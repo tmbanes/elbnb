@@ -1,4 +1,4 @@
-# Pull Request Template
+# Pull Request
 
 ## Overview
 Provide a brief overview or summary of the changes you have implemented.
@@ -7,15 +7,17 @@ Provide a brief overview or summary of the changes you have implemented.
 
 ---
 
-## 📝 Type of change
+## Type of change
 
+*Please insert X in the box that applies.*
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Refactoring (Code cleanup)
 - [ ] Documentation
+- [ ] Chore
 
 ---
 
-## ❓ Notes / Additional comments
+## Notes / Additional comments
 
 Add any extra context or thoughts about your changes here.
