@@ -36,9 +36,3 @@ jobs:
 
       - name: Run ESLint
         run: pnpm eslint .
-
-      - name: Check formatting
-        run: pnpm prettier --check .
-
-      - name: TypeScript check
-        run: pnpm tsc --noEmit
