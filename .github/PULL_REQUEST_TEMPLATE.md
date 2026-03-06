@@ -1,6 +1,7 @@
 # Pull Request
 
 ## Overview
+
 Provide a brief overview or summary of the changes you have implemented.
 
 **Related issue:** #[INSERT ISSUE NUMBER HERE]
@@ -9,7 +10,8 @@ Provide a brief overview or summary of the changes you have implemented.
 
 ## Type of change
 
-*Please insert X in the box that applies.*
+_Please insert X in the box that applies._
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Refactoring (Code cleanup)

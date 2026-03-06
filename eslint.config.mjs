@@ -1,18 +1,41 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import next from "eslint-config-next";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
-import prettier from "eslint-config-prettier";
+import js from "@eslint/js";
+import tsParser from "@typescript-eslint/parser";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
+import reactPlugin from "eslint-plugin-react";
+import prettierPlugin from "eslint-plugin-prettier";
+import prettierConfig from "eslint-config-prettier";
 
-export default defineConfig([
-  ...next,
-  ...nextVitals,
-  ...nextTs,
-  prettier,
-  globalIgnores([
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
+export default [
+  js.configs.recommended,
+
+  {
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: "module",
+        ecmaFeatures: { jsx: true }
+      }
+    },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+      react: reactPlugin,
+      prettier: prettierPlugin
+    },
+    rules: {
+      ...tsPlugin.configs.recommended.rules,
+      "prettier/prettier": "error"
+    },
+    settings: {
+      react: {
+        version: "detect",   
+        pragma: "React",          
+        reactNamespace: "React",
+        jsxRuntime: "automatic"  
+      }
+    }
+  },
+
+  prettierConfig
+];
