@@ -1,15 +1,17 @@
+import { sign } from "crypto";
 import { supabase } from "./supabase/supabaseClient";
-import { UserCreationRequest } from "@/types/user.types";
+import { UserCreationRequest, GuestCreationRequest, StudentCreationRequest } from "@/types/user.types";
+import { metadata } from "@/app/layout";
 
 
 // FUNCTION: Sign up with email and password [To-Do: Test]
 async function signUpWithEmail(userData: UserCreationRequest) { 
-    const { email, password, first_name, last_name, middle_name, role, user_status } = userData
+    const { email, password, ...metadata} = userData
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-            data: { first_name, last_name, middle_name, role, user_status }
+            data: { ...metadata } // passd all metadata including its subclass
         }
     });
     console.log('Supabase response:', { data, error }) // [DEBUGGING LOG] to check the response from Supabase
@@ -22,8 +24,21 @@ async function signUpWithEmail(userData: UserCreationRequest) {
     return { success: true };
 }
 
+// FUNCTION: Sign Un as guest 
+async function signUpAsGuest(guestData: GuestCreationRequest) {
+   return signUpWithEmail({
+    ...guestData,
+    role: 'guest',
+    });
+}
 
-
+// FUNCTION: Sign Up as student
+async function signUpAsStudent(studentData: StudentCreationRequest) {   
+    return signUpWithEmail({
+    ...studentData,
+    role: 'student',
+    });
+}
 // FUNCTION: Sign in with email and password [To-Do: Test]
 async function signInWithEmail(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -52,4 +67,4 @@ async function signOut() {
 
 
 
-export {signUpWithEmail, signInWithGoogle, signInWithEmail , signOut };
+export {signUpAsGuest, signUpAsStudent, signInWithGoogle, signInWithEmail , signOut };
