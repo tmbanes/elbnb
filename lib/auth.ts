@@ -1,6 +1,6 @@
 import { sign } from "crypto";
 import { supabase } from "./supabase/supabaseClient";
-import { UserCreationRequest, GuestCreationRequest, StudentCreationRequest } from "@/types/user.types";
+import { UserCreationRequest, GuestCreationRequest, StudentCreationRequest, DormitoryManagerCreationRequest } from "@/types/user.types";
 import { metadata } from "@/app/layout";
 
 
@@ -11,7 +11,7 @@ async function signUpWithEmail(userData: UserCreationRequest) {
         email,
         password,
         options: {
-            data: { ...metadata } // passd all metadata including its subclass
+            data: { ...metadata } // pass all metadata including its subclass
         }
     });
     console.log('Supabase response:', { data, error }) // [DEBUGGING LOG] to check the response from Supabase
@@ -39,6 +39,15 @@ async function signUpAsStudent(studentData: StudentCreationRequest) {
     role: 'student',
     });
 }
+
+// FUNCTION: Create dormitory manager [ADMIN ROLE ONLY]
+async function createDormitoryManager(managerData: DormitoryManagerCreationRequest) {
+    return signUpWithEmail({
+    ...managerData,
+    role: 'dormitory_manager',
+    });
+}
+
 // FUNCTION: Sign in with email and password [To-Do: Test]
 async function signInWithEmail(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -51,6 +60,12 @@ async function signInWithEmail(email: string, password: string) {
  async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
+    options: {
+      queryParams: {
+        hd: 'up.edu.ph',  // only allow UP mail sign in (restrict to UP domain)
+      },
+      redirectTo: `${window.location.origin}/auth/callback`
+    }
   });
     if (error) {
         console.error('[ERROR] signing in with Google:', error.message);
@@ -67,4 +82,4 @@ async function signOut() {
 
 
 
-export {signUpAsGuest, signUpAsStudent, signInWithGoogle, signInWithEmail , signOut };
+export {signUpAsGuest, signUpAsStudent, createDormitoryManager,signInWithGoogle, signInWithEmail , signOut };
