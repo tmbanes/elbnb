@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const demos = [
+const setups = [
   {
     href: "/email-password",
     title: "Email + Password",
@@ -40,12 +40,12 @@ export default function Home() {
           </h1>
         </header>
         <section className="grid gap-6 md:grid-cols-3">
-          {demos.map((demo) => {
-            const theme = demo.theme;
+          {setups.map((setup) => {
+            const theme = setup.theme;
             return (
               <Link
-                key={demo.href}
-                href={demo.href}
+                key={setup.href}
+                href={setup.href}
                 className={`group relative isolate flex flex-col overflow-hidden rounded-[32px] p-6 transition hover:-translate-y-1 ${
                   theme?.card ??
                   "border border-white/5 bg-slate-900/60 shadow-[0_30px_70px_rgba(2,6,23,0.65)] hover:border-emerald-300/50"
@@ -62,10 +62,10 @@ export default function Home() {
                     theme?.title ?? "text-white"
                   } transition group-hover:opacity-95`}
                 >
-                  {demo.title}
+                  {setup.title}
                 </h3>
                 <ul className={`mt-4 space-y-1 text-xs ${theme?.bullets ?? "text-slate-400"}`}>
-                  {demo.highlights.map((highlight) => (
+                  {setup.highlights.map((highlight) => (
                     <li key={highlight}>• {highlight}</li>
                   ))}
                 </ul>

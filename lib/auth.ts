@@ -1,17 +1,20 @@
 import { sign } from "crypto";
-import { supabase } from "./supabase/supabaseClient";
+import { getSupabaseBrowserClient } from "../lib/supabase/browser-client";
 import { UserCreationRequest, GuestCreationRequest, StudentCreationRequest, DormitoryManagerCreationRequest } from "@/types/user.types";
 import { metadata } from "@/app/layout";
 
+// VARIABLE: Browser client instance
+const browserClient = getSupabaseBrowserClient(); 
 
 // FUNCTION: Sign up with email and password [To-Do: Test]
 async function signUpWithEmail(userData: UserCreationRequest) { 
-    const { email, password, ...metadata} = userData
-    const { data, error } = await supabase.auth.signUp({
+
+    const { email, password, ...userMetadata} = userData
+    const { data, error } = await browserClient.auth.signUp({
         email,
         password,
         options: {
-            data: { ...metadata } // pass all metadata including its subclass
+            data: { ...userMetadata } // pass all metadata including its subclass
         }
     });
     console.log('Supabase response:', { data, error }) // [DEBUGGING LOG] to check the response from Supabase
@@ -24,7 +27,7 @@ async function signUpWithEmail(userData: UserCreationRequest) {
     return { success: true };
 }
 
-// FUNCTION: Sign Un as guest 
+// FUNCTION: Sign Up as guest 
 async function signUpAsGuest(guestData: GuestCreationRequest) {
    return signUpWithEmail({
     ...guestData,
@@ -50,7 +53,7 @@ async function createDormitoryManager(managerData: DormitoryManagerCreationReque
 
 // FUNCTION: Sign in with email and password [To-Do: Test]
 async function signInWithEmail(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await browserClient.auth.signInWithPassword({ email, password });
     console.log('Supabase response:', { data, error }) // [DEBUGGING LOG] to check the response from Supabase
     if (error) return { success: false, error: error.message };
     return { success: true };
@@ -58,7 +61,7 @@ async function signInWithEmail(email: string, password: string) {
 
 // FUNCTION: to sign in/sign up using Google [instantly creates User if they don't exist in DB ]
  async function signInWithGoogle() {
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { error } = await browserClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
       queryParams: {
@@ -74,12 +77,10 @@ async function signInWithEmail(email: string, password: string) {
 
 // FUNCTION: to sign out
 async function signOut() {
-    const { error } = await supabase.auth.signOut();    
+    const { error } = await browserClient.auth.signOut();    
     if (error) {
         console.error('[ERROR] signing out:', error.message);
     }
 }
-
-
 
 export {signUpAsGuest, signUpAsStudent, createDormitoryManager,signInWithGoogle, signInWithEmail , signOut };
