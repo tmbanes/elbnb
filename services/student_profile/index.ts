@@ -4,18 +4,18 @@ import { UserProfile, AccommodationAssignment } from '@/types/student_profile';
 export const studentProfileService = {
 
 
-  async getProfile(userId: string) {
+  async getProfile(user_id: string) {
     const { data, error } = await supabase
       .from('USER')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', user_id)
       .single();
 
     return { data: data as UserProfile | null, error };
   },
 
 
-  async updateProfile(userId: string, updates: Partial<UserProfile>) {
+  async updateProfile(user_id: string, updates: Partial<UserProfile>) {
     const { data, error } = await supabase
       .from('USER')
         .update({
@@ -24,7 +24,7 @@ export const studentProfileService = {
         last_name: updates.last_name,
         middle_name: updates.middle_name,
       })
-      .eq('user_id', userId)
+      .eq('user_id', user_id)
       .select()
       .single();
 
@@ -47,7 +47,7 @@ export const studentProfileService = {
 //     preferred_Accomodation: string;
 //     };
 
-  async getMyAssignment(applicationId: string) {
+  async getMyAssignment(application_id: string) {
     const { data, error } = await supabase
       .from('accomodation_assignment')
       .select(`
@@ -57,9 +57,93 @@ export const studentProfileService = {
         actual_Move_Out_Date,
         application_id
       `)
-      .eq('application_id', applicationId)
+      .eq('application_id', application_id)
       .single();
 
     return { data: data as AccommodationAssignment | null, error };
-  }
+  },
+
+
+
+/*
+
+for reference:
+https://supabase.com/docs/reference/javascript/storage-from-upload
+https://supabase.com/docs/reference/javascript/insert
+not yet tested - NOT YET WORKING (NO INTERFACE YET FOR ACCOMODATION_APPLICATION)
+
+hindi pa makakapagselect from supabase
+
+
+// */
+
+// const avatarFile = event.target.files[0]
+// const { data, error } = await supabase
+//   .storage
+//   .from('avatars')
+//   .upload('public/avatar1.png', avatarFile, {
+//     cacheControl: '3600',
+//     upsert: false
+//   })
+
+
+// async uploadDocument(user_id: string, application_id: string, file: File){ 
+//   const filePath = `${user_id}/${application_id}/${file.name}`;
+
+//   const { data: storageData}
+
+
+// }
+
+
+  async uploadDocument(user_id: string, application_id: string, file: File) {
+
+    /*
+    const avatarFile = event.target.files[0]
+    const { data, error } = await supabase
+      .storage
+      .from('avatars')
+      .upload('public/avatar1.png', avatarFile, {
+        cacheControl: '3600',
+        upsert: false
+      })
+    */
+    
+    const filePath = `${user_id}/${application_id}/${file.name}`;
+    const { data: storageData, error: storageError } = await supabase
+      .storage
+      .from('documents')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true // for overwriting
+      });
+
+    if (storageError) {
+      console.error("Storage Error:", storageError);
+      return { data: null, error: storageError };
+    }
+
+    // added document successfully
+    const { data: dbData, error: dbError } = await supabase
+      .from('Document')
+      .insert({
+        user_id: user_id,
+        application_id: application_id,
+        file_name: file.name,
+        file_type: file.type,
+        file_url: storageData.path,
+        // status: 'Uploaded' na dpat (to be updated!!!)
+      })
+      .select()
+      .single();
+
+    return { data: dbData, error: dbError };
+  },
+
+  // https://supabase.com/dashboard/project/cywurzembhxgwqvpsrlh/database/schemas
+
+  
+  
+
 };
+
