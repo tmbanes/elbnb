@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/supabaseClient'; 
-import { UserProfile, AccommodationAssignment } from '@/types/student_profile';
+import { UserProfile, AccommodationAssignment, AccommodationApplication } from '@/types/student_profile';
 
 export const studentProfileService = {
 
@@ -143,7 +143,49 @@ hindi pa makakapagselect from supabase
   // https://supabase.com/dashboard/project/cywurzembhxgwqvpsrlh/database/schemas
 
   
+
+  /*
+
+  export interface AccommodationApplication {
+      application_id: string;
+      preferred_Accomodation: string;
+      preferred_Unit_Type: string;
+      date_Submitter: string; // pacheck if submitter ba talaga un or submitted
+      duration_Of_Stay: number | null; 
+      check_In: string | null;        
+      check_Out: string | null;        
+      number_Of_Companions: number | null;
+
+      // https://supabase.com/dashboard/project/cywurzembhxgwqvpsrlh/database/schemas
+      // no status ???? (acc supabase database)
+      accomodation_assignment?: AccommodationAssignment | null; 
+  }
+  */
   
+  
+  async getAccommodationHistory(user_id: string) { 
+    const { data, error } = await supabase 
+
+      .from('accomodation_application')
+      .select(`
+        application_id,
+        preferred_Accomodation,
+        preferred_Unit_Type,
+        date_Submitter,
+        duration_Of_Stay,
+        check_In,
+        check_Out,
+        number_Of_Companions,
+
+
+        accomodation_assignment (
+          assignment_id,
+          move_In_Date,
+          expected_Move_Out_Date,
+          actual_Move_Out_Date
+        )
+        `)
+  }
 
 };
 
