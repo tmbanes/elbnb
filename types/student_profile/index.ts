@@ -17,7 +17,7 @@ export interface AccommodationAssignment {
     assignment_id: string; 
     move_In_Date: string; 
     expected_Move_Out_Date: string;
-    actual_Move_Out_Date?: string | null;
+    actual_Move_Out_Date?: string | null; // optional
     application_id: string; 
     
     // optional for history checker 
@@ -36,7 +36,8 @@ export interface AccommodationApplication {
     date_Submitter: string; // pacheck if submitter ba talaga un or submitted
     duration_Of_Stay: number | null; 
     check_In: string | null;        
-    check_Out: string | null;        
+    check_Out: string | null;    
+    number_Of_Companions: number | null;
 
     // https://supabase.com/dashboard/project/cywurzembhxgwqvpsrlh/database/schemas
     // no status ???? (acc supabase database)
