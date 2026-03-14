@@ -26,3 +26,19 @@ export interface AccommodationAssignment {
     preferred_Accomodation: string;
     };
 }
+
+
+
+export interface AccommodationApplication {
+    application_id: string;
+    preferred_Accomodation: string;
+    preferred_Unit_Type: string;
+    date_Submitter: string; // pacheck if submitter ba talaga un or submitted
+    duration_Of_Stay: number | null; 
+    check_In: string | null;        
+    check_Out: string | null;        
+
+    // https://supabase.com/dashboard/project/cywurzembhxgwqvpsrlh/database/schemas
+    // no status ???? (acc supabase database)
+    accomodation_assignment?: AccommodationAssignment | null; 
+}
