@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const setups = [
   {
-    href: "/email-password",
+    href: "/login",
     title: "Email + Password",
     highlights: ["Toggle sign in/sign up", "Show the session panel", "Explain password rules"],
     theme: {
