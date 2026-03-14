@@ -70,9 +70,7 @@ export const studentProfileService = {
 for reference:
 https://supabase.com/docs/reference/javascript/storage-from-upload
 https://supabase.com/docs/reference/javascript/insert
-not yet tested - NOT YET WORKING (NO INTERFACE YET FOR ACCOMODATION_APPLICATION)
-
-hindi pa makakapagselect from supabase
+not yet tested
 
 
 // */
@@ -194,3 +192,12 @@ hindi pa makakapagselect from supabase
 
 };
 
+
+
+/*
+notes:
+- date_Submitter or date_Submitted
+- no status yet (??)
+- not yet tested
+- not sure yet for update sa students (only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible)
+*/
