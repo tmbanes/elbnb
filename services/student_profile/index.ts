@@ -162,7 +162,7 @@ hindi pa makakapagselect from supabase
   }
   */
   
-  
+
   async getAccommodationHistory(user_id: string) { 
     const { data, error } = await supabase 
 
@@ -185,6 +185,11 @@ hindi pa makakapagselect from supabase
           actual_Move_Out_Date
         )
         `)
+    
+      .eq('user_id', user_id)
+      .order('date_Submitter', { ascending: false })
+    
+    return { data: data as AccommodationApplication[] | null, error };
   }
 
 };
