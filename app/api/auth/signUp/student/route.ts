@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signUpAsStudent } from "@/lib/auth";
+import { signUpAsStudent } from "@/services/browser/auth";
 
 async function POST(request: NextRequest) {
     try {

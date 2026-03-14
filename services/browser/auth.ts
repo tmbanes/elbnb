@@ -1,5 +1,5 @@
 import { sign } from "crypto";
-import { getSupabaseBrowserClient } from "../lib/supabase/browser-client";
+import { getSupabaseBrowserClient } from "../../lib/supabase/browser-client";
 import { UserCreationRequest, GuestCreationRequest, StudentCreationRequest, DormitoryManagerCreationRequest } from "@/types/user.types";
 import { metadata } from "@/app/layout";
 
@@ -14,6 +14,7 @@ async function signUpWithEmail(userData: UserCreationRequest) {
         email,
         password,
         options: {
+            emailRedirectTo: `${window.location.origin}/welcome`,
             data: { ...userMetadata } // pass all metadata including its subclass
         }
     });
@@ -52,7 +53,7 @@ async function createDormitoryManager(managerData: DormitoryManagerCreationReque
 }
 
 // FUNCTION: Sign in with email and password [To-Do: Test]
-async function signInWithEmail(email: string, password: string) {
+async function signInWithEmail({ email, password} : { email: string, password: string }) {
     const { data, error } = await browserClient.auth.signInWithPassword({ email, password });
     console.log('Supabase response:', { data, error }) // [DEBUGGING LOG] to check the response from Supabase
     if (error) return { success: false, error: error.message };
@@ -83,4 +84,4 @@ async function signOut() {
     }
 }
 
-export {signUpAsGuest, signUpAsStudent, createDormitoryManager,signInWithGoogle, signInWithEmail , signOut };
+export {signUpWithEmail, signUpAsGuest, signUpAsStudent, createDormitoryManager,signInWithGoogle, signInWithEmail , signOut };
