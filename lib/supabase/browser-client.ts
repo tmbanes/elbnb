@@ -33,3 +33,5 @@ export function getSupabaseBrowserClient(): SupabaseClient<SupabaseSchema> {
   return client;
   
 }
+
+export { createBrowserClient };

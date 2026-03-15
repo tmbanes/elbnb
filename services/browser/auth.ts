@@ -69,7 +69,7 @@ async function signInWithGoogle() {
         queryParams: {
             hd: 'up.edu.ph',  // only allow UP mail sign in (restrict to UP domain)
         },
-        redirectTo: `${window.location.origin}/google-login`
+        redirectTo: `${window.location.origin}/welcome`
         }
     });
     if (error) {
