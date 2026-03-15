@@ -62,14 +62,14 @@ async function signInWithEmail({ email, password} : { email: string, password: s
 }   
 
 // FUNCTION: to sign in/sign up using Google [instantly creates User if they don't exist in DB ]
-async function signInWithGoogle() {
+async function signInWithGoogle(next = '/') {
     const { error } = await browserClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
         queryParams: {
             hd: 'up.edu.ph',  // only allow UP mail sign in (restrict to UP domain)
         },
-        redirectTo: `${window.location.origin}/welcome`
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
         }
     });
     if (error) {
