@@ -62,19 +62,21 @@ async function signInWithEmail({ email, password} : { email: string, password: s
 }   
 
 // FUNCTION: to sign in/sign up using Google [instantly creates User if they don't exist in DB ]
- async function signInWithGoogle() {
-  const { error } = await browserClient.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      queryParams: {
-        hd: 'up.edu.ph',  // only allow UP mail sign in (restrict to UP domain)
-      },
-      redirectTo: `${window.location.origin}/auth/callback`
-    }
-  });
+async function signInWithGoogle() {
+    const { error } = await browserClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+        queryParams: {
+            hd: 'up.edu.ph',  // only allow UP mail sign in (restrict to UP domain)
+        },
+        redirectTo: `${window.location.origin}/google-login`
+        }
+    });
     if (error) {
         console.error('[ERROR] signing in with Google:', error.message);
+        return { success: false, error: error.message}
     }
+    return { success: true }
 }
 
 // FUNCTION: to sign out
