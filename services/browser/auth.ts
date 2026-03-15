@@ -25,7 +25,8 @@ async function signUpWithEmail(userData: UserCreationRequest) {
     return { success: false, error: "This email is already taken!" };
     }
 
-    return { success: true };
+    // VARIABLE: userId to be used in inserting a row in users table
+    return { success: true, userId: data.user?.id };
 }
 
 // FUNCTION: Sign Up as guest 
