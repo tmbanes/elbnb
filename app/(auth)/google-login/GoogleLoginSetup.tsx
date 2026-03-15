@@ -1,3 +1,4 @@
+// /google-login/GoogleLoginSetup.tsx
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
@@ -31,10 +32,7 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
     }, [supabase])
 
     async function handleGoogleLogin() {
-        const result = await signInWithGoogle();
-        if (result.success) {
-            console.log("Success redirection!")
-        }
+        await signInWithGoogle('/dashboard');
     }
 
     return (
@@ -73,7 +71,7 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
                 </span>
                 </div>
                 <p className="mt-4 text-sm text-slate-300">
-                Supabase hosts the OAuth flow and returns a ready-to-use session.
+                Click the button below to sign in with Google.
                 </p>
                 <button
                 type="button"
