@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signUpAsGuest } from "@/lib/auth";
+import { signUpAsGuest } from "@/services/browser/auth";
 
 async function POST(request: NextRequest) {
     try {
@@ -15,4 +15,4 @@ async function POST(request: NextRequest) {
     }
 }
 
-export { POST };
+export { POST };    
