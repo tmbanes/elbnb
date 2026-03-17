@@ -48,33 +48,30 @@ export default function LoginWithEmailSetup({ user }: LoginWithEmailProps) {
     const supabase = getSupabaseBrowserClient();
     const [currentUser, setCurrentUser] = useState<User | null>(user);
 
-    // VARIABLE: User data
-    const [formData, setFormData] = useState<FormData>({
-        // GENERAL
+    const getInitialFormData = (): FormData => ({
         first_name: "",
         last_name: "",
         middle_name: "",
         email: "",
         password: "",
-        role: "student" as UserRole,
-        user_status: "active" as UserStatus,
+        role: "student",
+        user_status: "active",
 
-        // STUDENT
         student_number: "",
         degree_program: "",
         enrollment_status: "enrolled",
         residency_status: "freshman",
         violation_count: 0,
-        
 
-        // DORM MANAGER
         employee_id: "",
 
-        // GUEST
         valid_id: "",
         purpose_visit: "",
         occupancy_status: "",
-    });
+    }); 
+
+    // VARIABLE: User data
+    const [formData, setFormData] = useState<FormData>(getInitialFormData());
 
     // FUNCTION: Handles role change; 
     // Clears role specific fields (previously filled) on role change
@@ -157,12 +154,14 @@ export default function LoginWithEmailSetup({ user }: LoginWithEmailProps) {
                 password: formData.password,
             });
 
-        if (error) {
-            setStatus(error.message);
-        } else {
-            setStatus("Signed in successfully");
+            if (error) {
+                setStatus(error.message);
+            } else {
+                setStatus("Signed in successfully");
+            }
         }
-        }
+
+        setFormData(getInitialFormData());
     }
     
     // FUNCTION: Handles sign out function
