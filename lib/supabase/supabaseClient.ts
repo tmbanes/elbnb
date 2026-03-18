@@ -1,4 +1,5 @@
-import {createClient, SupabaseClient} from '@supabase/supabase-js';
+// no supabaseClient.ts in develop
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL as string;
 const supabaseKey = process.env.PUBLIC_SUPABASE_ANON_KEY as string;
