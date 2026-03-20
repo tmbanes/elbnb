@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase/admin-client'
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 // GET /api/admin/housing/rental-spaces          → all rental spaces
 // GET /api/admin/housing/rental-spaces?id=123   → single rental space with units
 export async function GET(req: NextRequest) {
-  const id = req.nextUrl.searchParams.get('id')
+  const id = req.nextUrl.searchParams.get("id");
 
   if (id) {
     const { data, error } = await supabaseAdmin
-      .from('accommodation')
-      .select(`
+      .from("accommodation")
+      .select(
+        `
         accommodation_id, name, location,
         accommodation_type, accommodation_status, total_capacity,
         manager_id,
@@ -30,17 +31,20 @@ export async function GET(req: NextRequest) {
           max_occupancy, current_occupancy,
           rental_fee, unit_status
         )
-      `)
-      .eq('accommodation_id', id)
-      .single()
+      `,
+      )
+      .eq("accommodation_id", id)
+      .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json(data)
+    if (error)
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data);
   }
 
   const { data, error } = await supabaseAdmin
-    .from('accommodation')
-    .select(`
+    .from("accommodation")
+    .select(
+      `
       accommodation_id, name, location,
       accommodation_type, accommodation_status, total_capacity,
       manager_id,
@@ -56,70 +60,76 @@ export async function GET(req: NextRequest) {
         maximum_stay_days,
         security_deposit_required
       )
-    `)
-    .eq('accommodation_type', 'renting_space')
+    `,
+    )
+    .eq("accommodation_type", "renting_space");
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
 }
 
 // POST /api/admin/housing/rental-spaces
 export async function POST(req: NextRequest) {
-  const body = await req.json()
+  const body = await req.json();
 
-  const { data, error } = await supabaseAdmin.rpc('create_rental_space_full', {
-    p_name:                      body.name,
-    p_location:                  body.location,
-    p_manager_id:                body.manager_id,
-    p_total_capacity:            body.total_capacity,
-    p_property_type:             body.property_type,
-    p_allow_shortterm_stay:      body.allow_shortterm_stay,
-    p_allow_longterm_stay:       body.allow_longterm_stay,
-    p_minimum_stay_days:         body.minimum_stay_days ?? null,
-    p_maximum_stay_days:         body.maximum_stay_days ?? null,
+  const { data, error } = await supabaseAdmin.rpc("create_rental_space_full", {
+    p_name: body.name,
+    p_location: body.location,
+    p_manager_id: body.manager_id,
+    p_total_capacity: body.total_capacity,
+    p_property_type: body.property_type,
+    p_allow_shortterm_stay: body.allow_shortterm_stay,
+    p_allow_longterm_stay: body.allow_longterm_stay,
+    p_minimum_stay_days: body.minimum_stay_days ?? null,
+    p_maximum_stay_days: body.maximum_stay_days ?? null,
     p_security_deposit_required: body.security_deposit_required,
-  })
+  });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data, { status: 201 })
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data, { status: 201 });
 }
 
 // PATCH /api/admin/housing/rental-spaces?id=123
 // Body: { accommodationFields: {...}, rentingFields: {...} }
 export async function PATCH(req: NextRequest) {
-  const id = req.nextUrl.searchParams.get('id')
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  const id = req.nextUrl.searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-  const { accommodationFields, rentingFields } = await req.json()
+  const { accommodationFields, rentingFields } = await req.json();
 
   if (accommodationFields && Object.keys(accommodationFields).length > 0) {
     const { error } = await supabaseAdmin
-      .from('accommodation')
+      .from("accommodation")
       .update(accommodationFields)
-      .eq('accommodation_id', id)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      .eq("accommodation_id", id);
+    if (error)
+      return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   if (rentingFields && Object.keys(rentingFields).length > 0) {
     const { error } = await supabaseAdmin
-      .from('renting_space')
+      .from("renting_space")
       .update(rentingFields)
-      .eq('accommodation_id', id)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      .eq("accommodation_id", id);
+    if (error)
+      return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true });
 }
 
 // DELETE /api/admin/housing/rental-spaces?id=123
 export async function DELETE(req: NextRequest) {
-  const id = req.nextUrl.searchParams.get('id')
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  const id = req.nextUrl.searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-  const { data, error } = await supabaseAdmin.rpc('delete_accommodation', {
+  const { data, error } = await supabaseAdmin.rpc("delete_accommodation", {
     p_accommodation_id: id,
-  })
+  });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
 }
