@@ -25,7 +25,21 @@ const setups = [
       bullets: "text-white"
     },
   },
+  { // Housing Inventory Management
+    href: "/dashboard/admin/housing",
+    title: "Housing Inventory Management",
+    highlights: ["Dormitory CRUD", "Room and Bed Space Logic", "Facility-Manager Mapping"],
+    theme: {
+      card:
+        "border border-green-900 bg-gradient-to-br from-[#052e1f] via-[#064e3b] to-[#065f46] hover:border-[#34d399]/60",
+      open: "text-[#34d399]",
+      title: "text-[#6ee7b7]",
+      bullets: "text-[#d1fae5]"
+    },
+  },
 ] as const;
+
+
 
 export default function Home() {
   return (
