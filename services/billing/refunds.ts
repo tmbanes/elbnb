@@ -1,9 +1,4 @@
-import {
-  Payment,
-  Refund,
-  RefundReason,
-  RefundStatus,
-} from "@/types/billing";
+import { Payment, Refund, RefundReason, RefundStatus } from "@/types/billing";
 
 export interface RefundCalculationInput {
   payment_amount: number;
@@ -39,7 +34,9 @@ export function calculateRefundAmount(
 
   const remaining_payment_amount = Math.max(
     0,
-    input.payment_amount - (input.already_refunded_amount ?? 0) - approved_refund_amount,
+    input.payment_amount -
+      (input.already_refunded_amount ?? 0) -
+      approved_refund_amount,
   );
 
   return {
@@ -59,7 +56,9 @@ export interface CreateRefundInput {
   notes?: string | null;
 }
 
-export function createRefundRecord(input: CreateRefundInput): Omit<Refund, "id" | "created_at" | "updated_at"> {
+export function createRefundRecord(
+  input: CreateRefundInput,
+): Omit<Refund, "id" | "created_at" | "updated_at"> {
   return {
     billing_id: input.billing_id,
     payment_id: input.payment_id,

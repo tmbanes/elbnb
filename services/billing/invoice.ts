@@ -20,7 +20,8 @@ export function generateInvoiceFromBilling(
   return {
     billing_id: input.billing.id,
     tenant_id: input.billing.tenant_id,
-    invoice_number: input.billing.invoice_id ?? `INV-${input.billing.billing_number}`,
+    invoice_number:
+      input.billing.invoice_id ?? `INV-${input.billing.billing_number}`,
     issued_at: new Date().toISOString(),
     due_at: input.billing.due_date,
     subtotal_amount: totals.subtotal_amount,

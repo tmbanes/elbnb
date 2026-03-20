@@ -21,7 +21,9 @@ export function calculateFixedFee(fixed_fee: number = 0): number {
   return fixed_fee;
 }
 
-export function calculatePlatformFee(input: PlatformFeeInput): PlatformFeeResult {
+export function calculatePlatformFee(
+  input: PlatformFeeInput,
+): PlatformFeeResult {
   const percentage_fee_amount = calculatePercentageFee(
     input.base_amount,
     input.percentage_rate ?? 0,
