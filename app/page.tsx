@@ -25,6 +25,18 @@ const setups = [
       bullets: "text-white"
     },
   },
+  { // Housing Inventory Management
+    href: "/housing-management",
+    title: "Housing Inventory Management",
+    highlights: ["Dormitory CRUD", "Room and Bed Space Logic", "Facility-Manager Mapping"],
+    theme: {
+      card:
+        "border border-yellow-900 bg-gradient-to-br from-[#083a45] via-[#04313b] to-[#11424d] hover:border-[#7fb0ff]/60",
+      open: "text-[#24b3d4]",
+      title: "text-[#74e3fc]",
+      bullets: "text-white"
+    },
+  },
 ] as const;
 
 export default function Home() {
@@ -46,10 +58,9 @@ export default function Home() {
               <Link
                 key={setup.href}
                 href={setup.href}
-                className={`group relative isolate flex flex-col overflow-hidden rounded-[32px] p-6 transition hover:-translate-y-1 ${
-                  theme?.card ??
+                className={`group relative isolate flex flex-col overflow-hidden rounded-[32px] p-6 transition hover:-translate-y-1 ${theme?.card ??
                   "border border-white/5 bg-slate-900/60 shadow-[0_30px_70px_rgba(2,6,23,0.65)] hover:border-emerald-300/50"
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Flow</p>
@@ -58,9 +69,8 @@ export default function Home() {
                   </span>
                 </div>
                 <h3
-                  className={`mt-4 text-xl font-semibold ${
-                    theme?.title ?? "text-white"
-                  } transition group-hover:opacity-95`}
+                  className={`mt-4 text-xl font-semibold ${theme?.title ?? "text-white"
+                    } transition group-hover:opacity-95`}
                 >
                   {setup.title}
                 </h3>
