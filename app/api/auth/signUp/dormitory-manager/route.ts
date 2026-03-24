@@ -1,3 +1,4 @@
+export {};
 // import { NextRequest, NextResponse } from "next/server";
 // import { createDormitoryManager } from "@/services/browser/auth";
 
