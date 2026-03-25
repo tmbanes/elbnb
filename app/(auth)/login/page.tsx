@@ -1,5 +1,7 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+// "use client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import SignUpWithEmailSetup from "./LoginWithEmailSetup";
+import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import GoogleLoginSetup from "../google-login/GoogleLoginSetup";
 
 export default async function LoginPage() {
