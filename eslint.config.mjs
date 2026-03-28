@@ -15,27 +15,27 @@ export default [
       parserOptions: {
         ecmaVersion: 2020,
         sourceType: "module",
-        ecmaFeatures: { jsx: true }
-      }
+        ecmaFeatures: { jsx: true },
+      },
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
       react: reactPlugin,
-      prettier: prettierPlugin
+      prettier: prettierPlugin,
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      "prettier/prettier": "error"
+      "prettier/prettier": "error",
     },
     settings: {
       react: {
-        version: "detect",   
-        pragma: "React",          
+        version: "detect",
+        pragma: "React",
         reactNamespace: "React",
-        jsxRuntime: "automatic"  
-      }
-    }
+        jsxRuntime: "automatic",
+      },
+    },
   },
 
-  prettierConfig
+  prettierConfig,
 ];
