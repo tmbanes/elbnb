@@ -8,12 +8,13 @@ export default function AuthCodeErrorPage() {
       <p>We couldn't complete your login. Please try again.</p>
       <button
         className="mt-[1rem] p-[0rem 1rem] w-[200px] text-center h-[40px] border-gray border-[1px] rounded-md hover:bg-white/70 hover:text-black"
-        onClick={() => (window.location.href = '/')}
+        onClick={() => (window.location.href = "/")}
       >
         Return to Login
       </button>
       <p className="mt-[1rem] text-[0.9rem] text-[#666]">
-        If the issue continues, try clearing your browser cookies or using a different browser.
+        If the issue continues, try clearing your browser cookies or using a
+        different browser.
       </p>
     </div>
   );

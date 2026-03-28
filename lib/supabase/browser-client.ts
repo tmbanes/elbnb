@@ -18,20 +18,19 @@ export function getSupabaseBrowserClient(): SupabaseClient<SupabaseSchema> {
     return client;
   }
 
-// ENVIRONMENT VARIABLES: Supabase project URL and public anon key
-// TO DO: Must be set in .env.local
+  // ENVIRONMENT VARIABLES: Supabase project URL and public anon key
+  // TO DO: Must be set in .env.local
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY"
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY",
     );
   }
 
   client = createBrowserClient<SupabaseSchema>(supabaseUrl, supabaseAnonKey);
   return client;
-  
 }
 
 export { createBrowserClient };
