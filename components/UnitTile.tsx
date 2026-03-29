@@ -9,7 +9,9 @@ interface UnitTileProps {
 }
 
 export function UnitTile({ unit }: UnitTileProps) {
-  return (
+    const isVacant = unit.vacant_slots > 0
+    
+    return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">{unit.unit_number}</h3>
       <div className="space-y-3 text-sm">
@@ -36,12 +38,21 @@ export function UnitTile({ unit }: UnitTileProps) {
           </span>
         </div>
       </div>
-      <Link
-        href={`/dashboard/accommodation_application?unitId=${unit.unit_id}&accommodationId=${unit.accommodation_id}`}
-        className="mt-4 w-full inline-block text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-      >
-        Apply in this Unit
-      </Link>
+      {isVacant ? (
+        <Link
+          href={`/dashboard/accommodation_application?unitId=${unit.unit_id}&accommodationId=${unit.accommodation_id}`}
+          className="mt-4 w-full inline-block text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+        >
+          Apply in this Unit
+        </Link>
+      ) : (
+        <button
+          disabled
+          className="mt-4 w-full px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed font-medium"
+        >
+          No Vacant Slots
+        </button>
+      )}
     </div>
   )
 }
