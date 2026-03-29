@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import {
   signUpAsGuest,
@@ -55,7 +54,6 @@ type FormData = BaseFormData & {
 };
 
 export default function LoginWithEmailSetup({ user }: LoginWithEmailProps) {
-  const router = useRouter();
   const [mode, setMode] = useState("signup");
   const [status, setStatus] = useState("");
   const supabase = getSupabaseBrowserClient();
@@ -83,6 +81,7 @@ export default function LoginWithEmailSetup({ user }: LoginWithEmailProps) {
     occupancy_status: "",
   });
 
+  // VARIABLE: User data
   const [formData, setFormData] = useState<FormData>(getInitialFormData());
 
   // FUNCTION: Handles role change;
@@ -479,13 +478,7 @@ export default function LoginWithEmailSetup({ user }: LoginWithEmailProps) {
               </div>
             </dl>
             <button
-              className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400"
-              onClick={() => router.push("/dashboard")}
-            >
-              Proceed to Dashboard
-            </button>
-            <button
-              className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
+              className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
               onClick={handleSignOut}
             >
               Sign out
