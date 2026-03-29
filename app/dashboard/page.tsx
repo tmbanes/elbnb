@@ -1,16 +1,20 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { redirect } from "next/navigation";
+"use client";
 
-export default async function DashboardPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
+import { useRouter } from "next/navigation";
 
-  if (error || !session) {
-    redirect("/auth/");
-  }
+export default function DashboardPage() {
+  const router = useRouter();
 
-  return <div>Dashboard for {session.user.email}</div>;
+  return (
+    <div className="space-y-4 p-6">
+      <div>Dashboard</div>
+
+      <button
+        onClick={() => router.push("/dashboard/apply")}
+        className="rounded bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-600"
+      >
+        Go to Apply Page
+      </button>
+    </div>
+  );
 }
