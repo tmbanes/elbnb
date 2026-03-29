@@ -3,6 +3,8 @@
 
 import { useState, useEffect } from 'react'
 import { Accommodation, Unit } from '@/types/accommodation_units'
+import { AccommodationTile } from '@/components/AccommodationTile'
+import { UnitTile } from '@/components/UnitTile'
 
 type ViewMode = 'accommodations' | 'units' | 'accommodation-detail'
 
@@ -61,7 +63,6 @@ export default function AccommodationsDashboardPage() {
     }
   }
 
-  // Fetch accommodations on mount
   useEffect(() => {
     fetchAccommodations()
   }, [])
@@ -88,7 +89,6 @@ export default function AccommodationsDashboardPage() {
     <div className="space-y-6 p-6">
       <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
 
-      {/* Toggle Buttons */}
       <div className="flex gap-3">
         <button
           onClick={() => setViewMode('accommodations')}
@@ -138,29 +138,11 @@ export default function AccommodationsDashboardPage() {
           {!loading && accommodations.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {accommodations.map((accommodation) => (
-                <button
+                <AccommodationTile
                   key={accommodation.accommodation_id}
-                  onClick={() => handleAccommodationClick(accommodation)}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition text-left"
-                >
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    {accommodation.name}
-                  </h3>
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <p className="text-gray-500">Location</p>
-                      <p className="text-gray-900 font-medium">{accommodation.location}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Type</p>
-                      <p className="text-gray-900 font-medium">{accommodation.accommodation_type}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Total Capacity</p>
-                      <p className="text-gray-900 font-medium">{accommodation.total_capacity}</p>
-                    </div>
-                  </div>
-                </button>
+                  accommodation={accommodation}
+                  onClick={handleAccommodationClick}
+                />
               ))}
             </div>
           )}
@@ -187,33 +169,7 @@ export default function AccommodationsDashboardPage() {
           {!loadingUnits && allUnits.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {allUnits.map((unit) => (
-                <div key={unit.unit_id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{unit.unit_number}</h3>
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <p className="text-gray-500">Type</p>
-                      <p className="text-gray-900 font-medium">{unit.unit_type}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Furnishing</p>
-                      <p className="text-gray-900 font-medium">{unit.furnishing_status}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Max Occupancy</p>
-                      <p className="text-gray-900 font-medium">{unit.max_occupancy}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Rental Fee</p>
-                      <p className="text-gray-900 font-medium">₱{unit.rental_fee.toLocaleString()} / {unit.billing_period}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Vacant Slots</p>
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${unit.vacant_slots > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {unit.vacant_slots}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <UnitTile key={unit.unit_id} unit={unit} />
               ))}
             </div>
           )}
@@ -252,33 +208,7 @@ export default function AccommodationsDashboardPage() {
           {!loadingUnits && unitsForAccommodation.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {unitsForAccommodation.map((unit) => (
-                <div key={unit.unit_id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{unit.unit_number}</h3>
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <p className="text-gray-500">Type</p>
-                      <p className="text-gray-900 font-medium">{unit.unit_type}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Furnishing</p>
-                      <p className="text-gray-900 font-medium">{unit.furnishing_status}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Max Occupancy</p>
-                      <p className="text-gray-900 font-medium">{unit.max_occupancy}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Rental Fee</p>
-                      <p className="text-gray-900 font-medium">₱{unit.rental_fee.toLocaleString()} / {unit.billing_period}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Vacant Slots</p>
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${unit.vacant_slots > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {unit.vacant_slots}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <UnitTile key={unit.unit_id} unit={unit} />
               ))}
             </div>
           )}

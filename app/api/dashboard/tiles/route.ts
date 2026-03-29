@@ -1,4 +1,3 @@
-// app/api/dashboard/tiles/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation/index";
 
