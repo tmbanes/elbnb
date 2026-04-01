@@ -1,7 +1,6 @@
-import { sign } from "crypto";
 import { getSupabaseBrowserClient } from "../../lib/supabase/browser-client";
-import { UserCreationRequest, GuestCreationRequest, StudentCreationRequest, DormitoryManagerCreationRequest } from "@/types/user.types";
-import { metadata } from "@/app/layout";
+import { UserCreationRequest, GuestCreationRequest, StudentCreationRequest, DormitoryManagerCreationRequest } from "@/types/auth/user.types";
+
 
 // VARIABLE: Browser client instance
 const browserClient = getSupabaseBrowserClient(); 
@@ -87,4 +86,6 @@ async function signOut() {
     }
 }
 
-export {signUpWithEmail, signUpAsGuest, signUpAsStudent, createDormitoryManager,signInWithGoogle, signInWithEmail , signOut };
+
+
+export {signInWithGoogle , signOut, signUpWithEmail, signUpAsGuest, signUpAsStudent, createDormitoryManager,signInWithEmail };

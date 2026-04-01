@@ -1,6 +1,8 @@
 // /services/server/auth.ts
-import { DormitoryManagerCreationRequest, StudentCreationRequest, UserCreationRequest } from "@/types/user.types";
+import { DormitoryManagerCreationRequest, StudentCreationRequest, UserCreationRequest } from "@/types/auth/user.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+
+// dedelete na ba to?
 
 // FUNCTION: Sign up with email and password [To-Do: Test]
 export async function createUserProfile(userData: UserCreationRequest) { 
@@ -42,7 +44,7 @@ export async function createDormitoryManager(managerData: DormitoryManagerCreati
     });
 }
 
-// FUNCTION: Sign in with email and password [To-Do: Test]
+// FUNCTION: Sign in with email and password 
 export async function signInWithEmail({ email, password} : { email: string, password: string }) {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -58,5 +60,26 @@ export async function signOut() {
     const { error } = await supabase.auth.signOut();    
     if (error) {
         console.error('[ERROR] signing out:', error.message);
+    }
+}
+
+// FUNCTION: to delete user account [ADMIN ROLE ONLY and USER THEMSELVES] 
+export async function deleteUserAccount(userId: string) {
+    const supabase = await createSupabaseServerClient();
+    
+    // get current user to check if they are admin or the owner of the account
+    const currentUser = await supabase.auth.getUser();
+
+     // check if role is admin or user themselves
+    if (currentUser.data.user?.id !== userId && currentUser.data.user?.role !== 'admin') {
+        return { success: false, error: 'Unauthorized to delete this account' };
+    } else {
+        const { error: deleteError } = await supabase.auth.admin.deleteUser(userId); 
+        if (deleteError) {
+            console.error('[ERROR] deleting user account:', deleteError.message);
+            return { success: false, error: 'Failed to delete user account' };
+        }
+        console.log(`User account with ID ${userId} has been deleted.`); // [DEBUGGING LOG] to confirm deletion
+        return { success: true };
     }
 }
