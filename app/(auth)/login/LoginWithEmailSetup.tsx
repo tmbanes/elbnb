@@ -2,8 +2,7 @@
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { signUpAsGuest, signUpAsStudent, signUpWithEmail } from "@/services/browser/auth";
-import { createDormitoryManager } from "@/services/browser/auth";
-import { DormitoryManagerCreationRequest, GuestCreationRequest, StudentCreationRequest, UserCreationRequest, UserRole, UserStatus } from "@/types/user.types";
+import { DormitoryManagerCreationRequest, GuestCreationRequest, StudentCreationRequest, UserCreationRequest, UserRole, UserStatus } from "@/types/auth/user.types";
 import { User } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
 
@@ -136,8 +135,6 @@ export default function LoginWithEmailSetup({ user }: LoginWithEmailProps) {
         if (mode == "signup") {
             if (formData.role == "student") {
                 result = await signUpAsStudent(formData as StudentCreationRequest);
-            } else if (formData.role == "dormitory_manager") {
-                result = await createDormitoryManager(formData as DormitoryManagerCreationRequest);
             } else {
                 result = await signUpAsGuest(formData as GuestCreationRequest);
             }
