@@ -5,7 +5,7 @@ import {
   AccommodationApplication,
 } from "@/types/student_profile";
 
-export const studentProfileService = {
+export const studentProfileService = { // function for getting profile
   async getProfile(user_id: string) {
     const { data, error } = await supabase
       .from("USER")
@@ -30,7 +30,7 @@ export const studentProfileService = {
       .eq("user_id", user_id)
       .select()
       .single();  
-      
+
     return { data: data as UserProfile | null, error };
   },
 

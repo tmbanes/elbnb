@@ -3,10 +3,8 @@ import {
   DormitoryManagerCreationRequest,
   StudentCreationRequest,
   UserCreationRequest,
-} from "@/types/user.types";
+} from "@/types/auth/user.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-
-// dedelete na ba to?
 
 // FUNCTION: Sign up with email and password [To-Do: Test]
 export async function createUserProfile(userData: UserCreationRequest) {
@@ -78,3 +76,11 @@ export async function signOut() {
     console.error("[ERROR] signing out:", error.message);
   }
 }
+
+
+// FUNCTION: to delete user account, ensure it is done only by the user themselves or by an admin
+// export async function deleteUser() {
+//   const supabase = await createSupabaseServerClient();
+//   const {data,error} = await supabase.auth.admin.deleteUser(supabase.auth.getUser()? || '');
+
+// }
