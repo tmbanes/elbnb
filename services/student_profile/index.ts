@@ -1,71 +1,71 @@
-import { supabase } from '@/lib/supabase/supabaseClient'; 
-import { UserProfile, AccommodationAssignment, AccommodationApplication } from '@/types/student_profile';
+import { supabase } from "@/lib/supabase/supabaseClient";
+import {
+  UserProfile,
+  AccommodationAssignment,
+  AccommodationApplication,
+} from "@/types/student_profile";
 
 export const studentProfileService = {
-
-
   async getProfile(user_id: string) {
     const { data, error } = await supabase
-      .from('USER')
-      .select('*')
-      .eq('user_id', user_id)
+      .from("USER")
+      .select("*")
+      .eq("user_id", user_id)
       .single();
 
     return { data: data as UserProfile | null, error };
   },
 
+  async updateProfile(user_id: string, updates: Partial<UserProfile>) { // function for updating profile
+    const updateFields: Partial<UserProfile> = {};
 
-  async updateProfile(user_id: string, updates: Partial<UserProfile>) {
-    const { data, error } = await supabase
-      .from('USER')
-        .update({
-          // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
-        first_name: updates.first_name,
-        last_name: updates.last_name,
-        middle_name: updates.middle_name,
-      })
-      .eq('user_id', user_id)
-      .select()
-      .single();
-
-    return { data: data as UserProfile | null, error };
-  },
-
-  
-
-
-// export interface AccommodationAssignment {
-//     assignment_id: string; 
-//     move_In_Date: string; 
-//     expected_Move_Out_Date: string;
-//     actual_Move_Out_Date?: string | null;
-//     application_id: string; 
+    // check if this field is being updated
+    if (updates.first_name) updateFields.first_name = updates.first_name;
+    if (updates.last_name) updateFields.last_name = updates.last_name;
+    if ("middle_name" in updates) updateFields.middle_name = updates.middle_name; // middle name can be null
     
-//     // optional for history checker 
-//     application?: {
-//     preferred_Unit_Type: string;
-//     preferred_Accomodation: string;
-//     };
+    const { data, error } = await supabase
+      .from("USER")
+      .update(updateFields)
+      .eq("user_id", user_id)
+      .select()
+      .single();  
+      
+    return { data: data as UserProfile | null, error };
+  },
+
+  // export interface AccommodationAssignment {
+  //     assignment_id: string;
+  //     move_In_Date: string;
+  //     expected_Move_Out_Date: string;
+  //     actual_Move_Out_Date?: string | null;
+  //     application_id: string;
+
+  //     // optional for history checker
+  //     application?: {
+  //     preferred_Unit_Type: string;
+  //     preferred_Accomodation: string;
+  //     };
 
   async getMyAssignment(application_id: string) {
     const { data, error } = await supabase
-      .from('accomodation_assignment')
-      .select(`
+      .from("accomodation_assignment")
+      .select(
+        `
         assignment_id,
         move_In_Date,
         expected_Move_Out_Date,
         actual_Move_Out_Date,
         application_id
-      `)
-      .eq('application_id', application_id)
+      `,
+      )
+      .eq("application_id", application_id)
       .single();
 
     return { data: data as AccommodationAssignment | null, error };
   },
 
-
-
-/*
+  /*
 
 for reference:
 https://supabase.com/docs/reference/javascript/storage-from-upload
@@ -75,27 +75,23 @@ not yet tested
 
 // */
 
-// const avatarFile = event.target.files[0]
-// const { data, error } = await supabase
-//   .storage
-//   .from('avatars')
-//   .upload('public/avatar1.png', avatarFile, {
-//     cacheControl: '3600',
-//     upsert: false
-//   })
+  // const avatarFile = event.target.files[0]
+  // const { data, error } = await supabase
+  //   .storage
+  //   .from('avatars')
+  //   .upload('public/avatar1.png', avatarFile, {
+  //     cacheControl: '3600',
+  //     upsert: false
+  //   })
 
+  // async uploadDocument(user_id: string, application_id: string, file: File){
+  //   const filePath = `${user_id}/${application_id}/${file.name}`;
 
-// async uploadDocument(user_id: string, application_id: string, file: File){ 
-//   const filePath = `${user_id}/${application_id}/${file.name}`;
+  //   const { data: storageData}
 
-//   const { data: storageData}
-
-
-// }
-
+  // }
 
   async uploadDocument(user_id: string, application_id: string, file: File) {
-
     /*
     const avatarFile = event.target.files[0]
     const { data, error } = await supabase
@@ -106,14 +102,13 @@ not yet tested
         upsert: false
       })
     */
-    
+
     const filePath = `${user_id}/${application_id}/${file.name}`;
-    const { data: storageData, error: storageError } = await supabase
-      .storage
-      .from('documents')
+    const { data: storageData, error: storageError } = await supabase.storage
+      .from("documents")
       .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true // for overwriting
+        cacheControl: "3600",
+        upsert: true, // for overwriting
       });
 
     if (storageError) {
@@ -123,7 +118,7 @@ not yet tested
 
     // added document successfully
     const { data: dbData, error: dbError } = await supabase
-      .from('Document')
+      .from("Document")
       .insert({
         user_id: user_id,
         application_id: application_id,
@@ -139,8 +134,6 @@ not yet tested
   },
 
   // https://supabase.com/dashboard/project/cywurzembhxgwqvpsrlh/database/schemas
-
-  
 
   /*
 
@@ -159,13 +152,13 @@ not yet tested
       accomodation_assignment?: AccommodationAssignment | null; 
   }
   */
-  
 
-  async getAccommodationHistory(user_id: string) { 
-    const { data, error } = await supabase 
+  async getAccommodationHistory(user_id: string) {
+    const { data, error } = await supabase
 
-      .from('accomodation_application')
-      .select(`
+      .from("accomodation_application")
+      .select(
+        `
         application_id,
         preferred_Accomodation,
         preferred_Unit_Type,
@@ -182,17 +175,15 @@ not yet tested
           expected_Move_Out_Date,
           actual_Move_Out_Date
         )
-        `)
-    
-      .eq('user_id', user_id)
-      .order('date_Submitter', { ascending: false })
-    
+        `,
+      )
+
+      .eq("user_id", user_id)
+      .order("date_Submitter", { ascending: false });
+
     return { data: data as AccommodationApplication[] | null, error };
-  }
-
+  },
 };
-
-
 
 /*
 notes:
