@@ -1,3 +1,4 @@
+// /lib/supabase/browser-client.ts
 "use client";
 
 // Import Statements
