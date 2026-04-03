@@ -21,15 +21,15 @@ export function getSupabaseBrowserClient(): SupabaseClient<SupabaseSchema> {
   // ENVIRONMENT VARIABLES: Supabase project URL and public anon key
   // TO DO: Must be set in .env.local
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabasePublicKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabasePublicKey) {
     throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_KEY",
     );
   }
 
-  client = createBrowserClient<SupabaseSchema>(supabaseUrl, supabaseAnonKey);
+  client = createBrowserClient<SupabaseSchema>(supabaseUrl, supabasePublicKey);
   return client;
 }
 
