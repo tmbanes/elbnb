@@ -36,106 +36,56 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
   }
 
   return (
-    <div className="h-[900px] flex-row flex justify-center items-center gap-[20px]">
-      {!currentUser && (
-        <>
-          <section className="relative overflow-hidden w-[40%] flex-col items-center justify-self-center rounded-[32px] border border-[#5a8dee]/40 bg-gradient-to-br from-[#083a45] via-[#04313b] to-[#11424d] p-8 text-slate-100 shadow-[0_35px_90px_rgba(2,6,23,0.65)]">
-            <div
-              className="pointer-events-none absolute -right-6 -top-8 -z-10 h-24 w-24 rounded-full bg-[radial-gradient(circle,_rgba(66,133,244,0.25),_rgba(234,67,53,0.06))] blur-xl"
-              aria-hidden="true"
-            />
-            <div
-              className="pointer-events-none absolute bottom-2 right-10 -z-10 h-14 w-20 rounded-full bg-[radial-gradient(circle,_rgba(52,168,83,0.2),_transparent)] blur-lg"
-              aria-hidden="true"
-            />
-            <div
-              className="pointer-events-none absolute -left-10 bottom-4 -z-10 h-20 w-32 rotate-12 rounded-full bg-[linear-gradient(120deg,_rgba(251,188,5,0.18),_rgba(66,133,244,0.12))] blur-lg"
-              aria-hidden="true"
-            />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0d1f3f] text-2xl font-semibold text-white shadow-lg shadow-blue-900/40 ring-2 ring-[#8ab4ff]/40">
-                  G
-                </span>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                    OAuth
-                  </p>
-                  <h3 className="text-xl font-semibold text-white">
-                    Continue with Google
-                  </h3>
-                </div>
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#8dbd59] p-4 font-sans selection:bg-emerald-500/30">
+      <div className="w-full max-w-md space-y-6">
+        
+        {!currentUser && (
+          <div className="relative overflow-hidden rounded-3xl bg-[#5591AB] p-8 shadow-2xl backdrop-blur-xl">
+           
+            <div className="absolute -right-10 -top-10 -z-10 h-32 w-32 rounded-full bg-emerald-500/20 blur-3xl" />
+            <div className="absolute -left-10 -bottom-10 -z-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl" />
+
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-4xl font-bold text-[#F6F8D5]">
+                  Continue with Google
+                </h2>
+                <p className="text-l text-[#F6F8D5]">Sign in using your Google account</p>
               </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-[#fbbc05] shadow-sm">
-                No password storage
-              </span>
             </div>
-            <p className="mt-4 text-sm text-slate-300">
-              Click the button below to sign in with Google.
-            </p>
+
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0d9aba] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-[#1662c4]"
+              className="w-full mt-4 bg-[#fbbc05] hover:bg-[#fcf4d9] text-[#fcf4d9] hover:text-[#2d1a12] font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
             >
               Continue with Google
             </button>
-          </section>
-        </>
-      )}
-      <section className="rounded-[28px] w-[40%] border border-white/10 bg-white/5 p-7 text-slate-200 shadow-[0_25px_70px_rgba(2,6,23,0.65)] backdrop-blur">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-white">Session</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              {currentUser
-                ? "Hydrated by getSession + onAuthStateChange."
-                : "Sign in to hydrate this panel instantly."}
-            </p>
-          </div>
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              currentUser
-                ? "bg-emerald-500/20 text-emerald-200"
-                : "bg-white/10 text-slate-400"
-            }`}
-          >
-            {currentUser ? "Active" : "Idle"}
-          </span>
-        </div>
-        {currentUser ? (
-          <>
-            <dl className="mt-5 space-y-3 text-sm text-slate-200">
-              <div className="flex items-center justify-between gap-6">
-                <dt className="text-slate-400">User ID</dt>
-                <dd className="font-mono text-xs">{currentUser.id}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-6">
-                <dt className="text-slate-400">Email</dt>
-                <dd>{currentUser.email}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-6">
-                <dt className="text-slate-400">Last sign in</dt>
-                <dd>
-                  {currentUser.last_sign_in_at
-                    ? new Date(currentUser.last_sign_in_at).toLocaleString()
-                    : "—"}
-                </dd>
-              </div>
-            </dl>
-            <button
-              className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
-              onClick={handleSignOut}
-            >
-              Sign out
-            </button>
-          </>
-        ) : (
-          <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-slate-900/50 p-5 text-sm text-slate-400">
-            Session metadata will show up here after a successful sign in.
           </div>
         )}
-      </section>
+
+        {/* Session Status Card */}
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-white">System Session</h3>
+              <p className="text-xs text-slate-500">
+                {currentUser ? currentUser.email : "No active session detected"}
+              </p>
+            </div>
+            {currentUser ? (
+              <button 
+                onClick={handleSignOut}
+                className="px-4 py-2 text-xs font-bold text-white bg-red-500/20 hover:bg-red-500/40 rounded-lg transition-colors"
+              >
+                Log Out
+              </button>
+            ) : (
+              <span className="h-2 w-2 rounded-full bg-slate-600 animate-pulse" />
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
