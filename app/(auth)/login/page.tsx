@@ -1,6 +1,6 @@
 // "use client";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import SignUpWithEmailSetup from "./LoginWithEmailSetup";
+import LoginWithEmailSetup from "./LoginWithEmailSetup";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import GoogleLoginSetup from "../google-login/GoogleLoginSetup";
 
@@ -11,5 +11,5 @@ export default async function LoginPage() {
   } = await supabase.auth.getUser();
 
   console.log({ user });
-  return <SignUpWithEmailSetup user={user} />;
+  return <LoginWithEmailSetup user={user} />;
 }
