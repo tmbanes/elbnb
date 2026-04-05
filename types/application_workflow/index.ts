@@ -6,16 +6,17 @@ export type ApplicationStatus =
   | "rejected"
   | "cancelled";
 
-export interface SubmitAccommodationApplicationInput {
-  accommodation_id: string;
-  user_fname: string;
-  user_lname: string;
-  user_email: string;
-  contact_number: string;
-  check_in: string;
-  check_out: string;
-  files?: [];
-  notes?: string;
+export interface AccommodationApplication {
+  application_id: string;
+  preferred_accommodation: string;
+  preferred_unit_type: string;
+  date_submitted: string; // ISO date string
+  duration_of_stay: number; // in months
+  check_in: string; // ISO date string
+  check_out: string; // ISO date string
+  number_of_companions: number;
+  application_status: ApplicationStatus;
+  user_id: string;
 }
 
 export interface TransitionApplicationStatus {
