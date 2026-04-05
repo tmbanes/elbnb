@@ -20,6 +20,12 @@ export default function DashboardPage() {
             Applications
           </button>
         </Link>
+
+        <Link href="/dashboard/accommodation_assignment">
+          <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+            Assignments
+          </button>
+        </Link>
       </div>
     </div>
   )
