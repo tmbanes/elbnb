@@ -24,7 +24,7 @@ export function AccommodationTile({ accommodation, onClick }: AccommodationTileP
         </div>
         <div>
           <p className="text-gray-500">Type</p>
-          <p className="text-gray-900 font-medium">{accommodation.type}</p>
+          <p className="text-gray-900 font-medium">{accommodation.accommodation_type}</p>
         </div>
         <div>
           <p className="text-gray-500">Total Capacity</p>
