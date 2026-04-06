@@ -29,7 +29,11 @@ export const studentProfileService = { // function for getting profile
       .update(updateFields)
       .eq("user_id", user_id)
       .select()
-      .single();  
+      .single(); 
+    
+    if (error) {
+      console.error("Error updating profile:", error);
+    }
 
     return { data: data as UserProfile | null, error };
   },

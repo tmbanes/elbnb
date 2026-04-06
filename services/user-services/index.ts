@@ -60,16 +60,19 @@ export async function insertDocument(
     
     const { data, error } = await supabase
     .rpc("insert_document_metadata", {
-        p_user_id: user_id,
+        p_uploader_id: user_id,
         p_application_id: application_id,
         p_doc_name: doc_name,
+        p_doc_type: document_type,
         p_file_url: file_url,
-        p_document_type: document_type})
+        })
 
     if (error) {
         console.error("Error inserting document metadata:", error);
         return { data: null, error };
-    }
+      }
+
+    return { data, error: null };
 
   }
     
