@@ -8,7 +8,7 @@ import { UnitTile } from '@/components/UnitTile'
 type ViewMode = 'accommodations' | 'units' | 'accommodation-detail'
 
 interface AccommodationFilters {
-  accommodationType: 'dormitory' | 'rental_space' | ''
+  accommodationType: 'dormitory' | 'renting_space' | ''
 }
 
 interface UnitFilters {
@@ -49,8 +49,13 @@ export default function AccommodationsDashboardPage() {
 
       if (currentFilters.accommodationType) {
         filtered = filtered.filter(
-          (accommodation) => accommodation.type === currentFilters.accommodationType
-        )
+          (accommodation) => {
+            accommodation.accommodation_type === currentFilters.accommodationType
+            console.log('Filtering accommodation:', accommodation.name)
+            console.log('Accommodation type:', accommodation.accommodation_type)
+            console.log('Current filter:', currentFilters.accommodationType)
+            return accommodation.accommodation_type === currentFilters.accommodationType
+        })
       }
 
       setFilteredAccommodations(filtered)
@@ -251,7 +256,7 @@ export default function AccommodationsDashboardPage() {
                   value={accommodationFilters.accommodationType}
                   onChange={(e) =>
                     handleAccommodationFilterChange({
-                      accommodationType: e.target.value as 'dormitory' | 'rental_space' | '',
+                      accommodationType: e.target.value as 'dormitory' | 'renting_space' | '',
                     })
                   }
                   disabled={loading}
@@ -259,7 +264,7 @@ export default function AccommodationsDashboardPage() {
                 >
                   <option value="">All Types</option>
                   <option value="dormitory">Dormitory</option>
-                  <option value="rental_space">Rental Space</option>
+                  <option value="renting_space">Renting Space</option>
                 </select>
               </div>
 
