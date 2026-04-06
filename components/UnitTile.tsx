@@ -1,16 +1,19 @@
 // components/UnitTile.tsx
 'use client'
 
-import { Unit } from '@/types/accommodation_units'
+import { Unit, Accommodation } from '@/types/accommodation_units'
 import Link from 'next/link'
 
 interface UnitTileProps {
   unit: Unit
+  accommodation?: Accommodation
 }
 
-export function UnitTile({ unit }: UnitTileProps) {
-    const isVacant = unit.vacant_slots > 0
-    
+export function UnitTile({ unit, accommodation }: UnitTileProps) {
+  const isVacant = unit.vacant_slots > 0
+  const today = new Date();
+  const isWithinApplicationPeriod = accommodation?.allowed_application_period && today <= new Date(accommodation.allowed_application_period);
+  
     return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">{unit.unit_number}</h3>
@@ -38,9 +41,9 @@ export function UnitTile({ unit }: UnitTileProps) {
           </span>
         </div>
       </div>
-      {isVacant ? (
+      {isVacant && isWithinApplicationPeriod ? (
         <Link
-          href={`/dashboard/accommodation_application?unitId=${unit.unit_id}&accommodationId=${unit.accommodation_id}`}
+          href={`/dashboard/application_form?unitId=${unit.unit_id}&accommodationId=${unit.accommodation_id}`}
           className="mt-4 w-full inline-block text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
         >
           Apply in this Unit

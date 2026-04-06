@@ -1,4 +1,3 @@
-// app/dashboard/accommodations/page.tsx
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -8,6 +7,10 @@ import { UnitTile } from '@/components/UnitTile'
 
 type ViewMode = 'accommodations' | 'units' | 'accommodation-detail'
 
+interface AccommodationFilters {
+  accommodationType: 'dormitory' | 'rental_space' | ''
+}
+
 interface UnitFilters {
   unitType: 'room' | 'bedspace' | 'wholeunit' | ''
   furnishingStatus: 'furnished' | 'semi-furnished' | 'unfurnished' | ''
@@ -16,19 +19,64 @@ interface UnitFilters {
 
 export default function AccommodationsDashboardPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('accommodations')
+
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
+  const [filteredAccommodations, setFilteredAccommodations] = useState<Accommodation[]>([])
+
   const [allUnits, setAllUnits] = useState<Unit[]>([])
   const [filteredUnits, setFilteredUnits] = useState<Unit[]>([])
+
   const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null)
   const [unitsForAccommodation, setUnitsForAccommodation] = useState<Unit[]>([])
+
   const [loading, setLoading] = useState(true)
   const [loadingUnits, setLoadingUnits] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [filters, setFilters] = useState<UnitFilters>({
+
+  const [accommodationFilters, setAccommodationFilters] = useState<AccommodationFilters>({
+    accommodationType: '',
+  })
+
+  const [unitFilters, setUnitFilters] = useState<UnitFilters>({
     unitType: '',
     furnishingStatus: '',
     availability: 'vacant',
   })
+
+  const applyAccommodationFilters = useCallback(
+    (accommodationsList: Accommodation[], currentFilters: AccommodationFilters) => {
+      let filtered = accommodationsList
+
+      if (currentFilters.accommodationType) {
+        filtered = filtered.filter(
+          (accommodation) => accommodation.type === currentFilters.accommodationType
+        )
+      }
+
+      setFilteredAccommodations(filtered)
+    },
+    []
+  )
+
+  const applyUnitFilters = useCallback((units: Unit[], currentFilters: UnitFilters) => {
+    let filtered = units
+
+    if (currentFilters.unitType) {
+      filtered = filtered.filter((unit) => unit.unit_type === currentFilters.unitType)
+    }
+
+    if (currentFilters.furnishingStatus) {
+      filtered = filtered.filter(
+        (unit) => unit.furnishing_status === currentFilters.furnishingStatus
+      )
+    }
+
+    if (currentFilters.availability === 'vacant') {
+      filtered = filtered.filter((unit) => unit.current_occupancy < unit.max_occupancy)
+    }
+
+    setFilteredUnits(filtered)
+  }, [])
 
   const fetchAccommodations = async () => {
     setLoading(true)
@@ -37,8 +85,10 @@ export default function AccommodationsDashboardPage() {
     try {
       const response = await fetch('/api/dashboard/tiles?type=accommodations')
       if (!response.ok) throw new Error('Failed to fetch accommodations')
+
       const result = await response.json()
       setAccommodations(result)
+      applyAccommodationFilters(result, accommodationFilters)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -46,7 +96,10 @@ export default function AccommodationsDashboardPage() {
     }
   }
 
-  const fetchUnits = async (type: 'all' | 'by-accommodation', accommodationId?: string) => {
+  const fetchUnits = async (
+    type: 'all' | 'by-accommodation',
+    accommodationId?: string
+  ) => {
     setLoadingUnits(true)
     setError(null)
 
@@ -61,11 +114,12 @@ export default function AccommodationsDashboardPage() {
 
       const response = await fetch(url)
       if (!response.ok) throw new Error('Failed to fetch units')
+
       const result = await response.json()
 
       if (type === 'all') {
         setAllUnits(result)
-        applyFilters(result, filters)
+        applyUnitFilters(result, unitFilters)
       } else {
         setUnitsForAccommodation(result)
       }
@@ -76,52 +130,52 @@ export default function AccommodationsDashboardPage() {
     }
   }
 
-  const applyFilters = useCallback((units: Unit[], currentFilters: UnitFilters) => {
-    let filtered = units
-
-    // Filter by unit type
-    if (currentFilters.unitType) {
-      filtered = filtered.filter(
-        (unit) => unit.unit_type === currentFilters.unitType
-      )
-    }
-
-    // Filter by furnishing status
-    if (currentFilters.furnishingStatus) {
-      filtered = filtered.filter(
-        (unit) => unit.furnishing_status === currentFilters.furnishingStatus
-      )
-    }
-
-    // Filter by availability
-    if (currentFilters.availability === 'vacant') {
-      filtered = filtered.filter((unit) => unit.is_vacant)
-    }
-
-    setFilteredUnits(filtered)
-  }, [])
-
-  const handleFilterChange = useCallback(
-    (newFilters: UnitFilters) => {
-      setFilters(newFilters)
-      applyFilters(allUnits, newFilters)
+  const handleAccommodationFilterChange = useCallback(
+    (newFilters: AccommodationFilters) => {
+      setAccommodationFilters(newFilters)
+      applyAccommodationFilters(accommodations, newFilters)
     },
-    [allUnits, applyFilters]
+    [accommodations, applyAccommodationFilters]
   )
 
-  const resetFilters = useCallback(() => {
+  const handleUnitFilterChange = useCallback(
+    (newFilters: UnitFilters) => {
+      setUnitFilters(newFilters)
+      applyUnitFilters(allUnits, newFilters)
+    },
+    [allUnits, applyUnitFilters]
+  )
+
+  const resetAccommodationFilters = useCallback(() => {
+    const defaultFilters: AccommodationFilters = {
+      accommodationType: '',
+    }
+
+    setAccommodationFilters(defaultFilters)
+    applyAccommodationFilters(accommodations, defaultFilters)
+  }, [accommodations, applyAccommodationFilters])
+
+  const resetUnitFilters = useCallback(() => {
     const defaultFilters: UnitFilters = {
       unitType: '',
       furnishingStatus: '',
       availability: 'vacant',
     }
-    setFilters(defaultFilters)
-    applyFilters(allUnits, defaultFilters)
-  }, [allUnits, applyFilters])
+
+    setUnitFilters(defaultFilters)
+    applyUnitFilters(allUnits, defaultFilters)
+  }, [allUnits, applyUnitFilters])
 
   useEffect(() => {
     fetchAccommodations()
   }, [])
+
+  const handleViewAccommodations = () => {
+    setViewMode('accommodations')
+    setSelectedAccommodation(null)
+    setUnitsForAccommodation([])
+    setError(null)
+  }
 
   const handleViewAllUnits = async () => {
     setViewMode('units')
@@ -147,7 +201,7 @@ export default function AccommodationsDashboardPage() {
 
       <div className="flex gap-3">
         <button
-          onClick={() => setViewMode('accommodations')}
+          onClick={handleViewAccommodations}
           className={`px-4 py-2 rounded-lg font-medium transition ${
             viewMode === 'accommodations'
               ? 'bg-blue-600 text-white'
@@ -156,6 +210,7 @@ export default function AccommodationsDashboardPage() {
         >
           Accommodations
         </button>
+
         <button
           onClick={handleViewAllUnits}
           className={`px-4 py-2 rounded-lg font-medium transition ${
@@ -174,9 +229,53 @@ export default function AccommodationsDashboardPage() {
         </div>
       )}
 
-      {/* Accommodations View */}
       {viewMode === 'accommodations' && (
         <>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Accommodation Filters</h2>
+              <button
+                onClick={resetAccommodationFilters}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Reset Filters
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Accommodation Type
+                </label>
+                <select
+                  value={accommodationFilters.accommodationType}
+                  onChange={(e) =>
+                    handleAccommodationFilterChange({
+                      accommodationType: e.target.value as 'dormitory' | 'rental_space' | '',
+                    })
+                  }
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+                >
+                  <option value="">All Types</option>
+                  <option value="dormitory">Dormitory</option>
+                  <option value="rental_space">Rental Space</option>
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <div className="text-sm">
+                  <p className="text-gray-600">
+                    <span className="font-semibold text-gray-900">
+                      {filteredAccommodations.length}
+                    </span>{' '}
+                    accommodation{filteredAccommodations.length !== 1 ? 's' : ''} found
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {loading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -191,9 +290,21 @@ export default function AccommodationsDashboardPage() {
             </div>
           )}
 
-          {!loading && accommodations.length > 0 && (
+          {!loading && accommodations.length > 0 && filteredAccommodations.length === 0 && (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <p className="text-gray-600">No accommodations found matching your filters.</p>
+              <button
+                onClick={resetAccommodationFilters}
+                className="mt-4 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
+
+          {!loading && filteredAccommodations.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {accommodations.map((accommodation) => (
+              {filteredAccommodations.map((accommodation) => (
                 <AccommodationTile
                   key={accommodation.accommodation_id}
                   accommodation={accommodation}
@@ -205,15 +316,13 @@ export default function AccommodationsDashboardPage() {
         </>
       )}
 
-      {/* All Units View with Filters */}
       {viewMode === 'units' && (
         <>
-          {/* Filters Section */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Unit Filters</h2>
               <button
-                onClick={resetFilters}
+                onClick={resetUnitFilters}
                 className="text-sm text-blue-600 hover:text-blue-700 font-medium"
               >
                 Reset Filters
@@ -221,16 +330,15 @@ export default function AccommodationsDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Unit Type Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Unit Type
                 </label>
                 <select
-                  value={filters.unitType}
+                  value={unitFilters.unitType}
                   onChange={(e) =>
-                    handleFilterChange({
-                      ...filters,
+                    handleUnitFilterChange({
+                      ...unitFilters,
                       unitType: e.target.value as 'room' | 'bedspace' | 'wholeunit' | '',
                     })
                   }
@@ -244,17 +352,20 @@ export default function AccommodationsDashboardPage() {
                 </select>
               </div>
 
-              {/* Furnishing Status Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Furnishing Status
                 </label>
                 <select
-                  value={filters.furnishingStatus}
+                  value={unitFilters.furnishingStatus}
                   onChange={(e) =>
-                    handleFilterChange({
-                      ...filters,
-                      furnishingStatus: e.target.value as 'furnished' | 'semi-furnished' | 'unfurnished' | '',
+                    handleUnitFilterChange({
+                      ...unitFilters,
+                      furnishingStatus: e.target.value as
+                        | 'furnished'
+                        | 'semi-furnished'
+                        | 'unfurnished'
+                        | '',
                     })
                   }
                   disabled={loadingUnits}
@@ -267,16 +378,15 @@ export default function AccommodationsDashboardPage() {
                 </select>
               </div>
 
-              {/* Availability Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Availability
                 </label>
                 <select
-                  value={filters.availability}
+                  value={unitFilters.availability}
                   onChange={(e) =>
-                    handleFilterChange({
-                      ...filters,
+                    handleUnitFilterChange({
+                      ...unitFilters,
                       availability: e.target.value as 'vacant' | 'all',
                     })
                   }
@@ -288,7 +398,6 @@ export default function AccommodationsDashboardPage() {
                 </select>
               </div>
 
-              {/* Results Count */}
               <div className="flex items-end">
                 <div className="text-sm">
                   <p className="text-gray-600">
@@ -300,7 +409,6 @@ export default function AccommodationsDashboardPage() {
             </div>
           </div>
 
-          {/* Units Grid */}
           {loadingUnits && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -313,7 +421,7 @@ export default function AccommodationsDashboardPage() {
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-600">No units found matching your filters.</p>
               <button
-                onClick={resetFilters}
+                onClick={resetUnitFilters}
                 className="mt-4 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium"
               >
                 Clear Filters
@@ -324,14 +432,13 @@ export default function AccommodationsDashboardPage() {
           {!loadingUnits && filteredUnits.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredUnits.map((unit) => (
-                <UnitTile key={unit.unit_id} unit={unit} />
+                <UnitTile key={unit.unit_id} unit={unit}/>
               ))}
             </div>
           )}
         </>
       )}
 
-      {/* Accommodation Detail View */}
       {viewMode === 'accommodation-detail' && selectedAccommodation && (
         <>
           <button
