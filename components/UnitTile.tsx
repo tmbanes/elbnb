@@ -6,21 +6,29 @@ import Link from 'next/link'
 
 interface UnitTileProps {
   unit: Unit
-  accommodation?: Accommodation
+  accommodation: Accommodation
 }
 
 export function UnitTile({ unit, accommodation }: UnitTileProps) {
   const isVacant = unit.vacant_slots > 0
   const today = new Date();
-  const isWithinApplicationPeriod = accommodation?.allowed_application_period && today <= new Date(accommodation.allowed_application_period);
+  const isApplicationOpen = today <= new Date(accommodation.allowed_application);  
   
-    return (
+  return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">{unit.unit_number}</h3>
       <div className="space-y-3 text-sm">
         <div>
           <p className="text-gray-500">Type</p>
           <p className="text-gray-900 font-medium">{unit.unit_type}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Name</p>
+          <p className="text-gray-900 font-medium">{accommodation.name}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Application Period</p>
+          <p className="text-gray-900 font-medium">{accommodation.allowed_application}</p>
         </div>
         <div>
           <p className="text-gray-500">Furnishing</p>
@@ -42,7 +50,7 @@ export function UnitTile({ unit, accommodation }: UnitTileProps) {
         </div>
       </div>
       {isVacant ? (
-        isWithinApplicationPeriod ? (
+        isApplicationOpen ? (
           <Link
             href={`/dashboard/application_form?unitId=${unit.unit_id}&accommodationId=${unit.accommodation_id}`}
             className="mt-4 w-full inline-block text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"

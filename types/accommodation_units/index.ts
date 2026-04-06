@@ -25,5 +25,5 @@ export interface Accommodation {
     manager_id: string;
     accommodation_status: string;
     total_capacity: number;
-    allowed_application_period: string; // ISO date string
+    allowed_application: string; // ISO date string
 }
