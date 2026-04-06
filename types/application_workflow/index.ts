@@ -1,3 +1,5 @@
+import { AccommodationAssignment } from '@/types/assignment_workflow';
+
 // BASED ON SUPABASE PROPERTIES
 export type ApplicationStatus =
   | "pending_dorm_manager"
@@ -7,7 +9,7 @@ export type ApplicationStatus =
   | "rejected"
   | "cancelled";
 
-// BASED ON SUPABASE PROPERTIES
+// BASED ON SUPABASE PROPERTIES + accommodation_assignment 
 export interface AccommodationApplication {
   application_id: string;
   preferred_accommodation: string; // REQUIRED, accommodation_id.
@@ -20,6 +22,7 @@ export interface AccommodationApplication {
   application_status: ApplicationStatus;
   user_id: string;
   unit_id: string;
+  accommodation_assignment?: AccommodationAssignment | null;
 }
 
 export interface TransitionApplicationStatus {
