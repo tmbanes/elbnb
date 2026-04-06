@@ -28,6 +28,12 @@ export async function getAccomodationHistory(user_id: string) {
     .eq("user_id", user_id)
     .order("date_submitted", { ascending: false });
 
+    // catch error
+    if (error) {
+      console.error("Error fetching accommodation history:", error);
+      return { data: null, error };
+    }
+
      const flattened = data?.map(({ accommodation_assignment, ...app }) => ({ // eradicates nested values
     ...app,
     ...(accommodation_assignment ?? { // if accommodation_assignment is null, provide default values
@@ -43,3 +49,27 @@ export async function getAccomodationHistory(user_id: string) {
 }
 
 //-----DOCUMENT  SERVICES-----//
+
+export async function insertDocument( 
+    user_id: string,  // FLOW: append existing user_id and application_id so it can be referenced in the db.
+    application_id: string,
+    doc_name: string,
+    file_url: string, 
+    document_type: string) {
+    const supabase = await createSupabaseServerClient();
+    
+    const { data, error } = await supabase
+    .rpc("insert_document_metadata", {
+        p_user_id: user_id,
+        p_application_id: application_id,
+        p_doc_name: doc_name,
+        p_file_url: file_url,
+        p_document_type: document_type})
+
+    if (error) {
+        console.error("Error inserting document metadata:", error);
+        return { data: null, error };
+    }
+
+  }
+    
