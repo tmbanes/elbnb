@@ -41,13 +41,22 @@ export function UnitTile({ unit, accommodation }: UnitTileProps) {
           </span>
         </div>
       </div>
-      {isVacant && isWithinApplicationPeriod ? (
-        <Link
-          href={`/dashboard/application_form?unitId=${unit.unit_id}&accommodationId=${unit.accommodation_id}`}
-          className="mt-4 w-full inline-block text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-        >
-          Apply in this Unit
-        </Link>
+      {isVacant ? (
+        isWithinApplicationPeriod ? (
+          <Link
+            href={`/dashboard/application_form?unitId=${unit.unit_id}&accommodationId=${unit.accommodation_id}`}
+            className="mt-4 w-full inline-block text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+          >
+            Apply in this Unit
+          </Link>
+        ) : (
+          <button
+            disabled
+            className="mt-4 w-full px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed font-medium"
+          >
+            Application Period Ended
+          </button>
+        )
       ) : (
         <button
           disabled
