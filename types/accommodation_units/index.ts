@@ -21,7 +21,7 @@ export interface Accommodation {
     accommodation_id: string;
     name: string;
     location: string;
-    accommodation_type: string;
+    type: string;
     manager_id: string;
     accommodation_status: string;
     total_capacity: number;

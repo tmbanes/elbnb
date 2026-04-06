@@ -186,7 +186,7 @@ export default function AccommodationApplicationFormPage() {
             <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
               <p className="text-sm text-gray-500">Accommodation</p>
               <p className="mt-2 text-lg font-semibold text-gray-900">
-                {accommodation?.name ?? accommodationName || '—'}
+                {accommodation?.name ?? accommodationName }
               </p>
               <p className="text-xs text-gray-500">{accommodationId}</p>
             </div>
