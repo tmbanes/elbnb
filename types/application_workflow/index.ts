@@ -15,9 +15,9 @@ export interface AccommodationApplication {
   preferred_accommodation: string; // REQUIRED, accommodation_id.
   preferred_unit_type: string;
   date_submitted: string; // ISO date string
-  duration_of_stay: number; // dependent on billing period
+  duration_of_stay?: number | null; // dependent on billing period
   check_in: string; // ISO date string
-  check_out: string; // ISO date string
+  check_out?: string | null; // ISO date string
   number_of_companions: number;
   application_status: ApplicationStatus;
   accommodation_assignment?: AccommodationAssignment | null;
