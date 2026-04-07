@@ -6,7 +6,7 @@ type CreateApplicationInput = Omit<AccommodationApplication, 'application_id' | 
 const CANCELLABLE_STATUSES: CancellableStatus[] = ['pending_dorm_manager', 'pending_admin', 'pending_payment']
 const INITIAL_SUBMIT_APPLICATION_STATUS = 'pending_dorm_manager' as ApplicationStatus
 
-export class ApplicationService {
+export class CreateApplicationService {
   
   // CREATE ACCOMMODATION APPLICATION WITH GUARD CHECKERS
   static async createApplication(data: CreateApplicationInput): Promise<AccommodationApplication> {
@@ -145,27 +145,6 @@ export class ApplicationService {
       .single()
 
     if (error) return null
-    return data
-  }
-
-  // UPDATE APPLICATION STATUS
-  static async updateApplicationStatus(
-    applicationId: string,
-    status: string
-  ): Promise<AccommodationApplication> {
-    const supabase = await createSupabaseServerClient()
-
-    const { data, error } = await supabase
-      .from('accommodation_application')
-      .update({ application_status: status })
-      .eq('application_id', applicationId)
-      .select()
-      .single()
-
-    if (error) {
-      throw new Error(`Failed to update application: ${error.message}`)
-    }
-
     return data
   }
 

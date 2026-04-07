@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ApplicationService } from '@/services/application_workflow'
+import { CreateApplicationService } from '@/services/application_workflow/create_application'
 import { getAuthenticatedUser } from '@/lib/auth/get-user'
 import { AccommodationApplication, ApplicationStatus } from '@/types/application_workflow'
 import { requireRole } from '@/lib/auth/require-role'
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       // application_id OMITTED
       // accommodation_assignment OMITTED
     }
-    const validationErrors = ApplicationService.validateApplication(applicationData)
+    const validationErrors = CreateApplicationService.validateApplication(applicationData)
     
     if (validationErrors.length > 0) {
       return NextResponse.json(
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // CALL SERVICE TO CREATE APPLICATION
-    const application = await ApplicationService.createApplication(applicationData)
+    const application = await CreateApplicationService.createApplication(applicationData)
     return NextResponse.json({
       success: true,
       data: application,
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const applications = await ApplicationService.getApplicationsByUser(user.user_id)
+    const applications = await CreateApplicationService.getApplicationsByUser(user.user_id)
 
     return NextResponse.json({
       success: true,

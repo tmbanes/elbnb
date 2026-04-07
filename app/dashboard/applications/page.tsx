@@ -263,7 +263,14 @@ export default function MyApplicationsPage() {
     setCancellingId(applicationId)
     setConfirmId(null)
     try {
-      const res = await fetch(`/api/applications/${applicationId}/cancel`, { method: 'PATCH' })
+      const res = await fetch('/api/applications/cancel_application', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ applicationId }),
+      })
+      
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error ?? 'Failed to cancel application')
