@@ -36,6 +36,12 @@ export default function ApplicationFormPage() {
         const data = await res.json()
         const user = data.user
 
+        // AUTH CHECK - MUST BE LOGGED IN TO ACCESS APPLICATION FORM
+        if (!user || !user.user_id) {
+          alert('You must be logged in to submit an application')
+          return
+        }
+
         setUserId(user.user_id)
         setUserRole(user.role) 
       } catch (err) {
