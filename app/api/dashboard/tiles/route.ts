@@ -1,34 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation/index";
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { getAuthenticatedUser } from "@/lib/auth/get-user";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const type = searchParams.get("type") || "accommodations";
   const accommodationId = searchParams.get("accommodationId");
+  const user = await getAuthenticatedUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    // Get the current user's role
-    const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    let userRole;
-    if (user) {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
-      
-      userRole = userData?.role;
-    }
-
     let result;
 
     switch (type) {
       case "accommodations":
         // Pass user role to filter accommodations
-        result = await UnitAccomodationsDisplayService.listAccomodations(userRole);
+        result = await UnitAccomodationsDisplayService.listAccomodations(user.role);
         break;
 
       case "units":
@@ -68,7 +55,7 @@ export async function GET(request: NextRequest) {
       }));
     }
 
-    return NextResponse.json(data, { status: 200 });
+    return NextResponse.json(data, { status: 200 }); // returns array of type Units / Accommodations
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message },

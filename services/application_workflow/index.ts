@@ -5,6 +5,7 @@ import { AccommodationApplication } from '@/types/application_workflow'
 type CreateApplicationInput = Omit<AccommodationApplication, 'application_id' | 'accommodation_assignment'>
 
 export class ApplicationService {
+  
   // CREATE ACCOMMODATION APPLICATION
   static async createApplication(data: CreateApplicationInput): Promise<AccommodationApplication> {
     const supabase = await createSupabaseServerClient()

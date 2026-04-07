@@ -32,8 +32,6 @@ export default function ApplicationFormPage() {
     number_of_companions: '0',
   })
 
-  // Derive check_out from check_in + duration_of_stay (months).
-  // The server also validates this — this is just for display and client-side guard.
   const derivedCheckOut = useCallback((): string => {
     if (!formData.check_in || !formData.duration_of_stay) return ''
     const checkIn = new Date(formData.check_in)
@@ -126,7 +124,6 @@ export default function ApplicationFormPage() {
     setSubmitState('submitting')
     setSubmitMessage('')
 
-    // unit_id is `string` in the type (not `string | null`).
     // Send empty string when there's no specific unit — the service converts '' → null before insert.
     const payload: ApplicationCreatePayload = {
       preferred_accommodation: accommodationIdFromQuery,
