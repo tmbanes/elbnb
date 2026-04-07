@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter} from 'next/navigation'
 import type { ApplicationStatus } from '@/types/application_workflow'
 import { Accommodation, Unit } from '@/types/accommodation_units'
 
 export default function ApplicationFormPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   const accommodationIdFromQuery = searchParams.get('accommodationId') || ''
   const unitIdFromQuery = searchParams.get('unitId') || ''
@@ -15,6 +16,7 @@ export default function ApplicationFormPage() {
   const [userRole, setUserRole] = useState<string>('')
   const [accommodation, setAccommodation] = useState<Accommodation>()
   const [unit, setUnit] = useState<Unit>() 
+  const [isLoading, setIsLoading] = useState(true)
 
   const [formData, setFormData] = useState({
     preferred_accommodation: accommodationIdFromQuery,
@@ -39,13 +41,17 @@ export default function ApplicationFormPage() {
         // AUTH CHECK - MUST BE LOGGED IN TO ACCESS APPLICATION FORM
         if (!user || !user.user_id) {
           alert('You must be logged in to submit an application')
+          router.push('/login')
           return
         }
 
         setUserId(user.user_id)
         setUserRole(user.role) 
+        setIsLoading(false)
       } catch (err) {
         console.error(err)
+        alert('Authentication failed. Please log in.')
+        router.push('/login')
       }
     }
 
