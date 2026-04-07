@@ -1,3 +1,4 @@
+// BASED ON SUPABASE PROPERTIES
 export type AssignmentStatus =
   | "active"
   | "completed"
@@ -5,6 +6,7 @@ export type AssignmentStatus =
   | "terminated"
   | "pending";
 
+// BASED ON SUPABASE PROPERTIES
 export interface AccommodationAssignment {
   assignment_id: string;
   application_id: string;

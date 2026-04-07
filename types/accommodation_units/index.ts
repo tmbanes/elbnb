@@ -1,7 +1,10 @@
+// UNIT ENUM TYPES
 export type UnitType = "room" | "bedspace" | "wholeunit"
-export type AccommodationType = "dormitory" | "renting_space"
 export type FurnishingStatus = "furnished" | "unfurnished" | "semi-furnished";
 export type BillingPeriod = "daily" | "weekly" | "monthly" | "one-time";
+
+// ACCOMMODATION ENUM TYPES
+export type AccommodationType = "dormitory" | "renting_space"
 export type UnitAccommodationStatus = "active" | "inactive";
 
 // BASED ON SUPABASE PROPERTIES + vacant slots
