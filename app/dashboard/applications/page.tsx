@@ -106,7 +106,9 @@ function ApplicationTile({ enriched, onCancel, cancelling }: ApplicationTileProp
       <div className="grid grid-cols-3 gap-2 text-xs">
         <DateBlock label="Submitted" value={fmt(application.date_submitted)} />
         <DateBlock label="Check-in" value={fmt(application.check_in)} />
-        <DateBlock label="Check-out" value={fmt(application.check_out)} />
+        {application.check_out && (
+          <DateBlock label="Check-out" value={fmt(application.check_out)} />
+        )}
       </div>
 
       {/* Stay + companions */}

@@ -225,12 +225,22 @@ export default function ApplicationFormPage() {
         {/* Accommodation summary card */}
         {accommodation && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm font-semibold text-blue-800">{accommodation.name}</p>
-            <p className="text-xs text-blue-600 mt-0.5">{accommodation.location}</p>
+            <p className="text-sm font-semibold text-blue-800">Accommodation Name: {accommodation.name}</p>
+            <p className="text-xs text-blue-600 mt-0.5">Accommodation Location: {accommodation.location}</p>
+            <p className="text-xs text-blue-600 mt-0.5">Accommodation Status: {accommodation.accommodation_status}</p>
+            <p className="text-xs text-blue-600 mt-0.5">Accommodation Type: {accommodation.accommodation_type}</p>
+            <p className="text-xs text-blue-600 mt-0.5">Accommodation Property Type: {accommodation.property_type}</p>
             {unit && (
-              <p className="text-xs text-blue-600 mt-0.5">
-                Unit {unit.unit_number} &mdash; {unit.unit_type}
-              </p>
+              <div>
+                <p className="text-xs text-blue-600 mt-0.5"> Unit Number: {unit.unit_number} </p>
+                <p className="text-xs text-blue-600 mt-0.5"> Unit Type: {unit.unit_type} </p>
+                <p className="text-xs text-blue-600 mt-0.5"> Unit Billing Period: {unit.billing_period} </p>
+                <p className="text-xs text-blue-600 mt-0.5"> Unit max_stay_duration: {unit.max_stay_duration} </p>
+                <p className="text-xs text-blue-600 mt-0.5"> Unit min_stay_duration: {unit.min_stay_duration} </p>
+                <p className="text-xs text-blue-600 mt-0.5"> Unit furnishing_status: {unit.furnishing_status} </p>
+                <p className="text-xs text-blue-600 mt-0.5"> Unit rental_fee: {unit.rental_fee} </p>
+                <p className="text-xs text-blue-600 mt-0.5"> Unit Status: {unit.unit_status} </p>
+              </div>
             )}
           </div>
         )}
