@@ -3,7 +3,7 @@ import {
   DormitoryManagerCreationRequest,
   StudentCreationRequest,
   UserCreationRequest,
-} from "@/types/auth/user.types";
+} from "@/types/user.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 
 // FUNCTION: Sign up with email and password [To-Do: Test]

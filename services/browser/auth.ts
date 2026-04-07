@@ -4,7 +4,7 @@ import {
   GuestCreationRequest,
   StudentCreationRequest,
   DormitoryManagerCreationRequest,
-} from "@/types/auth/user.types";
+} from "@/types/user.types";
 import { metadata } from "@/app/layout";
 
 // VARIABLE: Browser client instance
