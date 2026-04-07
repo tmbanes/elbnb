@@ -1,3 +1,6 @@
+// BASED ON SUPABASE PROPERTIES for renting_space 
+export type PropertyType = "apartment" | "boarding" | "transient" | "house";
+
 // BASED ON SUPABASE PROPERTIES
 export type AssignmentStatus =
   | "active"
