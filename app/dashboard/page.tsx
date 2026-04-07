@@ -15,7 +15,7 @@ export default function DashboardPage() {
           </button>
         </Link>
         
-        <Link href="/dashboard/aapplications">
+        <Link href="/dashboard/applications">
           <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
             Applications
           </button>

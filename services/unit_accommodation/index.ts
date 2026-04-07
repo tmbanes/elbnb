@@ -10,31 +10,33 @@ type ServiceResult<T> = {
 
 export const UnitAccomodationsDisplayService = {
   
-  // lists all ACTIVE ACCOMMODATIONS with optional role-based filtering
-  async listAccomodations(
-    userRole?: UserRole,
-  ): Promise<ServiceResult<Accommodation[]>> {
+  // lists all ACTIVE ACCOMMODATIONS with optional role-based filtering (adds property type to the Accommodation Interface)
+  async listAccomodations(userRole?: UserRole): Promise<ServiceResult<Accommodation[]>> {
     try {
-      const supabase = await createSupabaseServerClient();
-      
+      const supabase = await createSupabaseServerClient()
+
       let query = supabase
-        .from("accommodation")
-        .select("*")
-        .eq("accommodation_status", "active");
+        .from('accommodation')
+        .select('*, renting_space(property_type)')  // join renting_space
+        .eq('accommodation_status', 'active')
 
-      // Filter: Non-students can only see "renting_space" accommodations
-      if (userRole && userRole !== "student") {
-        query = query.eq("accommodation_type", "renting_space");
+      if (userRole && userRole !== 'student') {
+        query = query.eq('accommodation_type', 'renting_space')
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query
+      if (error) return { data: null, error: error.message }
 
-      if (error) {
-        return { data: null, error: error.message };
-      }
-      return { data: data as Accommodation[], error: null };
+      // Flatten property_type onto the accommodation object
+      const flattened = (data ?? []).map((a: any) => ({
+        ...a,
+        property_type: a.renting_space?.property_type ?? null,
+        renting_space: undefined,
+      }))
+
+      return { data: flattened as Accommodation[], error: null }
     } catch (error) {
-      return { data: null, error: (error as Error).message };
+      return { data: null, error: (error as Error).message }
     }
   },
   
