@@ -1,4 +1,6 @@
-import { supabase } from "@/lib/supabase/supabaseClient";
+// /services/student_profile/index.ts
+
+import { createSupabaseServerClient as supabase } from "@/lib/supabase/server-client";
 import {
   UserProfile,
   AccommodationAssignment,
@@ -7,7 +9,8 @@ import {
 
 export const studentProfileService = {
   async getProfile(user_id: string) {
-    const { data, error } = await supabase
+    const client = await supabase();
+    const { data, error } = await client
       .from("USER")
       .select("*")
       .eq("user_id", user_id)
@@ -17,7 +20,8 @@ export const studentProfileService = {
   },
 
   async updateProfile(user_id: string, updates: Partial<UserProfile>) {
-    const { data, error } = await supabase
+    const client = await supabase();
+    const { data, error } = await client
       .from("USER")
       .update({
         // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
@@ -46,7 +50,8 @@ export const studentProfileService = {
   //     };
 
   async getMyAssignment(application_id: string) {
-    const { data, error } = await supabase
+    const client = await supabase();
+    const { data, error } = await client
       .from("accomodation_assignment")
       .select(
         `
@@ -90,9 +95,10 @@ not yet tested
   // }
 
   async uploadDocument(user_id: string, application_id: string, file: File) {
+    const client = await supabase();
     /*
     const avatarFile = event.target.files[0]
-    const { data, error } = await supabase
+    const { data, error } = await client
       .storage
       .from('avatars')
       .upload('public/avatar1.png', avatarFile, {
@@ -102,7 +108,7 @@ not yet tested
     */
 
     const filePath = `${user_id}/${application_id}/${file.name}`;
-    const { data: storageData, error: storageError } = await supabase.storage
+    const { data: storageData, error: storageError } = await client.storage
       .from("documents")
       .upload(filePath, file, {
         cacheControl: "3600",
@@ -115,7 +121,7 @@ not yet tested
     }
 
     // added document successfully
-    const { data: dbData, error: dbError } = await supabase
+    const { data: dbData, error: dbError } = await client
       .from("Document")
       .insert({
         user_id: user_id,
@@ -152,7 +158,8 @@ not yet tested
   */
 
   async getAccommodationHistory(user_id: string) {
-    const { data, error } = await supabase
+    const client = await supabase();
+    const { data, error } = await client
 
       .from("accomodation_application")
       .select(
