@@ -47,7 +47,7 @@ export function AccommodationTile({ accommodation, onClick, units }: Accommodati
       {hasVacant ? (
         isApplicationOpen ? (
           <Link
-            href={`/dashboard/application_form?unitId=${null}&accommodationId=${accommodation.accommodation_id}`}
+            href={`/dashboard/application_form?accommodationId=${accommodation.accommodation_id}`}
             className="mt-4 w-full inline-block text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
           >
             Apply in this Accommodation
