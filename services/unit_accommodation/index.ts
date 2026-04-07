@@ -9,13 +9,13 @@ type ServiceResult<T> = {
 };
 
 export const UnitAccomodationsDisplayService = {
+  
   // lists all ACTIVE ACCOMMODATIONS with optional role-based filtering
   async listAccomodations(
     userRole?: UserRole,
-    supabaseClient?: SupabaseClient
   ): Promise<ServiceResult<Accommodation[]>> {
     try {
-      const supabase = supabaseClient || (await createSupabaseServerClient());
+      const supabase = await createSupabaseServerClient();
       
       let query = supabase
         .from("accommodation")

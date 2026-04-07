@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ApplicationService } from '@/services/application_workflow'
 import { getAuthenticatedUser } from '@/lib/auth/get-user'
-import { AccommodationApplication } from '@/types/application_workflow'
+import { AccommodationApplication, ApplicationStatus } from '@/types/application_workflow'
+import { requireRole } from '@/lib/auth/require-role'
 
-// CREATE A NEW APPLICATION
+// CREATE A NEW APPLICATION -- user should be authenticated AND either student or guest to create an application
 export async function POST(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
@@ -14,10 +15,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const denied = requireRole(user, ['student', 'guest'])
+    if (denied) return denied
+
     const body = await request.json()
-    const applicationData: AccommodationApplication = {
-      ...body,
-      user_id: user.user_id, // Ensure the application is tied to the authenticated user
+    const applicationData: Omit<AccommodationApplication, 'application_id' | 'accommodation_assignment'> = {
+      preferred_accommodation: body.preferred_accommodation,
+      preferred_unit_type: body.preferred_unit_type,
+      duration_of_stay: body.duration_of_stay,
+      check_in: body.check_in,
+      check_out: body.check_out,
+      number_of_companions: body.number_of_companions ?? 0,
+      unit_id: body.unit_id ?? '',
+      user_id: user.user_id,
+      date_submitted: '',
+      application_status: 'pending_dorm_manager' as ApplicationStatus,
+      // application_id OMITTED
+      // accommodation_assignment OMITTED
     }
     const validationErrors = ApplicationService.validateApplication(applicationData)
     
