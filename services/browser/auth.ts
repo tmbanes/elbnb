@@ -1,6 +1,4 @@
 import { getSupabaseBrowserClient } from "../../lib/supabase/browser-client";
-import { supabaseAdmin } from "@/lib/supabase/admin-client";
-import { DormitoryManagerCreationRequest } from "@/types/auth";
 import {
   UserCreationRequest,
   GuestCreationRequest,
@@ -53,39 +51,13 @@ async function signUpAsStudent(studentData: StudentCreationRequest) {
 }
 
 // FUNCTION: Create dormitory manager [ADMIN ROLE ONLY]
-export async function createDormitoryManager(managerData: DormitoryManagerCreationRequest) {
-  try {
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: managerData.email,
-      password: managerData.password,
-      email_confirm: true, 
-    });
-
-    if (authError || !authData.user) {
-      return { success: false, error: authError?.message || "Failed to create auth user" };
-    }
-
-    // 2. Insert into your database
-    const { error: dbError } = await supabaseAdmin
-      .from("users") // Or "USER"
-      .insert({
-        id: authData.user.id,
-        email: managerData.email,
-        first_name: managerData.first_name,
-        last_name: managerData.last_name,
-        role: "dormitory_manager" 
-      });
-
-    if (dbError) {
-      return { success: false, error: dbError.message };
-    }
-
-    return { success: true };
-
-  } catch (error) {
-    console.error("Manager creation error:", error);
-    return { success: false, error: "Internal server error" };
-  }
+async function createDormitoryManager(
+  managerData: DormitoryManagerCreationRequest,
+) {
+  return signUpWithEmail({
+    ...managerData,
+    role: "dormitory_manager",
+  });
 }
 
 // FUNCTION: Sign in with email and password [To-Do: Test]
