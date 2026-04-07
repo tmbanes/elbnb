@@ -1,12 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
-
-export interface User {
-  user_id: string
-  email: string
-  role: 'student' | 'guest' | 'dorm_manager' | 'admin'
-  full_name?: string
-  // Add other user properties from your users table
-}
+import { User } from '@/types/user.types'
 
 export async function getAuthenticatedUser(): Promise<User | null> {
   try {
@@ -29,14 +22,7 @@ export async function getAuthenticatedUser(): Promise<User | null> {
     if (userError || !userData) {
       return null
     }
-
-    return {
-      user_id: userData.user_id,
-      email: userData.email,
-      role: userData.role,
-      full_name: userData.full_name,
-      // Map other fields as needed
-    }
+    return (userData)
   } catch (error) {
     console.error('Error fetching authenticated user:', error)
     return null
