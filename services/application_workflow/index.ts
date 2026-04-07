@@ -1,12 +1,14 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
-import { AccommodationApplication } from '@/types/application_workflow'
+import { AccommodationApplication, ApplicationStatus, CancellableStatus } from '@/types/application_workflow'
 
 // Input type for creation: server generates application_id; accommodation_assignment is a join
 type CreateApplicationInput = Omit<AccommodationApplication, 'application_id' | 'accommodation_assignment'>
+const CANCELLABLE_STATUSES: CancellableStatus[] = ['pending_dorm_manager', 'pending_admin', 'pending_payment']
+const INITIAL_SUBMIT_APPLICATION_STATUS = 'pending_dorm_manager' as ApplicationStatus
 
 export class ApplicationService {
   
-  // CREATE ACCOMMODATION APPLICATION
+  // CREATE ACCOMMODATION APPLICATION WITH GUARD CHECKERS
   static async createApplication(data: CreateApplicationInput): Promise<AccommodationApplication> {
     const supabase = await createSupabaseServerClient()
 
@@ -14,13 +16,13 @@ export class ApplicationService {
     // Store null in DB so foreign key constraints and queries work correctly.
     const unitId = data.unit_id && data.unit_id.trim() !== '' ? data.unit_id : null
 
-    // Guard: reject if user already has a pending application for this accommodation (+ unit if specified)
+    // GUARD 1: reject if user already has a pending application for specific unit
     let duplicateQuery = supabase
       .from('accommodation_application')
       .select('application_id')
       .eq('user_id', data.user_id)
       .eq('preferred_accommodation', data.preferred_accommodation)
-      .in('application_status', ['pending_dorm_manager', 'pending_admin'])
+      .in('application_status', CANCELLABLE_STATUSES)
 
     if (unitId) {
       duplicateQuery = duplicateQuery.eq('unit_id', unitId)
@@ -38,12 +40,68 @@ export class ApplicationService {
       )
     }
 
-    // Server is the single source of truth for these fields — overwrite whatever came from the client
+    // GUARD 2: Check vacant slots (unit must have space)
+    if (unitId) {
+      const { data: unit, error: unitError } = await supabase
+        .from('unit')
+        .select('current_occupancy, max_occupancy')
+        .eq('unit_id', unitId)
+        .single()
+
+      if (unitError || !unit) throw new Error('Unit not found.')
+
+      if (unit.current_occupancy >= unit.max_occupancy) {
+        throw new Error('This unit has no vacant slots.')
+      }
+    } else { // check if there are available vacancies in any unit of the accommodation
+      const { data: accommodation, error: accommodationError } = await supabase
+        .from('accommodation')
+        .select('accommodation_id')
+        .eq('accommodation_id', data.preferred_accommodation)
+        .single()
+
+      if (accommodationError || !accommodation) throw new Error('Accommodation not found.')
+
+      const { data: units, error: unitAccommodationError } = await supabase
+        .from('unit')
+        .select('current_occupancy, max_occupancy')
+        .eq('accommodation_id', data.preferred_accommodation)
+
+      if (unitAccommodationError || !units) throw new Error('Failed to fetch units for accommodation.')
+
+      const totalVacantSlots = units.reduce((sum, unit) => sum + (unit.max_occupancy - unit.current_occupancy), 0)
+      if (totalVacantSlots <= 0) {
+        throw new Error('There are no vacant slots available in any unit of this accommodation.')
+      }
+    }
+
+    // GUARD 3: application period has ended
+    const { data: accommodation, error: accomError } = await supabase
+      .from('accommodation')
+      .select('allowed_application')
+      .eq('accommodation_id', data.preferred_accommodation)
+      .single()
+
+    if (accomError || !accommodation) throw new Error('Accommodation not found.')
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const deadline = new Date(accommodation.allowed_application)
+    deadline.setHours(0, 0, 0, 0)
+
+    if (today > deadline) {
+      throw new Error('The application period for this accommodation has ended.')
+    }
+
+    // GUARD 4: if user is currently assigned to this unit
+    // TO DO: GUARD 4
+
+    //////// SERVER CONTROLLING FIELDS ////////////////
     const payload = {
       ...data,
       unit_id: unitId,                                // normalised null
       date_submitted: new Date().toISOString(),       // authoritative timestamp
-      application_status: 'pending_dorm_manager',    // always start here
+      application_status: INITIAL_SUBMIT_APPLICATION_STATUS,    
     }
 
     const { data: application, error } = await supabase
