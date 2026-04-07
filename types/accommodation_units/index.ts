@@ -48,7 +48,7 @@ export interface Unit {
 //          ACCOMMODATION - RELATED INTERFACES 
 ////////////////////////////////////////////////////////
 
-// BASED ON SUPABASE PROPERTIES
+// BASED ON SUPABASE PROPERTIES + property_type (to be filled in unit_accommodation service)
 export interface Accommodation {
     accommodation_id: string;
     name: string;
@@ -58,6 +58,7 @@ export interface Accommodation {
     accommodation_status: UnitAccommodationStatus;
     total_capacity: number;
     allowed_application: string; // ISO date string
+    property_type: PropertyType
 }
 
 // BASED ON SUPABASE PROPERTIES
