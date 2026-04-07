@@ -1,13 +1,9 @@
 import { AccommodationAssignment } from '@/types/assignment_workflow';
 
 // BASED ON SUPABASE PROPERTIES
-export type ApplicationStatus =
-  | "pending_dorm_manager"
-  | "pending_admin"
-  | "pending_payment"
-  | "accepted"
-  | "rejected"
-  | "cancelled";
+export type ApplicationStatus = "pending_dorm_manager" | "pending_admin" | "pending_payment" | "accepted" | "rejected" | "cancelled";
+export type DocumentType =  "university_id" | "form_5" | "proof_of_payment" | "parent_consent" | "other"
+export type DocumentStatus = "pending" | "verified" | "rejected"
 
 // BASED ON SUPABASE PROPERTIES + accommodation_assignment 
 export interface AccommodationApplication {
@@ -29,4 +25,16 @@ export interface TransitionApplicationStatus {
   application_id: string;
   to_status: ApplicationStatus;
   remarks?: string;
+}
+
+export interface Document {
+  doc_id: string
+  uploader_id: string // user_id
+  application_id: string
+  doc_name: string
+  doc_type: DocumentType
+  doc_status: DocumentStatus
+  file_url: string
+  upload_date: string // ISO Date format
+  verified_by: string // manager_id
 }
