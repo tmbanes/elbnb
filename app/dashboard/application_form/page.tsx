@@ -198,7 +198,7 @@ export default function ApplicationFormPage() {
           <p className="text-gray-600">{submitMessage}</p>
           <div className="flex gap-3 justify-center pt-2">
             <button
-              onClick={() => router.push('/dashboard/accommodation_application')}
+              onClick={() => router.push('/dashboard/applications')}
               className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
             >
               View My Applications
