@@ -6,6 +6,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { User } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { signInWithEmail } from "@/services/browser/auth";
 
 const fieldClasses =
   "mt-1.5 w-full rounded-full border-none bg-[#fcf4d9] px-6 py-2.5 text-lg " +
@@ -43,13 +44,10 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: formData.email,
-      password: formData.password,
-    });
+    const response = await signInWithEmail(formData);
 
-    if (error) {
-      setStatus(error.message);
+    if (!response.success == false) {
+      setStatus(response.error?? "");
       return;
     }
 
