@@ -1,19 +1,19 @@
   'use client'
 
   import { useState, useEffect, useCallback } from 'react'
-  import { Accommodation, Unit } from '@/types/accommodation_units'
+  import { Accommodation, Unit, AccommodationType, FurnishingStatus, UnitType } from '@/types/accommodation_units'
   import { AccommodationTile } from '@/components/AccommodationTile'
   import { UnitTile } from '@/components/UnitTile'
 
   type ViewMode = 'accommodations' | 'units' | 'accommodation-detail'
 
   interface AccommodationFilters {
-    accommodationType: 'dormitory' | 'renting_space' | ''
+    accommodationType: AccommodationType | ''
   }
 
   interface UnitFilters {
-    unitType: 'room' | 'bedspace' | 'wholeunit' | ''
-    furnishingStatus: 'furnished' | 'semi-furnished' | 'unfurnished' | ''
+    unitType: UnitType | ''
+    furnishingStatus: FurnishingStatus | ''
     availability: 'vacant' | 'all'
   }
 

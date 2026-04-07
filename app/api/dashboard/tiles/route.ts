@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation/index";
+import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -7,11 +8,27 @@ export async function GET(request: NextRequest) {
   const accommodationId = searchParams.get("accommodationId");
 
   try {
+    // Get the current user's role
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    let userRole;
+    if (user) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      
+      userRole = userData?.role;
+    }
+
     let result;
 
     switch (type) {
       case "accommodations":
-        result = await UnitAccomodationsDisplayService.listAccomodations();
+        // Pass user role to filter accommodations
+        result = await UnitAccomodationsDisplayService.listAccomodations(userRole);
         break;
 
       case "units":
