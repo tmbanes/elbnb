@@ -109,23 +109,29 @@ export default function ApplicationFormPage() {
         : 0,
       application_status: applicationStatus,
       user_id: userId,
-      unit_id: unitIdFromQuery,
+      unit_id: unitIdFromQuery || null,
     }
 
-    console.log('Submitting application:', payload)
+    try {
+      const response = await fetch('/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
 
-    const response = await fetch('/api/applications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+      const data = await response.json()
 
-    if (!response.ok) {
-      alert('Failed to submit application')
-      return
+      if (!response.ok) {
+        alert(`Failed to submit application: ${data.error || 'Unknown error'}`)
+        return
+      }
+
+      alert('Application submitted successfully!')
+      // Optionally redirect: router.push('/dashboard/applications')
+    } catch (error) {
+      console.error('Submission error:', error)
+      alert('An error occurred while submitting the application')
     }
-
-    alert('Application submitted')
   }
 
   return (
