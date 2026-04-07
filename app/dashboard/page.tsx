@@ -15,13 +15,13 @@ export default function DashboardPage() {
           </button>
         </Link>
         
-        <Link href="/dashboard/accommodation_application">
+        <Link href="/dashboard/aapplications">
           <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
             Applications
           </button>
         </Link>
 
-        <Link href="/dashboard/accommodation_assignment">
+        <Link href="/dashboard/assignments">
           <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
             Assignments
           </button>
