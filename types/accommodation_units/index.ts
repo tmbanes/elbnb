@@ -7,6 +7,10 @@ export type BillingPeriod = "daily" | "weekly" | "monthly" | "one-time";
 export type AccommodationType = "dormitory" | "renting_space"
 export type UnitAccommodationStatus = "active" | "inactive";
 
+// RENTING_SPACE ACCOMMODATION ENUM TYPES
+
+// DORMITORY ACCOMMODATION ENUM TYPES
+
 // BASED ON SUPABASE PROPERTIES + vacant slots
 export interface Unit {
     unit_id: string;
