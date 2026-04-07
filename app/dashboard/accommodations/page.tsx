@@ -10,6 +10,7 @@ type ViewMode = 'accommodations' | 'units' | 'accommodation-detail'
 interface AccommodationFilters {
   accommodationType: AccommodationType | ''
   propertyType: PropertyType | ''
+  availability: 'vacant' | 'all'   
 }
 
 interface UnitFilters {
@@ -17,6 +18,7 @@ interface UnitFilters {
   furnishingStatus: FurnishingStatus | ''
   availability: 'vacant' | 'all'
   propertyType: PropertyType | ''
+  accommodationType: AccommodationType | ''  
 }
 
 // ─── Shared filter select ────────────────────────────────────────────────────
@@ -73,6 +75,7 @@ export default function AccommodationsDashboardPage() {
   const [accommodationFilters, setAccommodationFilters] = useState<AccommodationFilters>({
     accommodationType: '',
     propertyType: '',
+    availability: 'all',   // ← default: show all
   })
 
   const [unitFilters, setUnitFilters] = useState<UnitFilters>({
@@ -80,12 +83,13 @@ export default function AccommodationsDashboardPage() {
     furnishingStatus: '',
     availability: 'vacant',
     propertyType: '',
+    accommodationType: '',   // ← default: show all
   })
 
   // ── Filter logic ───────────────────────────────────────────────────────────
 
   const applyAccommodationFilters = useCallback(
-    (list: Accommodation[], f: AccommodationFilters) => {
+    (list: Accommodation[], units: Unit[], f: AccommodationFilters) => {
       let filtered = list
 
       if (f.accommodationType) {
@@ -97,6 +101,16 @@ export default function AccommodationsDashboardPage() {
         filtered = filtered.filter(
           a => a.accommodation_type === 'renting_space' && a.property_type === f.propertyType
         )
+      }
+
+      // availability filter — only keep accommodations that have at least one vacant unit
+      if (f.availability === 'vacant') {
+        const accomIdsWithVacancy = new Set(
+          units
+            .filter(u => u.current_occupancy < u.max_occupancy)
+            .map(u => u.accommodation_id)
+        )
+        filtered = filtered.filter(a => accomIdsWithVacancy.has(a.accommodation_id))
       }
 
       setFilteredAccommodations(filtered)
@@ -130,6 +144,16 @@ export default function AccommodationsDashboardPage() {
         filtered = filtered.filter(u => rentingSpaceIds.has(u.accommodation_id))
       }
 
+      // accommodation type filter — match via parent accommodation
+      if (f.accommodationType) {
+        const matchingAccomIds = new Set(
+          accomList
+            .filter(a => a.accommodation_type === f.accommodationType)
+            .map(a => a.accommodation_id)
+        )
+        filtered = filtered.filter(u => matchingAccomIds.has(u.accommodation_id))
+      }
+
       setFilteredUnits(filtered)
     },
     []
@@ -145,7 +169,7 @@ export default function AccommodationsDashboardPage() {
       if (!response.ok) throw new Error('Failed to fetch accommodations')
       const result: Accommodation[] = await response.json()
       setAccommodations(result)
-      applyAccommodationFilters(result, accommodationFilters)
+      applyAccommodationFilters(result, allUnits, accommodationFilters)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -181,15 +205,48 @@ export default function AccommodationsDashboardPage() {
     }
   }
 
+  // ── Initial load — fetch both, then apply accommodation filters once units are ready ──
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true)
+      setLoadingUnits(true)
+      setError(null)
+      try {
+        const [accomRes, unitsRes] = await Promise.all([
+          fetch('/api/dashboard/tiles?type=accommodations'),
+          fetch('/api/dashboard/tiles?type=units'),
+        ])
+        if (!accomRes.ok) throw new Error('Failed to fetch accommodations')
+        if (!unitsRes.ok) throw new Error('Failed to fetch units')
+
+        const accomData: Accommodation[] = await accomRes.json()
+        const unitsData: Unit[] = await unitsRes.json()
+
+        setAccommodations(accomData)
+        setAllUnits(unitsData)
+
+        // Apply default filters with both datasets available immediately
+        applyAccommodationFilters(accomData, unitsData, accommodationFilters)
+        applyUnitFilters(unitsData, unitFilters, accomData)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
+      } finally {
+        setLoading(false)
+        setLoadingUnits(false)
+      }
+    }
+    init()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Filter change handlers ─────────────────────────────────────────────────
 
   const handleAccommodationFilterChange = useCallback(
     (patch: Partial<AccommodationFilters>) => {
       const next = { ...accommodationFilters, ...patch }
       setAccommodationFilters(next)
-      applyAccommodationFilters(accommodations, next)
+      applyAccommodationFilters(accommodations, allUnits, next)
     },
-    [accommodations, accommodationFilters, applyAccommodationFilters]
+    [accommodations, allUnits, accommodationFilters, applyAccommodationFilters]
   )
 
   const handleUnitFilterChange = useCallback(
@@ -202,23 +259,18 @@ export default function AccommodationsDashboardPage() {
   )
 
   const resetAccommodationFilters = useCallback(() => {
-    const defaults: AccommodationFilters = { accommodationType: '', propertyType: '' }
+    const defaults: AccommodationFilters = { accommodationType: '', propertyType: '', availability: 'all' }
     setAccommodationFilters(defaults)
-    applyAccommodationFilters(accommodations, defaults)
-  }, [accommodations, applyAccommodationFilters])
+    applyAccommodationFilters(accommodations, allUnits, defaults)
+  }, [accommodations, allUnits, applyAccommodationFilters])
 
   const resetUnitFilters = useCallback(() => {
-    const defaults: UnitFilters = { unitType: '', furnishingStatus: '', availability: 'vacant', propertyType: '' }
+    const defaults: UnitFilters = { unitType: '', furnishingStatus: '', availability: 'vacant', propertyType: '', accommodationType: '' }
     setUnitFilters(defaults)
     applyUnitFilters(allUnits, defaults, accommodations)
   }, [allUnits, accommodations, applyUnitFilters])
 
   // ── Navigation handlers ────────────────────────────────────────────────────
-
-  useEffect(() => {
-    fetchAccommodations()
-    fetchUnits('all')
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleViewAccommodations = () => {
     setViewMode('accommodations')
@@ -229,13 +281,36 @@ export default function AccommodationsDashboardPage() {
 
   const handleViewAllUnits = async () => {
     setViewMode('units')
-    await fetchUnits('all')
+    setLoadingUnits(true)
+    try {
+      const response = await fetch('/api/dashboard/tiles?type=units')
+      if (!response.ok) throw new Error('Failed to fetch units')
+      const result: Unit[] = await response.json()
+      setAllUnits(result)
+      applyUnitFilters(result, unitFilters, accommodations)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setLoadingUnits(false)
+    }
   }
 
   const handleAccommodationClick = async (accommodation: Accommodation) => {
     setSelectedAccommodation(accommodation)
     setViewMode('accommodation-detail')
-    await fetchUnits('by-accommodation', accommodation.accommodation_id)
+    setLoadingUnits(true)
+    try {
+      const response = await fetch(
+        `/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`
+      )
+      if (!response.ok) throw new Error('Failed to fetch units')
+      const result: Unit[] = await response.json()
+      setUnitsForAccommodation(result)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setLoadingUnits(false)
+    }
   }
 
   const handleBack = () => {
@@ -246,13 +321,9 @@ export default function AccommodationsDashboardPage() {
   }
 
   // ── Derived: is property type filter relevant? ─────────────────────────────
-  // Only show property type filter when renting_space is selected (or no type filter = could include renting_space)
   const showPropertyTypeInAccommodations =
     accommodationFilters.accommodationType === 'renting_space' ||
     accommodationFilters.accommodationType === ''
-
-  const showPropertyTypeInUnits =
-    unitFilters.propertyType !== '' || true // always show in units tab for discoverability
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -304,11 +375,14 @@ export default function AccommodationsDashboardPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <FilterSelect
                 label="Accommodation Type"
                 value={accommodationFilters.accommodationType}
-                onChange={v => handleAccommodationFilterChange({ accommodationType: v as AccommodationType | '', propertyType: '' })}
+                onChange={v => handleAccommodationFilterChange({
+                  accommodationType: v as AccommodationType | '',
+                  propertyType: '',
+                })}
                 disabled={loading}
                 options={[
                   { value: 'dormitory',     label: 'Dormitory' },
@@ -324,13 +398,25 @@ export default function AccommodationsDashboardPage() {
                   onChange={v => handleAccommodationFilterChange({ propertyType: v as PropertyType | '' })}
                   disabled={loading}
                   options={[
-                    { value: 'apartment',  label: 'Apartment' },
-                    { value: 'boarding',   label: 'Boarding House' },
-                    { value: 'transient',  label: 'Transient' },
-                    { value: 'house',      label: 'House' },
+                    { value: 'apartment', label: 'Apartment' },
+                    { value: 'boarding',  label: 'Boarding House' },
+                    { value: 'transient', label: 'Transient' },
+                    { value: 'house',     label: 'House' },
                   ]}
                 />
               )}
+
+              {/* Availability filter for accommodations */}
+              <FilterSelect
+                label="Availability"
+                value={accommodationFilters.availability}
+                onChange={v => handleAccommodationFilterChange({ availability: v as 'vacant' | 'all' })}
+                disabled={loading}
+                options={[
+                  { value: 'vacant', label: 'With Vacant Slots' },
+                  { value: 'all',    label: 'All Accommodations' },
+                ]}
+              />
 
               <div className="flex items-end">
                 <p className="text-sm text-gray-600">
@@ -393,7 +479,18 @@ export default function AccommodationsDashboardPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              {/* Accommodation Type filter in Units tab */}
+              <FilterSelect
+                label="Accommodation Type"
+                value={unitFilters.accommodationType}
+                onChange={v => handleUnitFilterChange({ accommodationType: v as AccommodationType | '' })}
+                disabled={loadingUnits}
+                options={[
+                  { value: 'dormitory',     label: 'Dormitory' },
+                  { value: 'renting_space', label: 'Renting Space' },
+                ]}
+              />
               <FilterSelect
                 label="Unit Type"
                 value={unitFilters.unitType}
