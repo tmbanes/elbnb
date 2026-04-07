@@ -10,7 +10,7 @@ type ViewMode = 'accommodations' | 'units' | 'accommodation-detail'
 interface AccommodationFilters {
   accommodationType: AccommodationType | ''
   propertyType: PropertyType | ''
-  availability: 'vacant' | 'all'   
+  availability: 'vacant' | 'all'
 }
 
 interface UnitFilters {
@@ -18,10 +18,15 @@ interface UnitFilters {
   furnishingStatus: FurnishingStatus | ''
   availability: 'vacant' | 'all'
   propertyType: PropertyType | ''
-  accommodationType: AccommodationType | ''  
+  accommodationType: AccommodationType | ''
 }
 
-// ─── Shared filter select ────────────────────────────────────────────────────
+interface AccommodationDetailFilters {
+  unitType: UnitType | ''
+  furnishingStatus: FurnishingStatus | ''
+  availability: 'vacant' | 'all'
+  propertyType: PropertyType | ''
+}
 
 function FilterSelect({
   label,
@@ -54,8 +59,6 @@ function FilterSelect({
   )
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
-
 export default function AccommodationsDashboardPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('accommodations')
 
@@ -67,6 +70,7 @@ export default function AccommodationsDashboardPage() {
 
   const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null)
   const [unitsForAccommodation, setUnitsForAccommodation] = useState<Unit[]>([])
+  const [filteredUnitsForAccommodation, setFilteredUnitsForAccommodation] = useState<Unit[]>([])
 
   const [loading, setLoading] = useState(true)
   const [loadingUnits, setLoadingUnits] = useState(false)
@@ -75,7 +79,7 @@ export default function AccommodationsDashboardPage() {
   const [accommodationFilters, setAccommodationFilters] = useState<AccommodationFilters>({
     accommodationType: '',
     propertyType: '',
-    availability: 'all',   // ← default: show all
+    availability: 'all',
   })
 
   const [unitFilters, setUnitFilters] = useState<UnitFilters>({
@@ -83,10 +87,15 @@ export default function AccommodationsDashboardPage() {
     furnishingStatus: '',
     availability: 'vacant',
     propertyType: '',
-    accommodationType: '',   // ← default: show all
+    accommodationType: '',
   })
 
-  // ── Filter logic ───────────────────────────────────────────────────────────
+  const [accommodationDetailFilters, setAccommodationDetailFilters] = useState<AccommodationDetailFilters>({
+    unitType: '',
+    furnishingStatus: '',
+    availability: 'vacant',
+    propertyType: '',
+  })
 
   const applyAccommodationFilters = useCallback(
     (list: Accommodation[], units: Unit[], f: AccommodationFilters) => {
@@ -96,14 +105,12 @@ export default function AccommodationsDashboardPage() {
         filtered = filtered.filter(a => a.accommodation_type === f.accommodationType)
       }
 
-      // property_type only applies to renting_space accommodations
       if (f.propertyType) {
         filtered = filtered.filter(
           a => a.accommodation_type === 'renting_space' && a.property_type === f.propertyType
         )
       }
 
-      // availability filter — only keep accommodations that have at least one vacant unit
       if (f.availability === 'vacant') {
         const accomIdsWithVacancy = new Set(
           units
@@ -134,7 +141,6 @@ export default function AccommodationsDashboardPage() {
         filtered = filtered.filter(u => u.current_occupancy < u.max_occupancy)
       }
 
-      // property_type: match via the unit's parent accommodation
       if (f.propertyType) {
         const rentingSpaceIds = new Set(
           accomList
@@ -144,7 +150,6 @@ export default function AccommodationsDashboardPage() {
         filtered = filtered.filter(u => rentingSpaceIds.has(u.accommodation_id))
       }
 
-      // accommodation type filter — match via parent accommodation
       if (f.accommodationType) {
         const matchingAccomIds = new Set(
           accomList
@@ -159,7 +164,36 @@ export default function AccommodationsDashboardPage() {
     []
   )
 
-  // ── Data fetching ──────────────────────────────────────────────────────────
+  const applyAccommodationDetailFilters = useCallback(
+    (units: Unit[], f: AccommodationDetailFilters, accommodation: Accommodation | null) => {
+      let filtered = units
+
+      if (f.unitType) {
+        filtered = filtered.filter(u => u.unit_type === f.unitType)
+      }
+
+      if (f.furnishingStatus) {
+        filtered = filtered.filter(u => u.furnishing_status === f.furnishingStatus)
+      }
+
+      if (f.availability === 'vacant') {
+        filtered = filtered.filter(u => u.current_occupancy < u.max_occupancy)
+      }
+
+      if (f.propertyType) {
+        if (!accommodation || accommodation.accommodation_type !== 'renting_space') {
+          filtered = []
+        } else {
+          if (accommodation.property_type !== f.propertyType) {
+            filtered = []
+          }
+        }
+      }
+
+      setFilteredUnitsForAccommodation(filtered)
+    },
+    []
+  )
 
   const fetchAccommodations = async () => {
     setLoading(true)
@@ -197,6 +231,7 @@ export default function AccommodationsDashboardPage() {
         applyUnitFilters(result, unitFilters, accommodations)
       } else {
         setUnitsForAccommodation(result)
+        setFilteredUnitsForAccommodation(result)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -205,7 +240,6 @@ export default function AccommodationsDashboardPage() {
     }
   }
 
-  // ── Initial load — fetch both, then apply accommodation filters once units are ready ──
   useEffect(() => {
     const init = async () => {
       setLoading(true)
@@ -225,7 +259,6 @@ export default function AccommodationsDashboardPage() {
         setAccommodations(accomData)
         setAllUnits(unitsData)
 
-        // Apply default filters with both datasets available immediately
         applyAccommodationFilters(accomData, unitsData, accommodationFilters)
         applyUnitFilters(unitsData, unitFilters, accomData)
       } catch (err) {
@@ -237,8 +270,6 @@ export default function AccommodationsDashboardPage() {
     }
     init()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Filter change handlers ─────────────────────────────────────────────────
 
   const handleAccommodationFilterChange = useCallback(
     (patch: Partial<AccommodationFilters>) => {
@@ -258,6 +289,15 @@ export default function AccommodationsDashboardPage() {
     [allUnits, unitFilters, accommodations, applyUnitFilters]
   )
 
+  const handleAccommodationDetailFilterChange = useCallback(
+    (patch: Partial<AccommodationDetailFilters>) => {
+      const next = { ...accommodationDetailFilters, ...patch }
+      setAccommodationDetailFilters(next)
+      applyAccommodationDetailFilters(unitsForAccommodation, next, selectedAccommodation)
+    },
+    [accommodationDetailFilters, unitsForAccommodation, selectedAccommodation, applyAccommodationDetailFilters]
+  )
+
   const resetAccommodationFilters = useCallback(() => {
     const defaults: AccommodationFilters = { accommodationType: '', propertyType: '', availability: 'all' }
     setAccommodationFilters(defaults)
@@ -270,12 +310,22 @@ export default function AccommodationsDashboardPage() {
     applyUnitFilters(allUnits, defaults, accommodations)
   }, [allUnits, accommodations, applyUnitFilters])
 
-  // ── Navigation handlers ────────────────────────────────────────────────────
+  const resetAccommodationDetailFilters = useCallback(() => {
+    const defaults: AccommodationDetailFilters = {
+      unitType: '',
+      furnishingStatus: '',
+      availability: 'vacant',
+      propertyType: '',
+    }
+    setAccommodationDetailFilters(defaults)
+    applyAccommodationDetailFilters(unitsForAccommodation, defaults, selectedAccommodation)
+  }, [unitsForAccommodation, selectedAccommodation, applyAccommodationDetailFilters])
 
   const handleViewAccommodations = () => {
     setViewMode('accommodations')
     setSelectedAccommodation(null)
     setUnitsForAccommodation([])
+    setFilteredUnitsForAccommodation([])
     setError(null)
   }
 
@@ -299,6 +349,15 @@ export default function AccommodationsDashboardPage() {
     setSelectedAccommodation(accommodation)
     setViewMode('accommodation-detail')
     setLoadingUnits(true)
+
+    const defaultDetailFilters: AccommodationDetailFilters = {
+      unitType: '',
+      furnishingStatus: '',
+      availability: 'vacant',
+      propertyType: '',
+    }
+    setAccommodationDetailFilters(defaultDetailFilters)
+
     try {
       const response = await fetch(
         `/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`
@@ -306,6 +365,7 @@ export default function AccommodationsDashboardPage() {
       if (!response.ok) throw new Error('Failed to fetch units')
       const result: Unit[] = await response.json()
       setUnitsForAccommodation(result)
+      applyAccommodationDetailFilters(result, defaultDetailFilters, accommodation)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -317,21 +377,21 @@ export default function AccommodationsDashboardPage() {
     setViewMode('accommodations')
     setSelectedAccommodation(null)
     setUnitsForAccommodation([])
+    setFilteredUnitsForAccommodation([])
     setError(null)
   }
 
-  // ── Derived: is property type filter relevant? ─────────────────────────────
   const showPropertyTypeInAccommodations =
     accommodationFilters.accommodationType === 'renting_space' ||
     accommodationFilters.accommodationType === ''
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const showPropertyTypeInAccommodationDetail =
+    selectedAccommodation?.accommodation_type === 'renting_space'
 
   return (
     <div className="space-y-6 p-6">
       <h1 className="text-3xl font-bold text-gray-900">Accommodations Dashboard</h1>
 
-      {/* Tab buttons */}
       <div className="flex gap-3">
         <button
           onClick={handleViewAccommodations}
@@ -361,7 +421,6 @@ export default function AccommodationsDashboardPage() {
         </div>
       )}
 
-      {/* ── Accommodations tab ── */}
       {viewMode === 'accommodations' && (
         <>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
@@ -385,12 +444,11 @@ export default function AccommodationsDashboardPage() {
                 })}
                 disabled={loading}
                 options={[
-                  { value: 'dormitory',     label: 'Dormitory' },
+                  { value: 'dormitory', label: 'Dormitory' },
                   { value: 'renting_space', label: 'Renting Space' },
                 ]}
               />
 
-              {/* Property type — only relevant for renting_space */}
               {showPropertyTypeInAccommodations && (
                 <FilterSelect
                   label="Property Type"
@@ -399,14 +457,13 @@ export default function AccommodationsDashboardPage() {
                   disabled={loading}
                   options={[
                     { value: 'apartment', label: 'Apartment' },
-                    { value: 'boarding',  label: 'Boarding House' },
+                    { value: 'boarding', label: 'Boarding House' },
                     { value: 'transient', label: 'Transient' },
-                    { value: 'house',     label: 'House' },
+                    { value: 'house', label: 'House' },
                   ]}
                 />
               )}
 
-              {/* Availability filter for accommodations */}
               <FilterSelect
                 label="Availability"
                 value={accommodationFilters.availability}
@@ -414,7 +471,7 @@ export default function AccommodationsDashboardPage() {
                 disabled={loading}
                 options={[
                   { value: 'vacant', label: 'With Vacant Slots' },
-                  { value: 'all',    label: 'All Accommodations' },
+                  { value: 'all', label: 'All Accommodations' },
                 ]}
               />
 
@@ -468,7 +525,6 @@ export default function AccommodationsDashboardPage() {
         </>
       )}
 
-      {/* ── All Units tab ── */}
       {viewMode === 'units' && (
         <>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
@@ -480,14 +536,13 @@ export default function AccommodationsDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-              {/* Accommodation Type filter in Units tab */}
               <FilterSelect
                 label="Accommodation Type"
                 value={unitFilters.accommodationType}
                 onChange={v => handleUnitFilterChange({ accommodationType: v as AccommodationType | '' })}
                 disabled={loadingUnits}
                 options={[
-                  { value: 'dormitory',     label: 'Dormitory' },
+                  { value: 'dormitory', label: 'Dormitory' },
                   { value: 'renting_space', label: 'Renting Space' },
                 ]}
               />
@@ -497,8 +552,8 @@ export default function AccommodationsDashboardPage() {
                 onChange={v => handleUnitFilterChange({ unitType: v as UnitType | '' })}
                 disabled={loadingUnits}
                 options={[
-                  { value: 'room',      label: 'Room' },
-                  { value: 'bedspace',  label: 'Bedspace' },
+                  { value: 'room', label: 'Room' },
+                  { value: 'bedspace', label: 'Bedspace' },
                   { value: 'wholeunit', label: 'Whole Unit' },
                 ]}
               />
@@ -508,9 +563,9 @@ export default function AccommodationsDashboardPage() {
                 onChange={v => handleUnitFilterChange({ furnishingStatus: v as FurnishingStatus | '' })}
                 disabled={loadingUnits}
                 options={[
-                  { value: 'furnished',      label: 'Furnished' },
+                  { value: 'furnished', label: 'Furnished' },
                   { value: 'semi-furnished', label: 'Semi-Furnished' },
-                  { value: 'unfurnished',    label: 'Unfurnished' },
+                  { value: 'unfurnished', label: 'Unfurnished' },
                 ]}
               />
               <FilterSelect
@@ -520,7 +575,7 @@ export default function AccommodationsDashboardPage() {
                 disabled={loadingUnits}
                 options={[
                   { value: 'vacant', label: 'With Vacant Slots' },
-                  { value: 'all',    label: 'All Units' },
+                  { value: 'all', label: 'All Units' },
                 ]}
               />
               <FilterSelect
@@ -530,9 +585,9 @@ export default function AccommodationsDashboardPage() {
                 disabled={loadingUnits}
                 options={[
                   { value: 'apartment', label: 'Apartment' },
-                  { value: 'boarding',  label: 'Boarding House' },
+                  { value: 'boarding', label: 'Boarding House' },
                   { value: 'transient', label: 'Transient' },
-                  { value: 'house',     label: 'House' },
+                  { value: 'house', label: 'House' },
                 ]}
               />
 
@@ -574,7 +629,6 @@ export default function AccommodationsDashboardPage() {
         </>
       )}
 
-      {/* ── Accommodation detail tab ── */}
       {viewMode === 'accommodation-detail' && selectedAccommodation && (
         <>
           <button
@@ -592,6 +646,77 @@ export default function AccommodationsDashboardPage() {
             )}
           </div>
 
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Unit Filters</h2>
+              <button
+                onClick={resetAccommodationDetailFilters}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Reset Filters
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <FilterSelect
+                label="Unit Type"
+                value={accommodationDetailFilters.unitType}
+                onChange={v => handleAccommodationDetailFilterChange({ unitType: v as UnitType | '' })}
+                disabled={loadingUnits}
+                options={[
+                  { value: 'room', label: 'Room' },
+                  { value: 'bedspace', label: 'Bedspace' },
+                  { value: 'wholeunit', label: 'Whole Unit' },
+                ]}
+              />
+
+              <FilterSelect
+                label="Furnishing Status"
+                value={accommodationDetailFilters.furnishingStatus}
+                onChange={v => handleAccommodationDetailFilterChange({ furnishingStatus: v as FurnishingStatus | '' })}
+                disabled={loadingUnits}
+                options={[
+                  { value: 'furnished', label: 'Furnished' },
+                  { value: 'semi-furnished', label: 'Semi-Furnished' },
+                  { value: 'unfurnished', label: 'Unfurnished' },
+                ]}
+              />
+
+              <FilterSelect
+                label="Availability"
+                value={accommodationDetailFilters.availability}
+                onChange={v => handleAccommodationDetailFilterChange({ availability: v as 'vacant' | 'all' })}
+                disabled={loadingUnits}
+                options={[
+                  { value: 'vacant', label: 'With Vacant Slots' },
+                  { value: 'all', label: 'All Units' },
+                ]}
+              />
+
+              {showPropertyTypeInAccommodationDetail && (
+                <FilterSelect
+                  label="Property Type"
+                  value={accommodationDetailFilters.propertyType}
+                  onChange={v => handleAccommodationDetailFilterChange({ propertyType: v as PropertyType | '' })}
+                  disabled={loadingUnits}
+                  options={[
+                    { value: 'apartment', label: 'Apartment' },
+                    { value: 'boarding', label: 'Boarding House' },
+                    { value: 'transient', label: 'Transient' },
+                    { value: 'house', label: 'House' },
+                  ]}
+                />
+              )}
+
+              <div className="flex items-end">
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold text-gray-900">{filteredUnitsForAccommodation.length}</span>{' '}
+                  unit{filteredUnitsForAccommodation.length !== 1 ? 's' : ''} found
+                </p>
+              </div>
+            </div>
+          </div>
+
           {loadingUnits && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -600,15 +725,21 @@ export default function AccommodationsDashboardPage() {
             </div>
           )}
 
-          {!loadingUnits && unitsForAccommodation.length === 0 && (
+          {!loadingUnits && filteredUnitsForAccommodation.length === 0 && (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-600">No units found.</p>
+              <p className="text-gray-600">No units found matching your filters.</p>
+              <button
+                onClick={resetAccommodationDetailFilters}
+                className="mt-4 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Clear Filters
+              </button>
             </div>
           )}
 
-          {!loadingUnits && unitsForAccommodation.length > 0 && (
+          {!loadingUnits && filteredUnitsForAccommodation.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {unitsForAccommodation.map(unit => (
+              {filteredUnitsForAccommodation.map(unit => (
                 <UnitTile key={unit.unit_id} unit={unit} accommodation={selectedAccommodation} />
               ))}
             </div>
