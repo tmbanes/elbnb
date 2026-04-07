@@ -1,3 +1,5 @@
+import { College } from '@/types/user.types'
+
 // UNIT ENUM TYPES
 export type UnitType = "room" | "bedspace" | "wholeunit"
 export type FurnishingStatus = "furnished" | "unfurnished" | "semi-furnished";
@@ -12,8 +14,15 @@ export type PropertyType = "apartment" | "boarding" | "transient" | "house";
 
 // DORMITORY ACCOMMODATION ENUM TYPES
 export type TermType = "semestral" | "annual";
-export type College = "CAS" | "CEAT" | "CAFS" | "CVM" | "CDC" | "CEM" | "CHE" | "CFNR" | "SESAM" | "CPAf";
-export type DegreePrograms = "";
+
+
+// AMENITIES/RULES ENUM TYPES
+export type RuleCategory = "curfew" | "visitor" | "appliances" | "pets" | "cleanliness" | "other" 
+export type AmenityCondition = "new" | "good" | "fair" | "need_repair" | "damaged" 
+
+////////////////////////////////////////////////////////
+//          UNIT - RELATED INTERFACES 
+////////////////////////////////////////////////////////
 
 // BASED ON SUPABASE PROPERTIES + vacant slots
 export interface Unit {
@@ -32,6 +41,12 @@ export interface Unit {
     unit_status: UnitAccommodationStatus;
     vacant_slots: number;
 }
+
+
+
+////////////////////////////////////////////////////////
+//          ACCOMMODATION - RELATED INTERFACES 
+////////////////////////////////////////////////////////
 
 // BASED ON SUPABASE PROPERTIES
 export interface Accommodation {
@@ -64,4 +79,44 @@ export interface RentingSpace {
     minimum_stay_days: number
     maximum_stay_days: number
     security_deposit_required: boolean
+}
+
+////////////////////////////////////////////////////////
+//          ACCOMMODATION/UNIT AMENITIES/RULES
+////////////////////////////////////////////////////////
+
+export interface AccommodationRules {
+    accommodation_id: string
+    rule_id: string
+}
+
+export interface AccommodationAmenities {
+    accommodation_id: string
+    amenity_id: string
+}
+
+export interface Rule {
+    rule_id: string
+    rule_title: string
+    rule_desc: string
+    rule_category: RuleCategory
+}
+
+export interface UnitRule {
+    unit_id: string
+    rule_id: string
+    date_implemented: string // ISO date format
+}
+
+export interface Amenity {
+    amenity_id: string
+    amenity_name: string
+    description: string
+}
+
+export interface UnitAmenity {
+    unit_id: string
+    amenity_id: string
+    quantity: number
+    amenity_condition: AmenityCondition
 }
