@@ -1,67 +1,61 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+// /middleware/middleware.ts
 
-// Every request hitting your app passes through this first (but only matched routes).
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
+
+// Allowed roles for each path
+const roleMap: Record<string, string[]> = {
+  "/api/admin": ["housing_admin"],
+  "/api/manager": ["dormitory_manager"],
+  "/api/student": ["student"],
+  "/api/guest": ["guest"]
+  // We can add more paths and roles
+};
+
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next(); // “Let the request continue normally” (default pass-through)
+  // Only protect /api routes
+  if (!req.nextUrl.pathname.startsWith("/api")) return NextResponse.next();
 
-  // Only run on admin API routes
-  if (!req.nextUrl.pathname.startsWith("/api/admin")) {
-    //This manually checks the route (route filtering)
-    return res;
-  }
+  // Get token from Authorization header
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (!token) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  // ── DEV BYPASS — remove this block before production ──────────────────────
-  // THIS IS FOR TESTING PURPOSES ONLY — it allows you to bypass auth checks
-  // REMOVE THIS IF THERE ARE ROLES IMPLEMENTED
-  if (process.env.NODE_ENV === "development") {
-    return res;
-  }
+  // Verify JWT using Supabase Admin client
+  const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+  if (userError || !userData.user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-  // crateServerClient is a helper that sets up a Supabase client with the right cookies for auth
-  // Reads cookies from the request
-  // Uses them to reconstruct the user session
-  // Allows server-side auth checking
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => req.cookies.getAll(),
-        setAll: () => {}, // read-only in middleware (can't modify cookies)
-      },
-    },
-  );
+  const userId = userData.user.id;
 
-  // Check if user is logged in
-  // Reads session from cookies
-  // Validates it with Supabase Auth
-  // Returns the authenticated user (or null)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    // if not logged in, block access
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Check if user has housing_admin role
-  const { data: profile } = await supabase // Fetch user role from database
+  // Fetch role from the database
+  const { data: roleData, error: roleError } = await supabaseAdmin
     .from("users")
-    .select("role")
-    .eq("user_id", user.id)
+    .select("role") 
+    .eq("id", userId)
     .single();
 
-  if (profile?.role !== "housing_admin") {
-    // if logged in but not admin role
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (roleError || !roleData) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+  const userRole = roleData.role;
+
+  // Check if role is allowed for this path
+  const allowedRoles = Object.entries(roleMap)
+    .filter(([path]) => req.nextUrl.pathname.startsWith(path))
+    .flatMap(([, roles]) => roles);
+
+  if (allowedRoles.length && !allowedRoles.includes(userRole)) {
+    return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
 
-  return res;
+  // Pass user info to route handlers via headers
+  const response = NextResponse.next();
+  response.headers.set("x-user-id", userId);
+  response.headers.set("x-user-role", userRole);
+
+  return response;
 }
 
+// Apply middleware to all API routes
 export const config = {
-  // Covers all current and future admin routes
-  matcher: ["/api/admin/:path*"],
+  matcher: "/api/:path*",
 };
