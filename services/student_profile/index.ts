@@ -21,7 +21,8 @@ export const studentProfileService = {
 
 
   async updateProfile(user_id: string, updates: Partial<UserProfile>) {
-    const { data, error } = await supabase
+    const client = await supabase();
+    const { data, error } = await client
       .from('USER')
         .update({
           // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
