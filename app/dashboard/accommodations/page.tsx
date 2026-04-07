@@ -256,7 +256,7 @@
                     value={accommodationFilters.accommodationType}
                     onChange={(e) =>
                       handleAccommodationFilterChange({
-                        accommodationType: e.target.value as 'dormitory' | 'renting_space' | '',
+                        accommodationType: e.target.value as AccommodationType | '' ,
                       })
                     }
                     disabled={loading}
@@ -350,7 +350,7 @@
                     onChange={(e) =>
                       handleUnitFilterChange({
                         ...unitFilters,
-                        unitType: e.target.value as 'room' | 'bedspace' | 'wholeunit' | '',
+                        unitType: e.target.value as UnitType | '',
                       })
                     }
                     disabled={loadingUnits}
@@ -372,11 +372,7 @@
                     onChange={(e) =>
                       handleUnitFilterChange({
                         ...unitFilters,
-                        furnishingStatus: e.target.value as
-                          | 'furnished'
-                          | 'semi-furnished'
-                          | 'unfurnished'
-                          | '',
+                        furnishingStatus: e.target.value as FurnishingStatus | '',
                       })
                     }
                     disabled={loadingUnits}
