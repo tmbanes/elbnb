@@ -1,67 +1,47 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+// /middleware/middleware.ts
 
-// Every request hitting your app passes through this first (but only matched routes).
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
+
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next(); // “Let the request continue normally” (default pass-through)
-
-  // Only run on admin API routes
-  if (!req.nextUrl.pathname.startsWith("/api/admin")) {
-    //This manually checks the route (route filtering)
-    return res;
+  // Only protect API routes
+  if (!req.nextUrl.pathname.startsWith("/api")) {
+    return NextResponse.next();
   }
 
-  // ── DEV BYPASS — remove this block before production ──────────────────────
-  // THIS IS FOR TESTING PURPOSES ONLY — it allows you to bypass auth checks
-  // REMOVE THIS IF THERE ARE ROLES IMPLEMENTED
-  if (process.env.NODE_ENV === "development") {
-    return res;
+  // Extract Bearer token
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
+
+  if (!token) {
+    return NextResponse.json(
+      { error: "Not authenticated" },
+      { status: 401 }
+    );
   }
 
-  // crateServerClient is a helper that sets up a Supabase client with the right cookies for auth
-  // Reads cookies from the request
-  // Uses them to reconstruct the user session
-  // Allows server-side auth checking
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => req.cookies.getAll(),
-        setAll: () => {}, // read-only in middleware (can't modify cookies)
-      },
+  // Verify JWT with Supabase
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+
+  if (error || !data.user) {
+    return NextResponse.json(
+      { error: "Invalid token" },
+      { status: 401 }
+    );
+  }
+
+  // Pass user info to API routes
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-user-id", data.user.id);
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
     },
-  );
-
-  // Check if user is logged in
-  // Reads session from cookies
-  // Validates it with Supabase Auth
-  // Returns the authenticated user (or null)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    // if not logged in, block access
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Check if user has housing_admin role
-  const { data: profile } = await supabase // Fetch user role from database
-    .from("users")
-    .select("role")
-    .eq("user_id", user.id)
-    .single();
-
-  if (profile?.role !== "housing_admin") {
-    // if logged in but not admin role
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  return res;
+  });
 }
 
 export const config = {
-  // Covers all current and future admin routes
-  matcher: ["/api/admin/:path*"],
+  matcher: "/api/:path*",
 };
