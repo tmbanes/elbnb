@@ -1,396 +1,275 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import type { Accommodation, Unit } from '@/types/accommodation_units'
+import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import type { ApplicationStatus } from '@/types/application_workflow'
+import { Accommodation, Unit } from '@/types/accommodation_units'
 
-export default function AccommodationApplicationFormPage() {
-  const router = useRouter()
+export default function ApplicationFormPage() {
   const searchParams = useSearchParams()
 
-  const accommodationId = searchParams.get('accommodationId') ?? ''
-  const accommodationType = searchParams.get('accommodationType') ?? ''
-  const accommodationName = searchParams.get('accommodationName') ?? ''
-  const unitId = searchParams.get('unitId') ?? ''
-  const unitTypeFromQuery = searchParams.get('unitType') ?? ''
+  const accommodationIdFromQuery = searchParams.get('accommodationId') || ''
+  const unitIdFromQuery = searchParams.get('unitId') || ''
 
-  const [accommodation, setAccommodation] = useState<Accommodation | null>(null)
-  const [availableUnits, setAvailableUnits] = useState<Unit[]>([])
-  const [loadingMeta, setLoadingMeta] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string>('')
+  const [userRole, setUserRole] = useState<string>('')
+  const [accommodation, setAccommodation] = useState<Accommodation>()
+  const [unit, setUnit] = useState<Unit>() 
 
   const [formData, setFormData] = useState({
-    preferred_unit_type: unitTypeFromQuery,
+    preferred_accommodation: accommodationIdFromQuery,
+    preferred_unit_type: '',
     duration_of_stay: '',
     check_in: '',
     check_out: '',
     number_of_companions: '0',
-    stay_count: '',
-    stay_unit: 'days',
+    unit_id: unitIdFromQuery ? unitIdFromQuery : '',
   })
 
-  const normalizedAccommodationType = accommodationType.trim().toLowerCase()
-  const isDormitory = normalizedAccommodationType === 'dormitory'
-  const isRentalSpace =
-    normalizedAccommodationType === 'rental_space' ||
-    normalizedAccommodationType === 'rental space'
-
+  const dateSubmitted = useMemo(() => new Date().toISOString(), [])
+  const applicationStatus: ApplicationStatus = 'pending_dorm_manager'
+  
   useEffect(() => {
-    const loadMeta = async () => {
-      setLoadingMeta(true)
-      setError(null)
-
+    const fetchUser = async () => {
       try {
-        const [accommodationResponse, unitsResponse] = await Promise.all([
-          fetch('/api/dashboard/tiles?type=accommodations'),
-          accommodationId
-            ? fetch(
-                `/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationId}`,
-              )
-            : Promise.resolve(null as Response | null),
-        ])
+        const res = await fetch('/api/auth')
+        const data = await res.json()
+        const user = data.user
 
-        if (!accommodationResponse.ok) {
-          throw new Error('Failed to load accommodation information')
-        }
-
-        const accommodationList = (await accommodationResponse.json()) as Accommodation[]
-
-        const selectedAccommodation =
-          accommodationList.find((item) => item.accommodation_id === accommodationId) ??
-          null
-
-        setAccommodation(selectedAccommodation)
-
-        if (unitsResponse && unitsResponse.ok) {
-          const unitsResult = (await unitsResponse.json()) as Unit[]
-          const filteredUnits = unitsResult.filter(
-            (unit) => unit.unit_status === 'active' && unit.vacant_slots > 0,
-          )
-          setAvailableUnits(filteredUnits)
-        }
-
-        if (!selectedAccommodation) {
-          throw new Error('Selected accommodation was not found')
-        }
+        setUserId(user.user_id)
+        setUserRole(user.role) 
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred')
-      } finally {
-        setLoadingMeta(false)
+        console.error(err)
       }
     }
 
-    loadMeta()
-  }, [accommodationId])
+    fetchUser()
+  }, [])
 
-  const availableUnitTypes = useMemo(() => {
-    return Array.from(
-      new Set(availableUnits.map((unit) => unit.unit_type).filter(Boolean)),
-    )
-  }, [availableUnits])
+  useEffect(() => {
+    const fetchAccommodation = async () => {
+      if (!accommodationIdFromQuery) return
 
-  const canSubmit =
-    !!accommodation &&
-    !!formData.preferred_unit_type &&
-    !!formData.duration_of_stay &&
-    !!formData.check_in &&
-    !!formData.check_out
+      try {
+        const res = await fetch('/api/dashboard/tiles?type=accommodations')
+        if (!res.ok) throw new Error('Failed to fetch accommodations')
+
+        const data = await res.json()
+
+        const matchedAccommodation = data.find(
+          (accommodation: any) =>
+            accommodation.accommodation_id === accommodationIdFromQuery
+        )
+        if (matchedAccommodation) {
+          setAccommodation(matchedAccommodation)
+        }
+
+        if (unitIdFromQuery) {
+          const resUnit = await fetch('/api/dashboard/tiles?type=units-by-accommodation&accommodationId=' + accommodationIdFromQuery)
+          if (!resUnit.ok) throw new Error('Failed to fetch units for accommodation')
+
+          const dataUnits = await resUnit.json()
+          const matchedUnit = dataUnits.find((unit: any) => unit.unit_id === unitIdFromQuery)
+          if (matchedUnit) {
+            setUnit(matchedUnit)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch accommodation type:', error)
+      }
+    }
+
+    fetchAccommodation()
+  }, [accommodationIdFromQuery])
+
+  const shouldShowCompanions = userRole === 'guest' && accommodation?.accommodation_type === 'renting_space'
 
   const handleChange = (
-    field: keyof typeof formData,
-    value: string,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
+    const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      [name]: value,
     }))
   }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setSubmitting(true)
-    setError(null)
-    setSuccessMessage(null)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-    try {
-      const payload: Record<string, unknown> = {
-        preferred_accommodation: accommodationId,
-        preferred_unit_type: formData.preferred_unit_type,
-        duration_of_stay: Number(formData.duration_of_stay),
-        check_in: formData.check_in,
-        check_out: formData.check_out,
-        number_of_companions: Number(formData.number_of_companions),
-        selected_unit_id: unitId || null,
-        accommodation_type: accommodationType,
-      }
-
-      if (isRentalSpace) {
-        payload.stay_count = formData.stay_count ? Number(formData.stay_count) : undefined
-        payload.stay_unit = formData.stay_unit
-      }
-
-      const response = await fetch('/api/applications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to submit application')
-      }
-
-      setSuccessMessage('Application submitted successfully.')
-
-      setTimeout(() => {
-        router.push('/dashboard/accommodation_application')
-      }, 1200)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setSubmitting(false)
+    const payload = {
+      preferred_accommodation: formData.preferred_accommodation,
+      preferred_unit_type: unitIdFromQuery ? '' : formData.preferred_unit_type,
+      date_submitted: dateSubmitted,
+      duration_of_stay: Number(formData.duration_of_stay),
+      check_in: formData.check_in,
+      check_out: formData.check_out,
+      number_of_companions: shouldShowCompanions
+        ? Number(formData.number_of_companions)
+        : 0,
+      application_status: applicationStatus,
+      user_id: userId,
+      unit_id: unitIdFromQuery,
     }
+
+    console.log('Submitting application:', payload)
+
+    const response = await fetch('/api/applications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      alert('Failed to submit application')
+      return
+    }
+
+    alert('Application submitted')
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => router.back()}
-          className="rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200"
-        >
-          ← Back
-        </button>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Application Form</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Submit an accommodation application based on the selected listing.
-          </p>
-        </div>
-      </div>
+    <div className="max-w-3xl mx-auto p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">
+          Accommodation Application Form
+        </h1>
 
-      {loadingMeta ? (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-24 animate-pulse rounded-lg bg-gray-200" />
-          ))}
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-gray-500">Accommodation</p>
-              <p className="mt-2 text-lg font-semibold text-gray-900">
-                {accommodation?.name ?? accommodationName }
-              </p>
-              <p className="text-xs text-gray-500">{accommodationId}</p>
-            </div>
-
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-gray-500">Accommodation Type</p>
-              <p className="mt-2 text-lg font-semibold text-gray-900">
-                {accommodationType || '—'}
-              </p>
-            </div>
-
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-gray-500">Application Target</p>
-              <p className="mt-2 text-lg font-semibold text-gray-900">
-                {isDormitory ? 'Accommodation' : 'Unit'}
-              </p>
-              <p className="text-xs text-gray-500">
-                {isDormitory
-                  ? 'Dormitory applications are submitted to the accommodation.'
-                  : `Rental space applications are submitted from the chosen unit${unitId ? ` (${unitId})` : ''}.`}
-              </p>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Preferred Accommodation ID
+            </label>
+            <input
+              type="text"
+              value={formData.preferred_accommodation}
+              readOnly
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+            />
           </div>
 
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="text-red-800">{error}</p>
+          {!unitIdFromQuery && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Preferred Unit Type
+              </label>
+              <select
+                name="preferred_unit_type"
+                value={formData.preferred_unit_type}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              >
+                <option value="">Select unit type</option>
+                <option value="room">Room</option>
+                <option value="bedspace">Bedspace</option>
+                <option value="wholeunit">Whole Unit</option>
+              </select>
             </div>
           )}
 
-          {successMessage && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-              <p className="text-green-800">{successMessage}</p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Duration of Stay (months)
+            </label>
+            <input
+              type="number"
+              name="duration_of_stay"
+              value={formData.duration_of_stay}
+              onChange={handleChange}
+              required
+              min={1}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              placeholder="Enter number of months"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Check-in Date
+            </label>
+            <input
+              type="date"
+              name="check_in"
+              value={formData.check_in}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Check-out Date
+            </label>
+            <input
+              type="date"
+              name="check_out"
+              value={formData.check_out}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+
+          {shouldShowCompanions && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Number of Companions
+              </label>
+              <input
+                type="number"
+                name="number_of_companions"
+                value={formData.number_of_companions}
+                onChange={handleChange}
+                required
+                min={0}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                placeholder="Enter number of companions"
+              />
             </div>
           )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              User ID
+            </label>
+            <input
+              type="text"
+              value={userId}
+              readOnly
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Unit ID
+            </label>
+            <input
+              type="text"
+              value={formData.unit_id}
+              readOnly
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+            />
+          </div>
+
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700">
+            <p><span className="font-semibold">Date Submitted:</span> {dateSubmitted}</p>
+            <p><span className="font-semibold">Application Status:</span> {applicationStatus}</p>
+            <p><span className="font-semibold">User Role:</span> {userRole || 'N/A'}</p>
+            <p><span className="font-semibold">Accommodation Name:</span> {accommodation?.name || 'N/A'}</p>
+            <p><span className="font-semibold">Accommodation Type:</span> {accommodation?.accommodation_type || 'N/A'}</p>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
           >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Accommodation Type
-                </label>
-                <input
-                  value={accommodationType}
-                  disabled
-                  className="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  {isDormitory ? 'Preferred Unit Type' : 'Selected Unit Type'}
-                </label>
-
-                {isDormitory ? (
-                  <select
-                    value={formData.preferred_unit_type}
-                    onChange={(e) =>
-                      handleChange('preferred_unit_type', e.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                    required
-                  >
-                    <option value="">Select unit type</option>
-                    {availableUnitTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    value={formData.preferred_unit_type}
-                    disabled
-                    className="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm"
-                  />
-                )}
-              </div>
-
-              {!isDormitory && (
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Selected Unit ID
-                  </label>
-                  <input
-                    value={unitId}
-                    disabled
-                    className="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Duration of Stay
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.duration_of_stay}
-                  onChange={(e) => handleChange('duration_of_stay', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Check-in Date
-                </label>
-                <input
-                  type="date"
-                  value={formData.check_in}
-                  onChange={(e) => handleChange('check_in', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Check-out Date
-                </label>
-                <input
-                  type="date"
-                  value={formData.check_out}
-                  onChange={(e) => handleChange('check_out', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Number of Companions
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.number_of_companions}
-                  onChange={(e) =>
-                    handleChange('number_of_companions', e.target.value)
-                  }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  required
-                />
-              </div>
-
-              {isRentalSpace && (
-                <>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Stay Count
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={formData.stay_count}
-                      onChange={(e) => handleChange('stay_count', e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Billing Unit
-                    </label>
-                    <select
-                      value={formData.stay_unit}
-                      onChange={(e) => handleChange('stay_unit', e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                    >
-                      <option value="days">days</option>
-                      <option value="weeks">weeks</option>
-                      <option value="months">months</option>
-                    </select>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={!canSubmit || submitting}
-                className="rounded-lg bg-green-600 px-5 py-2.5 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {submitting ? 'Submitting...' : 'Submit Application'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => router.push('/dashboard/accommodations')}
-                className="rounded-lg bg-gray-100 px-5 py-2.5 font-medium text-gray-700 hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </>
-      )}
+            Submit Application
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

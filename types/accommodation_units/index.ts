@@ -1,9 +1,12 @@
+export type UnitType = "room" | "bedspace" | "wholeunit"
+export type AccommodationType = "dormitory" | "renting_space"
+
 // BASED ON SUPABASE PROPERTIES + vacant slots
 export interface Unit {
     unit_id: string;
     accommodation_id: string;
     unit_number: string;
-    unit_type: string;
+    unit_type: UnitType;
     max_occupancy: number;
     rental_fee: number;
     billing_period: string;
@@ -21,7 +24,7 @@ export interface Accommodation {
     accommodation_id: string;
     name: string;
     location: string;
-    accommodation_type: string;
+    accommodation_type: AccommodationType;
     manager_id: string;
     accommodation_status: string;
     total_capacity: number;
