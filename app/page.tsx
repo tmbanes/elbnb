@@ -31,6 +31,23 @@ const setups = [
       bullets: "text-white",
     },
   },
+
+  //onboarding page
+  {
+    href: "/onboarding",
+    title: "Onboarding Sign In + Log In",
+    highlights: [
+      "Interactive onboarding UI (HOUSE)",
+      "Sign up and login doors",
+      "Role selection",
+    ],
+    theme: {
+      card: "border border-green-700 bg-gradient-to-br from-[#052e1f] via-[#0a3f2a] to-[#0f5943] hover:border-[#10b981]/60",
+      open: "text-[#10b981]",
+      title: "text-[#6ee7b7]",
+      bullets: "text-[#d1fae5]",
+    },
+  },
   {
     // Housing Inventory Management
     href: "/dashboard/admin/housing",
