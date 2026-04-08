@@ -97,10 +97,10 @@ export function AssignmentTile({
 
         {/* Details */}
         <div className="bg-gray-50 rounded-xl px-3 py-1">
-          <InfoRow label="Move-in" value={fmt(assignment.move_In_Date)} />
-          <InfoRow label="Expected move-out" value={fmt(assignment.expected_Move_Out_Date)} />
-          {assignment.actual_Move_Out_Date && (
-            <InfoRow label="Actual move-out" value={fmt(assignment.actual_Move_Out_Date)} />
+          <InfoRow label="Move-in" value={fmt(assignment.move_in_date)} />
+          <InfoRow label="Expected move-out" value={fmt(assignment.expected_move_out_date)} />
+          {assignment.actual_move_out_date && (
+            <InfoRow label="Actual move-out" value={fmt(assignment.actual_move_out_date)} />
           )}
           {accommodation && (
             <InfoRow label="Accommodation type" value={accommodation.accommodation_type.replace('_', ' ')} />

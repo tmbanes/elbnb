@@ -26,7 +26,9 @@ export default function BillingPage() {
       try {
         // Fetch the assignment
         const assignRes = await fetch('/api/assignments')
-        if (!assignRes.ok) throw new Error('Failed to fetch assignments')
+        if (!assignRes.ok) {
+          throw new Error('Failed to fetch assignments')
+        }
         const assignJson = await assignRes.json()
         const assignments: AccommodationAssignment[] = assignJson.data ?? []
         const found = assignments.find(a => a.assignment_id === assignmentId) ?? null
@@ -70,10 +72,10 @@ export default function BillingPage() {
     setPayState('paying')
     setErrorMsg('')
     try {
-      const res = await fetch('/api/assignments/pay-deposit', {
+      const res = await fetch('/api/assignments', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignmentId }),
+        body: JSON.stringify({ assignmentId: assignmentId, action: 'activate' }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -189,8 +191,8 @@ export default function BillingPage() {
                 { label: 'Unit', value: unit?.unit_number ?? '—' },
                 { label: 'Unit Type', value: unit?.unit_type ?? '—' },
                 { label: 'Furnishing', value: unit?.furnishing_status ?? '—' },
-                { label: 'Move-in Date', value: fmt(assignment.move_In_Date) },
-                { label: 'Expected Move-out', value: fmt(assignment.expected_Move_Out_Date) },
+                { label: 'Move-in Date', value: fmt(assignment.move_in_date) },
+                { label: 'Expected Move-out', value: fmt(assignment.expected_move_out_date) },
                 { label: 'Assignment Status', value: assignment.assignment_status },
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between items-center px-4 py-2.5">
