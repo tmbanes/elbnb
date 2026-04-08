@@ -181,7 +181,7 @@ export default function MyApplicationsPage() {
 
     try {
       // 1. applications
-      const appRes = await fetch('/api/applications')
+      const appRes = await fetch('/api/applications/get_applications')
       if (!appRes.ok) {
         if (appRes.status === 401) { router.push('/login'); return }
         throw new Error('Failed to fetch applications')

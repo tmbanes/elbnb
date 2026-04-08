@@ -39,7 +39,7 @@ export class AssignmentService {
         )
       `)
       .eq('user_id', userId)
-      .order('move_In_Date', { ascending: false })
+      .order('move_in_date', { ascending: false })
 
     if (error) {
       throw new Error(`Failed to fetch assignments: ${error.message}`)

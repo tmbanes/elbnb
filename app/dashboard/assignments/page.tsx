@@ -197,7 +197,7 @@ export default function MyAssignmentsPage() {
     setTerminatingId(assignmentId)
     setConfirmTerminateId(null)
     try {
-      const res = await fetch('/api/assignments/terminate', {
+      const res = await fetch('/api/assignments', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assignmentId }),
@@ -220,7 +220,7 @@ export default function MyAssignmentsPage() {
     setRejectingId(assignmentId)
     setConfirmRejectId(null)
     try {
-      const res = await fetch('/api/assignments/reject', {
+      const res = await fetch('/api/assignments', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assignmentId }),
