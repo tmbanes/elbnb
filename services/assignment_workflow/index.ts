@@ -3,9 +3,10 @@ import { AccommodationAssignment, AssignmentStatus } from '@/types/assignment_wo
 
 // Statuses that can be terminated by the user (active → terminated)
 const TERMINATABLE_STATUSES: AssignmentStatus[] = ['active']
-
 // Statuses that can be cancelled by the user (pending → cancelled)
-const CANCELLABLE_STATUSES: AssignmentStatus[] = ['pending']
+const CANCELLABLE_STATUSES: AssignmentStatus[] = ['pending', 'waiting_payment']
+// Statuses that can be activated by the user (waiting_payment → active)
+const ACTIVATABLE_STATUSES: AssignmentStatus[] = ['waiting_payment']
 
 export class AssignmentService {
 
@@ -96,19 +97,19 @@ export class AssignmentService {
       !assignment.assignment_status ||
       !CANCELLABLE_STATUSES.includes(assignment.assignment_status)
     ) {
-      errors.push('Only pending assignments can be cancelled.')
+      errors.push('Only pending and waiting for payment assignments can be cancelled.')
     }
 
     return errors
   }
 
-  /** Update assignment status from pending → cancelled. */
+  /** Update assignment status from pending/'waiging for payment' → cancelled. */
   static async cancelAssignment(assignment: Partial<AccommodationAssignment>): Promise<AccommodationAssignment> {
     if (
       !assignment.assignment_status ||
       !CANCELLABLE_STATUSES.includes(assignment.assignment_status)
     ) {
-      throw new Error('Cannot cancel: assignment is not pending.')
+      throw new Error("'Cannot cancel: assignment is not 'pending' or 'waiting for payment.'")
     }
 
     const supabase = await createSupabaseServerClient()
@@ -127,14 +128,14 @@ export class AssignmentService {
     return data
   }
 
-  // ─── ACTIVATE (pending → active) via deposit payment ─────────────────────────
+  // ─── ACTIVATE (pending/waiting_payment → active) via deposit payment ─────────────────────────
 
   /** Validate that an assignment can be activated (deposit paid). */
   static validateActivation(assignment: Partial<AccommodationAssignment>): string[] {
     const errors: string[] = []
 
-    if (assignment.assignment_status !== 'pending') {
-      errors.push('Only pending assignments can be activated.')
+    if (!assignment.assignment_status || !ACTIVATABLE_STATUSES.includes(assignment.assignment_status)) {
+      errors.push('Only waiting for payment assignments can be activated.')
     }
 
     return errors
@@ -142,8 +143,8 @@ export class AssignmentService {
 
   /** Update assignment status from pending → active after deposit payment. */
   static async activateAssignment(assignment: Partial<AccommodationAssignment>): Promise<AccommodationAssignment> {
-    if (assignment.assignment_status !== 'pending') {
-      throw new Error('Cannot activate: assignment is not pending.')
+    if (!assignment.assignment_status || !ACTIVATABLE_STATUSES.includes(assignment.assignment_status)) {
+      throw new Error('Cannot activate: assignment is not waiting for payment.')
     }
 
     const supabase = await createSupabaseServerClient()

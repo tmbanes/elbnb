@@ -282,7 +282,7 @@ export default function MyAssignmentsPage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <FilterSelect
-            label="Application Status"
+            label="Assignment Status"
             value={filters.assignmentStatus}
             onChange={v => handleFilterChange({
               assignmentStatus: v as AssignmentStatus | '',
@@ -292,7 +292,6 @@ export default function MyAssignmentsPage() {
               { value: 'completed', label: 'Completed' },
               { value: 'cancelled', label: 'Rejected' },
               { value: 'terminated', label: 'Terminated' },
-              { value: 'pending', label: 'Pending' },
               { value: 'waiting_payment', label: 'Waiting For Payment' },
             ]}
           />
