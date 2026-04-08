@@ -49,14 +49,14 @@ export function AssignmentTile({
 }: AssignmentTileProps) {
   const status = STATUS_CONFIG[assignment.assignment_status]
   const isActive = assignment.assignment_status === 'active'
-  const isPending = assignment.assignment_status === 'pending'
+  const isWaitingPayment = assignment.assignment_status === 'waiting_payment'
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col">
       {/* Status bar top accent */}
       <div className={`h-1 w-full ${
         isActive ? 'bg-emerald-400' :
-        isPending ? 'bg-amber-400' :
+        isWaitingPayment ? 'bg-amber-400' :
         assignment.assignment_status === 'terminated' ? 'bg-red-400' :
         assignment.assignment_status === 'completed' ? 'bg-sky-400' :
         'bg-gray-300'
@@ -125,7 +125,7 @@ export function AssignmentTile({
             </button>
           )}
 
-          {isPending && (
+          {isWaitingPayment && (
             <div className="flex gap-2">
               <button
                 onClick={() => onReject(assignment.assignment_id)}
