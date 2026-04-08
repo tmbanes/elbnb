@@ -35,7 +35,7 @@ const STATUS_STYLES: Record<ApplicationStatus, { bg: string; text: string; label
   pending_dorm_manager: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pending Review' },
   pending_admin:        { bg: 'bg-blue-100',  text: 'text-blue-800',  label: 'Pending Admin' },
   pending_payment:      { bg: 'bg-purple-100',text: 'text-purple-800',label: 'Pending Payment' },
-  accepted:             { bg: 'bg-green-100', text: 'text-green-800', label: 'Accepted' },
+  approved:             { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' },
   rejected:             { bg: 'bg-red-100',   text: 'text-red-800',   label: 'Rejected' },
   cancelled:            { bg: 'bg-gray-100',  text: 'text-gray-500',  label: 'Cancelled' },
 }
@@ -64,6 +64,7 @@ interface ApplicationTileProps {
 
 function ApplicationTile({ enriched, onCancel, cancelling }: ApplicationTileProps) {
   const { application, accommodation, unit } = enriched
+  console.log('STATUS VALUE:', application.application_status)
   const status = STATUS_STYLES[application.application_status]
   const isCancellable = (CANCELLABLE_STATUSES as string[]).includes(application.application_status)
 
@@ -221,7 +222,7 @@ export default function MyApplicationsPage() {
     } finally {
       setLoading(false)
     }
-  }, [router]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [router]) 
 
   useEffect(() => { fetchApplications() }, [fetchApplications])
 
@@ -306,7 +307,7 @@ export default function MyApplicationsPage() {
         </div>
         <button
           onClick={handleBackToDashBoard}
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:`bg`-gray-200 transition font-medium"
         >
           ← Back to Dashboard
         </button>
@@ -344,7 +345,7 @@ export default function MyApplicationsPage() {
               { value: 'pending_dorm_manager', label: 'Pending Review' },
               { value: 'pending_admin',        label: 'Pending Admin' },
               { value: 'pending_payment',      label: 'Pending Payment' },
-              { value: 'accepted',             label: 'Accepted' },
+              { value: 'approved',             label: 'Approved' },
               { value: 'rejected',             label: 'Rejected' },
               { value: 'cancelled',            label: 'Cancelled' },
             ]}

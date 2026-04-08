@@ -74,7 +74,7 @@ export class AssignmentService {
       .from('accommodation_assignment')
       .update({
         assignment_status: 'terminated' as AssignmentStatus,
-        actual_Move_Out_Date: new Date().toISOString(),
+        actual_move_out_date: new Date().toISOString(),
       })
       .eq('assignment_id', assignment.assignment_id)
       .select()

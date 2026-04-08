@@ -16,8 +16,8 @@ export interface AccommodationAssignment {
   application_id: string;
   unit_id: string;
   user_id: string;
-  move_In_Date: string;
-  expected_Move_Out_Date: string;
-  actual_Move_Out_Date?: string | null; // optional
+  move_in_date: string;
+  expected_move_out_date: string;
+  actual_move_out_date?: string | null; // optional
   assignment_status: AssignmentStatus;
 }
