@@ -10,7 +10,7 @@ import { AssignmentTile } from '@/components/AssignmentTile'
 
 interface AssignmentFilters {
   assignmentStatus: AssignmentStatus | ''
-    accommodationType: AccommodationType | ''
+  accommodationType: AccommodationType | ''
   propertyType: PropertyType | ''
   unitType: UnitType | ''
   furnishingStatus: FurnishingStatus | ''
@@ -20,7 +20,7 @@ interface AssignmentFilters {
 
 const DEFAULT_FILTERS: AssignmentFilters = {
   assignmentStatus: '',
-    accommodationType: '',
+  accommodationType: '',
   propertyType: '',
   unitType: '',
   furnishingStatus: '',
@@ -137,17 +137,7 @@ export default function MyAssignmentsPage() {
       const accomRes = await fetch('/api/dashboard/tiles?type=accommodations')
       const accomData: Accommodation[] = accomRes.ok ? await accomRes.json() : []
       const accomMap = new Map(accomData.map(a => [a.accommodation_id, a]))
-
-      // 4. Fetch units per unique accommodation
-      const uniqueAccomIds = [...new Set(visibleAssignments.map(a => {
-        // We need to get the accommodation_id from the unit
-        // We'll fetch all units and build a map
-        return null
-      }).filter(Boolean))]
-
-      // Actually, fetch units by unit_id from assignments
       const unitMap = new Map<string, Unit>()
-      const uniqueUnitIds = [...new Set(visibleAssignments.map(a => a.unit_id).filter(Boolean))]
 
       // Get accommodation IDs via unit fetches - batch by accommodation
       // First get all accommodations' units
@@ -160,7 +150,7 @@ export default function MyAssignmentsPage() {
         })
       )
 
-      // 5. Enrich
+      // 4. Enrich
       const result: EnrichedAssignment[] = visibleAssignments.map(assignment => {
         const unit = unitMap.get(assignment.unit_id) ?? null
         const accommodation = unit ? accomMap.get(unit.accommodation_id) ?? null : null
@@ -174,7 +164,7 @@ export default function MyAssignmentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [router, applyFilters]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [router, applyFilters]) 
 
   useEffect(() => { fetchAssignments() }, [fetchAssignments])
 
@@ -204,7 +194,7 @@ export default function MyAssignmentsPage() {
       const res = await fetch('/api/assignments', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignmentId }),
+        body: JSON.stringify({ assignmentId: assignmentId, action: 'terminate' }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -227,7 +217,7 @@ export default function MyAssignmentsPage() {
       const res = await fetch('/api/assignments', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignmentId }),
+        body: JSON.stringify({ assignmentId: assignmentId, action: 'cancel' }),
       })
       if (!res.ok) {
         const data = await res.json()
