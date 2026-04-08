@@ -90,6 +90,9 @@ export default function MyAssignmentsPage() {
   const applyFilters = useCallback((list: EnrichedAssignment[], f: AssignmentFilters) => {
     let out = list
 
+    if (f.assignmentStatus)
+      out = out.filter(e => e.assignment?.assignment_status === f.assignmentStatus)
+
     if (f.accommodationType)
       out = out.filter(e => e.accommodation?.accommodation_type === f.accommodationType)
 
@@ -300,6 +303,7 @@ export default function MyAssignmentsPage() {
               { value: 'cancelled', label: 'Rejected' },
               { value: 'terminated', label: 'Terminated' },
               { value: 'pending', label: 'Pending' },
+              { value: 'waiting_payment', label: 'Waiting For Payment' },
             ]}
           />
           <FilterSelect

@@ -20,6 +20,7 @@ const STATUS_CONFIG: Record<AssignmentStatus, { bg: string; text: string; dot: s
   cancelled:  { bg: 'bg-gray-100',    text: 'text-gray-500',    dot: 'bg-gray-400',    label: 'Cancelled' },
   terminated: { bg: 'bg-red-50',      text: 'text-red-700',     dot: 'bg-red-500',     label: 'Terminated' },
   pending:    { bg: 'bg-amber-50',    text: 'text-amber-700',   dot: 'bg-amber-500',   label: 'Pending' },
+  waiting_payment:    { bg: 'bg-amber-50',    text: 'text-amber-700',   dot: 'bg-amber-500',   label: 'Waiting For Payment' },
 }
 
 function fmt(dateStr: string) {
