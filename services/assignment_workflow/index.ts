@@ -17,27 +17,7 @@ export class AssignmentService {
 
     const { data, error } = await supabase
       .from('accommodation_assignment')
-      .select(`
-        *,
-        unit:unit_id (
-          unit_id,
-          unit_number,
-          unit_type,
-          furnishing_status,
-          rental_fee,
-          billing_period,
-          max_occupancy,
-          current_occupancy,
-          accommodation_id,
-          accommodation:accommodation_id (
-            accommodation_id,
-            name,
-            location,
-            accommodation_type,
-            property_type
-          )
-        )
-      `)
+      .select('*')
       .eq('user_id', userId)
       .order('move_in_date', { ascending: false })
 
