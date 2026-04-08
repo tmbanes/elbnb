@@ -1,4 +1,3 @@
-import { sign } from "crypto";
 import { getSupabaseBrowserClient } from "../../lib/supabase/browser-client";
 import {
   UserCreationRequest,
@@ -8,18 +7,18 @@ import {
 } from "@/types/user.types";
 import { metadata } from "@/app/layout";
 
-// VARIABLE: Browser client instance
-const browserClient = getSupabaseBrowserClient();
-
+// NOT USED; Server Route Sign Up is used instead
 // FUNCTION: Sign up with email and password [To-Do: Test]
 async function signUpWithEmail(userData: UserCreationRequest) {
+  const browserClient = getSupabaseBrowserClient();
   const { email, password, ...userMetadata } = userData;
   const { data, error } = await browserClient.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${window.location.origin}/welcome`,
-      data: { ...userMetadata }, // pass all metadata including its subclass
+      data: {     
+        ...userMetadata }, // pass all metadata including its subclass
     },
   });
   console.log("Supabase response:", { data, error }); // [DEBUGGING LOG] to check the response from Supabase
@@ -68,6 +67,7 @@ async function signInWithEmail({
   email: string;
   password: string;
 }) {
+  const browserClient = getSupabaseBrowserClient();
   const { data, error } = await browserClient.auth.signInWithPassword({
     email,
     password,
@@ -79,6 +79,7 @@ async function signInWithEmail({
 
 // FUNCTION: to sign in/sign up using Google [instantly creates User if they don't exist in DB ]
 async function signInWithGoogle(next = "/") {
+  const browserClient = getSupabaseBrowserClient();
   const { error } = await browserClient.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -96,6 +97,7 @@ async function signInWithGoogle(next = "/") {
 }
 
 // FUNCTION: to sign out
+const browserClient = getSupabaseBrowserClient();
 async function signOut() {
   const { error } = await browserClient.auth.signOut();
   if (error) {

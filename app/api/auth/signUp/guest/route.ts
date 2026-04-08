@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signUpAsGuest } from "@/services/browser/auth";
+import { createClient } from "@supabase/supabase-js";
 
 async function POST(request: NextRequest) {
   try {
