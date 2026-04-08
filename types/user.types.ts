@@ -6,7 +6,7 @@ export type OccupancyStatus = ""
 export type College = "CAS" | "CEAT" | "CAFS" | "CVM" | "CDC" | "CEM" | "CHE" | "CFNR" | "SESAM" | "CPAf";
 export type DegreePrograms = "";
 
-export interface UserCreationRequest {
+interface UserCreationRequest {
   first_name: string;
   last_name: string;
   middle_name?: string;
@@ -57,12 +57,9 @@ export interface User {
 }
 
 export type {
-  User,
   UserCreationRequest,
   StudentCreationRequest,
   GuestCreationRequest,
   DormitoryManagerCreationRequest,
   HousingAdminCreationRequest,
-  UserRole,
-  UserStatus,
 };
