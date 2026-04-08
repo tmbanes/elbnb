@@ -2,15 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import type { AccommodationAssignment, AssignmentStatus } from '@/types/assignment_workflow'
-import type { Accommodation, Unit, AccommodationType, UnitType, FurnishingStatus, BillingPeriod } from '@/types/accommodation_units'
-import type { PropertyType } from '@/types/assignment_workflow'
+import type { AccommodationAssignment, AssignmentStatus, PropertyType} from '@/types/assignment_workflow'
+import type { Accommodation, Unit, AccommodationType, UnitType, FurnishingStatus, BillingPeriod} from '@/types/accommodation_units'
 import { AssignmentTile } from '@/components/AssignmentTile'
 
 // ─── Filter shape ─────────────────────────────────────────────────────────────
 
 interface AssignmentFilters {
-  accommodationType: AccommodationType | ''
+  assignmentStatus: AssignmentStatus | ''
+    accommodationType: AccommodationType | ''
   propertyType: PropertyType | ''
   unitType: UnitType | ''
   furnishingStatus: FurnishingStatus | ''
@@ -19,7 +19,8 @@ interface AssignmentFilters {
 }
 
 const DEFAULT_FILTERS: AssignmentFilters = {
-  accommodationType: '',
+  assignmentStatus: '',
+    accommodationType: '',
   propertyType: '',
   unitType: '',
   furnishingStatus: '',
@@ -287,6 +288,20 @@ export default function MyAssignmentsPage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <FilterSelect
+            label="Application Status"
+            value={filters.assignmentStatus}
+            onChange={v => handleFilterChange({
+              assignmentStatus: v as AssignmentStatus | '',
+            })}
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'completed', label: 'Completed' },
+              { value: 'cancelled', label: 'Rejected' },
+              { value: 'terminated', label: 'Terminated' },
+              { value: 'pending', label: 'Pending' },
+            ]}
+          />
           <FilterSelect
             label="Accommodation Type"
             value={filters.accommodationType}
