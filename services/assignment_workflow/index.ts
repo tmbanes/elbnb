@@ -24,7 +24,7 @@ export class AssignmentService {
     if (error) {
       throw new Error(`Failed to fetch assignments: ${error.message}`)
     }
-
+    console.log("Fetched Assignments from Service: " + data)
     return data || []
   }
 
