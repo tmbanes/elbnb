@@ -134,7 +134,7 @@ export function AssignmentTile({
                 {rejecting ? 'Rejecting…' : 'Reject'}
               </button>
               <Link
-                href={`/dashboard/assignments/billing?assignmentId=${assignment.assignment_id}`}
+                href={`/dashboard/billing?assignmentId=${assignment.assignment_id}`}
                 className="flex-1 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white text-center hover:bg-blue-700 transition-colors"
               >
                 Accept & Pay
