@@ -141,7 +141,7 @@ export default function ApplicationFormPage() {
     }
 
     try {
-      const response = await fetch('/api/applications', {
+      const response = await fetch('/api/applications/create_application', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
