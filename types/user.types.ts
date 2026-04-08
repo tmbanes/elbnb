@@ -16,37 +16,27 @@ export interface UserCreationRequest {
   user_status: UserStatus;
 }
 
-export interface StudentCreationRequest extends UserCreationRequest {
-  user_id: string
+interface StudentCreationRequest extends UserCreationRequest {
   student_number: string;
-  degree_program: DegreePrograms;
-  college: College
-  home_address: string
-  violation_count: number
-  enrollment_status: EnrollmentStatus
-  residency_status: ResidencyStatus
-  emergency_person: string
-  emergency_contact: string
-  university_id: string
-  form_5: string // document_id
+  degree_program: string;
+  enrollment_status: "enrolled" | "graduated" | "dropped";
+  residency_status: "freshman" | "sophomore" | "junior" | "senior" | "delayed";
+  violation_count: number;
 }
 
-export interface DormitoryManagerCreationRequest extends UserCreationRequest {
-  user_id: string
+interface DormitoryManagerCreationRequest extends UserCreationRequest {
   employee_id: string;
+}
+
+interface HousingAdminCreationRequest extends UserCreationRequest {
+  admin_id: string;
   office_location: string;
 }
 
-export interface HousingAdminCreationRequest extends UserCreationRequest {
-  user_id: string
-  admin_id: string;
-}
-
-export interface GuestCreationRequest extends UserCreationRequest {
-  user_id: string
+interface GuestCreationRequest extends UserCreationRequest {
   valid_id: string;
   purpose_visit: string;
-  occupancy_status: OccupancyStatus; 
+  occupancy_status: string; // ISO date string
 }
 
 //---------RESPONSE TYPES---------
@@ -66,3 +56,13 @@ export interface User {
   
 }
 
+export type {
+  User,
+  UserCreationRequest,
+  StudentCreationRequest,
+  GuestCreationRequest,
+  DormitoryManagerCreationRequest,
+  HousingAdminCreationRequest,
+  UserRole,
+  UserStatus,
+};

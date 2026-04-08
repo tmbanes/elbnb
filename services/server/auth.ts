@@ -10,24 +10,40 @@ import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 export async function createUserProfile(userData: UserCreationRequest) {
   const supabase = await createSupabaseServerClient();
   const { email, password, ...userMetadata } = userData;
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { ...userMetadata }, // pass all metadata including its subclass
-    },
-  });
-  console.log("Supabase response:", { data, error }); // [DEBUGGING LOG] to check the response from Supabase
-  // Modified duplicate checker
-  if (error) {
-    if (error.message.includes("User already registered")) {
-      return { success: false, error: "This email is already taken!" };
-    }
-    return { success: false, error: error.message };
-  }
 
-  // VARIABLE: userId to be used in inserting a row in users table
-  return { success: true, userId: data.user?.id };
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { ...userMetadata } },
+    });
+
+    console.log("Supabase response:", { data, error });
+
+    if (error) {
+      // If user is already registered
+      if (error.message.includes("User already registered")) {
+        return { success: false, error: "This email is already taken!" };
+      }
+      return { success: false, error: error.message };
+    }
+
+    // If no user is returned
+    if (!data.user) {
+      return { success: false, error: "Signup failed, no user returned" };
+    }
+
+    // Return id and session
+    return {
+      success: true,
+      userId: data.user.id,
+      session: data.session || null, // null if email verification required
+      emailVerificationRequired: data.session === null,
+    };
+  } catch (err: any) {
+    console.error("Unexpected signup error:", err);
+    return { success: false, error: "An unexpected error occurred." };
+  }
 }
 
 // FUNCTION: Sign Up as student
@@ -76,3 +92,11 @@ export async function signOut() {
     console.error("[ERROR] signing out:", error.message);
   }
 }
+
+
+// FUNCTION: to delete user account, ensure it is done only by the user themselves or by an admin
+// export async function deleteUser() {
+//   const supabase = await createSupabaseServerClient();
+//   const {data,error} = await supabase.auth.admin.deleteUser(supabase.auth.getUser()? || '');
+
+// }
