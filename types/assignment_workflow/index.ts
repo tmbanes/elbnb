@@ -7,7 +7,8 @@ export type AssignmentStatus =
   | "completed" // finished the contract
   | "cancelled" // if rejected upon assignment/ not paid 
   | "terminated" // napatalsik siya/incompleted before contract ended
-  | "pending"; // dorm manager and admin
+  | "pending" // dorm manager and admin
+  | "waiting_payment"; // approved by admin, waiting for user payment
 
 // BASED ON SUPABASE PROPERTIES
 export interface AccommodationAssignment {

@@ -128,9 +128,7 @@ export default function MyAssignmentsPage() {
       const assignments: AccommodationAssignment[] = assignJson.data ?? []
 
       // 2. Filter out "pending" assignments from display
-    // UNCOMMENT TO HIDE "PENDING" STATUS
-    //   const visibleAssignments = assignments.filter(a => a.assignment_status !== 'pending')
-        const visibleAssignments = assignments
+      const visibleAssignments = assignments.filter(a => a.assignment_status !== 'pending')
 
       // 3. Fetch accommodations
       const accomRes = await fetch('/api/dashboard/tiles?type=accommodations')
