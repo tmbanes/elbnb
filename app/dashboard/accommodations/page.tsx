@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Accommodation, Unit, AccommodationType, FurnishingStatus, UnitType, PropertyType } from '@/types/accommodation_units'
 import { AccommodationTile } from '@/components/AccommodationTile'
 import { UnitTile } from '@/components/UnitTile'
@@ -60,6 +61,7 @@ function FilterSelect({
 }
 
 export default function AccommodationsDashboardPage() {
+  const router = useRouter()
   const [viewMode, setViewMode] = useState<ViewMode>('accommodations')
 
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
@@ -381,6 +383,10 @@ export default function AccommodationsDashboardPage() {
     setError(null)
   }
 
+  const handleBackToDashBoard = () => {
+    router.push('/dashboard')
+  }
+
   const showPropertyTypeInAccommodations =
     accommodationFilters.accommodationType === 'renting_space' ||
     accommodationFilters.accommodationType === ''
@@ -391,7 +397,12 @@ export default function AccommodationsDashboardPage() {
   return (
     <div className="space-y-6 p-6">
       <h1 className="text-3xl font-bold text-gray-900">Accommodations Dashboard</h1>
-
+      <button
+        onClick={handleBackToDashBoard}
+        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+      >
+        ← Back to Dashboard
+      </button>
       <div className="flex gap-3">
         <button
           onClick={handleViewAccommodations}
