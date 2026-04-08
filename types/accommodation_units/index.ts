@@ -58,7 +58,7 @@ export interface Accommodation {
     accommodation_status: UnitAccommodationStatus;
     total_capacity: number;
     allowed_application: string; // ISO date string
-    property_type: PropertyType
+    property_type?: PropertyType
 }
 
 // BASED ON SUPABASE PROPERTIES
