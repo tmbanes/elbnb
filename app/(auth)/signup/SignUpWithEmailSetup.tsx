@@ -1,6 +1,8 @@
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+import { signUpWithEmail } from "@/services/browser/auth";
+import { UserRole, UserStatus } from "@/types/user.types";
 import { User } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
 
@@ -23,7 +25,8 @@ export default function SignUpWithEmailSetup({ user }: { user: User | null }) {
     last_name: "",
     email: "",
     password: "",
-    role: "Student", // Default role
+    role: "student" as UserRole, // Default role
+    user_status: "inactive" as UserStatus
   });
 
   const [formData, setFormData] = useState(getInitialFormData());
@@ -46,17 +49,16 @@ export default function SignUpWithEmailSetup({ user }: { user: User | null }) {
     setStatus("");
 
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const result = await response.json();
 
       if (result.success) {
+        const session = result.session;
         setStatus("Account created! Please check your email for verification.");
       } else {
         setStatus(`Error: ${result.error}`);
@@ -114,10 +116,10 @@ export default function SignUpWithEmailSetup({ user }: { user: User | null }) {
                     onChange={handleChange} 
                     className={`${fieldClasses} appearance-none cursor-pointer`}
                   >
-                    <option value="Student">Student</option>
-                    <option value="Guest">Guest</option>
-                    <option value="Dorm Manager">Dorm Manager</option>
-                    <option value="Admin">Admin</option>
+                    <option value="student">Student</option>
+                    <option value="guest">Guest</option>
+                    <option value="dormitory_manager">Dorm Manager</option>
+                    <option value="housing_admin">Admin</option>
                   </select>
                 </label>
 

@@ -13,5 +13,5 @@ import { createClient } from "@supabase/supabase-js";
 // This client bypasses RLS — only use inside /api/ routes, never in components
 export const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.SUPABASE_SECRET_KEY!,
 );
