@@ -3,11 +3,11 @@ export type PropertyType = "apartment" | "boarding" | "transient" | "house";
 
 // BASED ON SUPABASE PROPERTIES
 export type AssignmentStatus =
-  | "active"
-  | "completed"
-  | "cancelled"
-  | "terminated"
-  | "pending";
+  | "active" // currently living in it
+  | "completed" // finished the contract
+  | "cancelled" // if rejected upon assignment/ not paid 
+  | "terminated" // napatalsik siya/incompleted before contract ended
+  | "pending"; // dorm manager and admin
 
 // BASED ON SUPABASE PROPERTIES
 export interface AccommodationAssignment {

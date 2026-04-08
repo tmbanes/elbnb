@@ -258,6 +258,10 @@ export default function MyApplicationsPage() {
     applyFilters(enriched, DEFAULT_FILTERS)
   }
 
+  const handleBackToDashBoard = () => {
+    router.push('/dashboard')
+  }
+
   // ── Cancel ─────────────────────────────────────────────────────────────────
   const handleCancel = async (applicationId: string) => {
     setCancellingId(applicationId)
@@ -300,6 +304,12 @@ export default function MyApplicationsPage() {
             {enriched.length} total · {activeCount} active
           </p>
         </div>
+        <button
+          onClick={handleBackToDashBoard}
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+        >
+          ← Back to Dashboard
+        </button>
         <button
           onClick={() => router.push('/dashboard/accommodations')}
           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
