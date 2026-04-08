@@ -1,4 +1,3 @@
-import { sign } from "crypto";
 import { getSupabaseBrowserClient } from "../../lib/supabase/browser-client";
 import {
   UserCreationRequest,

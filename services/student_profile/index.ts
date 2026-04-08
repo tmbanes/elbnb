@@ -19,19 +19,24 @@ export const studentProfileService = {
     return { data: data as UserProfile | null, error };
   },
 
+
   async updateProfile(user_id: string, updates: Partial<UserProfile>) {
     const client = await supabase();
     const { data, error } = await client
-      .from("USER")
-      .update({
-        // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
+      .from('USER')
+        .update({
+          // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
         first_name: updates.first_name,
         last_name: updates.last_name,
         middle_name: updates.middle_name,
       })
-      .eq("user_id", user_id)
+      .eq('user_id', user_id)
       .select()
-      .single();
+      .single(); 
+    
+    if (error) {
+      console.error("Error updating profile:", error);
+    }
 
     return { data: data as UserProfile | null, error };
   },
