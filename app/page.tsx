@@ -1,3 +1,4 @@
+import { redirectByRole } from "@/lib/utils";
 import Link from "next/link";
 
 const setups = [
@@ -66,7 +67,9 @@ const setups = [
   },
 ] as const;
 
-export default function Home() {
+export default async function Home() {
+  await redirectByRole();
+
   return (
     <div className="min-h-screen bg-gradient-to-br bg-yellow-100 text-slate-100">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-12 px-6 py-16">
