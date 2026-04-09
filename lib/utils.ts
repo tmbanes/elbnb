@@ -1,23 +1,71 @@
-// USER UTILITY FUNCTIONS
-// import { supabase } from "./supabase/supabaseClient";
-// import { NextRequest, NextResponse } from "next/server";
-// import { User } from "@/types/user.types";
+// lib\utils.ts
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { User } from "@supabase/supabase-js";
+import { UserWithRole } from "@/types/user.types";
 
+// FUNCTION: Retrieves user and user role from users table.
+export async function getUserWithRole(): Promise<UserWithRole | null>{
+    const supabase = await createSupabaseServerClient();
 
-//----READ FUNCTIONS----
+    const { data: { user } } = await supabase.auth.getUser();
 
-// FUNCTION : Get current authenticated user
-// async function getCurrentUser(): Promise<User | string> {
-//     try {
-//         const {data: {user}, error}= await supabase.auth.getUser(); 
-//         if (error) throw error; // if there's an error, throw it to be caught in the catch block
-//         if (!user) return "No authenticated user found"; // if no user is found, return a message
+    if (!user) return null;
 
-//         const { data } = await supabase.from("USER").select("*").eq("id", user.id).single(); // fetch user data from USER table using the authenticated user's ID
-        
-// }
-// }
+    const { data: user_profile, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
 
-//----CREATE FUNCTIONS----
+    if (error || !user_profile) redirect("/auth/auth-code-error"); // keep error handling
 
-//
+    return {
+        user: user_profile.user,
+        role: user_profile.role,
+    };
+}
+
+// FUNCTION: Requires user and user role for route protection. 
+export async function requireRole(allowedRoles: string[]) {
+    const userWithRole = await getUserWithRole();
+
+    if (!userWithRole) redirect("/onboarding"); // redirect if unauthenticated
+
+    const { user, role } = userWithRole;
+    
+    if (!role) {
+        redirect("/role-selection");
+    }
+    else if (!allowedRoles.includes(role)) {
+        redirect("/auth/auth-code-error");
+    }
+
+    return { user, role };
+}
+
+// FUNCTION: Decide where the user belongs after successful login and redirect them to user authorized route.
+export async function redirectByRole() {
+    const userWithRole = await getUserWithRole();
+
+    if (!userWithRole) redirect("/onboarding");
+
+    const { user, role } = userWithRole;
+    if (!role) {
+        redirect("/role-selection");
+    } else {
+        switch (role) {
+            case "student":
+            redirect("/app/student/dashboard");
+            case "guest":
+            redirect("/app/guest/dashboard");
+            case "housing_admin":
+            redirect("/app/admin/dashboard");
+            case "dormitory_manager":
+            redirect("/app/manager/dashboard");
+            default:
+            redirect("/login");
+        }
+    }
+    
+}
