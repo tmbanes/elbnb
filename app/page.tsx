@@ -1,122 +1,91 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const setups = [
   {
-    href: "/login",
+    href: "/signup",
     title: "Email + Password",
+    description: "Standard authentication flow.",
     highlights: [
       "Toggle sign in/sign up",
       "Show the session panel",
       "Explain password rules",
     ],
-    theme: {
-      card: "border border-yellow-900 bg-gradient-to-br from-[#283307] via-[#212b03] to-[#283307] hover:border-emerald-300/60",
-      open: "text-yellow-300",
-      title: "text-yellow-100",
-      bullets: "text-white",
-    },
   },
   {
     href: "/google-login",
     title: "Google Login",
+    description: "OAuth social provider integration.",
     highlights: [
       "Redirect URLs",
       "Call signInWithOAuth",
       "Watch session update",
     ],
-    theme: {
-      card: "border border-yellow-900 bg-gradient-to-br from-[#083a45] via-[#04313b] to-[#11424d] hover:border-[#7fb0ff]/60",
-      open: "text-[#24b3d4]",
-      title: "text-[#74e3fc]",
-      bullets: "text-white",
-    },
   },
-
-  //onboarding page
   {
     href: "/onboarding",
     title: "Onboarding Sign In + Log In",
+    description: "Interactive multi-step entry.",
     highlights: [
       "Interactive onboarding UI (HOUSE)",
       "Sign up and login doors",
       "Role selection",
     ],
-    theme: {
-      card: "border border-green-700 bg-gradient-to-br from-[#052e1f] via-[#0a3f2a] to-[#0f5943] hover:border-[#10b981]/60",
-      open: "text-[#10b981]",
-      title: "text-[#6ee7b7]",
-      bullets: "text-[#d1fae5]",
-    },
   },
   {
-    // Housing Inventory Management
     href: "/dashboard/admin/housing",
     title: "Housing Inventory Management",
+    description: "Admin dashboard controls.",
     highlights: [
       "Dormitory CRUD",
       "Room and Bed Space Logic",
       "Facility-Manager Mapping",
     ],
-    theme: {
-      card: "border border-green-900 bg-gradient-to-br from-[#052e1f] via-[#064e3b] to-[#065f46] hover:border-[#34d399]/60",
-      open: "text-[#34d399]",
-      title: "text-[#6ee7b7]",
-      bullets: "text-[#d1fae5]",
-    },
   },
 ] as const;
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br bg-yellow-100 text-slate-100">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-12 px-6 py-16">
-        <header className="space-y-4">
-          <p className="text-sm tracking-[0.25em] text-yellow-900">Elbnb</p>
-          <h1 className="text-4xl text-yellow-900 font-semibold text-white drop-shadow-sm">
-            User Authentication Setup
-          </h1>
-        </header>
-        <section className="grid gap-6 md:grid-cols-3">
-          {setups.map((setup) => {
-            const theme = setup.theme;
-            return (
-              <Link
-                key={setup.href}
-                href={setup.href}
-                className={`group relative isolate flex flex-col overflow-hidden rounded-[32px] p-6 transition hover:-translate-y-1 ${
-                  theme?.card ??
-                  "border border-white/5 bg-slate-900/60 shadow-[0_30px_70px_rgba(2,6,23,0.65)] hover:border-emerald-300/50"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                    Flow
-                  </p>
-                  <span
-                    className={`text-sm font-semibold ${theme?.open ?? "text-emerald-300"}`}
-                  >
-                    Open ↗
-                  </span>
-                </div>
-                <h3
-                  className={`mt-4 text-xl font-semibold ${
-                    theme?.title ?? "text-white"
-                  } transition group-hover:opacity-95`}
-                >
-                  {setup.title}
-                </h3>
-                <ul
-                  className={`mt-4 space-y-1 text-xs ${theme?.bullets ?? "text-slate-400"}`}
-                >
-                  {setup.highlights.map((highlight) => (
-                    <li key={highlight}>• {highlight}</li>
-                  ))}
-                </ul>
-              </Link>
-            );
-          })}
-        </section>
-      </div>
+    <div className="container mx-auto py-16 px-6">
+      <header className="mb-12 space-y-2">
+        <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Elbnb</p>
+        <h1 className="text-3xl font-bold tracking-tight">User Authentication Setup</h1>
+      </header>
+
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {setups.map((setup) => (
+          <Card key={setup.href} size="sm" className="flex flex-col">
+            <CardHeader>
+              <CardTitle>{setup.title}</CardTitle>
+              <CardDescription>{setup.description}</CardDescription>
+            </CardHeader>
+            
+            <CardContent className="flex-1">
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                {setup.highlights.map((highlight) => (
+                  <li key={highlight}>• {highlight}</li>
+                ))}
+              </ul>
+            </CardContent>
+
+            <CardFooter>
+              <Button variant="outline" size="sm" className="w-full" asChild>
+                <Link href={setup.href}>
+                  Open Flow
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </section>
     </div>
   );
 }
