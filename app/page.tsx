@@ -1,3 +1,4 @@
+import { redirectByRole } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -78,7 +79,9 @@ const setups = [
   },
 ] as const;
 
-export default function Home() {
+export default async function Home() {
+  await redirectByRole();
+
   return (
     <div className="container mx-auto py-16 px-6">
       <header className="mb-12 space-y-2">

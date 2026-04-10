@@ -1,9 +1,11 @@
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+import { redirectByRole } from "@/lib/utils";
 import { signUpWithEmail } from "@/services/browser/auth";
 import { UserRole, UserStatus } from "@/types/user.types";
 import { User } from "@supabase/supabase-js";
+import { redirect } from "next/navigation";
 import { useState, useEffect } from "react";
 
 const fieldClasses =
@@ -14,7 +16,7 @@ const fieldClasses =
 const labelClasses =
   "block text-xs font-semibold uppercase tracking-wider text-slate-300";
 
-export default function SignUpWithEmailSetup({ user }: { user: User | null }) {
+export default function SignUpWithEmailSetup({ user }: { user: User| null }) {
   const [status, setStatus] = useState("");
   const supabase = getSupabaseBrowserClient();
   const [currentUser, setCurrentUser] = useState<User | null>(user);
@@ -37,6 +39,12 @@ export default function SignUpWithEmailSetup({ user }: { user: User | null }) {
     });
     return () => listener?.subscription.unsubscribe();
   }, [supabase]);
+
+  useEffect(() => {
+    if (currentUser) {
+     redirect('app');
+    }
+  }, [currentUser]);
 
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

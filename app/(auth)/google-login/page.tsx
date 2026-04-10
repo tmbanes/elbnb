@@ -1,13 +1,16 @@
 // /google-login/page.tsx
+import { getUserWithRole } from "@/lib/utils";
 import GoogleLoginSetup from "./GoogleLoginSetup";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { UserWithRole } from "@/types/user.types";
+import { redirect } from "next/navigation";
 
 export default async function GoogleLoginPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const userWithRole: UserWithRole | null = await getUserWithRole();
+    
+  if (userWithRole) {
+    redirect(`app`);
+  }
 
-  console.log({ user });
-  return <GoogleLoginSetup user={user} />;
+  return <GoogleLoginSetup user={userWithRole} />;
 }

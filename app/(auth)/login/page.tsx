@@ -1,14 +1,14 @@
-// "use client";
 import LoginWithEmailSetup from "./LoginWithEmailSetup";
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import GoogleLoginSetup from "../google-login/GoogleLoginSetup";
+import { getUserWithRole } from "@/lib/utils";
+import { UserWithRole } from "@/types/user.types";
+import { redirect } from "next/navigation";
 
 export default async function LoginPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const userWithRole: UserWithRole | null = await getUserWithRole();
+  
+  if (userWithRole) {
+    redirect(`/app`);
+  }
 
-  console.log({ user });
-  return <LoginWithEmailSetup user={user} />;
+  return <LoginWithEmailSetup user={userWithRole} />;
 }
