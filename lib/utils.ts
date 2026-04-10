@@ -1,77 +1,77 @@
 // lib\utils.ts
-import { redirect } from "next/navigation";
+// import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { User } from "@supabase/supabase-js";
 import { UserWithRole } from "@/types/user.types";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 // FUNCTION: Retrieves user and user role from users table.
-export async function getUserWithRole(): Promise<UserWithRole | null>{
-    const supabase = await createSupabaseServerClient();
+export async function getUserWithRole(): Promise<UserWithRole | null> {
+  const supabase = await createSupabaseServerClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) return null;
+  if (!user) return null;
 
-    const { data: user_profile, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+  const { data: user_profile, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
 
-    if (error || !user_profile) redirect("/auth/auth-code-error"); // keep error handling
+  if (error || !user_profile) redirect("/auth/auth-code-error"); // keep error handling
 
-    return {
-        user: user_profile.user,
-        role: user_profile.role,
-    };
+  return {
+    user: user_profile.user,
+    role: user_profile.role,
+  };
 }
 
-// FUNCTION: Requires user and user role for route protection. 
+// FUNCTION: Requires user and user role for route protection.
 export async function requireRole(allowedRoles: string[]) {
-    const userWithRole = await getUserWithRole();
+  const userWithRole = await getUserWithRole();
 
-    if (!userWithRole) redirect("/onboarding"); // redirect if unauthenticated
+  if (!userWithRole) redirect("/onboarding"); // redirect if unauthenticated
 
-    const { user, role } = userWithRole;
-    
-    if (!role) {
-        redirect("/role-selection");
-    }
-    else if (!allowedRoles.includes(role)) {
-        redirect("/auth/auth-code-error");
-    }
+  const { user, role } = userWithRole;
 
-    return { user, role };
+  if (!role) {
+    redirect("/role-selection");
+  } else if (!allowedRoles.includes(role)) {
+    redirect("/auth/auth-code-error");
+  }
+
+  return { user, role };
 }
 
 // FUNCTION: Decide where the user belongs after successful login and redirect them to user authorized route.
 export async function redirectByRole() {
-    const userWithRole = await getUserWithRole();
+  const userWithRole = await getUserWithRole();
 
-    if (!userWithRole) redirect("/onboarding");
+  if (!userWithRole) redirect("/onboarding");
 
-    const { user, role } = userWithRole;
-    if (!role) {
-        redirect("/role-selection");
-    } else {
-        switch (role) {
-            case "student":
-            redirect("/app/student/dashboard");
-            case "guest":
-            redirect("/app/guest/dashboard");
-            case "housing_admin":
-            redirect("/app/admin/dashboard");
-            case "dormitory_manager":
-            redirect("/app/manager/dashboard");
-            default:
-            redirect("/login");
-        }
+  const { user, role } = userWithRole;
+  if (!role) {
+    redirect("/role-selection");
+  } else {
+    switch (role) {
+      case "student":
+        redirect("/app/student/dashboard");
+      case "guest":
+        redirect("/app/guest/dashboard");
+      case "housing_admin":
+        redirect("/app/admin/dashboard");
+      case "dormitory_manager":
+        redirect("/app/manager/dashboard");
+      default:
+        redirect("/login");
     }
-    
+  }
 }
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
