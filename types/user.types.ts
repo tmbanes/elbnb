@@ -11,6 +11,11 @@ interface UserCreationRequest {
   user_status: UserStatus;
 }
 
+export interface UserWithRole {
+  user: User;
+  role: UserRole | null;
+}
+
 interface StudentCreationRequest extends UserCreationRequest {
   student_number: string;
   degree_program: string;
