@@ -4,12 +4,24 @@ import tsPlugin from "@typescript-eslint/eslint-plugin";
 import reactPlugin from "eslint-plugin-react";
 import prettierPlugin from "eslint-plugin-prettier";
 import prettierConfig from "eslint-config-prettier";
+import globals from "globals";
 
 export default [
   js.configs.recommended,
-
+  {
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
+    },
+  },
   {
     files: ["**/*.{ts,tsx}"],
+    env: {
+      browser: true,
+      es2021: true,
+    },
     languageOptions: {
       parser: tsParser,
       parserOptions: {
