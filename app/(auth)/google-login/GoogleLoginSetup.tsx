@@ -32,7 +32,7 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
   }, [supabase]);
 
   async function handleGoogleLogin() {
-    await signInWithGoogle("/app");
+    await signInWithGoogle("/");
   }
 
   return (
