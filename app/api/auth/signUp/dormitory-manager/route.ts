@@ -1,6 +1,6 @@
 export {};
 import { NextRequest, NextResponse } from "next/server";
-import { createDormitoryManager } from "@/services/browser/auth";
+import { createDormitoryManager } from "@/services/server/auth";
 
 async function POST(request: NextRequest) {
   try {

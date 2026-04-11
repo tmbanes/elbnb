@@ -1,13 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { AccommodationAssignment } from '@/types/assignment_workflow'
 import type { Accommodation, Unit } from '@/types/accommodation_units'
 
 type PayState = 'idle' | 'paying' | 'success' | 'error'
 
-export default function BillingPage() {
+export default function BillingPage(){
+  return (
+      <Suspense fallback={<div className="p-6 text-center">Loading form details...</div>}>
+        <BillingPageContent />
+      </Suspense>
+    )
+  }
+
+function BillingPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const assignmentId = searchParams.get('assignmentId') ?? ''
