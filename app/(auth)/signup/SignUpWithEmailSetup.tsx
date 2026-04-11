@@ -1,193 +1,386 @@
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { redirectByRole } from "@/lib/utils";
-import { signUpWithEmail } from "@/services/browser/auth";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { UserRole, UserStatus } from "@/types/user.types";
 import { User } from "@supabase/supabase-js";
-import { redirect } from "next/navigation";
-import { useState, useEffect } from "react";
 
-const fieldClasses =
-  "mt-1.5 w-full rounded-full border-none bg-[#fcf4d9] px-6 py-2.5 text-lg " +
-  "text-[#2d1a12] placeholder-[#2d1a12]/30 shadow-sm focus:outline-none " +
-  "focus:ring-2 focus:ring-[#fbbc05]/50 transition-all";
+//ui components
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
-const labelClasses =
-  "block text-xs font-semibold uppercase tracking-wider text-slate-300";
+//role options
+const roleOptions: Array<{ value: UserRole; label: string }> = [
+  { value: "student", label: "Student" },
+  { value: "guest", label: "Guest" },
+];
 
-export default function SignUpWithEmailSetup({ user }: { user: User| null }) {
+const enrollmentOptions = [
+  { value: "enrolled", label: "Enrolled" },
+  { value: "graduated", label: "Graduated" },
+  { value: "dropped", label: "Dropped" },
+];
+
+const residencyOptions = [
+  { value: "resident", label: "Resident" },
+  { value: "non-resident", label: "Non-Resident" },
+  { value: "evicted", label: "Evicted" },
+];
+
+type SignupFormData = {
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  user_status: UserStatus;
+  student_number: string;
+  degree_program: string;
+  enrollment_status: "enrolled" | "graduated" | "dropped";
+  // residency_status: "freshman" | "sophomore" | "junior" | "senior" | "delayed";
+  residency_status: "resident" | "non-resident" | "evicted";
+  valid_id: string;
+  purpose_visit: string;
+  occupancy_status: string;
+};
+
+const initialFormData: SignupFormData = {
+  first_name: "",
+  middle_name: "",
+  last_name: "",
+  email: "",
+  password: "",
+  role: "student",
+  user_status: "inactive",
+  student_number: "",
+  degree_program: "",
+  enrollment_status: "enrolled",
+  residency_status: "resident",
+  valid_id: "",
+  purpose_visit: "",
+  occupancy_status: "",
+};
+
+export default function SignUpWithEmailSetup({ user: initialUser }: { user: User | null }) {
+  const router = useRouter();
+  const [formData, setFormData] = useState<SignupFormData>(initialFormData);
   const [status, setStatus] = useState("");
-  const supabase = getSupabaseBrowserClient();
-  const [currentUser, setCurrentUser] = useState<User | null>(user);
-
-  const getInitialFormData = () => ({
-    first_name: "",
-    middle_name: "",
-    last_name: "",
-    email: "",
-    password: "",
-    role: "student" as UserRole, // Default role
-    user_status: "inactive" as UserStatus
-  });
-
-  const [formData, setFormData] = useState(getInitialFormData());
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user ?? null);
-    });
-    return () => listener?.subscription.unsubscribe();
-  }, [supabase]);
-
-  useEffect(() => {
-    if (currentUser) {
-     redirect('app');
+    if (initialUser) {
+      router.push("/app");
     }
-  }, [currentUser]);
+  }, [initialUser, router]);
 
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  //student & guest additional fields
+  const renderDynamicFields = () => {
+    switch (formData.role) {
+
+      //STUDENT FIELDS: student_number, degree_program, enrollment_status, residency_status
+      case "student":
+        return (
+          <>
+            <div className="grid gap-2">
+              <Label htmlFor="student_number">Student Number</Label>
+              <Input
+                id="student_number"
+                name="student_number"
+                type="text"
+                value={formData.student_number}
+                onChange={handleChange}
+                placeholder="202312345"
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="degree_program">Degree Program</Label>
+              <Input
+                id="degree_program"
+                name="degree_program"
+                type="text"
+                value={formData.degree_program}
+                onChange={handleChange}
+                placeholder="BS Computer Science"
+                required
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="enrollment_status">Enrollment Status</Label>
+                <select
+                  id="enrollment_status"
+                  name="enrollment_status"
+                  value={formData.enrollment_status}
+                  onChange={handleChange}
+                  className="h-12 rounded-full border border-slate-200 bg-white px-4 text-sm outline-none"
+                >
+                  {enrollmentOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="residency_status">Residency Status</Label>
+                <select
+                  id="residency_status"
+                  name="residency_status"
+                  value={formData.residency_status}
+                  onChange={handleChange}
+                  className="h-12 rounded-full border border-slate-200 bg-white px-4 text-sm outline-none"
+                >
+                  {residencyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </>
+        );
+
+      //GUEST FIELDS: valid_id, purpose_visit, occupancy_status
+      case "guest":
+        return (
+          <>
+            <div className="grid gap-2">
+              <Label htmlFor="valid_id">Valid ID</Label>
+              <Input
+                id="valid_id"
+                name="valid_id"
+                type="text"
+                value={formData.valid_id}
+                onChange={handleChange}
+                placeholder="Passport or ID number"
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="purpose_visit">Purpose of Visit</Label>
+              <Input
+                id="purpose_visit"
+                name="purpose_visit"
+                type="text"
+                value={formData.purpose_visit}
+                onChange={handleChange}
+                placeholder="Attending event"
+                required
+              />
+            </div>
+
+            {/* double check */}
+            <div className="grid gap-2">
+              <Label htmlFor="occupancy_status">Occupancy Date</Label>
+              <Input
+                id="occupancy_status"
+                name="occupancy_status"
+                type="date"
+                value={formData.occupancy_status}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getPayload = () => {
+    const basePayload = {
+      first_name: formData.first_name,
+      middle_name: formData.middle_name || undefined,
+      last_name: formData.last_name,
+      email: formData.email,
+      password: formData.password,
+      role: formData.role,
+      user_status: formData.user_status,
+    };
+
+    //role dependent fields
+    switch (formData.role) {
+      case "student":
+        return {
+          ...basePayload,
+          student_number: formData.student_number,
+          degree_program: formData.degree_program,
+          enrollment_status: formData.enrollment_status,
+          residency_status: formData.residency_status,
+          violation_count: 0,
+        };
+      case "guest":
+        return {
+          ...basePayload,
+          valid_id: formData.valid_id,
+          purpose_visit: formData.purpose_visit,
+          occupancy_status: formData.occupancy_status,
+        };
+      default:
+        return basePayload;
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setStatus("");
+    setLoading(true);
+
+    const payload = getPayload();
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      const response = await fetch("/api/auth/signUp", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
+      const data = await response.json();
 
-      const result = await response.json();
+      //troubleshooting: check response
+      console.log("Response:", data);
 
-      if (result.success) {
-        const session = result.session;
-        setStatus("Account created! Please check your email for verification.");
-      } else {
-        setStatus(`Error: ${result.error}`);
+      if (!response.ok || !data.success) {
+        setStatus(data.error ?? "Signup failed. Please try again.");
+        setLoading(false);
+        return;
       }
+
+      setStatus("Signup successful! Redirecting...");
+      router.push("/role-selection");
+
     } catch (error) {
-      setStatus("An error occurred. Please try again.");
+      setStatus("Unable to complete signup. Please try again later.");
+      console.error("Signup error:", error);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    // BACKGROUND
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#8dbd59] p-4 font-sans selection:bg-emerald-500/30">
-      <div className="w-full max-w-md space-y-6">
-        
-        {/* SIGN UP CARD */}
-        {!currentUser && (
-          <div className="relative overflow-hidden rounded-3xl bg-[#5591AB] p-8 shadow-2xl backdrop-blur-xl">
-            <div className="absolute -right-10 -top-10 -z-10 h-32 w-32 rounded-full blur-3xl" />
-            <div className="absolute -left-10 -bottom-10 -z-10 h-32 w-32 rounded-full blur-3xl" />
+    <Card className="w-full max-w-lg my-8 mx-auto">
+      <CardHeader>
+        <CardTitle>Get Started!</CardTitle>
+        <CardDescription>
+          Kindly fill up the following fields
+        </CardDescription>
+      </CardHeader>
 
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-4xl font-bold text-[#F6F8D5]">
-                  Get Started!
-                </h2>
-                <p className="text-l text-[#F6F8D5]">Kindly fill the necessary information below</p>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="first_name">First Name</Label>
+                <Input
+                  id="first_name"
+                  name="first_name"
+                  type="text"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  placeholder="First name"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="middle_name">Middle Name</Label>
+                <Input
+                  id="middle_name"
+                  name="middle_name"
+                  type="text"
+                  value={formData.middle_name}
+                  onChange={handleChange}
+                  placeholder="Middle name"
+                />
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-
-                {/* NAMES */}
-                <div className="grid grid-cols-2 gap-4">
-                  <label className={labelClasses}>
-                    First Name
-                    <input name="first_name" type="text" value={formData.first_name} onChange={handleChange} required className={fieldClasses} />
-                  </label>
-                  <label className={labelClasses}>
-                    Last Name
-                    <input name="last_name" type="text" value={formData.last_name} onChange={handleChange} required className={fieldClasses} />
-                  </label>
-                </div>
-
-                <label className={labelClasses}>
-                  Middle Name (Optional)
-                  <input name="middle_name" type="text" value={formData.middle_name} onChange={handleChange} className={fieldClasses} />
-                </label>
-
-                {/* ROLES */}
-                <label className={labelClasses}>
-                  User Role
-                  <select 
-                    name="role" 
-                    value={formData.role} 
-                    onChange={handleChange} 
-                    className={`${fieldClasses} appearance-none cursor-pointer`}
-                  >
-                    <option value="student">Student</option>
-                    <option value="guest">Guest</option>
-                    <option value="dormitory_manager">Dorm Manager</option>
-                    <option value="housing_admin">Admin</option>
-                  </select>
-                </label>
-
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
-                <hr className="border-white/5 my-4" />
-
-                {/* EMAIL & PASSWORD */}
-                <div className="grid grid-cols-1 gap-4">
-                    <label className={labelClasses}>
-                    Email Address
-                    <input name="email" type="email" value={formData.email} onChange={handleChange} required className={fieldClasses} placeholder="name@uplb.edu.ph" />
-                    </label>
-                    <label className={labelClasses}>
-                    Password
-                    <input name="password" type="password" value={formData.password} onChange={handleChange} required className={fieldClasses} placeholder="••••••••" />
-                    </label>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full mt-4 bg-[#fbbc05] hover:bg-[#fcf4d9] text-[#fcf4d9] hover:text-[#2d1a12] font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
-              >
-                Create Account
-              </button>
-
-              {status && (
-                <p className="text-center text-xs font-medium text-emerald-400 mt-2 bg-emerald-400/10 py-2 rounded-lg">
-                  {status}
-                </p>
-              )}
-            </form>
-          </div>
-        )}
-
-        {/* SESSION STATUS */}
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-white">System Session</h3>
-              <p className="text-xs text-slate-500">
-                {currentUser ? currentUser.email : "No active session detected"}
-              </p>
+            <div className="grid gap-2">
+              <Label htmlFor="last_name">Last Name</Label>
+              <Input
+                id="last_name"
+                name="last_name"
+                type="text"
+                value={formData.last_name}
+                onChange={handleChange}
+                placeholder="Last name"
+                required
+              />
             </div>
-            {currentUser ? (
-              <button 
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  window.location.href = "/onboarding"; 
-                }}
-                className="px-4 py-2 text-xs font-bold text-white bg-red-500/20 hover:bg-red-500/40 rounded-lg transition-colors"
+
+            <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="role">Role</Label>
+              <select
+                id="role"
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="h-12 rounded-full border border-slate-200 bg-white px-4 text-sm outline-none"
               >
-                Log Out
-              </button>
-            ) : (
-              <span className="h-2 w-2 rounded-full bg-slate-600 animate-pulse" />
-            )}
+                {roleOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="name@example.com"
+                required
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Choose a secure password"
+                required
+              />
+            </div>
+
+            <div className="space-y-4">{renderDynamicFields()}</div>
           </div>
-        </div>
-      </div>
-    </div>
+
+          {status && (
+            <p className="rounded-full bg-red-500/10 px-4 py-3 text-center text-sm text-red-700">
+              {status}
+            </p>
+          )}
+
+          <CardFooter className="flex flex-col gap-3">
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? "Signing up..." : "Create account"}
+            </Button>
+          </CardFooter>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
