@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { ApplicationStatus, AccommodationApplication } from '@/types/application_workflow'
 import type { Accommodation, Unit } from '@/types/accommodation_units'
@@ -11,6 +11,15 @@ type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 type ApplicationCreatePayload = Omit<AccommodationApplication, 'application_id' | 'accommodation_assignment'>
 
 export default function ApplicationFormPage() {
+
+  return (
+    <Suspense fallback={<div className="p-6 text-center">Loading form details...</div>}>
+      <ApplicationFormContent />
+    </Suspense>
+  )
+}
+
+function ApplicationFormContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -393,6 +402,7 @@ export default function ApplicationFormPage() {
     </div>
   )
 }
+
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
