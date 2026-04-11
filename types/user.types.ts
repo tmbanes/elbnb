@@ -12,8 +12,8 @@ interface UserCreationRequest {
   middle_name?: string;
   email: string;
   password: string;
-  role: UserRole;
-  user_status: UserStatus;
+  role?: UserRole | null;
+  user_status?: UserStatus;
 }
 
 export interface UserWithRole {
