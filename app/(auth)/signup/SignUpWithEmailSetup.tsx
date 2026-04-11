@@ -1,8 +1,7 @@
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { signUpWithEmail } from "@/services/browser/auth";
 import { UserRole, UserStatus } from "@/types/user.types";
 import { User } from "@supabase/supabase-js";
 
@@ -72,13 +71,21 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (initialUser) {
-      router.push("/app");
-    }
-  }, [initialUser, router]);
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+    return () => listener?.subscription.unsubscribe();
+  }, [supabase]);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = event.target;
+  useEffect(() => {
+    if (currentUser) {
+     redirect('/app');
+    }
+  }, [currentUser]);
+
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
