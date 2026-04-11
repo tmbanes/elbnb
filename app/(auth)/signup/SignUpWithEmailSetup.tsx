@@ -1,36 +1,34 @@
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { signUpWithEmail } from "@/services/browser/auth";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { UserRole, UserStatus } from "@/types/user.types";
 import { User } from "@supabase/supabase-js";
-import { redirect } from 'next/navigation';
 
 //ui components
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Card, 
+  CardContent,
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 
-//role options
-const roleOptions: Array<{ value: UserRole; label: string }> = [
-  { value: "student", label: "Student" },
-  { value: "guest", label: "Guest" },
-];
+//style constants
+const label_style = "block text-xs font-semibold uppercase tracking-wider text-slate-300"
 
-const enrollmentOptions = [
-  { value: "enrolled", label: "Enrolled" },
-  { value: "graduated", label: "Graduated" },
-  { value: "dropped", label: "Dropped" },
-];
+const field_style = 
+  "rounded-full border-none bg-[#fcf4d9] px-4 py-1.5 text-base " +
+  "text-[#2d1a12] placeholder-[#2d1a12]/30 shadow-sm " +
+  "transition-all outline-none";
 
-const residencyOptions = [
-  { value: "resident", label: "Resident" },
-  { value: "non-resident", label: "Non-Resident" },
-  { value: "evicted", label: "Evicted" },
-];
+const button_style = "w-full h-11 rounded-full bg-[#fbbc05] text-[#2d1a12] font-semibold hover:bg-[#f9d776]";
+
+type Role = "guest" | "student";
 
 type SignupFormData = {
   first_name: string;
@@ -38,16 +36,6 @@ type SignupFormData = {
   last_name: string;
   email: string;
   password: string;
-  role: UserRole;
-  user_status: UserStatus;
-  student_number: string;
-  degree_program: string;
-  enrollment_status: "enrolled" | "graduated" | "dropped";
-  // residency_status: "freshman" | "sophomore" | "junior" | "senior" | "delayed";
-  residency_status: "resident" | "non-resident" | "evicted";
-  valid_id: string;
-  purpose_visit: string;
-  occupancy_status: string;
 };
 
 const initialFormData: SignupFormData = {
@@ -56,15 +44,6 @@ const initialFormData: SignupFormData = {
   last_name: "",
   email: "",
   password: "",
-  role: "student",
-  user_status: "inactive",
-  student_number: "",
-  degree_program: "",
-  enrollment_status: "enrolled",
-  residency_status: "resident",
-  valid_id: "",
-  purpose_visit: "",
-  occupancy_status: "",
 };
 
 export default function SignUpWithEmailSetup({ user: initialUser }: { user: User | null }) {
@@ -84,9 +63,9 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
 
   useEffect(() => {
     if (currentUser) {
-     redirect('/');
+      router.push("/");
     }
-  }, [currentUser]);
+  }, [currentUser, router]);
 
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -94,155 +73,16 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  //student & guest additional fields
-  const renderDynamicFields = () => {
-    switch (formData.role) {
-
-      //STUDENT FIELDS: student_number, degree_program, enrollment_status, residency_status
-      case "student":
-        return (
-          <>
-            <div className="grid gap-2">
-              <Label htmlFor="student_number">Student Number</Label>
-              <Input
-                id="student_number"
-                name="student_number"
-                type="text"
-                value={formData.student_number}
-                onChange={handleChange}
-                placeholder="202312345"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="degree_program">Degree Program</Label>
-              <Input
-                id="degree_program"
-                name="degree_program"
-                type="text"
-                value={formData.degree_program}
-                onChange={handleChange}
-                placeholder="BS Computer Science"
-                required
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="enrollment_status">Enrollment Status</Label>
-                <select
-                  id="enrollment_status"
-                  name="enrollment_status"
-                  value={formData.enrollment_status}
-                  onChange={handleChange}
-                  className="h-12 rounded-full border border-slate-200 bg-white px-4 text-sm outline-none"
-                >
-                  {enrollmentOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="residency_status">Residency Status</Label>
-                <select
-                  id="residency_status"
-                  name="residency_status"
-                  value={formData.residency_status}
-                  onChange={handleChange}
-                  className="h-12 rounded-full border border-slate-200 bg-white px-4 text-sm outline-none"
-                >
-                  {residencyOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </>
-        );
-
-      //GUEST FIELDS: valid_id, purpose_visit, occupancy_status
-      case "guest":
-        return (
-          <>
-            <div className="grid gap-2">
-              <Label htmlFor="valid_id">Valid ID</Label>
-              <Input
-                id="valid_id"
-                name="valid_id"
-                type="text"
-                value={formData.valid_id}
-                onChange={handleChange}
-                placeholder="Passport or ID number"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="purpose_visit">Purpose of Visit</Label>
-              <Input
-                id="purpose_visit"
-                name="purpose_visit"
-                type="text"
-                value={formData.purpose_visit}
-                onChange={handleChange}
-                placeholder="Attending event"
-                required
-              />
-            </div>
-
-            {/* double check */}
-            <div className="grid gap-2">
-              <Label htmlFor="occupancy_status">Occupancy Date</Label>
-              <Input
-                id="occupancy_status"
-                name="occupancy_status"
-                type="date"
-                value={formData.occupancy_status}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </>
-        );
-      default:
-        return null;
-    }
-  };
 
   const getPayload = () => {
-    const basePayload = {
+    return {
       first_name: formData.first_name,
       middle_name: formData.middle_name || undefined,
       last_name: formData.last_name,
       email: formData.email,
       password: formData.password,
-      role: formData.role,
-      user_status: formData.user_status,
+      user_status: "inactive",
     };
-
-    //role dependent fields
-    switch (formData.role) {
-      case "student":
-        return {
-          ...basePayload,
-          student_number: formData.student_number,
-          degree_program: formData.degree_program,
-          enrollment_status: formData.enrollment_status,
-          residency_status: formData.residency_status,
-          violation_count: 0,
-        };
-      case "guest":
-        return {
-          ...basePayload,
-          valid_id: formData.valid_id,
-          purpose_visit: formData.purpose_visit,
-          occupancy_status: formData.occupancy_status,
-        };
-      default:
-        return basePayload;
-    }
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -272,7 +112,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
       }
 
       setStatus("Signup successful! Redirecting...");
-      router.push("/role-selection");
+      router.push("/role-selection"); //redirect to /role-selection after successful signup
 
     } catch (error) {
       setStatus("Unable to complete signup. Please try again later.");
@@ -283,116 +123,107 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
   };
 
   return (
-    <Card className="w-full max-w-lg my-8 mx-auto">
-      <CardHeader>
-        <CardTitle>Get Started!</CardTitle>
-        <CardDescription>
-          Kindly fill up the following fields
-        </CardDescription>
-      </CardHeader>
 
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#8dbd59] p-4 font-sans selection:bg-emerald-500/30">
+      
+      {/* Main Auth Card */}
+      <Card className="bg-[#5591AB] shadow-sm w-fit">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-[#F6F8D5]">Get Started!</CardTitle>
+          <CardDescription className="text-[#F6F8D5]">
+            Kindly fill the necessary information below
+          </CardDescription>
+        </CardHeader>
 
-            <div className="grid gap-2 sm:grid-cols-2">
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="first_name" className={label_style}>First Name</Label>
+                  <Input
+                    className={field_style}
+                    id="first_name"
+                    name="first_name"
+                    type="text"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    placeholder="First name"
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="middle_name" className={label_style}>Middle Name</Label>
+                  <Input
+                    className={field_style}
+                    id="middle_name"
+                    name="middle_name"
+                    type="text"
+                    value={formData.middle_name}
+                    onChange={handleChange}
+                    placeholder="Middle name"
+                  />
+                </div>
+              </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="first_name">First Name</Label>
+                <Label htmlFor="last_name" className={label_style}>Last Name</Label>
                 <Input
-                  id="first_name"
-                  name="first_name"
+                  className={field_style}
+                  id="last_name"
+                  name="last_name"
                   type="text"
-                  value={formData.first_name}
+                  value={formData.last_name}
                   onChange={handleChange}
-                  placeholder="First name"
+                  placeholder="Last name"
                   required
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="middle_name">Middle Name</Label>
-                <Input
-                  id="middle_name"
-                  name="middle_name"
-                  type="text"
-                  value={formData.middle_name}
-                  onChange={handleChange}
-                  placeholder="Middle name"
-                />
+
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email" className={label_style}>Email</Label>
+                  <Input
+                    className={field_style}
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="name@up.edu.ph"
+                    required
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="password" className={label_style}>Password</Label>
+                  <Input
+                    className={field_style}
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Choose a secure password"
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="last_name">Last Name</Label>
-              <Input
-                id="last_name"
-                name="last_name"
-                type="text"
-                value={formData.last_name}
-                onChange={handleChange}
-                placeholder="Last name"
-                required
-              />
-            </div>
-
-            <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="role">Role</Label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="h-12 rounded-full border border-slate-200 bg-white px-4 text-sm outline-none"
-              >
-                {roleOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="name@example.com"
-                required
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Choose a secure password"
-                required
-              />
-            </div>
-
-            <div className="space-y-4">{renderDynamicFields()}</div>
-          </div>
-
-          {status && (
-            <p className="rounded-full bg-red-500/10 px-4 py-3 text-center text-sm text-red-700">
-              {status}
-            </p>
-          )}
-
-          <CardFooter className="flex flex-col gap-3">
-            <Button type="submit" disabled={loading} className="w-full">
+            {/* {status && (
+              <p className="rounded-full bg-red-500/10 px-4 py-3 text-center text-sm text-red-700">
+                {status}
+              </p>
+            )} */}
+            
+            <Button type="submit" disabled={loading} className={button_style}>
               {loading ? "Signing up..." : "Create account"}
             </Button>
-          </CardFooter>
-        </form>
-      </CardContent>
-    </Card>
+            
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+
   );
 }
