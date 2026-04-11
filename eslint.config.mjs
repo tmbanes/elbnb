@@ -18,6 +18,10 @@ export default [
   },
   {
     files: ["**/*.{ts,tsx}"],
+    env: {
+      browser: true,
+      es2021: true,
+    },
     languageOptions: {
       parser: tsParser,
       parserOptions: {
