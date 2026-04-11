@@ -15,7 +15,8 @@ interface StudentCreationRequest extends UserCreationRequest {
   student_number: string;
   degree_program: string;
   enrollment_status: "enrolled" | "graduated" | "dropped";
-  residency_status: "freshman" | "sophomore" | "junior" | "senior" | "delayed";
+  // residency_status: "freshman" | "sophomore" | "junior" | "senior" | "delayed";
+  residency_status: "resident" | "non-resident" | "evicted";
   violation_count: number;
 }
 
