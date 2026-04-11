@@ -1,7 +1,6 @@
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { redirectByRole } from "@/lib/utils";
 import { signUpWithEmail } from "@/services/browser/auth";
 import { UserRole, UserStatus } from "@/types/user.types";
 import { User } from "@supabase/supabase-js";
@@ -42,7 +41,7 @@ export default function SignUpWithEmailSetup({ user }: { user: User| null }) {
 
   useEffect(() => {
     if (currentUser) {
-     redirect('app');
+     redirect('/app');
     }
   }, [currentUser]);
 
