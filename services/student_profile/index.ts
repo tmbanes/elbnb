@@ -19,7 +19,6 @@ export const studentProfileService = {
     return { data: data as UserProfile | null, error };
   },
 
-
   async updateProfile(user_id: string, updates: Partial<UserProfile>) {
     const client = await supabase();
     const { data, error } = await client
@@ -30,7 +29,7 @@ export const studentProfileService = {
         last_name: updates.last_name,
         middle_name: updates.middle_name,
       })
-      .eq('user_id', user_id)
+      .eq("user_id", user_id)
       .select()
       .single(); 
     
