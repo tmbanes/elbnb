@@ -1,4 +1,4 @@
-import { redirectByRole } from "@/lib/utils";
+import { redirectByRole } from "@/lib/utils/auth-utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {

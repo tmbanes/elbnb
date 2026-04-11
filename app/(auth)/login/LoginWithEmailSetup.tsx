@@ -7,7 +7,7 @@ import { User } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmail } from "@/services/browser/auth";
-import { redirectByRole } from "@/lib/utils";
+
 
 const fieldClasses =
   "mt-1.5 w-full rounded-full border-none bg-[#fcf4d9] px-6 py-2.5 text-lg " +
