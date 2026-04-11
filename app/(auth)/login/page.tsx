@@ -7,7 +7,7 @@ export default async function LoginPage() {
   const userWithRole: UserWithRole | null = await getUserWithRole();
   
   if (userWithRole) {
-    redirect(`/app`);
+    redirect(`/`);
   }
 
   return <LoginWithEmailSetup user={userWithRole} />;

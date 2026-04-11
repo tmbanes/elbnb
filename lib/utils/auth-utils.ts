@@ -14,9 +14,10 @@ export async function getUserWithRole(): Promise<UserWithRole | null>{
     const { data: user_profile, error } = await supabase
         .from("users")
         .select("*")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .single();
 
+    console.log(user_profile, error);
     if (error || !user_profile) redirect("/auth/auth-code-error"); // keep error handling
 
     return {
@@ -33,10 +34,10 @@ export async function requireRole(allowedRoles: string[]) {
 
     const { user, role } = userWithRole;
     
-    if (!role) {
+    if (role == null) {
         redirect("/role-selection");
     }
-    else if (!allowedRoles.includes(role)) {
+    else if (role != null && !allowedRoles.includes(role)) {
         redirect("/auth/auth-code-error");
     }
 
@@ -55,13 +56,13 @@ export async function redirectByRole() {
     } else {
         switch (role) {
             case "student":
-            redirect("/app/student/dashboard");
+            redirect("/student/dashboard");
             case "guest":
-            redirect("/app/guest/dashboard");
+            redirect("/guest/dashboard");
             case "housing_admin":
-            redirect("/app/admin/dashboard");
+            redirect("/admin/dashboard");
             case "dormitory_manager":
-            redirect("/app/manager/dashboard");
+            redirect("/manager/dashboard");
             default:
             redirect("/login");
         }
