@@ -9,7 +9,7 @@ export default async function GoogleLoginPage() {
   const userWithRole: UserWithRole | null = await getUserWithRole();
     
   if (userWithRole) {
-    redirect(`app`);
+    redirect(`/`);
   }
 
   return <GoogleLoginSetup user={userWithRole} />;

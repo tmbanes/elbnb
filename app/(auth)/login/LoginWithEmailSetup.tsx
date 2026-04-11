@@ -40,7 +40,7 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
 
   useEffect(() => {
     if (currentUser) {
-      router.push('/app');
+      router.push('/');
     }
   }, [currentUser]);
 

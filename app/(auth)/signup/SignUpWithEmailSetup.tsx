@@ -84,7 +84,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
 
   useEffect(() => {
     if (currentUser) {
-     redirect('/app');
+     redirect('/');
     }
   }, [currentUser]);
 
