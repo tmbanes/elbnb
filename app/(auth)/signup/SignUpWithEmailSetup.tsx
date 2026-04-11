@@ -2,8 +2,11 @@
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { signUpWithEmail } from "@/services/browser/auth";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { UserRole, UserStatus } from "@/types/user.types";
 import { User } from "@supabase/supabase-js";
+import { redirect } from 'next/navigation';
 
 //ui components
 import { Input } from "@/components/ui/input";
@@ -66,6 +69,8 @@ const initialFormData: SignupFormData = {
 
 export default function SignUpWithEmailSetup({ user: initialUser }: { user: User | null }) {
   const router = useRouter();
+  const supabase = getSupabaseBrowserClient();
+  const [currentUser, setCurrentUser] = useState<User | null>(initialUser);
   const [formData, setFormData] = useState<SignupFormData>(initialFormData);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
