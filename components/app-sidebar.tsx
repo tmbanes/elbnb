@@ -33,7 +33,7 @@ const sidebarConfig = {
     nav: [
       // /student/dashboard but use /dashboard for testing
       { title: "Dashboard", url: "/dashboard", icon: PieChart },
-      { title: "Accommodations", url: "#", icon: MapPinHouse },
+      { title: "Accommodations", url: "/student/accommodation", icon: MapPinHouse },
       { title: "Applications", url: "#", icon: Newspaper },
       { title: "Billing", url: "#", icon: Banknote },
     ],
