@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { AccomodationHistory } from "@/types/accomodation/accomodationHistory";
+import { BillingCreation, BillingInformation } from "@/types/billing";
 
 //-----ACCOMODATION SERVICES-----//
 // FUNCTION:   Get accomodation history
@@ -26,7 +27,7 @@ export async function getAccomodationHistory(user_id: string) {
       )
     `)
     .eq("user_id", user_id)
-    .order("date_submitted", { ascending: false });
+
 
     // catch error
     if (error) {
@@ -75,4 +76,51 @@ export async function insertDocument(
     return { data, error: null };
 
   }
-    
+  
+
+  //-----BILLING SERVICES-----//
+  export async function getBillingInformation(user_id: string) { // GET billing information for a user
+    const supabase = await createSupabaseServerClient();
+    const {data, error} = await supabase
+    .from("billing")
+    .select (  
+    `
+     amount,
+     due_date,
+     billing_period_date,
+     status,
+     created_at,
+     payment_method,
+     transaction_reference
+     `
+    ).eq("user_id", user_id)
+
+    if (error) {
+      console.error("Error fetching billing information:", error);
+      return { data: null, error };
+    }
+
+    return {data: (data as unknown) as BillingInformation, error}
+  }
+
+  export async function updateBillingInformation(user_id: string, billingData: Partial <BillingCreation>) { // UPDATE billing information for a user
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+    .from("billing")
+    .update({
+      amount : billingData.amount,
+      status : billingData.status,
+      billing_period_date: billingData.billing_period_date,
+      payment_method : billingData.payment_method
+    }     
+    ).eq("user_id", user_id)
+    .select() //returns updated
+    .single();
+
+    if (error) {
+      console.error("Error updating billing:", error)
+    }
+
+    console.log("Data updated successfully: ", data); //DEBUGGING
+    return {data: billingData as BillingCreation | null, error};
+  }
