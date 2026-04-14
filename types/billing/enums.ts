@@ -1,11 +1,9 @@
-export enum BillingStatus {
-  DRAFT = "draft",
-  PENDING = "pending",
-  PARTIALLY_PAID = "partially_paid",
+export enum BillingStatus { // Modified: based on DB
+  PARTIALLY_PAID = "partially_paid", // do we consider this?
   PAID = "paid",
+  UNPAID = "unpaid",  
   OVERDUE = "overdue",
-  CANCELLED = "cancelled",
-  REFUNDED = "refunded",
+  PAID_LATE = "paid_late",
 }
 
 export enum BillingItemType {
