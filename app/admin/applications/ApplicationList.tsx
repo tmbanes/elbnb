@@ -13,7 +13,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import { ChevronDown, X } from "lucide-react"
+import { ChevronDown, X, Check, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -89,17 +89,7 @@ export default function ApplicationList({
         { value: "cancelled", label: "Cancelled" },
     ]
 
-    // Active Filter
-    const activeFilters = [
-        status !== "all" && { label: statusOptions.find(s => s.value === status)?.label, key: "status" },
-        dormitory !== "all" && {
-            label: accommodations?.find(a => a.accommodation_id === dormitory)?.name,
-            key: "dormitory"
-        },
-        period !== "all" && { label: period, key: "period" },
-        search && { label: `Search: ${search}`, key: "search" },
-    ].filter((f): f is { label: string; key: string } => Boolean(f && f.label))
-
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchApplications();
@@ -166,6 +156,8 @@ export default function ApplicationList({
         console.log("DATA:", data);
 
         setApplications(data ?? [])
+
+        setLoading(false);
     }
 
     return (
@@ -252,8 +244,8 @@ export default function ApplicationList({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Period</SelectItem>
-                        <SelectItem value="semestral">Semestral</SelectItem>
-                        <SelectItem value="annual">Annual</SelectItem>
+                        <SelectItem value="start">Semestral</SelectItem>
+                        <SelectItem value="end">Annual</SelectItem>
                     </SelectContent>
                     </Select>
                 </div>
@@ -270,29 +262,6 @@ export default function ApplicationList({
                 </div>
                 </div>
             </div>
-
-            {/* ACTIVE FILTER CHIPS */}
-            {activeFilters.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-0.5">
-                {activeFilters.map((f: any, i) => (
-                    <Badge
-                    key={i}
-                    className="bg-[#264384] text-[#F6F8D5] border border-[#264384] flex items-center gap-1 transition-all duration-200 hover:bg-[#5591AB] hover:scale-[1.03] hover:shadow-sm cursor-default"
-                    >
-                    {f.label}
-                    <X
-                        className="w-3 h-3 cursor-pointer"
-                        onClick={() => {
-                        if (f.key === "status") setStatus("all")
-                        if (f.key === "dormitory") setDormitory("all")
-                        if (f.key === "period") setPeriod("all")
-                        if (f.key === "search") setSearch("")
-                        }}
-                    />
-                    </Badge>
-                ))}
-                </div>
-            )}
 
             {/* FOOTER */}
             <div className="flex justify-between items-center mt-0.5">
@@ -316,104 +285,166 @@ export default function ApplicationList({
         {/* TABLE */}
         <div className="border border-[#e8e2d6] rounded-md overflow-hidden">
 
-            {/* HEADER WITH ROOF IMAGES */}
-            <div className="flex items-stretch bg-[#264384]">
+        {/* HEADER WITH ROOF IMAGES */}
+        <div className="relative bg-[#264384]">
 
-                {/* LEFT ROOF IMAGE */}
-                {/* <img
-                    src="/assets/left_roof.png"
-                    className="w-10 h-auto flex-shrink-0"
-                    alt="left roof"
-                />*/}
+            {/* ROOF IMAGES (DO NOT AFFECT LAYOUT) */}
+            <img
+            src="/assets/left_roof.png"
+            className="absolute left-0 top-0 h-full object-contain pointer-events-none"
+            alt="left roof"
+            />
+            <img
+            src="/assets/right_roof.png"
+            className="absolute right-0 top-0 h-full object-contain pointer-events-none"
+            alt="right roof"
+            />
 
-                {/* HEADER CONTENT */}
-                <Table className="flex-1">
-                    <TableHeader>
-                        <TableRow className="border-none">
-                            <TableHead className="text-white font-semibold text-sm">
-                                Applicant Name
-                            </TableHead>
+            {/* HEADER */}
+            <Table className="w-full">
+            <TableHeader>
+                <TableRow className="border-none">
 
-                            <TableHead className="text-white font-semibold text-sm">
-                                Student ID
-                            </TableHead>
+                <TableHead className="text-white text-sm font-semibold px-6 py-4">
+                    Applicant Name
+                </TableHead>
 
-                            <TableHead className="text-white font-semibold text-sm">
-                                Dormitory
-                            </TableHead>
+                <TableHead className="text-white text-sm font-semibold px-6 py-4">
+                    Student ID
+                </TableHead>
 
-                            <TableHead className="text-white font-semibold text-sm">
-                                Application Date
-                            </TableHead>
+                <TableHead className="text-white text-sm font-semibold px-6 py-4">
+                    Dormitory
+                </TableHead>
 
-                            <TableHead className="text-white font-semibold text-sm">
-                                Status
-                            </TableHead>
+                <TableHead className="text-white text-sm font-semibold px-6 py-4">
+                    Application Date
+                </TableHead>
 
-                            <TableHead className="text-white font-semibold text-sm">
-                                Actions
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                </Table>
+                <TableHead className="text-white text-sm font-semibold px-6 py-4">
+                    Status
+                </TableHead>
 
-                {/* RIGHT ROOF IMAGE */}
-                {/*<img
-                    src="/assets/right_roof.png"
-                    className="w-10 h-auto flex-shrink-0"
-                    alt="right roof"
-                />*/}
-            </div>
+                <TableHead className="text-white text-sm font-semibold px-6 py-4">
+                    Actions
+                </TableHead>
 
-            <Table>
-                <TableBody>
-                    {applications.length === 0 ? (
-                        <TableRow className="bg-white border-b border-[#e8e2d6] hover:bg-[#F6F8D5]">
-                        <TableCell colSpan={6} className="text-center py-6 bg-white">
-                            No applications found
-                        </TableCell>
-                        </TableRow>
-                    ) : (
-                        applications.map((app) => (
-                        <TableRow key={app.application_id}>
-                            
-                            {/* Applicant Name (you currently don't have it) */}
-                            <TableCell className="bg-white">N/A</TableCell>
-
-                            {/* Student ID (you DON'T have student table yet) */}
-                            <TableCell className="bg-white">N/A</TableCell>
-
-                            {/* Dormitory */}
-                            <TableCell className="bg-white">
-                            {app.unit?.accommodation?.name ?? "N/A"}
-                            </TableCell>
-
-                            {/* Date */}
-                            <TableCell className="bg-white">
-                            {app.date_submitted
-                                ? new Date(app.date_submitted).toLocaleDateString()
-                                : "N/A"}
-                            </TableCell>
-
-                            {/* Status */}
-                            <TableCell className="bg-white">
-                            <span className="capitalize">
-                                {app.application_status}
-                            </span>
-                            </TableCell>
-
-                            {/* Actions */}
-                            <TableCell className="bg-white">
-                            <Button onClick={() => onSelect(app.application_id)}>
-                                View
-                            </Button>
-                            </TableCell>
-
-                        </TableRow>
-                        ))
-                    )}
-                </TableBody>
+                </TableRow>
+            </TableHeader>
             </Table>
+        </div>
+
+        {/* BODY */}
+        <Table>
+            <TableBody>
+            {loading ? (
+            [...Array(5)].map((_, i) => (
+                <TableRow key={i}>
+                {[...Array(6)].map((_, j) => (
+                    <TableCell key={j} className="px-6 py-4">
+                    <div className="h-4 w-full bg-gray-200 animate-pulse rounded-md" />
+                    </TableCell>
+                ))}
+                </TableRow>
+            ))
+            ) : applications.length === 0 ? (
+                <TableRow>
+                <TableCell colSpan={6} className="text-center py-6">
+                    No applications found
+                </TableCell>
+                </TableRow>
+            ) : (
+                applications.map((app) => {
+
+                const status = app.application_status?.toLowerCase();
+
+                const statusConfig: any = {
+                    approved: {
+                        class: "bg-[#78A24C] text-black",
+                        icon: <Check className="w-3 h-3" />,
+                    },
+                    rejected: {
+                        class: "bg-[#DF3538] text-black",
+                        icon: <X className="w-3 h-3" />,
+                    },
+                    cancelled: {
+                        class: "bg-[#EB8A0B] text-black",
+                        icon: <X className="w-3 h-3" />,
+                    },
+                    pending_admin: {
+                        class: "bg-[#F2C908] text-black",
+                        icon: <Clock className="w-3 h-3" />,
+                    },
+                    pending_payment: {
+                        class: "bg-[#F2C908] text-black",
+                        icon: <Clock className="w-3 h-3" />,
+                    },
+                    pending_dorm_manager: {
+                        class: "bg-[#F2C908] text-black",
+                        icon: <Clock className="w-3 h-3" />,
+                    },
+                };
+
+                return (
+                    <TableRow
+                    key={app.application_id}
+                    onClick={() => onSelect(app.application_id)}
+                    className="
+                        bg-white border-b border-[#e8e2d6]
+                        hover:bg-[#F6F8D5]
+                        hover:shadow-md
+                        hover:scale-[1.01]
+                        transition-all duration-200 ease-in-out
+                        cursor-pointer
+                        "
+                    >
+
+                    <TableCell className="px-6 py-4">N/A</TableCell>
+
+                    <TableCell className="px-6 py-4">N/A</TableCell>
+
+                    <TableCell className="px-6 py-4">
+                        {app.unit?.accommodation?.name ?? "N/A"}
+                    </TableCell>
+
+                    <TableCell className="px-6 py-4">
+                        {app.date_submitted
+                        ? new Date(app.date_submitted).toLocaleDateString()
+                        : "N/A"}
+                    </TableCell>
+
+                    {/* STATUS BADGE */}
+                    <TableCell className="px-6 py-4">
+                    <span
+                        className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium capitalize",
+                        statusConfig[status]?.class || "bg-gray-100 text-gray-600"
+                        )}
+                    >
+                        {statusConfig[status]?.icon}
+                        {app.application_status.replaceAll("_", " ")}
+                    </span>
+                    </TableCell>
+
+                    {/* ACTION */}
+                    <TableCell
+                        className="px-6 py-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Button
+                        size="sm"
+                        onClick={() => onSelect(app.application_id)}
+                        >
+                        View
+                        </Button>
+                    </TableCell>
+
+                    </TableRow>
+                );
+                })
+            )}
+            </TableBody>
+        </Table>
         </div>
     </div>
     );
