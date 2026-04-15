@@ -1,9 +1,13 @@
-export enum BillingStatus { // Modified: based on DB
-  PARTIALLY_PAID = "partially_paid", // do we consider this?
+export enum BillingStatus {
+  PARTIALLY_PAID = "partially_paid",
   PAID = "paid",
   UNPAID = "unpaid",  
   OVERDUE = "overdue",
   PAID_LATE = "paid_late",
+
+  // for receipt verification flow
+  PENDING_VERIFICATION = "pending_verification",
+  FAILED = "failed"
 }
 
 export enum BillingItemType {
@@ -39,57 +43,7 @@ export enum PaymentStatus {
 }
 
 export enum PaymentMethod {
-  CASH = "cash",
-  BANK_TRANSFER = "bank_transfer",
-  GCASH = "gcash",
-  MAYA = "maya",
-  CARD = "card",
-  ONLINE = "online",
-  OTHER = "other",
-}
-
-export enum PayoutStatus {
-  PENDING = "pending",
-  SCHEDULED = "scheduled",
-  PROCESSING = "processing",
-  PAID = "paid",
-  FAILED = "failed",
-  CANCELLED = "cancelled",
-}
-
-export enum RefundStatus {
-  PENDING = "pending",
-  APPROVED = "approved",
-  REJECTED = "rejected",
-  PROCESSED = "processed",
-  FAILED = "failed",
-  CANCELLED = "cancelled",
-}
-
-export enum RefundReason {
-  OVERPAYMENT = "overpayment",
-  BILLING_ERROR = "billing_error",
-  DUPLICATE_PAYMENT = "duplicate_payment",
-  RESERVATION_CANCELLED = "reservation_cancelled",
-  TENANT_REQUEST = "tenant_request",
-  OTHER = "other",
-}
-
-export enum TransactionType {
-  CHARGE = "charge",
-  PAYMENT = "payment",
-  REFUND = "refund",
-  PAYOUT = "payout",
-  ADJUSTMENT = "adjustment",
-  PENALTY = "penalty",
-  DISCOUNT = "discount",
-}
-
-export enum TransactionStatus {
-  PENDING = "pending",
-  POSTED = "posted",
-  FAILED = "failed",
-  CANCELLED = "cancelled",
+  CASH = "cash"
 }
 
 export enum BillingPeriodType {
