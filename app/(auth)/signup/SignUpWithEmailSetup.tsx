@@ -93,7 +93,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
     const payload = getPayload();
 
     try {
-      const response = await fetch("/api/auth/signUp", {
+      const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -210,11 +210,11 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
                 </div>
               </div>
 
-            {/* {status && (
-              <p className="rounded-full bg-red-500/10 px-4 py-3 text-center text-sm text-red-700">
+            {status && (
+              <p className="rounded-full bg-red-500/20 px-4 py-3 text-center text-sm text-red-700">
                 {status}
               </p>
-            )} */}
+            )}
             
             <Button type="submit" disabled={loading} className={button_style}>
               {loading ? "Signing up..." : "Create account"}

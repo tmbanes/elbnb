@@ -1,3 +1,4 @@
+// components/app-sidebar.tsx
 "use client"
 
 import * as React from "react"
@@ -31,10 +32,9 @@ const sidebarConfig = {
   student: {
     label: "Student",
     nav: [
-      // /student/dashboard but use /dashboard for testing
-      { title: "Dashboard", url: "/student/dashboard", icon: PieChart },
-      { title: "Accommodations", url: "#", icon: MapPinHouse },
-      { title: "Applications", url: "#", icon: Newspaper },
+      { title: "Dashboard", url: "/dashboard", icon: PieChart },
+      { title: "Accommodations", url: "/student/accommodations", icon: MapPinHouse },
+      { title: "Applications", url: "/student/application", icon: Newspaper },
       { title: "Billing", url: "/student/dashboard/billing", icon: Banknote },
       { title: "Admin Billing (Test)", url: "/admin/dashboard/billing", icon: Banknote },
     ],
@@ -61,9 +61,9 @@ const sidebarConfig = {
     label: "Guest",
     nav: [
       // should be "/guest/dashboard" but use /dashboard for testing
-      { title: "Dashboard", url: "/dashboard", icon: PieChart },
-      { title: "Accommodations", url: "#", icon: MapPinHouse },
-      { title: "Applications", url: "#", icon: Newspaper },
+      { title: "Dashboard", url: "/guest/dashboard", icon: PieChart },
+      { title: "Accommodations", url: "/guest/accommodations", icon: MapPinHouse },
+      { title: "Applications", url: "/guest/application", icon: Newspaper },
       { title: "Billing", url: "/guest/dashboard/billing", icon: Banknote },
       { title: "Guest Sample", url: "#", icon: Users },
     ],
