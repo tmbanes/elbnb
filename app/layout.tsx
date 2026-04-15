@@ -1,7 +1,24 @@
 import type { Metadata } from "next";
 import React from "react";
+<<<<<<< Updated upstream
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+=======
+import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Archivo_Black } from "next/font/google";
+import "./globals.css";
+import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Variable } from "lucide-react";
+
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+>>>>>>> Stashed changes
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,7 +41,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+<<<<<<< Updated upstream
     <html lang="en">
+=======
+    <html lang="en" className={cn("font-sans", inter.variable, archivoBlack.variable)}>
+>>>>>>> Stashed changes
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

@@ -13,8 +13,22 @@
     "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/auth-helpers-react": "^0.15.0",
     "@supabase/ssr": "^0.9.0",
+<<<<<<< Updated upstream
     "@supabase/supabase-js": "^2.99.1",
     "next": "16.1.6",
+=======
+    "@supabase/supabase-js": "^2.102.1",
+    "@tanstack/react-table": "^8.21.3",
+    "@uppy/core": "^5.2.0",
+    "@uppy/dashboard": "^5.1.1",
+    "@uppy/react": "^5.2.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^1.8.0",
+    "next": "^16.2.2",
+    "radix-ui": "^1.4.3",
+>>>>>>> Stashed changes
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

@@ -4,7 +4,7 @@ type UserStatus = 'active' | 'inactive' | 'deactivated';
 interface UserCreationRequest {
     first_name: string;
     last_name: string;
-    middle_name?: string; 
+    middle_name?: string;
     email: string;
     password: string;
     role: UserRole;
@@ -15,7 +15,7 @@ interface StudentCreationRequest extends UserCreationRequest {
     student_number: string;
     degree_program: string;
     enrollment_status: 'enrolled' | 'graduated' | 'dropped';
-    residency_status:'freshman' | 'sophomore' | 'junior' | 'senior' | 'delayed';
+    residency_status: 'freshman' | 'sophomore' | 'junior' | 'senior' | 'delayed';
     violation_count: number;
 }
 
@@ -37,15 +37,19 @@ interface GuestCreationRequest extends UserCreationRequest {
 
 //---------RESPONSE TYPES---------
 
-interface User { // Response type for data fetche
+export interface User {
+    // Response type for data fetche
     user_id: string;
     first_name: string;
     last_name: string;
     middle_name?: string; // Optional middle name
     email: string;
     role: UserRole; // [To-Do:Define the role field with the UserRole type next]
-    user_status: UserStatus; 
+    user_status: UserStatus;
     created_at: string; // ISO date string
+    sex: string
+    birthdate: string // ISO date string
+    profile_picture_url?: string | null;
 }
 
 export type { User, UserCreationRequest, StudentCreationRequest, GuestCreationRequest, DormitoryManagerCreationRequest, HousingAdminCreationRequest, UserRole, UserStatus };
