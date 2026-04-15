@@ -1,3 +1,4 @@
+// components/app-sidebar.tsx
 "use client"
 
 import * as React from "react"
@@ -33,8 +34,8 @@ const sidebarConfig = {
     nav: [
       // /student/dashboard but use /dashboard for testing
       { title: "Dashboard", url: "/dashboard", icon: PieChart },
-      { title: "Accommodations", url: "/dashboard/search-accommodations", icon: MapPinHouse },
-      { title: "Applications", url: "#", icon: Newspaper },
+      { title: "Accommodations", url: "/student/accommodation", icon: MapPinHouse },
+      { title: "Applications", url: "/student/application", icon: Newspaper },
       { title: "Billing", url: "#", icon: Banknote },
     ],
   },
@@ -59,9 +60,9 @@ const sidebarConfig = {
     label: "Guest",
     nav: [
       // should be "/guest/dashboard" but use /dashboard for testing
-      { title: "Dashboard", url: "/dashboard", icon: PieChart },
-      { title: "Accommodations", url: "/dashboard/search-accommodations", icon: MapPinHouse },
-      { title: "Applications", url: "#", icon: Newspaper },
+      { title: "Dashboard", url: "/guest/dashboard", icon: PieChart },
+      { title: "Accommodations", url: "/guest/accommodation", icon: MapPinHouse },
+      { title: "Applications", url: "/guest/application", icon: Newspaper },
       { title: "Billing", url: "#", icon: Banknote },
       { title: "Guest Sample", url: "#", icon: Users },
     ],
