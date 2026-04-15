@@ -1,4 +1,4 @@
-// app\admin\layout.tsx
+// app\manager\layout.tsx
 import { requireRole } from "@/lib/utils/auth-utils";
 
 //ui components
@@ -6,12 +6,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-    // await requireRole(["housing_admin"]); // Temporarily disabled for testing
+export default async function ManagerLayout({ children }: { children: React.ReactNode }) {
+    await requireRole(["dormitory_manager"]);
     return(
         <TooltipProvider>
             <SidebarProvider>
-                <AppSidebar role="admin" />
+                <AppSidebar role="manager" />
                 <SidebarTrigger />
 
                 <main className="flex-1">
