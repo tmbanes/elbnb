@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
 import React from "react";
-<<<<<<< feature/application-form
-import { Geist, Geist_Mono } from "next/font/google";
-=======
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Archivo_Black } from "next/font/google";
->>>>>>> develop
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const geist = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -42,11 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-<<<<<<< feature/application-form
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-=======
     <html lang="en" className={cn("font-sans", inter.variable, archivoBlack.variable)}>
->>>>>>> develop
       <body
         className={cn(
           geistSans.variable,
