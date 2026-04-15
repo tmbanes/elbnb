@@ -2,11 +2,9 @@ import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation";
 import { Accommodation } from "@/types/accommodation_units";
 import Link from "next/link";
 
-export default async function Page() {
+export default async function ListOfAccommodationsPage() {
   const { data: accommodations, error } =
-  // JUST CHANGE THE PARAMETER TO "guest" TO FETCH GUEST ACCOMMODATIONS INSTEAD OF STUDENT
-  // To review 
-    await UnitAccomodationsDisplayService.listAccomodations("guest");
+    await UnitAccomodationsDisplayService.listAccomodations("student");
 
   if (error) {
     return <div className="p-10 text-red-500">Error: {error}</div>;
@@ -175,7 +173,7 @@ export default async function Page() {
                       </button>
 
                       <Link 
-                        href="/guest/accommodation/application" 
+                        href="/student/accommodation/application" 
                         className="px-8 py-2 bg-[#2B4A8B] text-white rounded-lg text-sm inline-block"
                       >
                         Apply
