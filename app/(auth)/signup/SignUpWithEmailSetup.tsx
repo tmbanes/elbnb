@@ -93,7 +93,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
     const payload = getPayload();
 
     try {
-      const response = await fetch("/api/auth/signUp", {
+      const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
