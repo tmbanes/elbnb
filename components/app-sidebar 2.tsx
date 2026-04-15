@@ -32,11 +32,10 @@ const sidebarConfig = {
     label: "Student",
     nav: [
       // /student/dashboard but use /dashboard for testing
-      { title: "Dashboard", url: "/student/dashboard", icon: PieChart },
+      { title: "Dashboard", url: "/dashboard", icon: PieChart },
       { title: "Accommodations", url: "#", icon: MapPinHouse },
       { title: "Applications", url: "#", icon: Newspaper },
-      { title: "Billing", url: "/student/dashboard/billing", icon: Banknote },
-      { title: "Admin Billing (Test)", url: "/admin/dashboard/billing", icon: Banknote },
+      { title: "Billing", url: "#", icon: Banknote },
     ],
   },
 
@@ -44,7 +43,6 @@ const sidebarConfig = {
     label: "Admin",
     nav: [
       { title: "Dashboard", url: "/admin/dashboard", icon: PieChart },
-      { title: "Billing", url: "/admin/dashboard/billing", icon: Banknote },
       { title: "Sample", url: "#", icon: Users },
     ],
   },
@@ -64,7 +62,7 @@ const sidebarConfig = {
       { title: "Dashboard", url: "/dashboard", icon: PieChart },
       { title: "Accommodations", url: "#", icon: MapPinHouse },
       { title: "Applications", url: "#", icon: Newspaper },
-      { title: "Billing", url: "/guest/dashboard/billing", icon: Banknote },
+      { title: "Billing", url: "#", icon: Banknote },
       { title: "Guest Sample", url: "#", icon: Users },
     ],
   },

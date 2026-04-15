@@ -7,7 +7,8 @@ export enum BillingStatus {
 
   // for receipt verification flow
   PENDING_VERIFICATION = "pending_verification",
-  FAILED = "failed"
+  FAILED = "failed",
+  PENDING = "PENDING"
 }
 
 export enum BillingItemType {
