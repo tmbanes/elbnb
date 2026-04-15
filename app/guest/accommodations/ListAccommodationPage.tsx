@@ -2,7 +2,7 @@ import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation";
 import { Accommodation } from "@/types/accommodation_units";
 import Link from "next/link";
 
-export default async function Page() {
+export default async function ListAccommodationPage() {
   const { data: accommodations, error } =
   // JUST CHANGE THE PARAMETER TO "guest" TO FETCH GUEST ACCOMMODATIONS INSTEAD OF STUDENT
   // To review 
