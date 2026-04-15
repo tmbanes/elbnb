@@ -210,11 +210,11 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
                 </div>
               </div>
 
-            {/* {status && (
-              <p className="rounded-full bg-red-500/10 px-4 py-3 text-center text-sm text-red-700">
+            {status && (
+              <p className="rounded-full bg-red-500/20 px-4 py-3 text-center text-sm text-red-700">
                 {status}
               </p>
-            )} */}
+            )}
             
             <Button type="submit" disabled={loading} className={button_style}>
               {loading ? "Signing up..." : "Create account"}
