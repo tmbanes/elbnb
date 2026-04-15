@@ -38,7 +38,9 @@ export function calculateTaxAmount(
   return taxable_amount * tax_rate;
 }
 
-export function calculateTotalAmount(input: BillingTotalsInput): BillingTotalsResult {
+export function calculateTotalAmount(
+  input: BillingTotalsInput,
+): BillingTotalsResult {
   const subtotal_amount = calculateSubtotal(input.items);
   const discount_amount = input.discount_amount ?? 0;
   const penalty_amount = input.penalty_amount ?? 0;

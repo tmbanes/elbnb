@@ -25,7 +25,10 @@ export function calculateHostPayout(
 
   const net_amount = Math.max(
     0,
-    gross_amount - platform_fee_amount + adjustment_amount - refund_deduction_amount,
+    gross_amount -
+      platform_fee_amount +
+      adjustment_amount -
+      refund_deduction_amount,
   );
 
   return {

@@ -1,65 +1,252 @@
-import Image from "next/image";
+import { redirectByRole } from "@/lib/utils/auth-utils";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardAction
+} from "@/components/ui/card";
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 
-export default function Home() {
+
+const setups = [
+  {
+    href: "/signup",
+    title: "Email + Password",
+    description: "Standard authentication flow.",
+    highlights: [
+      "Toggle sign in/sign up",
+      "Show the session panel",
+      "Explain password rules",
+    ],
+  },
+  {
+    href: "/google-login",
+    title: "Google Login",
+    description: "OAuth social provider integration.",
+    highlights: [
+      "Redirect URLs",
+      "Call signInWithOAuth",
+      "Watch session update",
+    ],
+  },
+  {
+    href: "/onboarding",
+    title: "Onboarding Sign In + Log In",
+    description: "Interactive multi-step entry.",
+    highlights: [
+      "Interactive onboarding UI (HOUSE)",
+      "Sign up and login doors",
+      "Role selection",
+    ],
+  },
+  {
+    href: "/dashboard/admin/housing",
+    title: "Housing Inventory Management",
+    description: "Admin dashboard controls.",
+    highlights: [
+      "Dormitory CRUD",
+      "Room and Bed Space Logic",
+      "Facility-Manager Mapping",
+    ],
+  },
+] as const;
+
+export default async function Home() {
+  await redirectByRole();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <div className="container mx-auto py-16 px-6">
+      <header className="mb-12 space-y-2">
+        <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Elbnb</p>
+        <h1 className="text-3xl font-bold tracking-tight">User Authentication Setup</h1>
+      </header>
+
+
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {setups.map((setup) => (
+          <Card key={setup.href} size="sm" className="flex flex-col">
+            <CardHeader>
+              <CardTitle>{setup.title}</CardTitle>
+              <CardDescription>{setup.description}</CardDescription>
+            </CardHeader>
+           
+            <CardContent className="flex-1">
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                {setup.highlights.map((highlight) => (
+                  <li key={highlight}>• {highlight}</li>
+                ))}
+              </ul>
+            </CardContent>
+
+
+            <CardFooter>
+              <Button variant="outline" size="sm" className="w-full" asChild>
+                <Link href={setup.href}>
+                  Open Flow
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </section>
+
+      
+      {/* SAMPLE UI COMPONENTS (shadcn-ui) */}
+      <Separator className="my-12" />
+      
+      <section className="mt-12">
+        <h1 className="text-3xl font-bold tracking-tight mb-6">
+          Sample UI Components
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+          
+          {/* Context Menu */}
+          <ContextMenu>
+            <ContextMenuTrigger className="flex aspect-video w-full max-w-xs items-center justify-center rounded-xl border border-dashed text-sm">
+              <span className="hidden pointer-fine:inline-block">
+                Right click here
+              </span>
+              <span className="hidden pointer-coarse:inline-block">
+                Long press here
+              </span>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="w-48">
+              <ContextMenuGroup>
+                <ContextMenuItem>
+                  Back
+                  <ContextMenuShortcut>⌘[</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem disabled>
+                  Forward
+                  <ContextMenuShortcut>⌘]</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem>
+                  Reload
+                  <ContextMenuShortcut>⌘R</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSub>
+                  <ContextMenuSubTrigger>More Tools</ContextMenuSubTrigger>
+                  <ContextMenuSubContent className="w-44">
+                    <ContextMenuGroup>
+                      <ContextMenuItem>Save Page...</ContextMenuItem>
+                      <ContextMenuItem>Create Shortcut...</ContextMenuItem>
+                      <ContextMenuItem>Name Window...</ContextMenuItem>
+                    </ContextMenuGroup>
+                    <ContextMenuSeparator />
+                    <ContextMenuGroup>
+                      <ContextMenuItem>Developer Tools</ContextMenuItem>
+                    </ContextMenuGroup>
+                    <ContextMenuSeparator />
+                    <ContextMenuGroup>
+                      <ContextMenuItem variant="destructive">Delete</ContextMenuItem>
+                    </ContextMenuGroup>
+                  </ContextMenuSubContent>
+                </ContextMenuSub>
+              </ContextMenuGroup>
+              <ContextMenuSeparator />
+              <ContextMenuGroup>
+                <ContextMenuCheckboxItem checked>
+                  Show Bookmarks
+                </ContextMenuCheckboxItem>
+                <ContextMenuCheckboxItem>Show Full URLs</ContextMenuCheckboxItem>
+              </ContextMenuGroup>
+              <ContextMenuSeparator />
+              <ContextMenuGroup>
+                <ContextMenuRadioGroup value="pedro">
+                  <ContextMenuLabel>People</ContextMenuLabel>
+                  <ContextMenuRadioItem value="pedro">
+                    Pedro Duarte
+                  </ContextMenuRadioItem>
+                  <ContextMenuRadioItem value="colm">Colm Tuite</ContextMenuRadioItem>
+                </ContextMenuRadioGroup>
+              </ContextMenuGroup>
+            </ContextMenuContent>
+          </ContextMenu>
+
+          {/* Card */}
+          <Card className="relative mx-auto w-full max-w-sm pt-0">
+            <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
+            <img
+              src="https://avatar.vercel.sh/shadcn1"
+              alt="Event cover"
+              className="relative z-20 aspect-video w-full object-cover brightness-60 grayscale dark:brightness-40"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <CardHeader>
+              <CardAction>
+                <Badge variant="secondary">Featured</Badge>
+              </CardAction>
+              <CardTitle>Design systems meetup</CardTitle>
+              <CardDescription>
+                A practical talk on component APIs, accessibility, and shipping
+                faster.
+              </CardDescription>
+            </CardHeader>
+            <CardFooter>
+              <Button className="w-full">View Event</Button>
+            </CardFooter>
+          </Card>
+
+          <Accordion
+            type="single"
+            collapsible
+            defaultValue="shipping"
+            className="max-w-lg"
           >
-            Documentation
-          </a>
+            <AccordionItem value="shipping">
+              <AccordionTrigger>What are your shipping options?</AccordionTrigger>
+              <AccordionContent>
+                We offer standard (5-7 days), express (2-3 days), and overnight
+                shipping. Free shipping on international orders.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="returns">
+              <AccordionTrigger>What is your return policy?</AccordionTrigger>
+              <AccordionContent>
+                Returns accepted within 30 days. Items must be unused and in original
+                packaging. Refunds processed within 5-7 business days.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="support">
+              <AccordionTrigger>How can I contact customer support?</AccordionTrigger>
+              <AccordionContent>
+                Reach us via email, live chat, or phone. We respond within 24 hours
+                during business days.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
         </div>
-      </main>
+      </section>
+
     </div>
   );
 }

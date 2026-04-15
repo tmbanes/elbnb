@@ -1,22 +1,27 @@
-import { supabase } from '@/lib/supabase/supabaseClient'; 
-import { UserProfile, AccommodationAssignment, AccommodationApplication } from '@/types/student_profile';
+// /services/student_profile/index.ts
+
+import { createSupabaseServerClient as supabase } from "@/lib/supabase/server-client";
+import {
+  UserProfile,
+  AccommodationAssignment,
+  AccommodationApplication,
+} from "@/types/student_profile";
 
 export const studentProfileService = {
-
-
   async getProfile(user_id: string) {
-    const { data, error } = await supabase
-      .from('USER')
-      .select('*')
-      .eq('user_id', user_id)
+    const client = await supabase();
+    const { data, error } = await client
+      .from("USER")
+      .select("*")
+      .eq("user_id", user_id)
       .single();
 
     return { data: data as UserProfile | null, error };
   },
 
-
   async updateProfile(user_id: string, updates: Partial<UserProfile>) {
-    const { data, error } = await supabase
+    const client = await supabase();
+    const { data, error } = await client
       .from('USER')
         .update({
           // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
@@ -24,48 +29,50 @@ export const studentProfileService = {
         last_name: updates.last_name,
         middle_name: updates.middle_name,
       })
-      .eq('user_id', user_id)
+      .eq("user_id", user_id)
       .select()
-      .single();
+      .single(); 
+    
+    if (error) {
+      console.error("Error updating profile:", error);
+    }
 
     return { data: data as UserProfile | null, error };
   },
 
-  
+  // export interface AccommodationAssignment {
+  //     assignment_id: string;
+  //     move_In_Date: string;
+  //     expected_Move_Out_Date: string;
+  //     actual_Move_Out_Date?: string | null;
+  //     application_id: string;
 
-
-// export interface AccommodationAssignment {
-//     assignment_id: string; 
-//     move_In_Date: string; 
-//     expected_Move_Out_Date: string;
-//     actual_Move_Out_Date?: string | null;
-//     application_id: string; 
-    
-//     // optional for history checker 
-//     application?: {
-//     preferred_Unit_Type: string;
-//     preferred_Accomodation: string;
-//     };
+  //     // optional for history checker
+  //     application?: {
+  //     preferred_Unit_Type: string;
+  //     preferred_Accomodation: string;
+  //     };
 
   async getMyAssignment(application_id: string) {
-    const { data, error } = await supabase
-      .from('accomodation_assignment')
-      .select(`
+    const client = await supabase();
+    const { data, error } = await client
+      .from("accomodation_assignment")
+      .select(
+        `
         assignment_id,
         move_In_Date,
         expected_Move_Out_Date,
         actual_Move_Out_Date,
         application_id
-      `)
-      .eq('application_id', application_id)
+      `,
+      )
+      .eq("application_id", application_id)
       .single();
 
     return { data: data as AccommodationAssignment | null, error };
   },
 
-
-
-/*
+  /*
 
 for reference:
 https://supabase.com/docs/reference/javascript/storage-from-upload
@@ -75,30 +82,27 @@ not yet tested
 
 // */
 
-// const avatarFile = event.target.files[0]
-// const { data, error } = await supabase
-//   .storage
-//   .from('avatars')
-//   .upload('public/avatar1.png', avatarFile, {
-//     cacheControl: '3600',
-//     upsert: false
-//   })
+  // const avatarFile = event.target.files[0]
+  // const { data, error } = await supabase
+  //   .storage
+  //   .from('avatars')
+  //   .upload('public/avatar1.png', avatarFile, {
+  //     cacheControl: '3600',
+  //     upsert: false
+  //   })
 
+  // async uploadDocument(user_id: string, application_id: string, file: File){
+  //   const filePath = `${user_id}/${application_id}/${file.name}`;
 
-// async uploadDocument(user_id: string, application_id: string, file: File){ 
-//   const filePath = `${user_id}/${application_id}/${file.name}`;
+  //   const { data: storageData}
 
-//   const { data: storageData}
-
-
-// }
-
+  // }
 
   async uploadDocument(user_id: string, application_id: string, file: File) {
-
+    const client = await supabase();
     /*
     const avatarFile = event.target.files[0]
-    const { data, error } = await supabase
+    const { data, error } = await client
       .storage
       .from('avatars')
       .upload('public/avatar1.png', avatarFile, {
@@ -106,14 +110,13 @@ not yet tested
         upsert: false
       })
     */
-    
+
     const filePath = `${user_id}/${application_id}/${file.name}`;
-    const { data: storageData, error: storageError } = await supabase
-      .storage
-      .from('documents')
+    const { data: storageData, error: storageError } = await client.storage
+      .from("documents")
       .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true // for overwriting
+        cacheControl: "3600",
+        upsert: true, // for overwriting
       });
 
     if (storageError) {
@@ -122,8 +125,8 @@ not yet tested
     }
 
     // added document successfully
-    const { data: dbData, error: dbError } = await supabase
-      .from('Document')
+    const { data: dbData, error: dbError } = await client
+      .from("Document")
       .insert({
         user_id: user_id,
         application_id: application_id,
@@ -139,8 +142,6 @@ not yet tested
   },
 
   // https://supabase.com/dashboard/project/cywurzembhxgwqvpsrlh/database/schemas
-
-  
 
   /*
 
@@ -159,40 +160,59 @@ not yet tested
       accomodation_assignment?: AccommodationAssignment | null; 
   }
   */
-  
 
-  async getAccommodationHistory(user_id: string) { 
-    const { data, error } = await supabase 
-
-      .from('accomodation_application')
+  async getAccommodationHistory(user_id: string) {
+    const client = await supabase();
+    
+    // TODO (for BACKEND): Di ko gets pano yung joint database query magwork so tinanggal ko muna etong nasa baba, for me to test ung history page
+    // accomodation_assignment(assignment_id, move_in_date, expected_move_out_date, actual_move_out_date)
+    // pa-add nalang ung accommodation_assignment(..) later on, thanks - eunel
+    
+    // also NOTE: ung preferred_accommodation raw uuid sya and displayed sya sa UI, so need siguro ng getAccommodationName? function or 
+    // something to convert the uuid to the actual accommodation name?
+    const { data, error } = await client
+      .from("accommodation_application")
       .select(`
         application_id,
-        preferred_Accomodation,
-        preferred_Unit_Type,
-        date_Submitter,
-        duration_Of_Stay,
-        check_In,
-        check_Out,
-        number_Of_Companions,
+        application_status,
+        preferred_accommodation,
+        preferred_unit_type,
+        date_submitted,
+        duration_of_stay,
+        check_in,
+        check_out,
+        number_of_companions
+      `)
+      .eq("user_id", user_id)
+      .order("date_submitted", { ascending: false });
 
+    if (error) {
+       console.error("Supabase fetch error:", error);
+    }
 
-        accomodation_assignment (
-          assignment_id,
-          move_In_Date,
-          expected_Move_Out_Date,
-          actual_Move_Out_Date
-        )
-        `)
-    
-      .eq('user_id', user_id)
-      .order('date_Submitter', { ascending: false })
-    
     return { data: data as AccommodationApplication[] | null, error };
-  }
+  },
 
+  // added for the cancel modal in the history and status page, 
+  // to update the application_status to "cancelled" when the user cancels their pending application (pending_admin or pending_dorm_manager)
+  async cancelAccommodationApplication(application_id: string) {
+    const client = await supabase();
+    
+    const { data, error } = await client
+      .from("accommodation_application")
+      .update({ application_status: "cancelled" })
+      .eq("application_id", application_id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error canceling application:", error);
+      return { data: null, error };
+    }
+
+    return { data, error: null };
+  },
 };
-
-
 
 /*
 notes:
