@@ -60,14 +60,9 @@ export default function HousingDashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Housing Inventory</h1>
+      <h1 className="text-2xl font-bold">Housing Routes</h1>
+      <p>will remove this page once moved to ADMIN page routes (pages for housing currently in /dashboard for checking)</p>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        <StatCard label="Dormitories" value={stats.totalDorms} />
-        <StatCard label="Rental Spaces" value={stats.totalRentalSpaces} />
-        <StatCard label="Managers" value={stats.totalManagers} />
-      </div>
 
       {/* Quick Links */}
       <div className="flex gap-4">
@@ -84,15 +79,6 @@ export default function HousingDashboardPage() {
           View All Managers
         </Link>
       </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded border p-4 shadow-sm">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-3xl font-bold">{value}</p>
     </div>
   );
 }
