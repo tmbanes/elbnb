@@ -173,7 +173,7 @@ export default async function ListOfAccommodationsPage() {
                       </button>
 
                       <Link 
-                        href="/student/accommodation/application" 
+                        href="/student/accommodations/application" 
                         className="px-8 py-2 bg-[#2B4A8B] text-white rounded-lg text-sm inline-block"
                       >
                         Apply
