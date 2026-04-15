@@ -6,7 +6,6 @@ export default async function GuestLayout({
 }: {
     children: React.ReactNode
 }) {
-    // Uncomment just needed for testing
     // await requireRole(["housing_admin"])
 
     return (
