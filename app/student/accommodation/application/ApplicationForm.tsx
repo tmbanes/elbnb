@@ -279,7 +279,6 @@ export default function ApplyAccommodationForm() {
 
       <form onSubmit={handleSubmit(onSubmit)}>
 
-        // personal information
         <SectionCard title="Personal Information">
           <div className="grid grid-cols-3 gap-4 mb-4">
             <Field label="First Name" required error={errors.firstName?.message}>
@@ -366,7 +365,6 @@ export default function ApplyAccommodationForm() {
           </div>
         </SectionCard>
 
-        // address information
         <SectionCard title="Address Information">
           <div className="grid grid-cols-2 gap-4 mb-4">
             <Field label="Street Address" required error={errors.streetAddress?.message}>
@@ -417,7 +415,6 @@ export default function ApplyAccommodationForm() {
           </div>
         </SectionCard>
 
-        // dormitory preference
         <SectionCard title="Dormitory Preference">
           <div className="grid grid-cols-4 gap-4">
             <Field label="Dormitory" required error={errors.dormitory?.message}>
@@ -523,7 +520,6 @@ export default function ApplyAccommodationForm() {
           </div>
         </SectionCard>
 
-        // emergency contact
         <SectionCard title="Emergency Contact Information">
           <div className="grid grid-cols-4 gap-4">
             <Field label="First Name" required error={errors.emergencyFirstName?.message}>
@@ -578,7 +574,6 @@ export default function ApplyAccommodationForm() {
           </div>
         </SectionCard>
 
-        // upload document/s 
         <SectionCard title="Upload Document (Student ID or Proof of Enrollment)">
           <div
             className="border-2 border-dashed border-[#78A24C] rounded-xl p-5 flex flex-col items-center gap-2 cursor-pointer hover:bg-[#78A24C]/5 transition-colors"
@@ -616,7 +611,6 @@ export default function ApplyAccommodationForm() {
         </div>
       </form>
 
-      // pop-up
       <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
         <DialogContent className="bg-[#F6F8D5] border-2 border-[#78A24C] rounded-2xl max-w-sm text-center">
           <DialogHeader>
