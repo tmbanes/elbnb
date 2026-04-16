@@ -392,7 +392,7 @@ export default function ApplicationList({
                     <TableCell className="px-6 py-4">N/A</TableCell>
 
                     <TableCell className="px-6 py-4">
-                        {app.preferred_unit_type?.accommodation?.name ?? "N/A"}
+                        {app.preferred_unit_type ?? "N/A"}
                     </TableCell>
 
                     <TableCell className="px-6 py-4">
