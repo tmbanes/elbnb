@@ -2,6 +2,7 @@
 
 import { Unit, Accommodation } from "@/types/accommodation_units";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 interface UnitCardProps {
   unit: Unit;
@@ -14,6 +15,21 @@ export function UnitCard({
   accommodation,
   onDetailsClick,
 }: UnitCardProps) {
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getRole = async () => {
+      try {
+        const res = await fetch("/api/auth");
+        const data = await res.json();
+        // Adjust this based on your API's response structure
+        setUserRole(data.user?.role || "guest");
+      } catch (err) {
+        setUserRole("guest"); // Fallback to guest on error
+      }
+    };
+    getRole();
+  }, []);
   return (
     <div
       className="flex-shrink-0 w-64 rounded-2xl shadow-md hover:shadow-lg transition-shadow overflow-hidden cursor-pointer group -mr-12"
@@ -51,7 +67,9 @@ export function UnitCard({
           <Link
             href={
               unit.vacant_slots > 0
-                ? `/student/accommodations/application?accommodationId=${unit.accommodation_id}&unitId=${unit.unit_id}`
+                ? userRole === "guest"
+                  ? `/guest/accommodations/application?accommodationId=${unit.accommodation_id}&unitId=${unit.unit_id}` // Guest-specific route
+                  : `/student/accommodations/application?accommodationId=${unit.accommodation_id}&unitId=${unit.unit_id}`
                 : "#"
             }
             className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition text-center ${
