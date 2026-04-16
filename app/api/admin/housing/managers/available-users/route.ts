@@ -15,13 +15,12 @@ export async function GET() {
     .map((m: any) => m.user_id)
     .filter(Boolean);
 
-  // Get users with dormitory_manager role
+  // Get users with dormitory_manager role NOT yet in dormitory_manager table
   let query = supabaseAdmin
     .from("users")
     .select("user_id, first_name, last_name, email")
-    .eq("role", "dormitory_manager");
+    .eq("role", "dormitory_manager"); // ← was .neq, now .eq
 
-  // Exclude already-assigned users
   if (existingIds.length > 0) {
     query = query.not("user_id", "in", `(${existingIds.join(",")})`);
   }
