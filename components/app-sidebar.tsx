@@ -45,6 +45,7 @@ const sidebarConfig = {
     nav: [
       { title: "Dashboard", url: "/admin/dashboard", icon: PieChart },
       { title: "Billing", url: "/admin/dashboard/billing", icon: Banknote },
+      { title: "Applications", url: "/admin/applications", icon: Newspaper },
       { title: "Sample", url: "#", icon: Users },
     ],
   },
@@ -66,6 +67,7 @@ const sidebarConfig = {
       { title: "Applications", url: "/guest/application", icon: Newspaper },
       { title: "Billing", url: "/guest/dashboard/billing", icon: Banknote },
       { title: "Guest Sample", url: "#", icon: Users },
+      { title: "Billing", url: "#", icon: Banknote },
     ],
   },
 }
