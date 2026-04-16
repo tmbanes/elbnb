@@ -7,7 +7,8 @@ import { AccommodationCard } from '@/components/SearchAccommodations/Accommodati
 import { UnitCard } from '@/components/SearchAccommodations/UnitCard'
 import { AccommodationFilters } from '@/components/SearchAccommodations/AccommodationFilters'
 import { UnitFilters } from '@/components/SearchAccommodations/UnitFilters'
-import { Link } from 'lucide-react'
+import next from 'next'
+import Link from 'next/link'
 
 type TabType = 'accommodations' | 'units'
 
