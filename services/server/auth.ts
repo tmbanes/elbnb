@@ -11,11 +11,17 @@ export async function createUserProfile(userData: UserCreationRequest) {
   const supabase = await createSupabaseServerClient();
   const { email, password, ...userMetadata } = userData;
 
+  //test: set to inactive
+  const metadata = {
+    ...userMetadata,
+    user_status: userData.user_status ?? "inactive",
+  };
+
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { ...userMetadata } },
+      options: { data: metadata },
     });
 
     console.log("Supabase response:", { data, error });

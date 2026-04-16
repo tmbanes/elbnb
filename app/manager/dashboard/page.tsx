@@ -19,7 +19,7 @@ export default function DormitoryManagerDashboardPage() {
   };
   
   return (
-    <main className="min-h-screen p-8 bg-slate-50">
+    <main className="min-h-screen p-8">
       <h1 className="text-3xl font-bold text-slate-900">Dormitory Manager Dashboard</h1>
       <button 
         onClick={handleLogout}

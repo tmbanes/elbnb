@@ -1,3 +1,4 @@
+// components/AccommodationTile.tsx
 'use client'
 
 import { Unit, Accommodation } from '@/types/accommodation_units'

@@ -6,6 +6,21 @@ import { signInWithGoogle } from "@/services/browser/auth";
 import { User } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
 
+//ui components
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
+
+
+//style constants
+const button_style = "w-full h-11 rounded-full bg-[#fbbc05] text-[#2d1a12] font-semibold hover:bg-[#f9d776]";
+
 type GoogleLoginProps = {
   user: User | null;
 };
@@ -39,33 +54,32 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#8dbd59] p-4 font-sans selection:bg-emerald-500/30">
       <div className="w-full max-w-md space-y-6">
         
+        
+
         {!currentUser && (
-          <div className="relative overflow-hidden rounded-3xl bg-[#5591AB] p-8 shadow-2xl backdrop-blur-xl">
-           
-            <div className="absolute -right-10 -top-10 -z-10 h-32 w-32 rounded-full bg-emerald-500/20 blur-3xl" />
-            <div className="absolute -left-10 -bottom-10 -z-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl" />
+          <div>
+            <Card className="w-full max-w-xl bg-[#5591AB]">
+              <CardHeader>
+                <CardTitle className="text-3xl font-bold text-[#F6F8D5]">Continue with Google</CardTitle>
+                <CardDescription className="text-[#F6F8D5]">
+                  Enter your credentials to continue
+                </CardDescription>
 
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-4xl font-bold text-[#F6F8D5]">
+                <Button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  className="w-full mt-4 bg-[#fbbc05] hover:bg-[#fcf4d9] text-[#fcf4d9] hover:text-[#2d1a12] font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
+                >
                   Continue with Google
-                </h2>
-                <p className="text-l text-[#F6F8D5]">Sign in using your Google account</p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              className="w-full mt-4 bg-[#fbbc05] hover:bg-[#fcf4d9] text-[#fcf4d9] hover:text-[#2d1a12] font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
-            >
-              Continue with Google
-            </button>
+                </Button>
+              </CardHeader>
+            </Card>
           </div>
         )}
 
+
         {/* Session Status Card */}
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+        {/* <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-white">System Session</h3>
@@ -84,7 +98,7 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
               <span className="h-2 w-2 rounded-full bg-slate-600 animate-pulse" />
             )}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

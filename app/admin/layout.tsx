@@ -1,16 +1,23 @@
 // app\admin\layout.tsx
 import { requireRole } from "@/lib/utils/auth-utils"
 
-export default async function GuestLayout({
-    children,
-}: {
-    children: React.ReactNode
-}) {
-    // await requireRole(["housing_admin"])
+//ui components
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/app-sidebar"
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-    return (
-        <div className="min-h-screen bg-[#F6F8D5] text-[#44291B] font-archivo">
-        {children}
-        </div>
-    )
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+    await requireRole(["housing_admin"]);
+    return(
+        <TooltipProvider>
+            <SidebarProvider>
+                <AppSidebar role="admin" />
+                <SidebarTrigger />
+
+                <main className="flex-1">
+                    {children}
+                </main>
+            </SidebarProvider>
+        </TooltipProvider>
+    );
 }
