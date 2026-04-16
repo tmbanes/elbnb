@@ -112,7 +112,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
       }
 
       setStatus("Signup successful! Redirecting...");
-      router.push("/role-selection"); //redirect to /role-selection after successful signup
+      router.push("/"); //redirect to /role-selection after successful signup
 
     } catch (error) {
       setStatus("Unable to complete signup. Please try again later.");
