@@ -10,6 +10,8 @@ import {
   Sparkles,
 } from "lucide-react"
 
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
+
 import {
   Avatar,
   AvatarFallback,
@@ -41,6 +43,12 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const supabase = getSupabaseBrowserClient()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    window.location.href = "/"
+  }
 
   return (
     <SidebarMenu>
@@ -92,7 +100,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
               <LogOut />
               Log out
             </DropdownMenuItem>
