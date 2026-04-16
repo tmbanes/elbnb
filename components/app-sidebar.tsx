@@ -44,6 +44,7 @@ const sidebarConfig = {
     label: "Admin",
     nav: [
       { title: "Dashboard", url: "/admin/dashboard", icon: PieChart },
+      { title: "Applications", url: "/admin/applications", icon: Newspaper },
       { title: "Sample", url: "#", icon: Users },
     ],
   },
@@ -64,7 +65,6 @@ const sidebarConfig = {
       { title: "Accommodations", url: "/guest/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/guest/application", icon: Newspaper },
       { title: "Billing", url: "#", icon: Banknote },
-      { title: "Guest Sample", url: "#", icon: Users },
     ],
   },
 }
