@@ -22,7 +22,7 @@ export default async function StudentBillingPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 bg-slate-50/50">
+    <main className="min-h-screen p-8 bg-[#F3F6D0]">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Billing & Payments</h1>
