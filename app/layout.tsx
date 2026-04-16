@@ -6,14 +6,10 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const geist = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
 });
 
 const geistSans = Geist({
