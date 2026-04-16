@@ -34,7 +34,7 @@ const sidebarConfig = {
     nav: [
       // /student/dashboard but use /dashboard for testing
       { title: "Dashboard", url: "/dashboard", icon: PieChart },
-      { title: "Accommodations", url: "/student/accommodation", icon: MapPinHouse },
+      { title: "Accommodations", url: "/student/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/student/application", icon: Newspaper },
       { title: "Billing", url: "#", icon: Banknote },
     ],
@@ -61,7 +61,7 @@ const sidebarConfig = {
     nav: [
       // should be "/guest/dashboard" but use /dashboard for testing
       { title: "Dashboard", url: "/guest/dashboard", icon: PieChart },
-      { title: "Accommodations", url: "/guest/accommodation", icon: MapPinHouse },
+      { title: "Accommodations", url: "/guest/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/guest/application", icon: Newspaper },
       { title: "Billing", url: "#", icon: Banknote },
       { title: "Guest Sample", url: "#", icon: Users },
