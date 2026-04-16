@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { useRouter } from 'next/navigation'
+import { AccommodationApplication } from "@/types/application_workflow";
 
 import {
     Table,
@@ -28,19 +29,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-type Application = {
-    application_id: string;
-    preferred_accommodation: string;
-    date_submitted: string | null;
-    application_status: string;
-    user_id: string;
-    student?: {
-        student_num: string;
-    };
-    accommodation?: {
-        name: string;
-    };
-};
 
 export default function ApplicationList({
     onSelect,
@@ -49,7 +37,7 @@ export default function ApplicationList({
 }) {
     const supabase = getSupabaseBrowserClient();
 
-    const [applications, setApplications] = useState<Application[]>([]);
+    const [applications, setApplications] = useState<AccommodationApplication[]>([]);
 
     // FILTER STATES
     const [status, setStatus] = useState("all");
@@ -404,7 +392,7 @@ export default function ApplicationList({
                     <TableCell className="px-6 py-4">N/A</TableCell>
 
                     <TableCell className="px-6 py-4">
-                        {app.unit?.accommodation?.name ?? "N/A"}
+                        {app.preferred_unit_type?.accommodation?.name ?? "N/A"}
                     </TableCell>
 
                     <TableCell className="px-6 py-4">
