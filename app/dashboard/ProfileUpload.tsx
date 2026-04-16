@@ -126,8 +126,8 @@ export function ProfileUpload({
           {isUploading
             ? "Uploading..."
             : profileUrl
-            ? "Change picture"
-            : "Click to add picture"}
+              ? "Change picture"
+              : "Click to add picture"}
         </span>
       </div>
 
