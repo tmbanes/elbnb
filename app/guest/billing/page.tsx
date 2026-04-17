@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { getUserPaymentSummary, getStudentBillsDetailed } from "@/services/user-services";
 import { redirect } from "next/navigation";
-import BillingClient from "@/app/student/dashboard/billing/BillingClient";
+import BillingClient from "@/app/student/billing/BillingClient";
 import LogoutButton from "@/components/logout-button";
 
 export default async function GuestBillingPage() {

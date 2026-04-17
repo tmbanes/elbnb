@@ -35,8 +35,7 @@ const sidebarConfig = {
       { title: "Dashboard", url: "/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/student/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/student/application", icon: Newspaper },
-      { title: "Billing", url: "/student/dashboard/billing", icon: Banknote },
-      { title: "Admin Billing (Test)", url: "/admin/dashboard/billing", icon: Banknote },
+      { title: "Billing", url: "/student/billing", icon: Banknote },
     ],
   },
 
@@ -44,9 +43,8 @@ const sidebarConfig = {
     label: "Admin",
     nav: [
       { title: "Dashboard", url: "/admin/dashboard", icon: PieChart },
-      { title: "Billing", url: "/admin/dashboard/billing", icon: Banknote },
+      { title: "Billing", url: "/admin/billing", icon: Banknote },
       { title: "Applications", url: "/admin/applications", icon: Newspaper },
-      { title: "Sample", url: "#", icon: Users },
     ],
   },
 
@@ -54,6 +52,7 @@ const sidebarConfig = {
     label: "Dorm Manager",
     nav: [ 
       { title: "Dashboard", url: "/dashboard", icon: PieChart },
+      { title: "Applications", url: "/admin/applications", icon: Newspaper },
       { title: "Sample", url: "#", icon: Users },
     ],
   },
@@ -65,9 +64,7 @@ const sidebarConfig = {
       { title: "Dashboard", url: "/guest/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/guest/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/guest/application", icon: Newspaper },
-      { title: "Billing", url: "/guest/dashboard/billing", icon: Banknote },
-      { title: "Guest Sample", url: "#", icon: Users },
-      { title: "Billing", url: "#", icon: Banknote },
+      { title: "Billing", url: "/guest/billing", icon: Banknote },
     ],
   },
 }
