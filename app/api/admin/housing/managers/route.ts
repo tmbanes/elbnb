@@ -4,6 +4,18 @@ import { supabaseAdmin } from "@/lib/supabase/admin-client";
 // GET /api/admin/housing/managers          → all managers
 // GET /api/admin/housing/managers?id=123   → single manager
 export async function GET(req: NextRequest) {
+
+  // TO DO: Protect this API route. Make this only accessible to admin (if admin lang talaga pwede maka-access nito).
+  // const auth = await requireApiRole(['housing_admin']);
+
+  // if ("error" in auth) {
+  //   return NextResponse.json(
+  //     { error: auth.error },
+  //     { status: auth.status }
+  //   );
+  // }
+
+  // const user = auth.user;
   const id = req.nextUrl.searchParams.get("id");
 
   if (id) {
