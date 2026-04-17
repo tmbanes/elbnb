@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-export default function ReviewApplication({ onClose }: { onClose: () => void }) {
+export default function ReviewApplication({ applicationId, onClose }: { applicationId: string; onClose: () => void; }) {
     const data = {
         id: "0001",
         status: "Pending",
