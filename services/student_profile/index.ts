@@ -175,7 +175,7 @@ not yet tested
       .select(`
         application_id,
         application_status,
-        preferred_accommodation,
+        preferred_accommodation_id,
         preferred_unit_type,
         date_submitted,
         duration_of_stay,

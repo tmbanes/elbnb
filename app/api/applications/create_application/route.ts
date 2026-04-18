@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const applicationData: Omit<AccommodationApplication, 'application_id' | 'accommodation_assignment'> = {
-      preferred_accommodation: body.preferred_accommodation,
+      // preferred_accommodation: body.preferred_accommodation,
+      preferred_accommodation_id: body.preferred_accommodation_id,
       preferred_unit_type: body.preferred_unit_type,
       duration_of_stay: body.duration_of_stay,
       check_in: body.check_in,
