@@ -26,7 +26,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import { 
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -97,7 +97,7 @@ export default async function Home() {
               <CardTitle>{setup.title}</CardTitle>
               <CardDescription>{setup.description}</CardDescription>
             </CardHeader>
-           
+
             <CardContent className="flex-1">
               <ul className="space-y-1 text-sm text-muted-foreground">
                 {setup.highlights.map((highlight) => (
@@ -118,17 +118,17 @@ export default async function Home() {
         ))}
       </section>
 
-      
+
       {/* SAMPLE UI COMPONENTS (shadcn-ui) */}
       <Separator className="my-12" />
-      
+
       <section className="mt-12">
         <h1 className="text-3xl font-bold tracking-tight mb-6">
           Sample UI Components
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-          
+
           {/* Context Menu */}
           <ContextMenu>
             <ContextMenuTrigger className="flex aspect-video w-full max-w-xs items-center justify-center rounded-xl border border-dashed text-sm">
