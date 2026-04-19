@@ -30,7 +30,8 @@ export async function GET(_req: NextRequest) {
       .from("accommodation_application")
       .select(`
         application_id,
-        preferred_accommodation,
+        preferred_accommodation_id,
+        preferred_accommodation_id,
         preferred_unit_type,
         date_submitted,
         duration_of_stay,
@@ -44,7 +45,7 @@ export async function GET(_req: NextRequest) {
           last_name,
           email
         ),
-        accommodation:preferred_accommodation (
+        accommodation:preferred_accommodation_id (
           accommodation_id,
           name,
           location,
