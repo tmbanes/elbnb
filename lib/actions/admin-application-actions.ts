@@ -24,7 +24,8 @@ export interface ApplicationAccommodation {
 
 export interface AdminApplication {
   application_id: string;
-  preferred_accommodation: string;
+  preferred_accommodation_id: string;
+  preferred_accommodation_id: string;
   preferred_unit_type: string;
   date_submitted: string;
   duration_of_stay: number;

@@ -60,7 +60,8 @@ export async function GET(_req: NextRequest) {
       .select(
         `
         application_id,
-        preferred_accommodation,
+        preferred_accommodation_id,
+        preferred_accommodation_id,
         preferred_unit_type,
         date_submitted,
         duration_of_stay,
@@ -76,7 +77,7 @@ export async function GET(_req: NextRequest) {
         )
       `
       )
-      .eq("preferred_accommodation", accommodation.accommodation_id)
+      .eq("preferred_accommodation_id", accommodation.accommodation_id)
       .eq("application_status", "pending_dorm_manager")
       .order("date_submitted", { ascending: false });
 
