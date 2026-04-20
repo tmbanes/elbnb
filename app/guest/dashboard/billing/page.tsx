@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { getUserPaymentSummary, getStudentBillsDetailed } from "@/services/user-services";
+import { getUserPaymentSummary, getStudentBillsDetailed, getStudentPaymentHistory } from "@/services/user-services";
 import { redirect } from "next/navigation";
 import BillingClient from "@/app/student/dashboard/billing/BillingClient";
 import LogoutButton from "@/components/logout-button";
@@ -16,6 +16,7 @@ export default async function GuestBillingPage() {
 
   const { data: summary } = await getUserPaymentSummary(user.id, "guest");
   const { data: bills } = await getStudentBillsDetailed(user.id);
+  const { data: paymentHistory } = await getStudentPaymentHistory(user.id);
 
   return (
     <main className="min-h-screen p-8 bg-slate-50/50">
@@ -29,7 +30,8 @@ export default async function GuestBillingPage() {
         <BillingClient 
           userId={user.id} 
           summary={summary || { total: 0, paid: 0, balance: 0 }} 
-          bills={bills || []} 
+          bills={bills || []}
+          paymentHistory={paymentHistory || []}
         />
       </div>
     </main>
