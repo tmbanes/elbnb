@@ -1,7 +1,3 @@
-"use server";
-
-
-import { createSupabaseServerClient } from "../supabase/server-client";
 
 export interface ApplicationUser {
   first_name: string;
@@ -42,7 +38,7 @@ export interface AdminApplication {
   accommodation: ApplicationAccommodation;
 }
 
-export type AdminAction = "approve" | "reject";
+export type AdminAction = "approve" | "reject" | "pending_payment";
 
 export async function fetchAdminApplications(): Promise<{
   applications: AdminApplication[];
@@ -79,21 +75,14 @@ export async function processApplication(
 }
 
 export async function getApplicationById(id: string) {
-  const supabase = await createSupabaseServerClient();
+  const res = await fetch(`/api/admin/applications?id=${id}`, {
+    method: "GET",
+  });
 
-  const { data, error } = await supabase
-    .from('accommodation_application')
-    .select(`
-      *,
-      users:user_id (first_name, last_name, email, student_number, course, year_level),
-      accommodation:preferred_accommodation_id (name)
-    `)
-    .eq('application_id', id)
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
+  if (!res.ok) {
+    const { error } = await res.json();
+    throw new Error(error ?? "Failed to fetch application details.");
   }
-  
-  return data;
+
+  return res.json();
 }
