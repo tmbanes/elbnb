@@ -41,6 +41,18 @@ export interface Property {
   units?: Unit[];
 }
 
+// Complaint interface
+export interface Complaint {
+  complaint_id: string;
+  complainant_id: string;
+  accommodation_id: string;
+  unit_id: string;
+  complaint_type: 'maintenance' | 'utility' | 'sanitation' | 'behavior' | 'security' | 'billing' | 'other';
+  complaint_desc: string;
+  complaint_status: 'open' | 'under_review' | 'closed' | 'invalid';
+  submit_date: string;
+}
+
 // For manager page
 export interface Manager {
   employee_id: string;
