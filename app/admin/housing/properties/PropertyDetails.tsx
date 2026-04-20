@@ -8,7 +8,7 @@ import { Property, Complaint } from "../../../../types/housing/types";
 import AddUnitModal from "@/app/admin/housing/components/modals/AddUnitModal";
 
 // ui components
-import { ChevronLeft, MapPin, Building2, Home, AlertCircle, Mail } from "lucide-react";
+import { ChevronLeft, MapPin, Building2, Home, AlertCircle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -27,7 +27,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group";
-import { cn } from "@/lib/utils/ui-utils";
+import { cn } from "@/lib/utils";
 
 interface PropertyDetailProps {
   property: Property;
