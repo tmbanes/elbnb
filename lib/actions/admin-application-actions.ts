@@ -1,3 +1,4 @@
+
 export interface ApplicationUser {
   first_name: string;
   last_name: string;
@@ -25,7 +26,6 @@ export interface ApplicationAccommodation {
 export interface AdminApplication {
   application_id: string;
   preferred_accommodation_id: string;
-  preferred_accommodation_id: string;
   preferred_unit_type: string;
   date_submitted: string;
   duration_of_stay: number;
@@ -38,7 +38,7 @@ export interface AdminApplication {
   accommodation: ApplicationAccommodation;
 }
 
-export type AdminAction = "approve" | "reject";
+export type AdminAction = "approve" | "reject" | "pending_payment";
 
 export async function fetchAdminApplications(): Promise<{
   applications: AdminApplication[];
@@ -72,4 +72,17 @@ export async function processApplication(
     const { error } = await res.json();
     throw new Error(error ?? "Failed to process application.");
   }
+}
+
+export async function getApplicationById(id: string) {
+  const res = await fetch(`/api/admin/applications?id=${id}`, {
+    method: "GET",
+  });
+
+  if (!res.ok) {
+    const { error } = await res.json();
+    throw new Error(error ?? "Failed to fetch application details.");
+  }
+
+  return res.json();
 }
