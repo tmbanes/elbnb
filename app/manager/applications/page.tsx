@@ -40,9 +40,9 @@ function ApplicationRow({
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-gray-900">
-            {app.users.first_name} {app.users.last_name}
+              {app.users?.first_name || "Unknown"} {app.users?.last_name || "User"}
           </p>
-          <p className="text-xs text-gray-500">{app.users.email}</p>
+          <p className="text-xs text-gray-500">{app.users?.email || "No email provided"}</p>
         </div>
         <span className="text-xs font-medium px-2 py-0.5 rounded bg-yellow-100 text-yellow-700 whitespace-nowrap">
           Pending Review

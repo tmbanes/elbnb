@@ -29,30 +29,20 @@ export async function GET(_req: NextRequest) {
     }
 
     // Get the accommodation assigned to this manager
-    const { data: managerData, error: managerError } = await supabase
-      .from("dormitory_manager")
-      .select("accommodation ( accommodation_id, name )")
-      .eq("user_id", user.id)
+    const { data: accommodationData, error: managerError } = await supabase
+      .from("accommodation")
+      .select("accommodation_id, name")
+      .eq("manager_id", user.id)
       .single();
 
-    if (managerError || !managerData) {
+    if (managerError || !accommodationData) {
       return NextResponse.json(
-        { error: "No accommodation assigned to this manager." },
-        { status: 404 }
+        { error: "No accommodation assignment found for this manager." },
+        { status: 404 },
       );
     }
 
-    const accommodation = managerData.accommodation as {
-      accommodation_id: string;
-      name: string;
-    } | null;
-
-    if (!accommodation) {
-      return NextResponse.json(
-        { error: "No accommodation assigned to this manager." },
-        { status: 404 }
-      );
-    }
+    const accommodation = accommodationData?.accommodation_id;
 
     // Fetch all applications for this accommodation that are pending dorm manager review
     const { data: applications, error: appError } = await supabase
@@ -75,9 +65,9 @@ export async function GET(_req: NextRequest) {
           last_name,
           email
         )
-      `
+      `,
       )
-      .eq("preferred_accommodation_id", accommodation.accommodation_id)
+      .eq("preferred_accommodation_id", accommodation)
       .eq("application_status", "pending_dorm_manager")
       .order("date_submitted", { ascending: false });
 
@@ -130,20 +120,19 @@ export async function PATCH(req: NextRequest) {
     if (!application_id || !action) {
       return NextResponse.json(
         { error: "Missing application_id or action." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!["forward", "reject"].includes(action)) {
       return NextResponse.json(
         { error: "Invalid action. Must be 'forward' or 'reject'." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Map manager action to the correct enum status
-    const newStatus =
-      action === "forward" ? "pending_admin" : "rejected";
+    const newStatus = action === "forward" ? "pending_admin" : "rejected";
 
     const { error } = await supabase
       .from("accommodation_application")
