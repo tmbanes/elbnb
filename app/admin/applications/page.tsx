@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ApplicationList from "./ApplicationList";
 import ReviewApplication from "./ReviewApplication";
+import { processApplication, type AdminAction } from "@/lib/actions/admin-application-actions";
 
 export default function Page() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -29,6 +30,23 @@ export default function Page() {
         window.onmouseup = handleMouseUp;
     }
 
+    const handleApplicationAction = async (id: string, action: AdminAction, unitId?: string) => {
+      try {
+          // Send the decision to your database
+          await processApplication(id, action, unitId);
+          
+          // If successful, close the right pane!
+          setSelectedId(null);
+
+          // NOTE: You might also want to trigger a refresh of your ApplicationList here
+          // so the approved/rejected item disappears from the left side.
+          alert("Success! Application updated."); 
+      } catch (error) {
+          // Throw the error so the ReviewApplication component can catch it and show the red error box
+          throw error; 
+      }
+  };
+
     return (
         <div className="h-screen flex overflow-hidden">
 
@@ -53,7 +71,7 @@ export default function Page() {
             <ReviewApplication
               applicationId={selectedId}
               onClose={() => setSelectedId(null)}
-            />
+              onAction={handleApplicationAction}/>
           </div>
         )}
 
