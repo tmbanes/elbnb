@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { getUserPaymentSummary, getStudentBillsDetailed } from "@/services/user-services";
+import { getUserPaymentSummary, getStudentBillsDetailed, getStudentPaymentHistory } from "@/services/user-services";
 import { redirect } from "next/navigation";
 import BillingClient from "./BillingClient";
 import LogoutButton from "@/components/logout-button";
@@ -16,6 +16,7 @@ export default async function StudentBillingPage() {
 
   const { data: summary } = await getUserPaymentSummary(user.id, "student");
   const { data: bills, error: billsError } = await getStudentBillsDetailed(user.id);
+  const { data: paymentHistory } = await getStudentPaymentHistory(user.id);
 
   if (billsError) {
     return <div className="p-8 text-red-500 font-mono">SUPABASE ERROR: {JSON.stringify(billsError)}</div>;
@@ -33,7 +34,9 @@ export default async function StudentBillingPage() {
         <BillingClient 
           userId={user.id} 
           summary={summary || { total: 0, paid: 0, balance: 0 }} 
-          bills={bills || []} 
+          bills={bills || []}
+          paymentHistory={paymentHistory || []}
+          uploadEndpoint="/api/student/billing/upload-receipt"
         />
       </div>
     </main>
