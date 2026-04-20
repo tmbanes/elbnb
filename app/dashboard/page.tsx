@@ -1,12 +1,16 @@
 import Link from 'next/link'
-import { getAuthenticatedUser } from '@/lib/auth/get-user'
 import { redirect } from 'next/navigation'
+import { ProfileUpload } from './ProfileUpload'
+import { getApiAuthenticatedUser } from '@/lib/auth/server-auth'
+import { NextResponse } from 'next/server'
 
 export default async function DashboardPage() {
-  const user = await getAuthenticatedUser()
-  if (!user) {
-    redirect('/auth')
-  }
+  const auth = await getApiAuthenticatedUser()
+  if ("error" in auth) {
+    redirect("/");
+  };
+
+  const user = auth.user;
 
   return (
     <div className="space-y-6 p-6">
@@ -15,6 +19,10 @@ export default async function DashboardPage() {
         <p className="text-gray-600">Welcome to your dashboard.</p>
       </div>
 
+      {/* Profile Picture Upload */}
+      <ProfileUpload initialProfileUrl={user.profile_picture_url} />
+
+      {/* User Details */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-3">
         <h2 className="text-lg font-semibold text-gray-900">User Details</h2>
 
@@ -51,7 +59,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="flex gap-4">
+      {/* Navigation Links */}
+      <div className="flex gap-4 flex-wrap">
         <Link href="/dashboard/accommodations">
           <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
             Accommodations
@@ -67,6 +76,13 @@ export default async function DashboardPage() {
         <Link href="/dashboard/assignments">
           <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
             Assignments
+          </button>
+        </Link>
+
+        {/* for ADMIN ONLY housing */}
+        <Link href="/dashboard/admin/housing">
+          <button className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">
+            Housing (ADMIN)
           </button>
         </Link>
       </div>
