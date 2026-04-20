@@ -163,34 +163,54 @@ not yet tested
 
   async getAccommodationHistory(user_id: string) {
     const client = await supabase();
+    
+    // TODO (for BACKEND): Di ko gets pano yung joint database query magwork so tinanggal ko muna etong nasa baba, for me to test ung history page
+    // accomodation_assignment(assignment_id, move_in_date, expected_move_out_date, actual_move_out_date)
+    // pa-add nalang ung accommodation_assignment(..) later on, thanks - eunel
+    
+    // also NOTE: ung preferred_accommodation raw uuid sya and displayed sya sa UI, so need siguro ng getAccommodationName? function or 
+    // something to convert the uuid to the actual accommodation name?
     const { data, error } = await client
-
-      .from("accomodation_application")
-      .select(
-        `
+      .from("accommodation_application")
+      .select(`
         application_id,
-        preferred_Accomodation,
-        preferred_Unit_Type,
-        date_Submitter,
-        duration_Of_Stay,
-        check_In,
-        check_Out,
-        number_Of_Companions,
-
-
-        accomodation_assignment (
-          assignment_id,
-          move_In_Date,
-          expected_Move_Out_Date,
-          actual_Move_Out_Date
-        )
-        `,
-      )
-
+        application_status,
+        preferred_accommodation_id,
+        preferred_unit_type,
+        date_submitted,
+        duration_of_stay,
+        check_in,
+        check_out,
+        number_of_companions
+      `)
       .eq("user_id", user_id)
-      .order("date_Submitter", { ascending: false });
+      .order("date_submitted", { ascending: false });
+
+    if (error) {
+       console.error("Supabase fetch error:", error);
+    }
 
     return { data: data as AccommodationApplication[] | null, error };
+  },
+
+  // added for the cancel modal in the history and status page, 
+  // to update the application_status to "cancelled" when the user cancels their pending application (pending_admin or pending_dorm_manager)
+  async cancelAccommodationApplication(application_id: string) {
+    const client = await supabase();
+    
+    const { data, error } = await client
+      .from("accommodation_application")
+      .update({ application_status: "cancelled" })
+      .eq("application_id", application_id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error canceling application:", error);
+      return { data: null, error };
+    }
+
+    return { data, error: null };
   },
 };
 

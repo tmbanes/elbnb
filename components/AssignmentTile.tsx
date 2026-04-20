@@ -1,3 +1,4 @@
+// components/AssignmentTile.tsx
 'use client'
 
 import { AccommodationAssignment, AssignmentStatus } from '@/types/assignment_workflow'

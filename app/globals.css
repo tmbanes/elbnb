@@ -49,8 +49,6 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -81,6 +79,8 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
 }
 
 .dark {
@@ -126,5 +126,48 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+
+
+/* TABLE STYLING - Not final yet */
+@layer components {
+  [data-slot="table-container"] {
+    @apply border-none overflow-x-auto;
+  }
+
+  table {
+    @apply w-full bg-[#FDFFF4] text-[#44291B];
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    padding-bottom: 7px !important;
+  }
+
+  table th:first-child, 
+  table td:first-child {
+    padding-left: 20px !important; 
+  }
+
+  /* tr:hover td {
+    background-color: #e3e5da8a !important;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+  } */
+
+  /* tr:hover td:last-child {
+    background-color: #e3e5da15 !important;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+  } */
+
+  th {
+    @apply text-left text-[#44291B] text-xs uppercase tracking-wider font-semibold;
+
+    color: #44291B !important;
+  }
+
+  td {
+    @apply py-3 px-4 text-[#44291B] text-sm;
   }
 }

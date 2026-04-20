@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CreateApplicationService } from '@/services/application_workflow/create_application'
 import { CancelApplicationService } from '@/services/application_workflow/cancel_application'
-import { getAuthenticatedUser } from '@/lib/auth/get-user'
 import { AccommodationApplication, ApplicationStatus, CancellableStatus } from '@/types/application_workflow'
-import { requireRole } from '@/lib/auth/require-role'
+import { requireApiRole } from '@/lib/auth/server-auth'
 
 // CANCEL AN APPLICATION -- user should be authenticated AND either student or guest to cancel an application
 export async function PATCH(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser()
-    if (!user) {
+    const auth = await requireApiRole(['student', 'guest']);
+
+    if ("error" in auth) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+        { error: auth.error },
+        { status: auth.status }
+      );
     }
 
-    const denied = requireRole(user, ['student', 'guest'])
-    if (denied) return denied
+    const user = auth.user;
 
     const body = await request.json()
     const applicationId = body.applicationId
