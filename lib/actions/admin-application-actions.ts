@@ -1,3 +1,8 @@
+"use server";
+
+
+import { createSupabaseServerClient } from "../supabase/server-client";
+
 export interface ApplicationUser {
   first_name: string;
   last_name: string;
@@ -24,7 +29,6 @@ export interface ApplicationAccommodation {
 
 export interface AdminApplication {
   application_id: string;
-  preferred_accommodation_id: string;
   preferred_accommodation_id: string;
   preferred_unit_type: string;
   date_submitted: string;
@@ -72,4 +76,24 @@ export async function processApplication(
     const { error } = await res.json();
     throw new Error(error ?? "Failed to process application.");
   }
+}
+
+export async function getApplicationById(id: string) {
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from('accommodation_application')
+    .select(`
+      *,
+      users:user_id (first_name, last_name, email, student_number, course, year_level),
+      accommodation:preferred_accommodation_id (name)
+    `)
+    .eq('application_id', id)
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  
+  return data;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -10,6 +10,7 @@ import {
   processApplication,
   type AdminApplication,
   type AdminAction,
+  getApplicationById,
   type Unit,
 } from "@/lib/actions/admin-application-actions";
 
@@ -27,6 +28,27 @@ export default function ReviewApplication({
     const [selectedUnitId, setSelectedUnitId] = useState<string>("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [appData, setAppData] = useState<any>(null); 
+    const [isLoadingData, setIsLoadingData] = useState(true);
+
+    useEffect(() => {
+        async function loadData() {
+            try {
+                setIsLoadingData(true);
+                const realData = await getApplicationById(applicationId);
+                setAppData(realData);
+            } catch (err) {
+                console.error("Failed to fetch app data:", err);
+                setError("Failed to load application details.");
+            } finally {
+                setIsLoadingData(false);
+            }
+        }
+        
+        if (applicationId) {
+            loadData();
+        }
+    }, [applicationId]);
 
     async function handleConfirm() {
         if (!confirmAction) return;
@@ -52,45 +74,32 @@ export default function ReviewApplication({
             setConfirmAction(null);
         }
     }
-
-    // (TEMPORARY) Hardcoded data for visual mockup. 
-    // Replace these fields with {app.first_name}, {app.check_in}, etc., once your real data is ready.
+    
     const data = {
-        id: applicationId|| "0001",
-        status: "Pending",
-        submitted: "April 01, 2026 - 12:00 PM",
-        firstName: "Juan",
-        lastName: "Dela Cruz",
-        middleName: "Santos",
-        email: "student@up.edu.ph",
-        contact: "09123456789",
-        program: "BS Computer Science",
-        year: "Sophomore",
-        studentNum: "2022-12345",
+        id: appData.application_id,
+        status: appData.application_status,
+        submitted: new Date(appData.date_submitted).toLocaleDateString(),
+        
+        firstName: appData.users?.first_name || "Unknown",
+        lastName: appData.users?.last_name || "",
+        email: appData.users?.email || "No email",
+        program: appData.users?.course || "N/A",
+        year: appData.users?.year_level || "N/A",
+        studentNum: appData.users?.student_number || "N/A",
+        
         stay: {
-            duration: "6 months",
-            checkIn: "2026-04-05",
-            checkOut: "2026-11-29",
-            companions: "Solo",
-            dorm: "Women's Dorm",
-            roomType: "Solo dorm",
+            duration: `${appData.duration_of_stay} months`,
+            checkIn: appData.check_in,
+            checkOut: appData.check_out,
+            companions: appData.number_of_companions || "Solo",
+            dorm: appData.accommodation?.name || "Unassigned",
+            roomType: appData.preferred_unit_type,
         },
-        accommodation: {
-            name: "Men's Dorm",
-            unit: "Unit 203",
-            roommates: 0,
-        },
-        documents: [
-            "Valid ID",
-            "Application Form",
-            "Billing Statement",
-        ],
-        history: [
-            "Application Submitted - Jan 10, 2026",
-            "ID Verified - Jan 12, 2026",
-        ],
+        
+        // These might need to be fetched from a separate table later!
+        documents: ["Application Form"], 
+        history: [`Application Submitted - ${new Date(appData.date_submitted).toLocaleDateString()}`],
     };
-
     return (
         <div className="p-6 space-y-6 bg-[#F6F8D5] h-full overflow-y-auto">
             {/* HEADER */}
@@ -113,7 +122,7 @@ export default function ReviewApplication({
                     />
                     <div>
                       <p className="font-semibold">
-                          {data.firstName} {data.middleName} {data.lastName}
+                          {data.firstName} {data.lastName}
                       </p>
                       <p className="text-sm text-gray-600">{data.studentNum}</p>
                     </div>
@@ -165,9 +174,9 @@ export default function ReviewApplication({
             <Card className="p-4 space-y-2">
                 <h3 className="font-semibold text-lg">Accommodation Details</h3>
                 <p>
-                    Name: {data.accommodation.name} &nbsp;&nbsp; | &nbsp;&nbsp;
-                    Unit: {data.accommodation.unit} &nbsp;&nbsp; | &nbsp;&nbsp;
-                    Roommates: {data.accommodation.roommates}
+                    Name:
+                    Unit:
+                    Roommates: 
                 </p>
             </Card>
 
