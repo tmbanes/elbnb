@@ -4,6 +4,35 @@ import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 export async function GET(_req: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
+    const { searchParams } = new URL(_req.url);
+    const id = searchParams.get("id");
+
+    // If an ID is provided, fetch just that one application
+    if (id) {
+      const { data, error } = await supabase
+        .from("accommodation_application")
+        .select(
+          `
+        *,
+        users:user_id (first_name, last_name, email),
+        accommodation:preferred_accommodation_id (accommodation_id, name, location),
+        units:unit_id (unit_number)
+      `,
+        )
+        .eq("application_id", id)
+        .single();
+
+      if (error)
+        return NextResponse.json({ error: error.message }, { status: 404 });
+
+      // Fetch available units for the dropdown logic
+      const { data: unitList } = await supabase
+        .from("unit")
+        .select("unit_id, unit_number, unit_type")
+        .eq("accommodation_id", data.preferred_accommodation_id);
+
+      return NextResponse.json({ ...data, availableUnits: unitList || [] });
+    }
 
     // Verify session
     const {
@@ -28,7 +57,8 @@ export async function GET(_req: NextRequest) {
     // Fetch all applications that have passed dorm manager review
     const { data: applications, error: appError } = await supabase
       .from("accommodation_application")
-      .select(`
+      .select(
+        `
         application_id,
         preferred_accommodation_id,
         preferred_accommodation_id,
@@ -60,7 +90,8 @@ export async function GET(_req: NextRequest) {
             unit_status
           )
         )
-      `)
+      `,
+      )
       .eq("application_status", "pending_admin")
       .order("date_submitted", { ascending: false });
 
@@ -108,14 +139,14 @@ export async function PATCH(req: NextRequest) {
     if (!application_id || !action) {
       return NextResponse.json(
         { error: "Missing application_id or action." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (action === "approve" && !unit_id) {
       return NextResponse.json(
         { error: "A unit must be selected before approving." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -144,7 +175,7 @@ export async function PATCH(req: NextRequest) {
     if (fetchError || !application) {
       return NextResponse.json(
         { error: "Application not found or already processed." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -162,21 +193,21 @@ export async function PATCH(req: NextRequest) {
     if (unit.current_occupancy >= unit.max_occupancy) {
       return NextResponse.json(
         { error: "Selected unit is already at full capacity." },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
     if (unit.unit_status !== "active") {
       return NextResponse.json(
         { error: "Selected unit is not active." },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
-    // 3. Update application status to approved
+    // 3. Update application status to pending payment
     const { error: approveError } = await supabase
       .from("accommodation_application")
-      .update({ application_status: "approved" })
+      .update({ application_status: "pending_payment" })
       .eq("application_id", application_id);
 
     if (approveError) throw new Error(approveError.message);
