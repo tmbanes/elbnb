@@ -1,4 +1,3 @@
-// app/dashboard/history/cancel-modal.tsx
 "use client"
 
 import { useTransition, useState } from "react"
@@ -15,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { cancelApplicationAction } from "./actions"
+import { cancelApplicationAction } from "@/lib/actions/cancel-application-action"
 
 export function CancelApplicationModal({ applicationId }: { applicationId: string }) {
   const [isPending, startTransition] = useTransition()
