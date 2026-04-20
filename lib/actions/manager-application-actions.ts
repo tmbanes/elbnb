@@ -1,3 +1,5 @@
+import { Unit } from "@/types/accommodation_units";
+
 export interface ApplicationUser {
   first_name: string;
   last_name: string;
@@ -21,11 +23,13 @@ export interface Application {
 export interface ManagerApplicationsResponse {
   accommodation: { accommodation_id: string; name: string };
   applications: Application[];
+  units: Unit[];
 }
 
 export type ManagerAction = "forward" | "reject";
 
 export async function fetchManagerApplications(): Promise<ManagerApplicationsResponse> {
+  
   const res = await fetch("/api/manager/applications", {
     method: "GET",
     credentials: "include",
@@ -41,13 +45,14 @@ export async function fetchManagerApplications(): Promise<ManagerApplicationsRes
 
 export async function updateApplicationStatus(
   application_id: string,
-  action: ManagerAction
+  action: ManagerAction,
+  unitId?: string
 ): Promise<void> {
   const res = await fetch("/api/manager/applications", {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ application_id, action }),
+    body: JSON.stringify({ application_id, action, unit_id: unitId }),
   });
 
   if (!res.ok) {

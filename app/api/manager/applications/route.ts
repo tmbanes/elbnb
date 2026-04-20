@@ -35,6 +35,10 @@ export async function GET(_req: NextRequest) {
       .eq("manager_id", user.id)
       .single();
 
+    if (managerError) {
+      console.error("REAL SUPABASE ERROR:", managerError);
+    }
+
     if (managerError || !accommodationData) {
       return NextResponse.json(
         { error: "No accommodation assignment found for this manager." },
@@ -73,9 +77,17 @@ export async function GET(_req: NextRequest) {
 
     if (appError) throw new Error(appError.message);
 
+    const { data: units, error: unitsError } = await supabase
+      .from("unit") 
+      .select("unit_id, unit_number") //
+      .eq("accommodation_id", accommodation);
+
+    if (unitsError) throw new Error(unitsError.message);
+
     return NextResponse.json({
-      accommodation,
+      accommodation: accommodationData,
       applications: applications ?? [],
+      units: units ?? [],
     });
   } catch (e) {
     const message =
@@ -112,9 +124,10 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { application_id, action } = body as {
+    const { application_id, action, unit_id } = body as {
       application_id: string;
       action: "forward" | "reject";
+      unit_id?: string;
     };
 
     if (!application_id || !action) {
@@ -131,12 +144,24 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    if (action === "forward" && !unit_id) {
+        return NextResponse.json(
+          { error: "A unit_id is required to forward the application." },
+          { status: 400 },
+        );
+    }
+
     // Map manager action to the correct enum status
     const newStatus = action === "forward" ? "pending_admin" : "rejected";
 
+    const updateData: any = { application_status: newStatus };
+
+    if (action === "forward" && unit_id) {
+      updateData.unit_id = unit_id; 
+    }
     const { error } = await supabase
       .from("accommodation_application")
-      .update({ application_status: newStatus })
+      .update(updateData)
       .eq("application_id", application_id)
       .eq("application_status", "pending_dorm_manager"); // safety: only update if still at manager stage
 
