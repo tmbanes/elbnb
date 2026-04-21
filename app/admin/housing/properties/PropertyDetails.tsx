@@ -227,7 +227,6 @@ export default function PropertyDetail({
               if (onAddUnit) onAddUnit();
               closeUnitAction();
             }}
-            accentColor={isDorm ? "#5591AB" : "#EB8A0B"}
           />
 
           {/* Delete Unit Modal */}
