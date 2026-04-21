@@ -21,7 +21,7 @@ export class CreateApplicationService {
       .from('accommodation_application')
       .select('application_id')
       .eq('user_id', data.user_id)
-      .eq('preferred_accommodation_id', data.preferred_accommodation_id)
+      .eq('preferred_accommodation', data.preferred_accommodation)
       .in('application_status', CANCELLABLE_STATUSES)
 
     if (unitId) {
@@ -57,7 +57,7 @@ export class CreateApplicationService {
       const { data: accommodation, error: accommodationError } = await supabase
         .from('accommodation')
         .select('accommodation_id')
-        .eq('accommodation_id', data.preferred_accommodation_id)
+        .eq('accommodation_id', data.preferred_accommodation)
         .single()
 
       if (accommodationError || !accommodation) throw new Error('Accommodation not found.')
@@ -65,7 +65,7 @@ export class CreateApplicationService {
       const { data: units, error: unitAccommodationError } = await supabase
         .from('unit')
         .select('current_occupancy, max_occupancy')
-        .eq('accommodation_id', data.preferred_accommodation_id)
+        .eq('accommodation_id', data.preferred_accommodation)
 
       if (unitAccommodationError || !units) throw new Error('Failed to fetch units for accommodation.')
 
@@ -79,7 +79,7 @@ export class CreateApplicationService {
     const { data: accommodation, error: accomError } = await supabase
       .from('accommodation')
       .select('allowed_application')
-      .eq('accommodation_id', data.preferred_accommodation_id)
+      .eq('accommodation_id', data.preferred_accommodation)
       .single()
 
     if (accomError || !accommodation) throw new Error('Accommodation not found.')
@@ -152,7 +152,7 @@ export class CreateApplicationService {
   static validateApplication(data: Partial<CreateApplicationInput>): string[] {
     const errors: string[] = []
 
-    if (!data.preferred_accommodation_id) {
+    if (!data.preferred_accommodation) {
       errors.push('Accommodation is required')
     }
 
