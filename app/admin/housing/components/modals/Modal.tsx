@@ -12,6 +12,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   description?: string;
+  required?: boolean;
   children: React.ReactNode;
 }
 

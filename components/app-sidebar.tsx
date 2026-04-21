@@ -11,6 +11,7 @@ import {
   Building,
   Users,
   Settings2,
+  Building2,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -43,6 +44,8 @@ const sidebarConfig = {
     label: "Admin",
     nav: [
       { title: "Dashboard", url: "/admin/dashboard", icon: PieChart },
+      { title: "Housing", url: "/admin/housing", icon: Building2 },
+      { title: "Managers", url: "/admin/housing/managers", icon: Users },
       { title: "Billing", url: "/admin/billing", icon: Banknote },
       { title: "Applications", url: "/admin/applications", icon: Newspaper },
     ],
@@ -52,7 +55,7 @@ const sidebarConfig = {
     label: "Dorm Manager",
     nav: [ 
       { title: "Dashboard", url: "/dashboard", icon: PieChart },
-      { title: "Applications", url: "/admin/applications", icon: Newspaper },
+      { title: "Applications", url: "/manager/applications", icon: Newspaper },
       { title: "Sample", url: "#", icon: Users },
     ],
   },

@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AssignmentService } from '@/services/assignment_workflow'
-import { getAuthenticatedUser } from '@/lib/auth/get-user'
-import { requireRole } from '@/lib/auth/require-role'
-import { sendEmail } from '@/services/notification/email_service'
-
+import { requireApiRole } from '@/lib/auth/server-auth';
 
 // ─── GET — fetch all assignments for the authenticated user ───────────────────
 export async function GET(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireApiRole(['student', 'guest']);
+
+    if ("error" in auth) {
+      return NextResponse.json(
+        { error: auth.error },
+        { status: auth.status }
+      );
     }
 
-    const denied = requireRole(user, ['student', 'guest'])
-    if (denied) return denied
-
+    const user = auth.user;
+    
     const assignments = await AssignmentService.getAssignmentsByUser(user.user_id)
 
     return NextResponse.json({ success: true, data: assignments })
@@ -29,13 +29,16 @@ export async function GET(request: NextRequest) {
 // Body: { assignmentId: string, action: 'terminate' | 'cancel' | 'activate' }
 export async function PATCH(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireApiRole(['student', 'guest']);
+
+    if ("error" in auth) {
+      return NextResponse.json(
+        { error: auth.error },
+        { status: auth.status }
+      );
     }
 
-    const denied = requireRole(user, ['student', 'guest'])
-    if (denied) return denied
+    const user = auth.user;
 
     const body = await request.json()
     const { assignmentId, action } = body
@@ -91,16 +94,6 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ error: validationErrors.join(', ') }, { status: 400 })
         }
         updatedAssignment = await AssignmentService.activateAssignment(assignment)
-        //email notif 
-        const name = `${user.first_name} ${user.middle_name ?? ''} ${user.last_name}`
-        await sendEmail({
-              to: user.email,//can only use this registered email for testing or email domain @resend.dev
-              template: 'applicationApproved',
-              name: name
-            })
-        
-            console.log(' Email sent')
-   
         break
     }
 

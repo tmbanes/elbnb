@@ -1,8 +1,9 @@
+// app/admin/housing/properties/PropertiesList.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getPropertyColumns } from "@/app/dashboard/admin/housing/components/columns/propertyColumns";
-import { Property } from "../../../../../types/housing/types";
+import { getPropertyColumns } from "@/app/admin/housing/components/columns/propertyColumns";
+import { Property } from "../../../../types/housing/types";
 
 // ui components
 import { DataTable } from "@/components/ui/data-table";
@@ -157,15 +158,11 @@ export default function PropertiesList({
 
   return (
     <div className="p-6 space-y-4">
+      <div>
+        <h1 className="text-4xl font-bold text-[#44291B] mr-2">Properties Page</h1>
+        <p className="text-sm text-[#44291B]">Manage your Properties and view their details</p>
 
-      {/*TODO - Update Breadcrumb UI componenet to sidebar once added to admin */}
-      <Button
-        variant="link"
-        onClick={onBackToHousing}
-        className="pl-0 text-[#264384]"
-      >
-        <ChevronLeft className="mr-1 h-4 w-4" /> Back to Housing
-      </Button>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 pt-2">
         <StatCard
@@ -208,7 +205,7 @@ export default function PropertiesList({
         </div>
       ) : (
         <DataTable
-          columns={getPropertyColumns(onSelectProperty, onEditProperty, onDeleteProperty)}
+          columns={getPropertyColumns(onEditProperty, onDeleteProperty)}
           data={tableData}
           header={
             <div>
@@ -227,7 +224,7 @@ export default function PropertiesList({
                   if (value !== undefined) onFilterChange(value);
                 }}
               >
-                <ToggleGroupItem value="" aria-label="All">
+                <ToggleGroupItem value=" " aria-label="All">
                   All
                 </ToggleGroupItem>
                 <ToggleGroupItem value="dormitory" aria-label="Dormitories">

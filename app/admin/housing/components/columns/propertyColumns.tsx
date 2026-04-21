@@ -1,6 +1,7 @@
 //components/housing/propertyColumns.tsx
 "use client"
 
+import Link from "next/link"
 import { ColumnDef } from "@tanstack/react-table"
 
 //ui components
@@ -31,7 +32,6 @@ export type PropertyColumn = {
 }
 
 export const getPropertyColumns = (
-  handleSelectProperty: (id: string) => void,
   openEditModal: (p: any) => void,
   handleDeleteProperty: (id: string, type: string) => void
 ): ColumnDef<PropertyColumn>[] => [
@@ -146,11 +146,13 @@ export const getPropertyColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-[#FDFFF4] text-[#44291B]">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => handleSelectProperty(p.accommodation_id)}
-            > 
-              <Eye className="mr-2 h-4 w-4" />
-              <span>View</span>
+            <DropdownMenuItem asChild>
+              <Link href={`/admin/housing?id=${p.accommodation_id}`}>
+                <div className="flex items-center">
+                  <Eye className="mr-2 h-4 w-4" />
+                  <span>View</span>
+                </div>
+              </Link>
             </DropdownMenuItem>
             
   

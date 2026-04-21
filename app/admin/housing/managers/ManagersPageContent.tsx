@@ -1,44 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { Manager } from "../../../../../types/housing/types";
-import AddManagerModal from "@/app/dashboard/admin/housing/components/modals/AddManagerModal";
+import { Manager } from "../../../../types/housing/types";
+import AddManagerModal from "@/app/admin/housing/components/modals/AddManagerModal";
 import ManagersList from "./ManagersList";
 import ManagerDetail from "./ManagerDetail";
 
-// ui components
-import { DataTable } from "@/components/ui/data-table";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Card,
-  CardTitle,
-  CardHeader
-} from "@/components/ui/card";
-import { ChevronLeft } from "lucide-react";
-
-
 export default function ManagersContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const selectedId = searchParams.get("id");
-
   const [managers, setManagers] = useState<Manager[]>([]);
   const [selectedManager, setSelectedManager] = useState<Manager | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingManager, setEditingManager] = useState<any | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   async function fetchManagers() {
     try {
@@ -57,36 +33,28 @@ export default function ManagersContent() {
     fetchManagers();
   }, []);
 
-  async function fetchManager() {
+  async function fetchManagerDetail(id: string) {
     try {
-      const res = await fetch(`/api/admin/housing/managers?id=${selectedId}`);
+      setDetailLoading(true);
+      const res = await fetch(`/api/admin/housing/managers?id=${id}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setSelectedManager(data);
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setDetailLoading(false);
     }
   }
-
-  useEffect(() => {
-    if (!selectedId) {
-      setSelectedManager(null);
-      return;
-    }
-
-    fetchManager();
-  }, [selectedId]);
 
   function handleSelect(id: string) {
-    router.push(`/dashboard/admin/housing/managers?id=${id}`);
+    setSelectedId(id);
+    fetchManagerDetail(id);
   }
 
-  function handleBack() {
-    router.push("/dashboard/admin/housing/managers");
-  }
-
-  function handleBackToHousing() {
-    router.push("/dashboard/admin/housing");
+  function handleCloseDetail() {
+    setSelectedId(null);
+    setSelectedManager(null);
   }
 
   function openAddModal() {
@@ -124,35 +92,39 @@ export default function ManagersContent() {
       return;
     }
 
-    setManagers((prev) => prev.filter((manager) => manager.employee_id !== employeeId));
-    if (selectedId === employeeId) handleBack();
+    setManagers((prev) =>
+      prev.filter((manager) => manager.employee_id !== employeeId)
+    );
+
+    if (selectedId === employeeId) handleCloseDetail();
+  }
+
+  function handleBackToHousing() {
+    handleCloseDetail();
   }
 
   if (loading) return <p className="p-6">Loading managers...</p>;
   if (error) return <p className="p-6 text-red-500">Error: {error}</p>;
 
   return (
-    <>
-      {selectedId ? (
-        selectedManager ? (
-          <ManagerDetail
-            manager={selectedManager}
-            onBack={handleBack}
-            onEdit={openEditModal}
-            onDelete={handleDelete}
-          />
-        ) : (
-          <div className="p-6 space-y-4">
-            <Button
-              variant="link"
-              onClick={handleBack}
-              className="pl-0 text-[#264384]"
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" /> Back to Managers
-            </Button>
-          </div>
-        )
-      ) : (
+    <div className="min-h-screen flex overflow-hidden">
+
+      
+      {/* LEFT: Managers List */}
+      <div
+        className={`
+          ${selectedId ? "w-[65%]" : "w-full"}
+          transition-all duration-300
+          overflow-y-auto
+          pt-2
+        `}
+      >
+
+        <div className="pt-6 pl-7">
+          <h1 className="text-4xl font-bold text-[#44291B]">Managers Page</h1>
+          <p className="text-sm text-[#44291B] mt-1">View and manage your property managers</p>
+        </div>
+        
         <ManagersList
           managers={managers}
           onBackToHousing={handleBackToHousing}
@@ -161,18 +133,43 @@ export default function ManagersContent() {
           onEdit={openEditModal}
           onDelete={handleDelete}
         />
-      )}
+      </div>
+
+      {/* RIGHT: Detail Panel */}
+      {selectedId ? (
+        <div
+          className="
+            w-1/2 min-w-[400px]
+            border-l border-[#e8e2d6]
+            bg-[#F6F8D5]
+            transition-all duration-300
+            overflow-y-auto
+          "
+        >
+          {selectedId && selectedManager && !detailLoading ? (
+            <ManagerDetail
+              manager={selectedManager}
+              onBack={handleCloseDetail}
+              onEdit={openEditModal}
+              onDelete={handleDelete}
+            />
+          ) : selectedId && detailLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-[#44291B]">Loading...</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <AddManagerModal
         isOpen={modalOpen}
         onClose={closeModal}
         onSuccess={() => {
           fetchManagers();
-          if (selectedId) fetchManager();
           closeModal();
         }}
         existingManager={editingManager}
       />
-    </>
+    </div>
   );
 }
