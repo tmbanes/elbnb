@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AssignmentService } from '@/services/assignment_workflow'
+<<<<<<< HEAD
 import { getAuthenticatedUser } from '@/lib/auth/get-user'
 import { requireRole } from '@/lib/auth/require-role'
+=======
+import { requireApiRole } from '@/lib/auth/server-auth';
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
 
 // ─── GET — fetch all assignments for the authenticated user ───────────────────
 export async function GET(request: NextRequest) {
   try {
+<<<<<<< HEAD
     const user = await getAuthenticatedUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -14,6 +19,19 @@ export async function GET(request: NextRequest) {
     const denied = requireRole(user, ['student', 'guest'])
     if (denied) return denied
 
+=======
+    const auth = await requireApiRole(['student', 'guest']);
+
+    if ("error" in auth) {
+      return NextResponse.json(
+        { error: auth.error },
+        { status: auth.status }
+      );
+    }
+
+    const user = auth.user;
+    
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
     const assignments = await AssignmentService.getAssignmentsByUser(user.user_id)
 
     return NextResponse.json({ success: true, data: assignments })
@@ -27,6 +45,7 @@ export async function GET(request: NextRequest) {
 // Body: { assignmentId: string, action: 'terminate' | 'cancel' | 'activate' }
 export async function PATCH(request: NextRequest) {
   try {
+<<<<<<< HEAD
     const user = await getAuthenticatedUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -34,6 +53,18 @@ export async function PATCH(request: NextRequest) {
 
     const denied = requireRole(user, ['student', 'guest'])
     if (denied) return denied
+=======
+    const auth = await requireApiRole(['student', 'guest']);
+
+    if ("error" in auth) {
+      return NextResponse.json(
+        { error: auth.error },
+        { status: auth.status }
+      );
+    }
+
+    const user = auth.user;
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
 
     const body = await request.json()
     const { assignmentId, action } = body

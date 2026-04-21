@@ -12,7 +12,12 @@ export interface AccommodationApplication {
   application_id: string;
   user_id: string;
   unit_id: string;
+<<<<<<< HEAD
   preferred_accommodation: string; // REQUIRED, accommodation_id.
+=======
+  // preferred_accommodation: string; 
+  preferred_accommodation_id: string; // REQUIRED, accommodation_id.
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
   preferred_unit_type: string;
   date_submitted: string; // ISO date string
   duration_of_stay?: number | null; // dependent on billing period

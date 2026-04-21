@@ -1,4 +1,5 @@
 export enum BillingStatus {
+<<<<<<< HEAD
   DRAFT = "draft",
   PENDING = "pending",
   PARTIALLY_PAID = "partially_paid",
@@ -6,6 +7,18 @@ export enum BillingStatus {
   OVERDUE = "overdue",
   CANCELLED = "cancelled",
   REFUNDED = "refunded",
+=======
+  PARTIALLY_PAID = "partially_paid",
+  PAID = "paid",
+  UNPAID = "unpaid",  
+  OVERDUE = "overdue",
+  PAID_LATE = "paid_late",
+
+  // for receipt verification flow
+  PENDING_VERIFICATION = "pending_verification",
+  FAILED = "failed",
+  PENDING = "pending"
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
 }
 
 export enum BillingItemType {
@@ -41,6 +54,7 @@ export enum PaymentStatus {
 }
 
 export enum PaymentMethod {
+<<<<<<< HEAD
   CASH = "cash",
   BANK_TRANSFER = "bank_transfer",
   GCASH = "gcash",
@@ -92,6 +106,9 @@ export enum TransactionStatus {
   POSTED = "posted",
   FAILED = "failed",
   CANCELLED = "cancelled",
+=======
+  CASH = "cash"
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
 }
 
 export enum BillingPeriodType {

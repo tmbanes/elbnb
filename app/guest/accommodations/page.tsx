@@ -7,6 +7,8 @@ import { AccommodationCard } from '@/components/SearchAccommodations/Accommodati
 import { UnitCard } from '@/components/SearchAccommodations/UnitCard'
 import { AccommodationFilters } from '@/components/SearchAccommodations/AccommodationFilters'
 import { UnitFilters } from '@/components/SearchAccommodations/UnitFilters'
+import next from 'next'
+import Link from 'next/link'
 
 type TabType = 'accommodations' | 'units'
 
@@ -306,6 +308,16 @@ export default function SearchAccommodationsPage() {
           >
             All Units
           </button>
+          <Link 
+            href="/guest/accommodations/list"
+            className="px-6 py-3 rounded-lg font-semibold border border-gray-200 hover:border-gray-300 transition shadow-sm"
+            style={{
+              backgroundColor: '#FDFFF4',
+              color: '#44291B',
+            }}
+          >
+            List View
+          </Link>
         </div>
 
         {/* Error Message */}

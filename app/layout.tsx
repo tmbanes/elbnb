@@ -1,19 +1,16 @@
+
 import type { Metadata } from "next";
-import React from "react";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Archivo_Black } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const geist = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
 });
 
 const geistSans = Geist({

@@ -1,7 +1,7 @@
 export interface AccomodationHistory {
   application_id: string;
   date_submitted: string;
-  preferred_accommodation: string;
+  preferred_accommodation_id: string;
   preferred_unit_type: string;
   duration_of_stay: number;
   check_in: string;

@@ -1,7 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
+<<<<<<< HEAD
 
 export async function POST(req: NextRequest) {
+=======
+import { requireApiRole } from "@/lib/auth/server-auth";
+
+export async function POST(req: NextRequest) {
+  // TO DO: Protect this API route. Make this only accessible to admin (if admin lang talaga pwede maka-access nito).
+  // const auth = await requireApiRole(['housing_admin']);
+
+  // if ("error" in auth) {
+  //   return NextResponse.json(
+  //     { error: auth.error },
+  //     { status: auth.status }
+  //   );
+  // }
+
+  // const user = auth.user;
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
   const { first_name, last_name, email, office_location } = await req.json();
 
   if (!first_name || !last_name || !email) {

@@ -11,6 +11,7 @@ import {
   Building,
   Users,
   Settings2,
+  Building2,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -32,11 +33,10 @@ const sidebarConfig = {
   student: {
     label: "Student",
     nav: [
-      // /student/dashboard but use /dashboard for testing
       { title: "Dashboard", url: "/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/student/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/student/application", icon: Newspaper },
-      { title: "Billing", url: "#", icon: Banknote },
+      { title: "Billing", url: "/student/billing", icon: Banknote },
     ],
   },
 
@@ -44,7 +44,10 @@ const sidebarConfig = {
     label: "Admin",
     nav: [
       { title: "Dashboard", url: "/admin/dashboard", icon: PieChart },
-      { title: "Sample", url: "#", icon: Users },
+      { title: "Housing", url: "/admin/housing", icon: Building2 },
+      { title: "Managers", url: "/admin/housing/managers", icon: Users },
+      { title: "Billing", url: "/admin/billing", icon: Banknote },
+      { title: "Applications", url: "/admin/applications", icon: Newspaper },
     ],
   },
 
@@ -52,6 +55,7 @@ const sidebarConfig = {
     label: "Dorm Manager",
     nav: [ 
       { title: "Dashboard", url: "/dashboard", icon: PieChart },
+      { title: "Applications", url: "/manager/applications", icon: Newspaper },
       { title: "Sample", url: "#", icon: Users },
     ],
   },
@@ -63,8 +67,7 @@ const sidebarConfig = {
       { title: "Dashboard", url: "/guest/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/guest/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/guest/application", icon: Newspaper },
-      { title: "Billing", url: "#", icon: Banknote },
-      { title: "Guest Sample", url: "#", icon: Users },
+      { title: "Billing", url: "/guest/billing", icon: Banknote },
     ],
   },
 }

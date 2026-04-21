@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // dashboard/history/page.tsx
 
 import { createSupabaseServerClient } from "@/lib/supabase/server-client"
@@ -45,10 +46,23 @@ export default async function AccommodationHistoryPage() {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   // Protect the route: If no one is logged in, redirect them to the onboarding page
+=======
+import { createSupabaseServerClient } from "@/lib/supabase/server-client"
+import { redirect } from "next/navigation"
+import { studentProfileService } from "@/services/student_profile"
+import ApplicationsPage from "./ApplicationsPage";
+
+export default async function AccommodationHistoryPage() {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  // Redirect if not authenticated
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
   if (!user || authError) {
     redirect("/onboarding"); 
   }
 
+<<<<<<< HEAD
   // NOTE: THIS IS TEMPORARY HARDCODED USER ID FOR TESTING PURPOSES ONLY. REMOVE ONCE EVERTYHING IS GOOD
   //const tempUserId = "817d78b5-b102-4db2-b54b-61a952b0224e"; // stel's test account (thanks stel)
   // const tempUserId = "4bc89946-5a5c-4810-8839-afca74efdadb"; // my test account
@@ -74,10 +88,22 @@ export default async function AccommodationHistoryPage() {
             No accommodation history found.
           </CardContent>
         </Card>
+=======
+  // Fetch data from service layer
+  const { data: records, error } = await studentProfileService.getAccommodationHistory(user.id);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F6F8D5]">
+        <div className="p-6 bg-white border border-red-200 rounded-lg shadow-sm">
+          <p className="text-red-600 font-medium">Error loading data: {error.message}</p>
+        </div>
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
       </div>
     );
   }
 
+<<<<<<< HEAD
   // Define statuses that mean an application is "active"
   const activeStatuses = ['pending_admin', 'pending_dorm_manager', 'pending_payment', 'approved'];
 
@@ -194,6 +220,26 @@ export default async function AccommodationHistoryPage() {
           </Table>
         </CardContent>
       </Card>
+=======
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: '#F6F8D5' }}>
+      {/* Container for the Header. 
+          The ApplicationsPage has its own internal container for the cards 
+      */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+        <header className="mb-2">
+          <h1 className="text-4xl font-bold tracking-tight" style={{ color: '#44291B' }}>
+            Accommodation Overview
+          </h1>
+          <p className="mt-2 text-lg" style={{ color: '#44291B', opacity: 0.8 }}>
+            Manage your active requests and view past history.
+          </p>
+        </header>
+      </div>
+
+      {/* Render the component with the split sections and beige/blue theme */}
+      <ApplicationsPage records={records || []} />
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
     </div>
   )
 }
