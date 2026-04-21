@@ -47,18 +47,31 @@ interface GuestCreationRequest extends UserCreationRequest {
 //---------RESPONSE TYPES---------
 
 export interface User {
+<<<<<<< HEAD
+  // Response type for data fetche
+=======
   // Response type for data fetched
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
   user_id: string;
   first_name: string;
   last_name: string;
   middle_name?: string; // Optional middle name
   email: string;
+<<<<<<< HEAD
+  role: UserRole; // [To-Do:Define the role field with the UserRole type next]
+  user_status: UserStatus;
+  created_at: string; // ISO date string
+  sex: string
+  birthdate: string // ISO date string
+  
+=======
   role: UserRole;
   user_status: UserStatus;
   created_at: string; // ISO date string
   sex: string;
   birthdate: string; // ISO date string
   profile_picture_url?: string | null;
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
 }
 
 export type {

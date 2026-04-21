@@ -110,6 +110,10 @@ export default function AddDormModal({
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+  // ── Unit handlers ──────────────────────────────────────────────────────────
+=======
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
   function addUnit() {
     setUnits((prev) => [...prev, { ...EMPTY_UNIT }]);
   }
@@ -130,15 +134,35 @@ export default function AddDormModal({
 
   // ── Step validation ────────────────────────────────────────────────────────
   function canProceed() {
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+    if (step === 1) return form.name && form.location && form.total_capacity;
+    if (step === 2)
+      return form.number_of_semesters_allowed && form.term_type;
+    if (step === 3) return !!form.manager_id;
+    if (step === 4) {
+      return units.every(
+        (u) =>
+          u.unit_number.trim() !== "" &&
+          u.max_occupancy !== "" &&
+          u.rental_fee !== "" &&
+          u.billing_period !== "" &&
+          u.furnishing_status !== ""
+      );
+    }
+=======
     if (step === 1) return form.name.trim() !== "" && form.total_capacity.trim() !== "";
     if (step === 2) return form.number_of_semesters_allowed.trim() !== "" && !!form.term_type;
     if (step === 3) return !!form.manager_id;
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
     return true;
   }
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   async function handleSubmit() {
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+=======
     if (!canProceed()) return;
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
     setLoading(true);
     setError(null);
 
@@ -183,6 +207,10 @@ export default function AddDormModal({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Action failed");
 
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+      // ── Create units after dorm is made ──────────────────────────────────
+=======
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
       if (!isEditing && units.length > 0) {
         const accommodationId = data.accommodation_id;
         await Promise.all(
@@ -202,8 +230,17 @@ export default function AddDormModal({
                   rental_fee: Number(u.rental_fee),
                   billing_period: u.billing_period,
                   furnishing_status: u.furnishing_status,
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+                  min_stay_duration: u.min_stay_duration
+                    ? Number(u.min_stay_duration)
+                    : null,
+                  max_stay_duration: u.max_stay_duration
+                    ? Number(u.max_stay_duration)
+                    : null,
+=======
                   min_stay_duration: u.min_stay_duration ? Number(u.min_stay_duration) : null,
                   max_stay_duration: u.max_stay_duration ? Number(u.max_stay_duration) : null,
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
                 }),
               })
             )
@@ -230,6 +267,10 @@ export default function AddDormModal({
           : "Register a new university dormitory."
       }
     >
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+      {/* Step indicator */}
+=======
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
       <div className="flex items-center gap-2 mb-4">
         {Array.from({ length: totalSteps }).map((_, i) => (
           <div key={i} className="flex items-center gap-2">
@@ -257,18 +298,29 @@ export default function AddDormModal({
       </div>
 
       <FieldGroup>
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+        {/* Step 1 — Dorm Details */}
+=======
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
         {step === 1 && (
           <>
             <Field>
               <Label htmlFor="name" className="font-semibold">
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+                Dorm Name
+=======
                 Dorm Name <span className="text-[#DF3538]">*</span>
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
               </Label>
               <Input
                 id="name"
                 value={form.name}
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="e.g. Sampaguita Dormitory"
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+=======
                 required
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
               />
             </Field>
             <Field>
@@ -284,24 +336,55 @@ export default function AddDormModal({
             </Field>
             <Field>
               <Label htmlFor="total_capacity" className="font-semibold">
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+                Total Capacity
+=======
                 Total Capacity <span className="text-[#DF3538]">*</span>
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
               </Label>
               <Input
                 id="total_capacity"
                 type="number"
                 value={form.total_capacity}
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+                onChange={(e) =>
+                  handleChange("total_capacity", e.target.value)
+                }
+                placeholder="40"
+=======
                 onChange={(e) => handleChange("total_capacity", e.target.value)}
                 placeholder="40"
                 required
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
               />
             </Field>
           </>
         )}
 
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+        {/* Step 2 — Dorm Policies */}
+=======
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
         {step === 2 && (
           <>
             <div className="grid grid-cols-2 gap-4">
               <Field>
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+                <Label className="font-semibold">Semesters Allowed</Label>
+                <Input
+                  type="number"
+                  value={form.number_of_semesters_allowed}
+                  onChange={(e) =>
+                    handleChange(
+                      "number_of_semesters_allowed",
+                      e.target.value
+                    )
+                  }
+                />
+              </Field>
+              <Field>
+                <Label className="font-semibold">Term Type</Label>
+=======
                 <Label className="font-semibold">
                   Semesters Allowed <span className="text-[#DF3538]">*</span>
                 </Label>
@@ -316,6 +399,7 @@ export default function AddDormModal({
                 <Label className="font-semibold">
                   Term Type <span className="text-[#DF3538]">*</span>
                 </Label>
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
                 <Select
                   value={form.term_type}
                   onValueChange={(val) => handleChange("term_type", val)}
@@ -342,7 +426,13 @@ export default function AddDormModal({
               <Label className="font-semibold">Allowed Programs</Label>
               <Textarea
                 value={form.allowed_programs}
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+                onChange={(e) =>
+                  handleChange("allowed_programs", e.target.value)
+                }
+=======
                 onChange={(e) => handleChange("allowed_programs", e.target.value)}
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
                 placeholder="All programs..."
               />
             </Field>
@@ -351,20 +441,36 @@ export default function AddDormModal({
                 id="gender"
                 className="data-[state=checked]:bg-[#5591AB] data-[state=checked]:border-[#5591AB]"
                 checked={form.separate_by_gender}
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+                onCheckedChange={(checked) =>
+                  handleChange("separate_by_gender", checked)
+                }
+              />
+              <Label htmlFor="gender" className="text-sm font-semibold">
+                Separate by Gender
+=======
                 onCheckedChange={(checked) => handleChange("separate_by_gender", checked)}
               />
               <Label htmlFor="gender" className="text-sm font-semibold">
                 Separate by Gender <span className="text-[#DF3538]">*</span>
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
               </Label>
             </div>
           </>
         )}
 
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+        {/* Step 3 — Assign Manager */}
+        {step === 3 && (
+          <Field>
+            <Label className="font-semibold">Property Manager</Label>
+=======
         {step === 3 && (
           <Field>
             <Label className="font-semibold">
               Property Manager <span className="text-[#DF3538]">*</span>
             </Label>
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
             <Select
               value={form.manager_id}
               onValueChange={(val) => handleChange("manager_id", val)}
@@ -383,20 +489,39 @@ export default function AddDormModal({
           </Field>
         )}
 
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+        {/* Step 4 — Add Units (create only) */}
+=======
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
         {step === 4 && !isEditing && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-[#44291B]">
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+                  Add Units{" "}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    (Optional)
+                  </span>
+=======
                   Add Units <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
                 </p>
                 <p className="text-xs text-muted-foreground">
                   You can also add units from the property detail page later.
                 </p>
               </div>
               <Button
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addUnit}
+                className="gap-1 border-[#5591AB] text-[#5591AB] hover:bg-[#5591AB] hover:text-white text-xs"
+=======
                 onClick={addUnit}
                 className="bg-[#5591AB] hover:shadow-md text-white"
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
               >
                 <Plus className="h-3 w-3" />
                 Add Unit
@@ -431,6 +556,10 @@ export default function AddDormModal({
         )}
       </FieldGroup>
 
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+      {/* Navigation */}
+=======
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
       <div className="flex justify-between mt-4">
         <Button
           variant="outline"
@@ -452,8 +581,13 @@ export default function AddDormModal({
             onClick={handleSubmit}
             className={
               isEditing
+<<<<<<< HEAD:app/dashboard/admin/housing/components/modals/AddDormModal.tsx
+                ? "bg-[#5591AB] hover:bg-[#467a8f]"
+                : "bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
+=======
                 ? "bg-[#5591AB] hover:!bg-[#467a8f] text-white"
                 : "bg-[#78A24C] hover:!bg-[#E7FAD3] text-white hover:!text-[#78A24C]"
+>>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1:app/admin/housing/components/modals/AddDormModal.tsx
             }
           >
             {loading
