@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 export async function GET(_req: NextRequest) {
   try {
@@ -182,7 +183,7 @@ export async function PATCH(req: NextRequest) {
     // 2. Verify the selected unit still has available space
     const { data: unit, error: unitError } = await supabase
       .from("unit")
-      .select("unit_id, max_occupancy, current_occupancy, unit_status")
+      .select("unit_id, max_occupancy, current_occupancy, unit_status, rental_fee")
       .eq("unit_id", unit_id!)
       .single();
 
@@ -204,16 +205,24 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // 3. Update application status to pending payment
-    const { error: approveError } = await supabase
+    const monthlyRent = Number(unit.rental_fee ?? 0);
+    if (!Number.isFinite(monthlyRent) || monthlyRent <= 0) {
+      return NextResponse.json(
+        { error: "Selected unit has no valid rental fee for invoice creation." },
+        { status: 400 },
+      );
+    }
+
+    // 3. Update application status to pending payment and persist selected unit
+    const { error: approveError } = await supabaseAdmin
       .from("accommodation_application")
-      .update({ application_status: "pending_payment" })
+      .update({ application_status: "pending_payment", unit_id: unit_id! })
       .eq("application_id", application_id);
 
     if (approveError) throw new Error(approveError.message);
 
     // 4. Create accommodation_assignment row
-    const { error: assignError } = await supabase
+    const { data: assignment, error: assignError } = await supabaseAdmin
       .from("accommodation_assignment")
       .insert({
         application_id: application.application_id,
@@ -223,14 +232,82 @@ export async function PATCH(req: NextRequest) {
         expected_move_out_date: application.check_out,
         actual_move_out_date: null,
         assignment_status: "waiting_payment",
+      })
+      .select("assignment_id")
+      .single();
+
+    if (assignError) {
+      await supabaseAdmin
+        .from("accommodation_application")
+        .update({ application_status: "pending_admin", unit_id: null })
+        .eq("application_id", application.application_id);
+      throw new Error(`Failed to create assignment: ${assignError.message}`);
+    }
+
+    // 5. Auto-generate initial invoice (1 month room rent)
+    const dueDate = application.check_in ? new Date(application.check_in) : new Date();
+    const billingPeriodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
+
+    const { data: billing, error: billingError } = await supabaseAdmin
+      .from("billing")
+      .insert({
+        assignment_id: assignment.assignment_id,
+        amount: monthlyRent,
+        billing_period_date: billingPeriodDate.toISOString(),
+        due_date: dueDate.toISOString(),
+        status: "unpaid",
+        payment_method: "cash",
+        internal_notes: "Auto-generated initial invoice upon admin approval (1 month room rent).",
+      })
+      .select("billing_id")
+      .single();
+
+    if (billingError) {
+      await supabaseAdmin
+        .from("accommodation_assignment")
+        .delete()
+        .eq("assignment_id", assignment.assignment_id);
+
+      await supabaseAdmin
+        .from("accommodation_application")
+        .update({ application_status: "pending_admin", unit_id: null })
+        .eq("application_id", application.application_id);
+
+      throw new Error(`Failed to auto-create invoice: ${billingError.message}`);
+    }
+
+    const { error: itemError } = await supabaseAdmin
+      .from("billing_item")
+      .insert({
+        billing_id: billing.billing_id,
+        type: "room_rent",
+        amount: monthlyRent,
       });
 
-    if (assignError) throw new Error(assignError.message);
+    if (itemError) {
+      await supabaseAdmin
+        .from("billing")
+        .delete()
+        .eq("billing_id", billing.billing_id);
+
+      await supabaseAdmin
+        .from("accommodation_assignment")
+        .delete()
+        .eq("assignment_id", assignment.assignment_id);
+
+      await supabaseAdmin
+        .from("accommodation_application")
+        .update({ application_status: "pending_admin", unit_id: null })
+        .eq("application_id", application.application_id);
+
+      throw new Error(`Failed to create billing item: ${itemError.message}`);
+    }
 
     return NextResponse.json({
       success: true,
-      new_status: "approved",
+      new_status: "pending_payment",
       assignment_status: "waiting_payment",
+      auto_invoice_amount: monthlyRent,
     });
   } catch (e) {
     const message =
