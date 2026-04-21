@@ -1,6 +1,8 @@
 // /types/student_profile/index.ts
 // https://supabase.com/dashboard/project/cywurzembhxgwqvpsrlh/database/schemas
 
+import { Accommodation } from "../accommodation_units";
+
 export type UserRole =
   | "Student"
   | "Dormitory Manager"
@@ -46,4 +48,10 @@ export interface AccommodationApplication {
     application_status: string; // values: pending_admin, approved, rejected, pending_payment, cancelled, pending_dorm_manager
 
     accomodation_assignment?: AccommodationAssignment | null; 
+    accommodation?: {
+      name: string;
+    };
+    unit?: {
+      unit_number: string;
+    };
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { processPaymentAction } from "./actions";
 import { BillingStatus } from "@/types/billing/enums";
 import { 
   CreditCard, 
@@ -21,15 +21,35 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-export default function BillingClient({ userId, summary, bills }: any) {
+export default function BillingClient({
+  userId,
+  summary,
+  bills,
+  paymentHistory,
+  uploadEndpoint = "/api/student/billing/upload-receipt",
+}: any) {
   const supabase = getSupabaseBrowserClient();
 
   const [selectedBill, setSelectedBill] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const router = useRouter();
 
-  const USE_DUMMY_BILLING_DATA = true;
+  const USE_DUMMY_BILLING_DATA = false;
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('realtime_student_billing')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, () => {
+        router.refresh();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, router]);
 
   const dummyBills = useMemo(
     () => [
@@ -81,6 +101,11 @@ export default function BillingClient({ userId, summary, bills }: any) {
     [USE_DUMMY_BILLING_DATA, dummyBills, bills]
   );
 
+  const normalizedPaymentHistory = useMemo(
+    () => (Array.isArray(paymentHistory) ? paymentHistory : []),
+    [paymentHistory]
+  );
+
   const focusedBill = selectedBill;
 
   const toCurrencyNumber = (value: unknown) => {
@@ -128,6 +153,7 @@ export default function BillingClient({ userId, summary, bills }: any) {
     switch(status) {
       case BillingStatus.PAID: return "bg-green-100 text-green-700 border-green-200";
       case BillingStatus.UNPAID: return "bg-slate-100 text-slate-700 border-slate-200";
+      case BillingStatus.PENDING_VERIFICATION: return "bg-amber-100 text-amber-700 border-amber-200";
       case BillingStatus.PENDING: return "bg-amber-100 text-amber-700 border-amber-200";
       case BillingStatus.OVERDUE: return "bg-red-100 text-red-700 border-red-200";
       case BillingStatus.FAILED: return "bg-rose-100 text-rose-700 border-rose-200";
@@ -147,18 +173,19 @@ export default function BillingClient({ userId, summary, bills }: any) {
     setUploadError("");
 
     try {
-      const fileExt = uploadFile.name.split('.').pop();
-      const fileName = `${userId}/${billId}-${Date.now()}.${fileExt}`;
+      const formData = new FormData();
+      formData.append("billingId", billId);
+      formData.append("receiptFile", uploadFile);
 
-      const { data, error } = await supabase.storage
-        .from('payment_receipts')
-        .upload(fileName, uploadFile);
+      const response = await fetch(uploadEndpoint, {
+        method: "POST",
+        body: formData,
+      });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to upload receipt.");
       }
-
-      await processPaymentAction(userId, billId, data.path);
       
       // Reload page to reflect changes
       window.location.reload();
@@ -182,6 +209,26 @@ export default function BillingClient({ userId, summary, bills }: any) {
 
   return (
     <>
+    <style jsx global>{`
+      @media print {
+        body * {
+          visibility: hidden !important;
+        }
+
+        #invoice-print-root,
+        #invoice-print-root * {
+          visibility: visible !important;
+        }
+
+        #invoice-print-root {
+          position: fixed;
+          inset: 0;
+          width: 100%;
+          background: #fff;
+          z-index: 9999;
+        }
+      }
+    `}</style>
     <div className="space-y-8 print:hidden">
       {USE_DUMMY_BILLING_DATA && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -321,14 +368,6 @@ export default function BillingClient({ userId, summary, bills }: any) {
                           <FileText className="size-4" />
                           Detail
                         </Button>
-                        {isActionable && (
-                          <Button
-                            onClick={() => setSelectedBill(bill)}
-                            className="bg-[#0D2A6B] text-white hover:bg-[#0B235A]"
-                          >
-                            Pay Now
-                          </Button>
-                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -352,9 +391,43 @@ export default function BillingClient({ userId, summary, bills }: any) {
         </CardHeader>
         <CardContent className="pt-0">
           <Separator className="mb-4" />
-          <div className="text-sm text-slate-600">
-            Transaction history will appear here once payment records are available.
-          </div>
+          {normalizedPaymentHistory.length > 0 ? (
+            <Table className="text-slate-700">
+              <TableHeader>
+                <TableRow className="bg-slate-50/80">
+                  <TableHead className="px-4 py-3 font-semibold">Date</TableHead>
+                  <TableHead className="px-4 py-3 font-semibold">Invoice</TableHead>
+                  <TableHead className="px-4 py-3 font-semibold">Amount</TableHead>
+                  <TableHead className="px-4 py-3 font-semibold">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {normalizedPaymentHistory.map((entry: any, index: number) => {
+                  const nestedBilling = Array.isArray(entry?.billing) ? entry.billing[0] : entry?.billing;
+                  const historyAmount = nestedBilling?.amount ?? entry?.amount ?? 0;
+
+                  return (
+                  <TableRow key={`${entry?.billing_id || "unknown"}-${entry?.created_at || index}`} className="hover:bg-slate-50/60">
+                    <TableCell className="px-4 py-3">{safeDateLabel(entry?.created_at, "MMM dd, yyyy HH:mm")}</TableCell>
+                    <TableCell className="px-4 py-3 font-mono text-xs">{String(entry?.billing_id || "N/A").split("-")[0]}</TableCell>
+                    <TableCell className="px-4 py-3 font-semibold">₱{formatPeso(historyAmount)}</TableCell>
+                    <TableCell className="px-4 py-3">
+                      <Badge
+                        variant="outline"
+                        className={`border ${getStatusColor(entry?.status)} rounded-full px-2.5 py-1 font-semibold`}
+                      >
+                        {getStatusFormat(entry?.status)}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                )})}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-sm text-slate-600">
+              No payment activity yet.
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -480,7 +553,7 @@ export default function BillingClient({ userId, summary, bills }: any) {
 
     {/* Printable View (Hidden in normal screen, block in print) */}
     {selectedBill && (
-      <div className="hidden print:block font-sans text-black bg-white p-8 absolute inset-0 text-sm">
+      <div id="invoice-print-root" className="hidden print:block font-sans text-black bg-white p-8 absolute inset-0 text-sm">
         <div className="flex justify-between items-end border-b-2 border-slate-900 pb-6 mb-8">
           <div>
             <h1 className="text-4xl font-extrabold text-slate-900 uppercase tracking-tighter">INVOICE</h1>
@@ -495,7 +568,7 @@ export default function BillingClient({ userId, summary, bills }: any) {
         <div className="flex justify-between mb-10">
           <div>
             <p className="text-slate-500 font-bold mb-1">BILLED TO:</p>
-            <p className="font-semibold text-lg">{selectedBill?.accommodation_assignment?.users?.full_name || "Student Resident"}</p>
+            <p className="font-semibold text-lg">{selectedBill?.accommodation_assignment?.users ? `${selectedBill.accommodation_assignment.users.first_name} ${selectedBill.accommodation_assignment.users.last_name}` : "Student Resident"}</p>
             <p className="text-slate-600">ID: {userId}</p>
           </div>
           <div className="text-right">
