@@ -49,7 +49,10 @@ export async function GET(req: NextRequest) {
 
     if (error)
       return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data);
+    
+    // Rename 'unit' to 'units' for consistency
+    const response = data && data.unit ? { ...data, units: data.unit } : data;
+    return NextResponse.json(response);
   }
 
   const { data, error } = await supabaseAdmin

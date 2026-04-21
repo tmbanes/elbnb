@@ -110,7 +110,6 @@ export default function AddDormModal({
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ── Unit handlers ──────────────────────────────────────────────────────────
   function addUnit() {
     setUnits((prev) => [...prev, { ...EMPTY_UNIT }]);
   }
@@ -131,25 +130,15 @@ export default function AddDormModal({
 
   // ── Step validation ────────────────────────────────────────────────────────
   function canProceed() {
-    if (step === 1) return form.name && form.location && form.total_capacity;
-    if (step === 2)
-      return form.number_of_semesters_allowed && form.term_type;
+    if (step === 1) return form.name.trim() !== "" && form.total_capacity.trim() !== "";
+    if (step === 2) return form.number_of_semesters_allowed.trim() !== "" && !!form.term_type;
     if (step === 3) return !!form.manager_id;
-    if (step === 4) {
-      return units.every(
-        (u) =>
-          u.unit_number.trim() !== "" &&
-          u.max_occupancy !== "" &&
-          u.rental_fee !== "" &&
-          u.billing_period !== "" &&
-          u.furnishing_status !== ""
-      );
-    }
     return true;
   }
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   async function handleSubmit() {
+    if (!canProceed()) return;
     setLoading(true);
     setError(null);
 
@@ -194,7 +183,6 @@ export default function AddDormModal({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Action failed");
 
-      // ── Create units after dorm is made ──────────────────────────────────
       if (!isEditing && units.length > 0) {
         const accommodationId = data.accommodation_id;
         await Promise.all(
@@ -214,12 +202,8 @@ export default function AddDormModal({
                   rental_fee: Number(u.rental_fee),
                   billing_period: u.billing_period,
                   furnishing_status: u.furnishing_status,
-                  min_stay_duration: u.min_stay_duration
-                    ? Number(u.min_stay_duration)
-                    : null,
-                  max_stay_duration: u.max_stay_duration
-                    ? Number(u.max_stay_duration)
-                    : null,
+                  min_stay_duration: u.min_stay_duration ? Number(u.min_stay_duration) : null,
+                  max_stay_duration: u.max_stay_duration ? Number(u.max_stay_duration) : null,
                 }),
               })
             )
@@ -246,7 +230,6 @@ export default function AddDormModal({
           : "Register a new university dormitory."
       }
     >
-      {/* Step indicator */}
       <div className="flex items-center gap-2 mb-4">
         {Array.from({ length: totalSteps }).map((_, i) => (
           <div key={i} className="flex items-center gap-2">
@@ -274,18 +257,18 @@ export default function AddDormModal({
       </div>
 
       <FieldGroup>
-        {/* Step 1 — Dorm Details */}
         {step === 1 && (
           <>
             <Field>
               <Label htmlFor="name" className="font-semibold">
-                Dorm Name
+                Dorm Name <span className="text-[#DF3538]">*</span>
               </Label>
               <Input
                 id="name"
                 value={form.name}
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="e.g. Sampaguita Dormitory"
+                required
               />
             </Field>
             <Field>
@@ -301,40 +284,38 @@ export default function AddDormModal({
             </Field>
             <Field>
               <Label htmlFor="total_capacity" className="font-semibold">
-                Total Capacity
+                Total Capacity <span className="text-[#DF3538]">*</span>
               </Label>
               <Input
                 id="total_capacity"
                 type="number"
                 value={form.total_capacity}
-                onChange={(e) =>
-                  handleChange("total_capacity", e.target.value)
-                }
+                onChange={(e) => handleChange("total_capacity", e.target.value)}
                 placeholder="40"
+                required
               />
             </Field>
           </>
         )}
 
-        {/* Step 2 — Dorm Policies */}
         {step === 2 && (
           <>
             <div className="grid grid-cols-2 gap-4">
               <Field>
-                <Label className="font-semibold">Semesters Allowed</Label>
+                <Label className="font-semibold">
+                  Semesters Allowed <span className="text-[#DF3538]">*</span>
+                </Label>
                 <Input
                   type="number"
                   value={form.number_of_semesters_allowed}
-                  onChange={(e) =>
-                    handleChange(
-                      "number_of_semesters_allowed",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => handleChange("number_of_semesters_allowed", e.target.value)}
+                  required
                 />
               </Field>
               <Field>
-                <Label className="font-semibold">Term Type</Label>
+                <Label className="font-semibold">
+                  Term Type <span className="text-[#DF3538]">*</span>
+                </Label>
                 <Select
                   value={form.term_type}
                   onValueChange={(val) => handleChange("term_type", val)}
@@ -361,9 +342,7 @@ export default function AddDormModal({
               <Label className="font-semibold">Allowed Programs</Label>
               <Textarea
                 value={form.allowed_programs}
-                onChange={(e) =>
-                  handleChange("allowed_programs", e.target.value)
-                }
+                onChange={(e) => handleChange("allowed_programs", e.target.value)}
                 placeholder="All programs..."
               />
             </Field>
@@ -372,21 +351,20 @@ export default function AddDormModal({
                 id="gender"
                 className="data-[state=checked]:bg-[#5591AB] data-[state=checked]:border-[#5591AB]"
                 checked={form.separate_by_gender}
-                onCheckedChange={(checked) =>
-                  handleChange("separate_by_gender", checked)
-                }
+                onCheckedChange={(checked) => handleChange("separate_by_gender", checked)}
               />
               <Label htmlFor="gender" className="text-sm font-semibold">
-                Separate by Gender
+                Separate by Gender <span className="text-[#DF3538]">*</span>
               </Label>
             </div>
           </>
         )}
 
-        {/* Step 3 — Assign Manager */}
         {step === 3 && (
           <Field>
-            <Label className="font-semibold">Property Manager</Label>
+            <Label className="font-semibold">
+              Property Manager <span className="text-[#DF3538]">*</span>
+            </Label>
             <Select
               value={form.manager_id}
               onValueChange={(val) => handleChange("manager_id", val)}
@@ -405,27 +383,20 @@ export default function AddDormModal({
           </Field>
         )}
 
-        {/* Step 4 — Add Units (create only) */}
         {step === 4 && !isEditing && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-[#44291B]">
-                  Add Units{" "}
-                  <span className="text-xs font-normal text-muted-foreground">
-                    (Optional)
-                  </span>
+                  Add Units <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
                   You can also add units from the property detail page later.
                 </p>
               </div>
               <Button
-                type="button"
-                variant="outline"
-                size="sm"
                 onClick={addUnit}
-                className="gap-1 border-[#5591AB] text-[#5591AB] hover:bg-[#5591AB] hover:text-white text-xs"
+                className="bg-[#5591AB] hover:shadow-md text-white"
               >
                 <Plus className="h-3 w-3" />
                 Add Unit
@@ -460,7 +431,6 @@ export default function AddDormModal({
         )}
       </FieldGroup>
 
-      {/* Navigation */}
       <div className="flex justify-between mt-4">
         <Button
           variant="outline"
@@ -482,8 +452,8 @@ export default function AddDormModal({
             onClick={handleSubmit}
             className={
               isEditing
-                ? "bg-[#5591AB] hover:bg-[#467a8f]"
-                : "bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
+                ? "bg-[#5591AB] hover:!bg-[#467a8f] text-white"
+                : "bg-[#78A24C] hover:!bg-[#E7FAD3] text-white hover:!text-[#78A24C]"
             }
           >
             {loading

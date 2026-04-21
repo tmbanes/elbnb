@@ -3,12 +3,11 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import AddDormModal from "@/app/dashboard/admin/housing/components/modals/AddDormModal";
-import AddRentalSpaceModal from "@/app/dashboard/admin/housing/components/modals/AddRentalSpaceModal";
-// import AddUnitModal from "@/app/dashboard/admin/housing/components/modals/AddUnitModal";
-import { Property } from "../../../../../types/housing/types";
+import AddDormModal from "@/app/admin/housing/components/modals/AddDormModal";
+import AddRentalSpaceModal from "@/app/admin/housing/components/modals/AddRentalSpaceModal";
+import { Property } from "../../../../types/housing/types";
 import PropertiesList from "./PropertiesList";
-import PropertyDetail from "./PropertyDetail";
+import PropertyDetail from "./PropertyDetails";
 
 export default function PropertiesContent() {
   const searchParams = useSearchParams();
@@ -25,8 +24,8 @@ export default function PropertiesContent() {
   const [addPromptOpen, setAddPromptOpen] = useState(false);
   const [dormModalOpen, setDormModalOpen] = useState(false);
   const [rentalModalOpen, setRentalModalOpen] = useState(false);
-//   const [unitModalOpen, setUnitModalOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  
 
   async function fetchProperties() {
     try {
@@ -83,15 +82,15 @@ export default function PropertiesContent() {
   }, [selectedId, properties]);
 
   function handleSelectProperty(id: string) {
-    router.push(`/dashboard/admin/housing/properties?id=${id}`);
+    router.push(`/admin/housing?id=${id}`);
   }
 
   function handleBackToList() {
-    router.push("/dashboard/admin/housing/properties");
+    router.push("/admin/housing");
   }
 
   function handleBackToHousing() {
-    router.push("/dashboard/admin/housing");
+    router.push("/admin/housing");
   }
 
   function openEditModal(property: Property) {
@@ -112,21 +111,6 @@ export default function PropertiesContent() {
     setRentalModalOpen(false);
     setEditingProperty(null);
   }
-
-//   function openAddUnitModal() {
-//     setUnitModalOpen(true);
-//   }
-
-//   function closeUnitModal() {
-//     setUnitModalOpen(false);
-//   }
-
-//   function handleUnitAdded(unit: any) {
-//     setSelectedProperty((prev) =>
-//       prev ? { ...prev, units: [...(prev.units ?? []), unit] } : prev,
-//     );
-//     fetchProperties();
-//   }
 
   async function handleDeleteProperty(id: string, type: string) {
     if (!confirm("Are you sure you want to delete this property?")) return;
@@ -170,7 +154,7 @@ export default function PropertiesContent() {
     if (type) {
       router.push(`?type=${type}`);
     } else {
-      router.push("/dashboard/admin/housing/properties");
+      router.push("/admin/housing");
     }
   }
 
@@ -213,7 +197,7 @@ export default function PropertiesContent() {
           property={selectedProperty}
           onBack={handleBackToList}
           onDeleteUnit={handleDeleteUnit}
-        //   onAddUnit={openAddUnitModal}
+          onAddUnit={fetchProperties}
         />
       )}
 
@@ -287,12 +271,6 @@ export default function PropertiesContent() {
             : null
         }
       />
-      {/* <AddUnitModal
-        isOpen={unitModalOpen}
-        onClose={closeUnitModal}
-        accommodationId={selectedId ?? ""}
-        onSuccess={handleUnitAdded}
-      /> */}
     </>
   );
 }
