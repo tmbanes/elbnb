@@ -196,7 +196,7 @@ export default function MyApplicationsPage() {
       const accomMap = new Map(accomData.map(a => [a.accommodation_id, a]))
 
       // 3. units lookup (fetch per unique accommodation)
-      const uniqueAccomIds = [...new Set(applications.map(a => a.preferred_accommodation_id))]
+      const uniqueAccomIds = [...new Set(applications.map(a => a.preferred_accommodation))]
       const unitMap = new Map<string, Unit>()
 
       await Promise.all(
@@ -211,7 +211,7 @@ export default function MyApplicationsPage() {
       // 4. enrich
       const result: EnrichedApplication[] = applications.map(app => ({
         application: app,
-        accommodation: accomMap.get(app.preferred_accommodation_id) ?? null,
+        accommodation: accomMap.get(app.preferred_accommodation) ?? null,
         unit: app.unit_id ? unitMap.get(app.unit_id) ?? null : null,
       }))
 

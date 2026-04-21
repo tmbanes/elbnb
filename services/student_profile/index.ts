@@ -175,19 +175,13 @@ not yet tested
       .select(`
         application_id,
         application_status,
-        preferred_accommodation_id,
+        preferred_accommodation,
         preferred_unit_type,
         date_submitted,
         duration_of_stay,
         check_in,
         check_out,
-        number_of_companions,
-        accommodation:preferred_accommodation_id (
-          name
-        ),
-        unit:unit_id (
-          unit_number
-        )
+        number_of_companions
       `)
       .eq("user_id", user_id)
       .order("date_submitted", { ascending: false });
