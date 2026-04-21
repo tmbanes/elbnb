@@ -54,6 +54,9 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const [editingBill, setEditingBill] = useState<any>(null);
   const [editNotes, setEditNotes] = useState("");
   const [editFlag, setEditFlag] = useState(false);
+  const [editAmount, setEditAmount] = useState<number>(0);
+  const [editDueDate, setEditDueDate] = useState<string>("");
+  const [editStatus, setEditStatus] = useState<BillingStatus>(BillingStatus.UNPAID);
   const [isSaving, setIsSaving] = useState(false);
 
   // Create Bill Modal State
@@ -139,18 +142,33 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     setEditingBill(bill);
     setEditNotes(bill.internal_notes || "");
     setEditFlag(bill.admin_flag || false);
+    setEditAmount(Number(bill.amount || 0));
+    setEditDueDate(bill.due_date ? format(new Date(bill.due_date), "yyyy-MM-dd") : "");
+    setEditStatus((bill.status as BillingStatus) || BillingStatus.UNPAID);
   };
 
   const saveEdits = async () => {
     if (!editingBill) return;
     setIsSaving(true);
-    await adminUpdateInvoiceAction(editingBill.billing_id, {
-      internal_notes: editNotes,
-      admin_flag: editFlag
-    });
-    setIsSaving(false);
-    setEditingBill(null);
-    window.location.reload();
+    try {
+      await adminUpdateInvoiceAction(
+        editingBill.billing_id,
+        {
+          internal_notes: editNotes,
+          admin_flag: editFlag,
+          amount: editAmount,
+          due_date: editDueDate ? new Date(`${editDueDate}T00:00:00`).toISOString() : undefined,
+          status: editStatus,
+        },
+        adminId,
+      );
+      setEditingBill(null);
+      window.location.reload();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to save invoice changes.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const sendReminders = async () => {
@@ -425,7 +443,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
           <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><FileEdit className="w-5 h-5"/> Edit Invoice Notes</h3>
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><FileEdit className="w-5 h-5"/> Edit Invoice</h3>
               <button onClick={() => setEditingBill(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5"/></button>
             </div>
             
@@ -452,6 +470,45 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                   className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-4 outline-none focus:ring-2 focus:ring-indigo-500/50"
                   placeholder="Record calls, disputes, or manual actions taken..."
                 ></textarea>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Amount</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={Number.isFinite(editAmount) ? editAmount : 0}
+                    onChange={e => setEditAmount(Number(e.target.value || 0))}
+                    className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
+                  <input
+                    type="date"
+                    value={editDueDate}
+                    onChange={e => setEditDueDate(e.target.value)}
+                    className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Status</label>
+                <select
+                  value={editStatus}
+                  onChange={e => setEditStatus(e.target.value as BillingStatus)}
+                  className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                >
+                  {Object.values(BillingStatus).map(status => (
+                    <option key={status} value={status}>
+                      {status.replace(/_/g, " ").toUpperCase()}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {editingBill.reminded_at && (
