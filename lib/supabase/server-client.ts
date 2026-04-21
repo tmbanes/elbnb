@@ -18,11 +18,6 @@ export async function createSupabaseServerClient() {
             cookieStore.set(name, value, options),
           );
         } catch (error) {
-<<<<<<< HEAD
-          // This can be ignored if middleware handles refreshes
-=======
-          // ignore
->>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
         }
       },
     },
