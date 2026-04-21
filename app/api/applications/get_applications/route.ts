@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CreateApplicationService } from '@/services/application_workflow/create_application'
+import { getAuthenticatedUser } from '@/lib/auth/get-user'
 import { AccommodationApplication, ApplicationStatus } from '@/types/application_workflow'
-import { getApiAuthenticatedUser } from '@/lib/auth/server-auth'
+import { requireRole } from '@/lib/auth/require-role'
 
 // GET USER'S APPLICATIONS
 export async function GET(request: NextRequest) {
   try {
-    const auth = await getApiAuthenticatedUser();
-
-    if ("error" in auth) {
+    const user = await getAuthenticatedUser()
+    
+    if (!user) {
       return NextResponse.json(
-        { error: auth.error },
-        { status: auth.status }
-      );
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
-
-    const user = auth.user;
 
     const applications = await CreateApplicationService.getApplicationsByUser(user.user_id)
 

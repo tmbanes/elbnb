@@ -1,16 +1,13 @@
 import Link from 'next/link'
+import { getAuthenticatedUser } from '@/lib/auth/get-user'
 import { redirect } from 'next/navigation'
 import { ProfileUpload } from './ProfileUpload'
-import { getApiAuthenticatedUser } from '@/lib/auth/server-auth'
-import { NextResponse } from 'next/server'
 
 export default async function DashboardPage() {
-  const auth = await getApiAuthenticatedUser()
-  if ("error" in auth) {
-    redirect("/");
-  };
-
-  const user = auth.user;
+  const user = await getAuthenticatedUser()
+  if (!user) {
+    redirect('/auth')
+  }
 
   return (
     <div className="space-y-6 p-6">
