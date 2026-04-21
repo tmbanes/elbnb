@@ -97,18 +97,18 @@ export default function ReviewApplication({
     }
   }
 
+  const userData = Array.isArray(appData?.users) ? appData.users[0] : appData?.users;
+  console.log(userData)
+
   const data = {
     id: appData?.application_id || "",
     status: appData?.application_status || "Pending",
     submitted: new Date(appData.date_submitted).toLocaleDateString(),
     unit: appData.units?.unit_number || "Not yet assigned",
 
-    firstName: appData.users?.first_name || "Unknown",
-    lastName: appData.users?.last_name || "",
-    email: appData.users?.email || "No email",
-    // program: appData.users?.course || "N/A",
-    // year: appData.users?.year_level || "N/A",
-    // studentNum: appData.users?.student_number || "N/A",
+    firstName: userData?.first_name || "Unknown",
+    lastName: userData?.last_name || "",
+    email: userData?.email || "No email",
 
     stay: {
       duration: `${appData.duration_of_stay} months`,
@@ -125,6 +125,8 @@ export default function ReviewApplication({
       `Application Submitted - ${new Date(appData.date_submitted).toLocaleDateString()}`,
     ],
   };
+
+  console.log(appData.users);
   return (
     <div className="p-6 space-y-6 bg-[#F6F8D5] h-full overflow-y-auto">
       {/* HEADER */}

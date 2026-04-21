@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest) {
         .select(
           `
         *,
-        users:user_id (first_name, last_name, email),
+        users (first_name, last_name, email),
         accommodation:preferred_accommodation_id (accommodation_id, name, location),
         units:unit_id (unit_number)
       `,
