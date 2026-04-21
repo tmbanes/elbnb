@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation/index";
-import { getApiAuthenticatedUser } from "@/lib/auth/server-auth";
+import { getAuthenticatedUser } from "@/lib/auth/get-user";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const type = searchParams.get("type") || "accommodations";
   const accommodationId = searchParams.get("accommodationId");
-  const auth = await getApiAuthenticatedUser();
-
-  if ("error" in auth) {
-    return NextResponse.json(
-      { error: auth.error },
-      { status: auth.status }
-    );
-  }
-  
-  const user = auth.user;
+  const user = await getAuthenticatedUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     let result;
