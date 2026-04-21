@@ -120,7 +120,7 @@ export default function ManagersContent() {
         `}
       >
 
-        <div className="px-6 mt-10 pb-2">
+        <div className="pt-6 pl-7">
           <h1 className="text-4xl font-bold text-[#44291B]">Managers Page</h1>
           <p className="text-sm text-[#44291B] mt-1">View and manage your property managers</p>
         </div>
