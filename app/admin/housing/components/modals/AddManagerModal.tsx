@@ -218,7 +218,7 @@ export default function AddManagerModal({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-[#5591AB] hover:!bg-[#467a8f] text-white"
+              className="bg-[#264384] hover:bg-[#5273BC] text-white"
             >
               {loading ? "Saving..." : "Save Changes"}
             </Button>
@@ -229,7 +229,7 @@ export default function AddManagerModal({
       {/* ── CREATE MODE ── */}
       {!isEditing && submitState !== "success" && (
         <form onSubmit={handleCreateSubmit} className="space-y-4">
-          <div className="rounded-lg bg-[#5273BC] border border-[#264384] p-3">
+          <div className="rounded-lg bg-[#ebf2f4] border border-[#264384] p-3">
             <p className="text-xs text-[#264384]">
               A login account will be created. A temporary password will be
               shown once — share it securely with the manager.
