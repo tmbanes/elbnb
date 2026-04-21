@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CreateApplicationService } from '@/services/application_workflow/create_application'
-import { getAuthenticatedUser } from '@/lib/auth/get-user'
 import { AccommodationApplication, ApplicationStatus } from '@/types/application_workflow'
-import { requireRole } from '@/lib/auth/require-role'
+import { requireApiRole } from '@/lib/auth/server-auth'
 
 // CREATE A NEW APPLICATION -- user should be authenticated AND either student or guest to create an application
 export async function POST(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser()
-    if (!user) {
+    const auth = await requireApiRole(['student', 'guest']);
+    
+    if ("error" in auth) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+        { error: auth.error },
+        { status: auth.status }
+      );
     }
 
-    const denied = requireRole(user, ['student', 'guest'])
-    if (denied) return denied
+    const user = auth.user;
 
     const body = await request.json()
     const applicationData: Omit<AccommodationApplication, 'application_id' | 'accommodation_assignment'> = {
-      preferred_accommodation: body.preferred_accommodation,
+      // preferred_accommodation: body.preferred_accommodation,
+      preferred_accommodation_id: body.preferred_accommodation_id,
       preferred_unit_type: body.preferred_unit_type,
       duration_of_stay: body.duration_of_stay,
       check_in: body.check_in,

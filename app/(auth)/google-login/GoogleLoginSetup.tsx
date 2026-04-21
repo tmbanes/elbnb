@@ -3,7 +3,7 @@
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { signInWithGoogle } from "@/services/browser/auth";
-import { User } from "@supabase/supabase-js";
+import { User } from "@/types/user.types";
 import { useState, useEffect } from "react";
 
 //ui components
@@ -16,6 +16,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
+import router from "next/router";
 
 
 //style constants
@@ -37,14 +38,14 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setCurrentUser(session?.user ?? null);
-      },
+        if (session) {
+          router.push("/"); // or redirectByRole
+        }
+      }
     );
 
-    return () => {
-      listener?.subscription.unsubscribe();
-    };
-  }, [supabase]);
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   async function handleGoogleLogin() {
     await signInWithGoogle("/");
