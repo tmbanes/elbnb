@@ -72,6 +72,16 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
       return;
     }
 
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (!userError && user?.user_metadata?.must_reset_password) {
+      router.push("/update-password");
+      return;
+    }
+
     router.push("/role-selection");
   }
 
