@@ -1,7 +1,11 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { getUserPaymentSummary, getStudentBillsDetailed, getStudentPaymentHistory } from "@/services/user-services";
 import { redirect } from "next/navigation";
+<<<<<<< HEAD:app/guest/billing/page.tsx
 import BillingClient from "@/app/student/billing/BillingClient";
+=======
+import BillingClient from "@/app/student/dashboard/billing/BillingClient";
+>>>>>>> a950bae (chore: updated invoice for automatic billing):app/guest/dashboard/billing/page.tsx
 import LogoutButton from "@/components/logout-button";
 
 export default async function GuestBillingPage() {
