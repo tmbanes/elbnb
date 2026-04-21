@@ -78,6 +78,26 @@ export async function ensureInitialInvoicesForUser(user_id: string) {
           .update({ unit_id: fallbackUnitId })
           .eq("application_id", app.application_id);
       }
+
+      // If preferred type does not exist in this accommodation, choose the cheapest active unit.
+      if (!fallbackUnitId) {
+        const { data: anyActiveUnits } = await supabase
+          .from("unit")
+          .select("unit_id, rental_fee")
+          .eq("accommodation_id", app.preferred_accommodation_id)
+          .eq("unit_status", "active")
+          .order("rental_fee", { ascending: true })
+          .limit(1);
+
+        if (anyActiveUnits?.length) {
+          fallbackUnitId = anyActiveUnits[0].unit_id;
+
+          await supabase
+            .from("accommodation_application")
+            .update({ unit_id: fallbackUnitId })
+            .eq("application_id", app.application_id);
+        }
+      }
     }
 
     if (!fallbackUnitId) continue;
