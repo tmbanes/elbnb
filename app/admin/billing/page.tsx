@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { getAllBillsForAdmin, getActiveTenants } from "@/services/user-services";
+import { ensureInitialInvoicesForPendingPaymentApplications, getAllBillsForAdmin, getActiveTenants } from "@/services/user-services";
 import { redirect } from "next/navigation";
 import AdminBillingClient from "./AdminBillingClient";
 import LogoutButton from "@/components/logout-button";
@@ -13,6 +13,8 @@ export default async function AdminBillingPage() {
   if (!user) {
     redirect("/");
   }
+
+  await ensureInitialInvoicesForPendingPaymentApplications();
 
   // Double check if user is admin role by getting profile metadata if needed, 
   // or default to passing "admin" to service
