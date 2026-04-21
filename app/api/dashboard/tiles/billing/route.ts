@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     
     try {
         // TO DO: Add user.role to actual parameters of getBillingInformation()
-        const billingInfo = await getBillingInformation(user.user_id); // get billing information for the user
+        const billingInfo = await getBillingInformation(user.user_id, user.role); // get billing information for the user
         console.log("Billing information retrieved:", billingInfo); // [DEBUGGING] log billing information for debugging
         return NextResponse.json({ billingInfo }); // return billing information as JSON
     }

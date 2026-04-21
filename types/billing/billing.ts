@@ -8,6 +8,7 @@ export interface BillingCreation {
   assignment_id: string;
 
   amount: number;
+  billing_period_date: Date;
   due_date: Date;
 
   status: BillingStatus;
@@ -15,6 +16,7 @@ export interface BillingCreation {
 
   payment_method: string;
   transaction_reference?: string | null;
+  receipt_files?: string[] | null;
 }
 
 // Used when fetching billing
@@ -29,6 +31,7 @@ export interface BillingInformation {
 
   payment_method: string;
   transaction_reference: string | null;
+  receipt_files?: string[] | null;
 
   admin_flag?: boolean;
   internal_notes?: string | null;
