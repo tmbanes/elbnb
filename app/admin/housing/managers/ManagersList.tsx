@@ -1,7 +1,7 @@
 "use client";
 
-import { Manager } from "../../../../../types/housing/types";
-import { getManagerColumns, ManagerColumn } from "@/app/dashboard/admin/housing/components/columns/managerColumns";
+import { Manager } from "../../../../types/housing/types";
+import { getManagerColumns, ManagerColumn } from "@/app/admin/housing/components/columns/managerColumns";
 
 // ui components
 import { DataTable } from "@/components/ui/data-table";
@@ -35,14 +35,6 @@ export default function ManagersList({
 
   return (
     <div className="p-6 space-y-4">
-      {/*TODO - Update Breadcrumb UI componenet to sidebar once added to admin */}
-      <Button
-        variant="link"
-        onClick={onBackToHousing}
-        className="pl-0 text-[#264384]"
-      >
-        <ChevronLeft className="mr-1 h-4 w-4" /> Back to Housing
-      </Button>
 
       {managers.length > 0 ? (
         <DataTable
