@@ -1,7 +1,7 @@
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { User } from "@supabase/supabase-js";
+import { User } from "@/types/user.types";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmail } from "@/services/browser/auth";
@@ -42,20 +42,20 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
     password: "",
   });
 
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setCurrentUser(session?.user ?? null);
-      }
-    );
-    return () => listener?.subscription.unsubscribe();
-  }, [supabase]);
+  // useEffect(() => {
+  //   const { data: listener } = supabase.auth.onAuthStateChange(
+  //     (_event, session) => {
+  //       setCurrentUser(session?.user ?? null);
+  //     }
+  //   );
+  //   return () => listener?.subscription.unsubscribe();
+  // }, [supabase]);
 
-  useEffect(() => {
-    if (currentUser) {
-      router.push("/");
-    }
-  }, [currentUser]);
+  // useEffect(() => {
+  //   if (currentUser) {
+  //     router.push("/");
+  //   }
+  // }, [currentUser]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -72,12 +72,12 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
       return;
     }
 
-    router.push("/role-selection");
+    router.push("/");
   }
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/onboarding");
+    router.push("/");
   };
 
   return (
