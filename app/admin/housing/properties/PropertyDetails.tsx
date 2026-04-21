@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Modal from "@/app/admin/housing/components/modals/Modal";
+import EditUnitModal from "@/app/admin/housing/components/modals/EditUnitModal";
 import {
   ToggleGroup,
   ToggleGroupItem,
@@ -47,6 +48,7 @@ export default function PropertyDetail({
   const [addUnitModalOpen, setAddUnitModalOpen] = useState(false);
   const isDorm = property.accommodation_type === "dormitory";
 
+  // DUMMY COMPLAINTS FOR DEMO PURPOSES ONLY
   const [complaints, setComplaints] = useState<Complaint[]>([
     {
       complaint_id: "c1",
@@ -133,12 +135,18 @@ export default function PropertyDetail({
                 }`}>
                   {isDorm ? "Dormitory" : "Rental Space"}
                 </span>
+
+                {/* accommodation status */}
                 <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider border ${
-                  property.accommodation_status === "active"
+                  property.accommodation_status === "active" || property.accommodation_status === "Active"
                     ? "bg-[#F0F6E9] text-[#78A24C] border-[#d8e7c8]"
-                    : "bg-gray-100 text-gray-600 border-gray-200"
+                    : property.accommodation_status === "inactive" || property.accommodation_status === "Inactive"
+                      ? "bg-[#FFF7ED] text-[#BA7517] border-[#f5dab8]"
+                      : "bg-gray-100 text-gray-600 border-gray-200"
                 }`}>
-                  {property.accommodation_status}
+                  {property.accommodation_status 
+                    ? property.accommodation_status.charAt(0).toUpperCase() + property.accommodation_status.slice(1).toLowerCase()
+                    : "Unknown"}
                 </span>
               </div>
             </div>
@@ -203,34 +211,48 @@ export default function PropertyDetail({
             onStatusChange={handleStatusChange}
           />
 
-          {/* Unit action modal */}
-          <Modal
-            isOpen={Boolean(activeUnit && unitAction)}
+          {/* Unit view/edit/delete modals
+          <ViewUnitModal
+            isOpen={Boolean(activeUnit && unitAction === "view")}
             onClose={closeUnitAction}
-            title={
-              unitAction === "view" ? "View Unit"
-              : unitAction === "edit" ? "Edit Unit"
-              : "Delete Unit"
-            }
-            description={
-              activeUnit
-                ? `Placeholder for ${unitAction} action on unit ${activeUnit.unit_number}.`
-                : undefined
-            }
+            unit={unitAction === "view" ? activeUnit : null}
+            accentColor={isDorm ? "#5591AB" : "#EB8A0B"}
+          /> */}
+
+          <EditUnitModal
+            isOpen={Boolean(activeUnit && unitAction === "edit")}
+            onClose={closeUnitAction}
+            unit={unitAction === "edit" ? activeUnit : null}
+            onSuccess={(updatedUnit) => {
+              if (onAddUnit) onAddUnit();
+              closeUnitAction();
+            }}
+            accentColor={isDorm ? "#5591AB" : "#EB8A0B"}
+          />
+
+          {/* Delete Unit Modal */}
+          <Modal
+            isOpen={Boolean(activeUnit && unitAction === "delete")}
+            onClose={closeUnitAction}
+            title="Delete Unit"
+            description={`Are you sure you want to delete Unit ${activeUnit?.unit_number}? This action cannot be undone.`}
           >
             <div className="space-y-4">
-              {activeUnit && (
-                <div className="space-y-2 text-sm">
-                  <p><strong>Unit:</strong> {activeUnit.unit_number}</p>
-                  <p><strong>Type:</strong> {activeUnit.unit_type}</p>
-                  <p><strong>Occupancy:</strong> {activeUnit.current_occupancy} / {activeUnit.max_occupancy}</p>
-                </div>
-              )}
               <div className="flex justify-end gap-2">
-                <Button variant="secondary" onClick={closeUnitAction}>Close</Button>
-                {(unitAction === "edit" || unitAction === "delete") && (
-                  <Button disabled>{unitAction === "edit" ? "Save" : "Confirm"}</Button>
-                )}
+                <Button variant="secondary" onClick={closeUnitAction}>Cancel</Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (activeUnit) {
+                      onDeleteUnit(activeUnit.unit_id).then(() => {
+                        closeUnitAction();
+                        if (onAddUnit) onAddUnit();
+                      });
+                    }
+                  }}
+                >
+                  Delete Unit
+                </Button>
               </div>
             </div>
           </Modal>
@@ -249,15 +271,13 @@ export default function PropertyDetail({
         <div className="space-y-6">
 
           {/* Property details card */}
-          <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#e2e4c0] flex items-center gap-2">
-              {isDorm
-                ? <Building2 className="w-3.5 h-3.5 text-[#264384]" />
-                : <Home className="w-3.5 h-3.5 text-[#264384]" />}
-              <span className="text-sm font-bold text-[#44291B]">
+          <Card className="bg-[#FDFFF4] shadow-sm">
+            <CardHeader className="grid flex-1">
+              <CardTitle className="font-bold text-[#44291B]">
                 {isDorm ? "Dormitory Details" : "Rental Space Details"}
-              </span>
-            </div>
+              </CardTitle>
+            </CardHeader>
+
             <CardContent className="p-0">
               {isDorm && property.dormitory && (
                 <>
@@ -317,6 +337,7 @@ export default function PropertyDetail({
 }
 
 // complaints panel (update status and styling)
+// DUMMY VALUES AND FUNCTIONS FOR DEMO PURPOSES ONLY
 const STATUS_ORDER: Complaint["complaint_status"][] = ["open", "under_review", "closed"];
 
 const STATUS_META = {
