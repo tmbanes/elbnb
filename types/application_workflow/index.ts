@@ -12,12 +12,7 @@ export interface AccommodationApplication {
   application_id: string;
   user_id: string;
   unit_id: string;
-<<<<<<< HEAD
-  preferred_accommodation: string; // REQUIRED, accommodation_id.
-=======
-  // preferred_accommodation: string; 
   preferred_accommodation_id: string; // REQUIRED, accommodation_id.
->>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
   preferred_unit_type: string;
   date_submitted: string; // ISO date string
   duration_of_stay?: number | null; // dependent on billing period
@@ -26,6 +21,30 @@ export interface AccommodationApplication {
   number_of_companions: number;
   application_status: ApplicationStatus;
   accommodation_assignment?: AccommodationAssignment | null;
+
+  // Optional joined fields (when selecting relational data in Supabase)
+  users?: {
+    first_name: string;
+    last_name: string;
+    email?: string;
+  } | null;
+  accommodation?: {
+    accommodation_id?: string;
+    name: string;
+    location?: string;
+  } | null;
+  units?: {
+    unit_number?: string;
+  } | null;
+  unit?: {
+    unit_id?: string;
+    unit_number?: string;
+    accommodation?: {
+      accommodation_id?: string;
+      name: string;
+      location?: string;
+    } | null;
+  } | null;
 }
 
 export interface TransitionApplicationStatus {

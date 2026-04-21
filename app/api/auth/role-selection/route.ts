@@ -40,15 +40,9 @@ export async function POST(req: NextRequest) {
         residency_status,
       } = body;
 
-<<<<<<< HEAD
       if (!student_number || !degree_program || !enrollment_status || !residency_status) {
         return NextResponse.json({ success: false, error: "Incomplete student data." }, { status: 400 });
       }
-=======
-      // if (!student_number || !degree_program || !enrollment_status || !residency_status) {
-      //   return NextResponse.json({ success: false, error: "Incomplete student data." }, { status: 400 });
-      // }
->>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
 
       metadataUpdates.student_number = student_number;
       metadataUpdates.degree_program = degree_program;
@@ -61,15 +55,9 @@ export async function POST(req: NextRequest) {
     if (role === "guest") {
       const { valid_id, purpose_visit, occupancy_status } = body;
 
-<<<<<<< HEAD
       if (!valid_id || !purpose_visit || !occupancy_status) {
         return NextResponse.json({ success: false, error: "Incomplete guest data." }, { status: 400 });
       }
-=======
-      // if (!valid_id || !purpose_visit || !occupancy_status) {
-      //   return NextResponse.json({ success: false, error: "Incomplete guest data." }, { status: 400 });
-      // }
->>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
 
       metadataUpdates.valid_id = valid_id;
       metadataUpdates.purpose_visit = purpose_visit;

@@ -116,12 +116,12 @@ export default async function AccommodationHistoryPage() {
               {isPending ? (
                 <>
                   <p className="font-medium">Date Submitted: <span className="font-normal">{new Date(currentApplication.date_submitted).toLocaleDateString()}</span></p>
-                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.preferred_accommodation}</span></p>
+                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.accommodation?.name ?? currentApplication.preferred_accommodation_id}</span></p>
                   <p className="font-medium">Room Type: <span className="font-normal">{currentApplication.preferred_unit_type}</span></p>
                 </>
               ) : (
                 <>
-                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.preferred_accommodation}</span></p>
+                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.accommodation?.name ?? currentApplication.preferred_accommodation_id}</span></p>
                   <p className="font-medium">Move-in Date: <span className="font-normal">{currentApplication.accomodation_assignment?.move_In_Date ? new Date(currentApplication.accomodation_assignment.move_In_Date).toLocaleDateString() : 'TBA'}</span></p>
                   <p className="font-medium">Expected Move-out: <span className="font-normal">{currentApplication.accomodation_assignment?.expected_Move_Out_Date ? new Date(currentApplication.accomodation_assignment.expected_Move_Out_Date).toLocaleDateString() : 'TBA'}</span></p>
                 </>
@@ -168,7 +168,7 @@ export default async function AccommodationHistoryPage() {
                     <TableRow key={record.application_id}>
                       <TableCell className="font-medium text-xs">{record.application_id}</TableCell>
                       <TableCell>{new Date(record.date_submitted).toLocaleDateString()}</TableCell>
-                      <TableCell>{record.preferred_accommodation}</TableCell>
+                      <TableCell>{record.accommodation?.name ?? record.preferred_accommodation_id}</TableCell>
                       <TableCell>{record.preferred_unit_type}</TableCell>
                       <TableCell>
                          <Badge variant={getBadgeVariant(status)}>

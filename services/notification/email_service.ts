@@ -7,6 +7,12 @@ import NotificationEmail, {templates} from './email_templates'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+function getEmailFrom(): string {
+  // Resend requires a valid "from". Use env when available; otherwise fall back
+  // to the default resend.dev sender used elsewhere in this project.
+  return process.env.EMAIL_FROM?.trim() || 'ElBnB@resend.dev'
+}
+
 export async function sendEmail({
     to,
   template,

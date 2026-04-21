@@ -1,11 +1,6 @@
 // /types/student_profile/index.ts
 // https://supabase.com/dashboard/project/cywurzembhxgwqvpsrlh/database/schemas
 
-<<<<<<< HEAD
-=======
-import { Accommodation } from "../accommodation_units";
-
->>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
 export type UserRole =
   | "Student"
   | "Dormitory Manager"
@@ -41,11 +36,7 @@ export interface AccommodationAssignment {
 // renamed the interface properties to match the database table columns
 export interface AccommodationApplication {
     application_id: string;
-<<<<<<< HEAD
-    preferred_accommodation: string;
-=======
     preferred_accommodation_id: string;
->>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
     preferred_unit_type: string;
     date_submitted: string;
     duration_of_stay: number | null; 
@@ -55,13 +46,10 @@ export interface AccommodationApplication {
     application_status: string; // values: pending_admin, approved, rejected, pending_payment, cancelled, pending_dorm_manager
 
     accomodation_assignment?: AccommodationAssignment | null; 
-<<<<<<< HEAD
-=======
     accommodation?: {
       name: string;
     };
     unit?: {
       unit_number: string;
     };
->>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
 }

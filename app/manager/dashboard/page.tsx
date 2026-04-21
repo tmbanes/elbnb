@@ -4,10 +4,7 @@
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { useState } from "react";
-<<<<<<< HEAD
-=======
 import ManagerDashboardUI from "./manager-dashboard-ui";
->>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
 
 export default function DormitoryManagerDashboardPage() {
   const supabase = getSupabaseBrowserClient();
@@ -23,23 +20,9 @@ export default function DormitoryManagerDashboardPage() {
   };
   
   return (
-<<<<<<< HEAD
-    <main className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold text-slate-900">Dormitory Manager Dashboard</h1>
-      <button 
-        onClick={handleLogout}
-        className="px-4 py-2 text-xs font-bold text-white bg-red-500/80 hover:bg-red-500 rounded-lg transition-colors"
-      >
-        Log Out
-      </button>
-    </main>
-  );
-}
-=======
     <ManagerDashboardUI 
       onLogout={handleLogout} 
       isLoggingOut={isExiting} 
     />
   );
 }
->>>>>>> 76e8f3255db7be2b6cbe835d611a2e1be74975e1
