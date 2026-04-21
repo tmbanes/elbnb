@@ -228,7 +228,7 @@ export async function createBilling(role: UserRole, billingData: BillingCreation
 }
 
 
-export async function getBillingInformation(user_id: string, role: UserRole) {
+export async function getBillingInformation(user_id: string, role: string) {
   const supabase = await createSupabaseServerClient();
 
   let query = supabase
