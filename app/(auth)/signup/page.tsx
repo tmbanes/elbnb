@@ -1,9 +1,9 @@
-// "use client";
+﻿// "use client";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import SignUpWithEmailSetup from "./SignUpWithEmailSetup";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import GoogleLoginSetup from "../google-login/GoogleLoginSetup";
-import { getUserWithRole } from "@/lib/auth/client-auth";
+import { getUserWithRole } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { User } from "@/types/user.types";
 

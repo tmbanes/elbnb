@@ -1,5 +1,5 @@
-// app\guest\layout.tsx
-import { requireRole } from "@/lib/auth/client-auth";
+﻿// app\guest\layout.tsx
+import { requireRole } from "@/lib/auth/session";
 
 //ui components
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"

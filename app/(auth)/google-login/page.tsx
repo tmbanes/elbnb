@@ -1,5 +1,5 @@
-// /google-login/page.tsx
-import { getUserWithRole } from "@/lib/auth/client-auth";
+﻿// /google-login/page.tsx
+import { getUserWithRole } from "@/lib/auth/session";
 import GoogleLoginSetup from "./GoogleLoginSetup";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { User } from "@/types/user.types";

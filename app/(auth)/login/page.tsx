@@ -1,5 +1,5 @@
-import LoginWithEmailSetup from "./LoginWithEmailSetup";
-import { getUserWithRole } from "@/lib/auth/client-auth";
+﻿import LoginWithEmailSetup from "./LoginWithEmailSetup";
+import { getUserWithRole } from "@/lib/auth/session";
 import { User } from "@/types/user.types";
 import { redirect } from "next/navigation";
 

@@ -1,5 +1,5 @@
-// app\student\layout.tsx
-import { requireRole } from "@/lib/auth/client-auth";
+﻿// app\student\layout.tsx
+import { requireRole } from "@/lib/auth/session";
 
 //ui components
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"

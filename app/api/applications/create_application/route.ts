@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { CreateApplicationService } from '@/services/application_workflow/create_application'
 import { AccommodationApplication, ApplicationStatus } from '@/types/application_workflow'
-import { requireApiRole } from '@/lib/auth/server-auth'
+import { requireApiRole } from '@/lib/auth/session'
 
 // CREATE A NEW APPLICATION -- user should be authenticated AND either student or guest to create an application
 export async function POST(request: NextRequest) {
