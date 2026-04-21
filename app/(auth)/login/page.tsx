@@ -1,14 +1,14 @@
 import LoginWithEmailSetup from "./LoginWithEmailSetup";
-import { getUserWithRole } from "@/lib/auth/client-auth";
-import { User } from "@/types/user.types";
+import { getUserWithRole } from "@/lib/utils/auth-utils";
+import { UserWithRole } from "@/types/user.types";
 import { redirect } from "next/navigation";
 
 export default async function LoginPage() {
-  const user: User | null = await getUserWithRole();
+  const userWithRole: UserWithRole | null = await getUserWithRole();
   
-  if (user) {
+  if (userWithRole) {
     redirect(`/`);
   }
 
-  return <LoginWithEmailSetup user={user}/>;
+  return <LoginWithEmailSetup user={userWithRole} />;
 }

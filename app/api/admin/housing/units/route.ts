@@ -2,17 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 export async function GET(req: NextRequest) {
-  // TO DO: Protect this API route. Make this only accessible to admin (if admin lang talaga pwede maka-access nito).
-  // const auth = await requireApiRole(['housing_admin']);
-
-  // if ("error" in auth) {
-  //   return NextResponse.json(
-  //     { error: auth.error },
-  //     { status: auth.status }
-  //   );
-  // }
-
-  // const user = auth.user;
   const id = req.nextUrl.searchParams.get("id");
   const accommodationId = req.nextUrl.searchParams.get("accommodation_id");
 
@@ -44,17 +33,6 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // TO DO: Protect this API route. Make this only accessible to admin (if admin lang talaga pwede maka-access nito).
-  // const auth = await requireApiRole(['housing_admin']);
-
-  // if ("error" in auth) {
-  //   return NextResponse.json(
-  //     { error: auth.error },
-  //     { status: auth.status }
-  //   );
-  // }
-
-  // const user = auth.user;
   const body = await req.json();
 
   const { data, error } = await supabaseAdmin
@@ -81,17 +59,6 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  // TO DO: Protect this API route. Make this only accessible to admin (if admin lang talaga pwede maka-access nito).
-  // const auth = await requireApiRole(['housing_admin']);
-
-  // if ("error" in auth) {
-  //   return NextResponse.json(
-  //     { error: auth.error },
-  //     { status: auth.status }
-  //   );
-  // }
-
-  // const user = auth.user;
   const id = req.nextUrl.searchParams.get("id");
   if (!id)
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -108,17 +75,6 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  // TO DO: Protect this API route. Make this only accessible to admin (if admin lang talaga pwede maka-access nito).
-  // const auth = await requireApiRole(['housing_admin']);
-
-  // if ("error" in auth) {
-  //   return NextResponse.json(
-  //     { error: auth.error },
-  //     { status: auth.status }
-  //   );
-  // }
-
-  // const user = auth.user;
   const id = req.nextUrl.searchParams.get("id");
   if (!id)
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
