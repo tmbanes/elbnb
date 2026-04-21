@@ -23,6 +23,8 @@ import {
   Trash
 } from "lucide-react";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function AdminBillingClient({ adminId, bills, summary, activeTenants }: { adminId: string, bills: any[], summary: any, activeTenants: any[] }) {
   const supabase = getSupabaseBrowserClient();
@@ -30,6 +32,20 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedBillIds, setSelectedBillIds] = useState<string[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('realtime_admin_billing')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, () => {
+        router.refresh();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, router]);
   
   // Modals state
   const [viewedReceipt, setViewedReceipt] = useState<any>(null);
@@ -64,7 +80,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const filteredBills = bills.filter(bill => {
     const matchesSearch = 
       bill.billing_id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (bill.accommodation_assignment?.users?.full_name || "").toLowerCase().includes(searchQuery.toLowerCase());
+      (bill.accommodation_assignment?.users ? `${bill.accommodation_assignment.users.first_name} ${bill.accommodation_assignment.users.last_name}` : "").toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === "ALL" || bill.status === statusFilter;
     
@@ -88,9 +104,15 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const openReceiptViewer = async (bill: any) => {
     setViewedReceipt(bill);
     setReceiptUrl(null);
-    if (bill.transaction_reference) {
-      const { data } = supabase.storage.from("payment_receipts").getPublicUrl(bill.transaction_reference);
-      setReceiptUrl(data.publicUrl);
+    const receiptPath = bill.transaction_reference || bill.receipt_files?.[bill.receipt_files.length - 1];
+
+    if (receiptPath) {
+      const response = await fetch(`/api/admin/billing/receipt-url?path=${encodeURIComponent(receiptPath)}`);
+      const payload = await response.json().catch(() => ({}));
+
+      if (response.ok && payload.signedUrl) {
+        setReceiptUrl(payload.signedUrl);
+      }
     }
   };
 
@@ -98,6 +120,11 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     if (!viewedReceipt) return;
     await adminApproveReceiptAction(viewedReceipt.billing_id, adminId);
     setViewedReceipt(null);
+    window.location.reload();
+  };
+
+  const markAsPaid = async (billingId: string) => {
+    await adminApproveReceiptAction(billingId, adminId);
     window.location.reload();
   };
 
@@ -147,6 +174,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     if (newBillItems.some(item => item.amount <= 0)) return alert("All items must have an amount greater than 0!");
 
     setIsSubmittingBill(true);
+    const dueDate = new Date(newBillDueDate);
+    const billingPeriodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
     
     // Automatically sum amount for the parent status based on the items attached.
     const totalAmount = newBillItems.reduce((acc, curr) => acc + curr.amount, 0);
@@ -154,7 +183,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     const payload = {
       assignment_id: newBillAssignmentId,
       amount: totalAmount,
-      due_date: new Date(newBillDueDate),
+      billing_period_date: billingPeriodDate,
+      due_date: dueDate,
       status: BillingStatus.UNPAID,
       payment_method: "cash",
       internal_notes: newBillNotes
@@ -279,7 +309,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             </thead>
             <tbody>
               {filteredBills.map((bill: any) => (
-                <tr key={bill.billing_id} className={`border-b border-slate-100 last:border-0 hover:bg-slate-50 flex-col transition-colors ${bill.admin_flag ? 'bg-amber-50/30' : ''}`}>
+                <tr key={bill.billing_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <input 
                       type="checkbox" 
@@ -291,9 +321,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                   <td className="px-6 py-4">
                     <p className="font-bold text-slate-900 flex items-center gap-2">
                        {bill.accommodation_assignment?.users ? `${bill.accommodation_assignment.users.first_name} ${bill.accommodation_assignment.users.last_name}` : "Unknown Tenant"}
-                       {bill.admin_flag && <Flag className="text-amber-500 w-3 h-3"/>}
                     </p>
-                    <p className="text-xs text-slate-500">Prop: {bill.accommodation_assignment?.property?.preferred_accommodation || "N/A"}</p>
+                    <p className="text-xs text-slate-500">Prop: {bill.accommodation_assignment?.accommodation_application?.preferred_accommodation_id || "N/A"}</p>
                   </td>
                   <td className="px-6 py-4 font-mono text-xs">
                     {bill.billing_id.split("-")[0]}
@@ -310,6 +339,14 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
+                      {bill.status !== BillingStatus.PAID && (
+                        <button
+                          onClick={() => markAsPaid(bill.billing_id)}
+                          className="px-3 py-2 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition"
+                        >
+                          Paid
+                        </button>
+                      )}
                       <button 
                         onClick={() => openEditor(bill)}
                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition tooltip-trigger"
@@ -374,7 +411,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                     <X className="w-5 h-5"/> Reject 
                   </button>
                   <button onClick={handleApprove} className="px-6 py-3 font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-400 hover:text-white border border-emerald-200 hover:border-emerald-500 rounded-xl transition flex items-center gap-2">
-                    <Check className="w-5 h-5"/> Approve
+                    <Check className="w-5 h-5"/> Paid
                   </button>
                 </div>
               )}
