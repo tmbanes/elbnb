@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { AccomodationHistory } from "@/types/accomodation/accomodationHistory";
 import { BillingCreation, BillingInformation } from "@/types/billing";
 import { BillingStatus } from "@/types/billing/enums";
@@ -66,6 +67,9 @@ export async function createBillingWithItems(
   if (role !== "admin") return { data: null, error: "Unauthorized" };
 
   const supabase = await createSupabaseServerClient();
+  const periodDate = billingData.billing_period_date
+    ? new Date(billingData.billing_period_date)
+    : new Date(new Date(billingData.due_date).getFullYear(), new Date(billingData.due_date).getMonth(), 1);
 
   const total = items.reduce((sum, item) => sum + item.amount, 0);
 
@@ -74,6 +78,7 @@ export async function createBillingWithItems(
     .insert([
       {
         ...billingData,
+        billing_period_date: periodDate,
         amount: total,
       },
     ])
@@ -110,13 +115,18 @@ export async function getStudentBillsDetailed(user_id: string) {
       status,
       payment_method,
       transaction_reference,
+      receipt_files,
       created_at,
       billing_item (
         type,
         amount
       ),
       accommodation_assignment!inner (
-        user_id
+        user_id,
+        users (
+          first_name,
+          last_name
+        )
       )
     `)
     .eq("accommodation_assignment.user_id", user_id)
@@ -152,6 +162,59 @@ export async function getStudentBillsDetailed(user_id: string) {
   return { data: formatted, error: null };
 }
 
+export async function getStudentPaymentHistory(user_id: string) {
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("payment_logs")
+    .select(`
+      billing_id,
+      status,
+      changed_by,
+      created_at,
+      billing!inner (
+        amount,
+        due_date,
+        billing_period_date,
+        accommodation_assignment!inner (
+          user_id
+        )
+      )
+    `)
+    .eq("billing.accommodation_assignment.user_id", user_id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    // Fallback for environments where payment_logs is not yet provisioned.
+    if ((error as any)?.code === "PGRST205") {
+      const { data: billingData, error: billingError } = await supabase
+        .from("billing")
+        .select(`
+          billing_id,
+          status,
+          payment_method,
+          transaction_reference,
+          amount,
+          due_date,
+          billing_period_date,
+          created_at,
+          accommodation_assignment!inner (
+            user_id
+          )
+        `)
+        .eq("accommodation_assignment.user_id", user_id)
+        .order("created_at", { ascending: false });
+
+      if (billingError) return { data: null, error: billingError };
+      return { data: billingData ?? [], error: null };
+    }
+
+    return { data: null, error };
+  }
+
+  return { data: data ?? [], error: null };
+}
+
 //======================================================//
 // CRUD
 //======================================================//
@@ -165,7 +228,7 @@ export async function createBilling(role: UserRole, billingData: BillingCreation
 }
 
 
-export async function getBillingInformation(user_id: string, role: UserRole) {
+export async function getBillingInformation(user_id: string, role: string) {
   const supabase = await createSupabaseServerClient();
 
   let query = supabase
@@ -214,16 +277,31 @@ export async function submitPayment(
   user_id: string,
   billing_id: string,
   reference: string,
+  receiptFileId: string,
   method: string
 ) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin;
+
+  const { data: existingBilling, error: fetchError } = await supabase
+    .from("billing")
+    .select("receipt_files")
+    .eq("billing_id", billing_id)
+    .single();
+
+  if (fetchError) {
+    return { data: null, error: fetchError };
+  }
+
+  const existingReceiptFiles = Array.isArray(existingBilling?.receipt_files)
+    ? existingBilling.receipt_files
+    : [];
 
   const { data, error } = await supabase
     .from("billing")
     .update({
-      status: BillingStatus.PENDING,
       transaction_reference: reference,
       payment_method: method,
+      receipt_files: [...existingReceiptFiles, receiptFileId],
     })
     .eq("billing_id", billing_id)
     .select()
@@ -232,7 +310,7 @@ export async function submitPayment(
   await supabase.from("payment_logs").insert([
     {
       billing_id,
-      status: BillingStatus.PENDING,
+      status: BillingStatus.UNPAID,
       changed_by: user_id,
     },
   ]);
@@ -247,7 +325,21 @@ export async function approveReceipt(
 ) {
   if (role !== "admin") return { data: null, error: "Unauthorized" };
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin;
+
+  const { data: billing, error: fetchError } = await supabase
+    .from("billing")
+    .select(`
+      billing_id,
+      accommodation_assignment (
+        assignment_id,
+        application_id
+      )
+    `)
+    .eq("billing_id", billing_id)
+    .single();
+
+  if (fetchError) return { data: null, error: fetchError };
 
   const result = await supabase
     .from("billing")
@@ -255,6 +347,27 @@ export async function approveReceipt(
     .eq("billing_id", billing_id)
     .select()
     .single();
+
+  const assignmentRecord = Array.isArray(billing?.accommodation_assignment)
+    ? billing.accommodation_assignment[0]
+    : billing?.accommodation_assignment;
+
+  const assignmentId = assignmentRecord?.assignment_id;
+  const applicationId = assignmentRecord?.application_id;
+
+  if (assignmentId) {
+    await supabase
+      .from("accommodation_assignment")
+      .update({ assignment_status: "active" })
+      .eq("assignment_id", assignmentId);
+  }
+
+  if (applicationId) {
+    await supabase
+      .from("accommodation_application")
+      .update({ application_status: "approved" })
+      .eq("application_id", applicationId);
+  }
 
   await supabase.from("payment_logs").insert([
     { billing_id, status: BillingStatus.PAID, changed_by: admin_id },
@@ -375,7 +488,7 @@ export async function getUserPaymentSummary(user_id: string, role: UserRole) {
 export async function getAllBillsForAdmin(role: UserRole) {
   if (role !== "admin") return { data: null, error: "Unauthorized" };
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin;
 
   const { data, error } = await supabase
     .from("billing")
@@ -388,15 +501,22 @@ export async function getAllBillsForAdmin(role: UserRole) {
       payment_method,
       transaction_reference,
       created_at,
-      admin_flag,
       internal_notes,
-      reminded_at,
       billing_item (
         type,
         amount
       ),
       accommodation_assignment (
-        user_id
+        assignment_id,
+        application_id,
+        user_id,
+        users (
+          first_name,
+          last_name
+        ),
+        accommodation_application (
+          preferred_accommodation_id
+        )
       )
     `)
     .order("created_at", { ascending: false });
@@ -425,9 +545,7 @@ export async function updateAdminInvoiceDetails(
 //======================================================//
 
 export async function getActiveTenants() {
-  const supabase = await createSupabaseServerClient();
-  
-  return await supabase
+  return await supabaseAdmin
     .from("accommodation_assignment")
     .select(`
       assignment_id,
@@ -437,5 +555,5 @@ export async function getActiveTenants() {
         last_name
       )
     `)
-    .in("assignment_status", ["active", "waiting_payment"]);
-}
+    .in("assignment_status", ["active", "waiting_payment", "pending"]);
+}
