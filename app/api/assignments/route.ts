@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { AssignmentService } from '@/services/assignment_workflow'
 import { getAuthenticatedUser } from '@/lib/auth/get-user'
 import { requireRole } from '@/lib/auth/require-role'
+import { sendEmail } from '@/services/notification/email_service'
+
 
 // ─── GET — fetch all assignments for the authenticated user ───────────────────
 export async function GET(request: NextRequest) {
@@ -89,6 +91,16 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ error: validationErrors.join(', ') }, { status: 400 })
         }
         updatedAssignment = await AssignmentService.activateAssignment(assignment)
+        //email notif 
+        const name = `${user.first_name} ${user.middle_name ?? ''} ${user.last_name}`
+        await sendEmail({
+              to: user.email,//can only use this registered email for testing or email domain @resend.dev
+              template: 'applicationApproved',
+              name: name
+            })
+        
+            console.log(' Email sent')
+   
         break
     }
 
