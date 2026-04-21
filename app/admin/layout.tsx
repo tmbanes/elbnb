@@ -1,4 +1,4 @@
-﻿// app\admin\layout.tsx
+// app\admin\layout.tsx
 import { requireRole } from "@/lib/auth/session"
 
 //ui components
@@ -8,7 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
     // await requireRole(["housing_admin"]); // Temporarily disabled for testing
-    return(
+    return (
         <TooltipProvider>
             <SidebarProvider>
                 <AppSidebar role="admin" />

@@ -2,9 +2,9 @@ import { AccommodationAssignment } from '@/types/assignment_workflow';
 
 // BASED ON SUPABASE PROPERTIES
 export type ApplicationStatus = "pending_dorm_manager" | "pending_admin" | "pending_payment" | "approved" | "rejected" | "cancelled";
-export type DocumentType =  "university_id" | "form_5" | "proof_of_payment" | "parent_consent" | "other"
+export type DocumentType = "university_id" | "form_5" | "proof_of_payment" | "parent_consent" | "other"
 export type DocumentStatus = "pending" | "verified" | "rejected"
-export type CancellableStatus = "pending_dorm_manager" | "pending_admin" | "pending_payment" 
+export type CancellableStatus = "pending_dorm_manager" | "pending_admin" | "pending_payment"
 
 
 // BASED ON SUPABASE PROPERTIES + accommodation_assignment 
@@ -12,7 +12,8 @@ export interface AccommodationApplication {
   application_id: string;
   user_id: string;
   unit_id: string;
-  preferred_accommodation: string; // REQUIRED, accommodation_id.
+  // preferred_accommodation: string; 
+  preferred_accommodation_id: string; // REQUIRED, accommodation_id.
   preferred_unit_type: string;
   date_submitted: string; // ISO date string
   duration_of_stay?: number | null; // dependent on billing period
@@ -21,6 +22,21 @@ export interface AccommodationApplication {
   number_of_companions: number;
   application_status: ApplicationStatus;
   accommodation_assignment?: AccommodationAssignment | null;
+  users?: {
+    first_name: string;
+    last_name: string;
+    email?: string;
+  };
+  unit?: {
+    unit_id: string;
+    accommodation?: {
+      name: string;
+    };
+  };
+  accommodation?: {
+    accommodataion_id: string;
+    name: string;
+  };
 }
 
 export interface TransitionApplicationStatus {

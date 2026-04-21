@@ -121,9 +121,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
@@ -144,9 +146,9 @@
     padding-bottom: 7px !important;
   }
 
-  table th:first-child, 
+  table th:first-child,
   table td:first-child {
-    padding-left: 20px !important; 
+    padding-left: 20px !important;
   }
 
   /* tr:hover td {

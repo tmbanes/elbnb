@@ -1,8 +1,8 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { AssignmentService } from '@/services/assignment_workflow'
 import { requireApiRole } from '@/lib/auth/session';
 
-// â”€â”€â”€ GET â€” fetch all assignments for the authenticated user â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── GET — fetch all assignments for the authenticated user ───────────────────
 export async function GET(request: NextRequest) {
   try {
     const auth = await requireApiRole(['student', 'guest']);
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = auth.user;
-    
+
     const assignments = await AssignmentService.getAssignmentsByUser(user.user_id)
 
     return NextResponse.json({ success: true, data: assignments })
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// â”€â”€â”€ PATCH â€” update assignment status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── PATCH — update assignment status ────────────────────────────────────────
 // Body: { assignmentId: string, action: 'terminate' | 'cancel' | 'activate' }
 export async function PATCH(request: NextRequest) {
   try {

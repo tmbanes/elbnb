@@ -33,11 +33,11 @@ interface EnrichedApplication {
 
 const STATUS_STYLES: Record<ApplicationStatus, { bg: string; text: string; label: string }> = {
   pending_dorm_manager: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pending Review' },
-  pending_admin:        { bg: 'bg-blue-100',  text: 'text-blue-800',  label: 'Pending Admin' },
-  pending_payment:      { bg: 'bg-purple-100',text: 'text-purple-800',label: 'Pending Payment' },
-  approved:             { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' },
-  rejected:             { bg: 'bg-red-100',   text: 'text-red-800',   label: 'Rejected' },
-  cancelled:            { bg: 'bg-gray-100',  text: 'text-gray-500',  label: 'Cancelled' },
+  pending_admin: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Pending Admin' },
+  pending_payment: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Pending Payment' },
+  approved: { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' },
+  rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
+  cancelled: { bg: 'bg-gray-100', text: 'text-gray-500', label: 'Cancelled' },
 }
 
 const CANCELLABLE_STATUSES: CancellableStatus[] = [
@@ -196,7 +196,7 @@ export default function MyApplicationsPage() {
       const accomMap = new Map(accomData.map(a => [a.accommodation_id, a]))
 
       // 3. units lookup (fetch per unique accommodation)
-      const uniqueAccomIds = [...new Set(applications.map(a => a.preferred_accommodation))]
+      const uniqueAccomIds = [...new Set(applications.map(a => a.preferred_accommodation_id))]
       const unitMap = new Map<string, Unit>()
 
       await Promise.all(
@@ -211,7 +211,7 @@ export default function MyApplicationsPage() {
       // 4. enrich
       const result: EnrichedApplication[] = applications.map(app => ({
         application: app,
-        accommodation: accomMap.get(app.preferred_accommodation) ?? null,
+        accommodation: accomMap.get(app.preferred_accommodation_id) ?? null,
         unit: app.unit_id ? unitMap.get(app.unit_id) ?? null : null,
       }))
 
@@ -222,7 +222,7 @@ export default function MyApplicationsPage() {
     } finally {
       setLoading(false)
     }
-  }, [router]) 
+  }, [router])
 
   useEffect(() => { fetchApplications() }, [fetchApplications])
 
@@ -275,7 +275,7 @@ export default function MyApplicationsPage() {
         },
         body: JSON.stringify({ applicationId }),
       })
-      
+
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error ?? 'Failed to cancel application')
@@ -343,11 +343,11 @@ export default function MyApplicationsPage() {
             onChange={v => handleFilterChange({ applicationStatus: v as ApplicationStatus | '' })}
             options={[
               { value: 'pending_dorm_manager', label: 'Pending Review' },
-              { value: 'pending_admin',        label: 'Pending Admin' },
-              { value: 'pending_payment',      label: 'Pending Payment' },
-              { value: 'approved',             label: 'Approved' },
-              { value: 'rejected',             label: 'Rejected' },
-              { value: 'cancelled',            label: 'Cancelled' },
+              { value: 'pending_admin', label: 'Pending Admin' },
+              { value: 'pending_payment', label: 'Pending Payment' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'rejected', label: 'Rejected' },
+              { value: 'cancelled', label: 'Cancelled' },
             ]}
           />
           <FilterSelect
@@ -355,7 +355,7 @@ export default function MyApplicationsPage() {
             value={filters.accommodationType}
             onChange={v => handleFilterChange({ accommodationType: v as AccommodationType | '' })}
             options={[
-              { value: 'dormitory',     label: 'Dormitory' },
+              { value: 'dormitory', label: 'Dormitory' },
               { value: 'renting_space', label: 'Renting Space' },
             ]}
           />
@@ -364,8 +364,8 @@ export default function MyApplicationsPage() {
             value={filters.unitType}
             onChange={v => handleFilterChange({ unitType: v as UnitType | '' })}
             options={[
-              { value: 'room',      label: 'Room' },
-              { value: 'bedspace',  label: 'Bedspace' },
+              { value: 'room', label: 'Room' },
+              { value: 'bedspace', label: 'Bedspace' },
               { value: 'wholeunit', label: 'Whole Unit' },
             ]}
           />
@@ -374,9 +374,9 @@ export default function MyApplicationsPage() {
             value={filters.furnishingStatus}
             onChange={v => handleFilterChange({ furnishingStatus: v as FurnishingStatus | '' })}
             options={[
-              { value: 'furnished',      label: 'Furnished' },
+              { value: 'furnished', label: 'Furnished' },
               { value: 'semi-furnished', label: 'Semi-furnished' },
-              { value: 'unfurnished',    label: 'Unfurnished' },
+              { value: 'unfurnished', label: 'Unfurnished' },
             ]}
           />
         </div>

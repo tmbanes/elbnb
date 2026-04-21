@@ -1,4 +1,4 @@
-﻿// app\manager\layout.tsx
+// app\manager\layout.tsx
 import { requireRole } from "@/lib/auth/session";
 
 //ui components
@@ -8,7 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default async function ManagerLayout({ children }: { children: React.ReactNode }) {
     await requireRole(["dormitory_manager"]);
-    return(
+    return (
         <TooltipProvider>
             <SidebarProvider>
                 <AppSidebar role="manager" />

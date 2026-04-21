@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ProfileUpload } from './ProfileUpload'
 import { getApiAuthenticatedUser } from '@/lib/auth/session'

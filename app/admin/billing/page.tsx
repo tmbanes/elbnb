@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { getAllBillsForAdmin, getActiveTenants } from "@/services/user-services";
+import { ensureInitialInvoicesForPendingPaymentApplications, getAllBillsForAdmin, getActiveTenants } from "@/services/user-services";
 import { redirect } from "next/navigation";
 import AdminBillingClient from "./AdminBillingClient";
 import LogoutButton from "@/components/logout-button";
@@ -14,6 +14,8 @@ export default async function AdminBillingPage() {
     redirect("/");
   }
 
+  await ensureInitialInvoicesForPendingPaymentApplications();
+
   // Double check if user is admin role by getting profile metadata if needed, 
   // or default to passing "admin" to service
   const { data: bills, error } = await getAllBillsForAdmin("admin");
@@ -23,7 +25,7 @@ export default async function AdminBillingPage() {
   let totalRevenue = 0;
   let unpaidBalance = 0;
   let overdueBalance = 0;
-  
+
   (bills || []).forEach((bill: any) => {
     if (bill.status === "paid") totalRevenue += bill.amount;
     if (bill.status === "unpaid") unpaidBalance += bill.amount;
@@ -45,10 +47,10 @@ export default async function AdminBillingPage() {
           <p className="text-slate-500 mt-1 mb-4 text-sm">Overview of all tenant invoices, payments, and revenue.</p>
           <LogoutButton />
         </div>
-        
-        <AdminBillingClient 
-          adminId={user.id} 
-          bills={bills || []} 
+
+        <AdminBillingClient
+          adminId={user.id}
+          bills={bills || []}
           summary={summary}
           activeTenants={activeTenants || []}
         />

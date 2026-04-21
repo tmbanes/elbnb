@@ -1,14 +1,14 @@
 export enum BillingStatus {
   PARTIALLY_PAID = "partially_paid",
   PAID = "paid",
-  UNPAID = "unpaid",  
+  UNPAID = "unpaid",
   OVERDUE = "overdue",
   PAID_LATE = "paid_late",
 
   // for receipt verification flow
   PENDING_VERIFICATION = "pending_verification",
   FAILED = "failed",
-  PENDING = "PENDING"
+  PENDING = "pending"
 }
 
 export enum BillingItemType {

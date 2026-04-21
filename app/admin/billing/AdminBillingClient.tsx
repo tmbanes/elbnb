@@ -4,7 +4,7 @@ import { useState } from "react";
 import { BillingStatus, BillingItemType } from "@/types/billing/enums";
 import { adminUpdateInvoiceAction, adminApproveReceiptAction, adminRejectReceiptAction, adminCreateBillAction } from "./actions";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { 
+import {
   Search,
   Filter,
   TrendingUp,
@@ -23,6 +23,8 @@ import {
   Trash
 } from "lucide-react";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function AdminBillingClient({ adminId, bills, summary, activeTenants }: { adminId: string, bills: any[], summary: any, activeTenants: any[] }) {
   const supabase = getSupabaseBrowserClient();
@@ -30,14 +32,31 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedBillIds, setSelectedBillIds] = useState<string[]>([]);
-  
+  const router = useRouter();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('realtime_admin_billing')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, () => {
+        router.refresh();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, router]);
+
   // Modals state
   const [viewedReceipt, setViewedReceipt] = useState<any>(null);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
-  
+
   const [editingBill, setEditingBill] = useState<any>(null);
   const [editNotes, setEditNotes] = useState("");
   const [editFlag, setEditFlag] = useState(false);
+  const [editAmount, setEditAmount] = useState<number>(0);
+  const [editDueDate, setEditDueDate] = useState<string>("");
+  const [editStatus, setEditStatus] = useState<BillingStatus>(BillingStatus.UNPAID);
   const [isSaving, setIsSaving] = useState(false);
 
   // Create Bill Modal State
@@ -45,13 +64,13 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const [newBillAssignmentId, setNewBillAssignmentId] = useState("");
   const [newBillDueDate, setNewBillDueDate] = useState<string>("");
   const [newBillNotes, setNewBillNotes] = useState<string>("");
-  const [newBillItems, setNewBillItems] = useState<{type: BillingItemType, amount: number}[]>([
+  const [newBillItems, setNewBillItems] = useState<{ type: BillingItemType, amount: number }[]>([
     { type: BillingItemType.ROOM_RENT, amount: 0 }
   ]);
   const [isSubmittingBill, setIsSubmittingBill] = useState(false);
 
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case BillingStatus.PAID: return "bg-green-100 text-green-700 border-green-200";
       case BillingStatus.UNPAID: return "bg-slate-100 text-slate-700 border-slate-200";
       case BillingStatus.PENDING: return "bg-amber-100 text-amber-700 border-amber-200 animate-pulse";
@@ -62,17 +81,17 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   };
 
   const filteredBills = bills.filter(bill => {
-    const matchesSearch = 
-      bill.billing_id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (bill.accommodation_assignment?.users?.full_name || "").toLowerCase().includes(searchQuery.toLowerCase());
-    
+    const matchesSearch =
+      bill.billing_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (bill.accommodation_assignment?.users ? `${bill.accommodation_assignment.users.first_name} ${bill.accommodation_assignment.users.last_name}` : "").toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesStatus = statusFilter === "ALL" || bill.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
   const toggleSelection = (id: string) => {
-    setSelectedBillIds(prev => 
+    setSelectedBillIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
   };
@@ -88,9 +107,15 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const openReceiptViewer = async (bill: any) => {
     setViewedReceipt(bill);
     setReceiptUrl(null);
-    if (bill.transaction_reference) {
-      const { data } = supabase.storage.from("payment_receipts").getPublicUrl(bill.transaction_reference);
-      setReceiptUrl(data.publicUrl);
+    const receiptPath = bill.transaction_reference || bill.receipt_files?.[bill.receipt_files.length - 1];
+
+    if (receiptPath) {
+      const response = await fetch(`/api/admin/billing/receipt-url?path=${encodeURIComponent(receiptPath)}`);
+      const payload = await response.json().catch(() => ({}));
+
+      if (response.ok && payload.signedUrl) {
+        setReceiptUrl(payload.signedUrl);
+      }
     }
   };
 
@@ -98,6 +123,11 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     if (!viewedReceipt) return;
     await adminApproveReceiptAction(viewedReceipt.billing_id, adminId);
     setViewedReceipt(null);
+    window.location.reload();
+  };
+
+  const markAsPaid = async (billingId: string) => {
+    await adminApproveReceiptAction(billingId, adminId);
     window.location.reload();
   };
 
@@ -112,23 +142,38 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     setEditingBill(bill);
     setEditNotes(bill.internal_notes || "");
     setEditFlag(bill.admin_flag || false);
+    setEditAmount(Number(bill.amount || 0));
+    setEditDueDate(bill.due_date ? format(new Date(bill.due_date), "yyyy-MM-dd") : "");
+    setEditStatus((bill.status as BillingStatus) || BillingStatus.UNPAID);
   };
 
   const saveEdits = async () => {
     if (!editingBill) return;
     setIsSaving(true);
-    await adminUpdateInvoiceAction(editingBill.billing_id, {
-      internal_notes: editNotes,
-      admin_flag: editFlag
-    });
-    setIsSaving(false);
-    setEditingBill(null);
-    window.location.reload();
+    try {
+      await adminUpdateInvoiceAction(
+        editingBill.billing_id,
+        {
+          internal_notes: editNotes,
+          admin_flag: editFlag,
+          amount: editAmount,
+          due_date: editDueDate ? new Date(`${editDueDate}T00:00:00`).toISOString() : undefined,
+          status: editStatus,
+        },
+        adminId,
+      );
+      setEditingBill(null);
+      window.location.reload();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to save invoice changes.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const sendReminders = async () => {
     if (selectedBillIds.length === 0) return alert("Select invoices first!");
-    
+
     for (const id of selectedBillIds) {
       await adminUpdateInvoiceAction(id, { reminded_at: new Date().toISOString() });
     }
@@ -147,21 +192,24 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     if (newBillItems.some(item => item.amount <= 0)) return alert("All items must have an amount greater than 0!");
 
     setIsSubmittingBill(true);
-    
+    const dueDate = new Date(newBillDueDate);
+    const billingPeriodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
+
     // Automatically sum amount for the parent status based on the items attached.
     const totalAmount = newBillItems.reduce((acc, curr) => acc + curr.amount, 0);
 
     const payload = {
       assignment_id: newBillAssignmentId,
       amount: totalAmount,
-      due_date: new Date(newBillDueDate),
+      billing_period_date: billingPeriodDate,
+      due_date: dueDate,
       status: BillingStatus.UNPAID,
       payment_method: "cash",
       internal_notes: newBillNotes
     };
 
     const { error } = await adminCreateBillAction(payload, newBillItems);
-    
+
     setIsSubmittingBill(false);
     if (error) {
       alert("Error: " + (typeof error === 'object' ? JSON.stringify(error, null, 2) : error));
@@ -179,28 +227,28 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-sm font-medium text-slate-500">Total Revenue</h3>
-            <div className="p-2 bg-emerald-50 rounded-lg"><TrendingUp className="w-5 h-5 text-emerald-500"/></div>
+            <div className="p-2 bg-emerald-50 rounded-lg"><TrendingUp className="w-5 h-5 text-emerald-500" /></div>
           </div>
           <p className="text-3xl font-bold text-slate-900">₱{summary.totalRevenue.toLocaleString()}</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-sm font-medium text-slate-500">Unpaid Balance</h3>
-            <div className="p-2 bg-amber-50 rounded-lg"><Clock className="w-5 h-5 text-amber-500"/></div>
+            <div className="p-2 bg-amber-50 rounded-lg"><Clock className="w-5 h-5 text-amber-500" /></div>
           </div>
           <p className="text-3xl font-bold text-slate-900">₱{summary.unpaidBalance.toLocaleString()}</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-sm font-medium text-slate-500">Overdue</h3>
-            <div className="p-2 bg-red-50 rounded-lg"><AlertOctagon className="w-5 h-5 text-red-500"/></div>
+            <div className="p-2 bg-red-50 rounded-lg"><AlertOctagon className="w-5 h-5 text-red-500" /></div>
           </div>
           <p className="text-3xl font-bold text-red-600">₱{summary.overdueBalance.toLocaleString()}</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-sm font-medium text-slate-500">Total Transactions</h3>
-            <div className="p-2 bg-indigo-50 rounded-lg"><List className="w-5 h-5 text-indigo-500"/></div>
+            <div className="p-2 bg-indigo-50 rounded-lg"><List className="w-5 h-5 text-indigo-500" /></div>
           </div>
           <p className="text-3xl font-bold text-slate-900">{summary.transactionCount}</p>
         </div>
@@ -210,21 +258,21 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm print:hidden">
         <div className="flex bg-slate-50 border border-slate-200 rounded-xl overflow-hidden flex-1 max-w-md">
           <div className="pl-3 flex items-center justify-center text-slate-400">
-            <Search className="w-4 h-4"/>
+            <Search className="w-4 h-4" />
           </div>
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Search tenant or invoice #"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-3 py-2 bg-transparent text-sm outline-none"
           />
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-sm bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
-            <Filter className="w-4 h-4 text-slate-400"/>
-            <select 
+            <Filter className="w-4 h-4 text-slate-400" />
+            <select
               className="bg-transparent outline-none text-slate-700 font-medium"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -237,26 +285,26 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
           </div>
 
           <div className="h-6 w-px bg-slate-200 mx-2"></div>
-          
-          <button 
+
+          <button
             onClick={sendReminders}
             className="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition"
           >
-            <Send className="w-4 h-4"/> Remind
+            <Send className="w-4 h-4" /> Remind
           </button>
-          
-          <button 
+
+          <button
             onClick={exportSelected}
             className="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition"
           >
-            <Download className="w-4 h-4"/> PDF
+            <Download className="w-4 h-4" /> PDF
           </button>
 
-          <button 
+          <button
             onClick={() => setIsCreatingBill(true)}
             className="flex items-center gap-2 text-sm font-medium text-white bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition"
           >
-            <Plus className="w-4 h-4"/> Create
+            <Plus className="w-4 h-4" /> Create
           </button>
         </div>
       </div>
@@ -268,7 +316,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-4 font-semibold w-12 pt-[18px]">
-                  <input type="checkbox" checked={selectedBillIds.length === filteredBills.length && filteredBills.length > 0} onChange={handleSelectAll} className="rounded border-slate-300"/>
+                  <input type="checkbox" checked={selectedBillIds.length === filteredBills.length && filteredBills.length > 0} onChange={handleSelectAll} className="rounded border-slate-300" />
                 </th>
                 <th className="px-6 py-4 font-semibold">Tenant / Property</th>
                 <th className="px-6 py-4 font-semibold">Invoice #</th>
@@ -279,21 +327,20 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             </thead>
             <tbody>
               {filteredBills.map((bill: any) => (
-                <tr key={bill.billing_id} className={`border-b border-slate-100 last:border-0 hover:bg-slate-50 flex-col transition-colors ${bill.admin_flag ? 'bg-amber-50/30' : ''}`}>
+                <tr key={bill.billing_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
-                    <input 
-                      type="checkbox" 
-                      onChange={() => toggleSelection(bill.billing_id)} 
+                    <input
+                      type="checkbox"
+                      onChange={() => toggleSelection(bill.billing_id)}
                       checked={selectedBillIds.includes(bill.billing_id)}
                       className="rounded border-slate-300"
                     />
                   </td>
                   <td className="px-6 py-4">
                     <p className="font-bold text-slate-900 flex items-center gap-2">
-                       {bill.accommodation_assignment?.users ? `${bill.accommodation_assignment.users.first_name} ${bill.accommodation_assignment.users.last_name}` : "Unknown Tenant"}
-                       {bill.admin_flag && <Flag className="text-amber-500 w-3 h-3"/>}
+                      {bill.accommodation_assignment?.users ? `${bill.accommodation_assignment.users.first_name} ${bill.accommodation_assignment.users.last_name}` : "Unknown Tenant"}
                     </p>
-                    <p className="text-xs text-slate-500">Prop: {bill.accommodation_assignment?.property?.preferred_accommodation || "N/A"}</p>
+                    <p className="text-xs text-slate-500">Prop: {bill.accommodation_assignment?.accommodation_application?.preferred_accommodation_id || "N/A"}</p>
                   </td>
                   <td className="px-6 py-4 font-mono text-xs">
                     {bill.billing_id.split("-")[0]}
@@ -310,19 +357,27 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button 
+                      {bill.status !== BillingStatus.PAID && (
+                        <button
+                          onClick={() => markAsPaid(bill.billing_id)}
+                          className="px-3 py-2 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition"
+                        >
+                          Paid
+                        </button>
+                      )}
+                      <button
                         onClick={() => openEditor(bill)}
                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition tooltip-trigger"
                       >
-                        <FileEdit className="w-4 h-4"/>
+                        <FileEdit className="w-4 h-4" />
                       </button>
-                      
-                      <button 
-                         disabled={!bill.transaction_reference}
-                         onClick={() => openReceiptViewer(bill)}
-                         className={`p-2 rounded-lg transition ${bill.transaction_reference ? 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-700' : 'text-slate-300 bg-slate-50 cursor-not-allowed'}`}
+
+                      <button
+                        disabled={!bill.transaction_reference}
+                        onClick={() => openReceiptViewer(bill)}
+                        className={`p-2 rounded-lg transition ${bill.transaction_reference ? 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-700' : 'text-slate-300 bg-slate-50 cursor-not-allowed'}`}
                       >
-                        {bill.status === BillingStatus.PENDING ? <Eye className="w-4 h-4 animate-pulse"/> : <ImageIcon className="w-4 h-4"/>}
+                        {bill.status === BillingStatus.PENDING ? <Eye className="w-4 h-4 animate-pulse" /> : <ImageIcon className="w-4 h-4" />}
                       </button>
                     </div>
                   </td>
@@ -349,32 +404,32 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 <h3 className="font-bold text-lg text-slate-900">Receipt Viewer</h3>
                 <p className="text-sm text-slate-500">Invoice #{viewedReceipt.billing_id.split("-")[0]}</p>
               </div>
-              <button onClick={() => setViewedReceipt(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5"/></button>
+              <button onClick={() => setViewedReceipt(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
             </div>
-            
+
             <div className="flex-1 bg-slate-200 overflow-y-auto flex items-center justify-center p-8">
-               {receiptUrl ? (
-                 // eslint-disable-next-line @next/next/no-img-element
-                 <img src={receiptUrl} alt="Receipt" className="max-w-full rounded-lg shadow-md border border-slate-300 bg-white" />
-               ) : (
-                 <p className="text-slate-500 font-medium tracking-wide animate-pulse">Loading receipt image...</p>
-               )}
+              {receiptUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={receiptUrl} alt="Receipt" className="max-w-full rounded-lg shadow-md border border-slate-300 bg-white" />
+              ) : (
+                <p className="text-slate-500 font-medium tracking-wide animate-pulse">Loading receipt image...</p>
+              )}
             </div>
 
             <div className="p-6 border-t border-slate-100 bg-white flex justify-between items-center">
               <div>
-                 <p className="text-sm font-medium text-slate-500">Target Amount: <span className="font-bold text-slate-900 text-lg">₱{viewedReceipt.amount.toLocaleString()}</span></p>
-                 <span className={`mt-1 inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(viewedReceipt.status)}`}>
-                   {viewedReceipt.status}
-                 </span>
+                <p className="text-sm font-medium text-slate-500">Target Amount: <span className="font-bold text-slate-900 text-lg">₱{viewedReceipt.amount.toLocaleString()}</span></p>
+                <span className={`mt-1 inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(viewedReceipt.status)}`}>
+                  {viewedReceipt.status}
+                </span>
               </div>
               {viewedReceipt.status === BillingStatus.PENDING && (
                 <div className="flex gap-3">
                   <button onClick={handleReject} className="px-6 py-3 font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition flex items-center gap-2">
-                    <X className="w-5 h-5"/> Reject 
+                    <X className="w-5 h-5" /> Reject
                   </button>
                   <button onClick={handleApprove} className="px-6 py-3 font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-400 hover:text-white border border-emerald-200 hover:border-emerald-500 rounded-xl transition flex items-center gap-2">
-                    <Check className="w-5 h-5"/> Approve
+                    <Check className="w-5 h-5" /> Paid
                   </button>
                 </div>
               )}
@@ -385,30 +440,30 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
       {/* EDITOR MODAL */}
       {editingBill && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
           <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><FileEdit className="w-5 h-5"/> Edit Invoice Notes</h3>
-              <button onClick={() => setEditingBill(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5"/></button>
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><FileEdit className="w-5 h-5" /> Edit Invoice</h3>
+              <button onClick={() => setEditingBill(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
             </div>
-            
+
             <div className="p-8 space-y-6">
               <div>
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={editFlag} 
+                  <input
+                    type="checkbox"
+                    checked={editFlag}
                     onChange={e => setEditFlag(e.target.checked)}
                     className="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500"
                   />
-                  <span className="font-semibold text-slate-800 flex items-center gap-2">Flag this invoice <Flag className="w-4 h-4 text-amber-500"/></span>
+                  <span className="font-semibold text-slate-800 flex items-center gap-2">Flag this invoice <Flag className="w-4 h-4 text-amber-500" /></span>
                 </label>
                 <p className="text-xs text-slate-500 ml-8 mt-1">Flagging pinpoints invoices requiring special administrative attention.</p>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes</label>
-                <textarea 
+                <textarea
                   rows={4}
                   value={editNotes}
                   onChange={e => setEditNotes(e.target.value)}
@@ -417,18 +472,57 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 ></textarea>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Amount</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={Number.isFinite(editAmount) ? editAmount : 0}
+                    onChange={e => setEditAmount(Number(e.target.value || 0))}
+                    className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
+                  <input
+                    type="date"
+                    value={editDueDate}
+                    onChange={e => setEditDueDate(e.target.value)}
+                    className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Status</label>
+                <select
+                  value={editStatus}
+                  onChange={e => setEditStatus(e.target.value as BillingStatus)}
+                  className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                >
+                  {Object.values(BillingStatus).map(status => (
+                    <option key={status} value={status}>
+                      {status.replace(/_/g, " ").toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {editingBill.reminded_at && (
                 <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs text-slate-500 flex items-center gap-2">
-                  <Clock className="w-4 h-4"/> Last reminded on: {format(new Date(editingBill.reminded_at), 'MMM dd, yyyy HH:mm')}
+                  <Clock className="w-4 h-4" /> Last reminded on: {format(new Date(editingBill.reminded_at), 'MMM dd, yyyy HH:mm')}
                 </div>
               )}
             </div>
 
             <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-               <button onClick={() => setEditingBill(null)} className="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
-               <button disabled={isSaving} onClick={saveEdits} className="px-5 py-2.5 font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition">
-                  {isSaving ? "Saving..." : "Save Changes"}
-               </button>
+              <button onClick={() => setEditingBill(null)} className="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
+              <button disabled={isSaving} onClick={saveEdits} className="px-5 py-2.5 font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition">
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
             </div>
           </div>
         </div>
@@ -439,14 +533,14 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
           <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden flex flex-col shadow-2xl max-h-[90vh]">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><Plus className="w-5 h-5"/> Create New Tenant Invoice</h3>
-              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5"/></button>
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><Plus className="w-5 h-5" /> Create New Tenant Invoice</h3>
+              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
             </div>
-            
+
             <div className="p-8 space-y-6 overflow-y-auto">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Select Target Tenant</label>
-                <select 
+                <select
                   className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
                   value={newBillAssignmentId}
                   onChange={e => setNewBillAssignmentId(e.target.value)}
@@ -463,7 +557,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
-                <input 
+                <input
                   type="date"
                   className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
                   value={newBillDueDate}
@@ -473,7 +567,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes <span className="font-normal text-slate-400 text-xs ml-2">(Optional)</span></label>
-                <textarea 
+                <textarea
                   rows={2}
                   className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
                   value={newBillNotes}
@@ -485,18 +579,18 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <label className="block text-sm font-semibold text-slate-700">Line Items</label>
-                  <button 
+                  <button
                     onClick={() => setNewBillItems([...newBillItems, { type: BillingItemType.OTHER, amount: 0 }])}
                     className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition"
                   >
-                    <Plus className="w-3 h-3"/> Add Item
+                    <Plus className="w-3 h-3" /> Add Item
                   </button>
                 </div>
-                
+
                 <div className="space-y-3">
                   {newBillItems.map((item, index) => (
                     <div key={index} className="flex gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      <select 
+                      <select
                         className="flex-1 text-sm border-0 bg-white rounded-lg p-2 outline-none shadow-sm font-medium text-slate-700"
                         value={item.type}
                         onChange={(e) => {
@@ -511,7 +605,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                       </select>
                       <div className="relative w-32">
                         <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
-                        <input 
+                        <input
                           type="number"
                           className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-white outline-none rounded-lg shadow-sm border-0 text-slate-900"
                           value={item.amount || ''}
@@ -523,7 +617,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                           placeholder="0"
                         />
                       </div>
-                      <button 
+                      <button
                         onClick={() => {
                           if (newBillItems.length === 1) return;
                           const updated = [...newBillItems];
@@ -533,7 +627,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                         className={`p-2 rounded-lg transition ${newBillItems.length > 1 ? 'text-red-500 hover:bg-red-50' : 'text-slate-300'}`}
                         disabled={newBillItems.length <= 1}
                       >
-                        <Trash className="w-4 h-4"/>
+                        <Trash className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
@@ -547,10 +641,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             </div>
 
             <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-               <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
-               <button disabled={isSubmittingBill} onClick={handleCreateBill} className="px-6 py-2.5 font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm transition flex items-center gap-2">
-                  {isSubmittingBill ? "Sending..." : <><Send className="w-4 h-4"/> Send Invoice</>}
-               </button>
+              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
+              <button disabled={isSubmittingBill} onClick={handleCreateBill} className="px-6 py-2.5 font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm transition flex items-center gap-2">
+                {isSubmittingBill ? "Sending..." : <><Send className="w-4 h-4" /> Send Invoice</>}
+              </button>
             </div>
           </div>
         </div>
@@ -559,39 +653,39 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       {/* PRINT OUT (PDF) EXPORT SECTION */}
       <div className="hidden print:block absolute inset-0 bg-white p-8 font-sans">
         <div className="border-b-2 border-slate-900 pb-4 mb-8">
-            <h1 className="text-3xl font-extrabold uppercase mb-2">Billing Accounts Export</h1>
-            <p className="text-sm font-medium text-slate-500">Date Exported: {format(new Date(), "MM/dd/yyyy HH:mm")}</p>
+          <h1 className="text-3xl font-extrabold uppercase mb-2">Billing Accounts Export</h1>
+          <p className="text-sm font-medium text-slate-500">Date Exported: {format(new Date(), "MM/dd/yyyy HH:mm")}</p>
         </div>
-        
+
         <table className="w-full text-left text-sm border-collapse">
-            <thead>
-              <tr className="border-b border-slate-300">
-                <th className="py-2 text-slate-600 uppercase text-xs">Tenant / Reference</th>
-                <th className="py-2 text-slate-600 uppercase text-xs">Invoice #</th>
-                <th className="py-2 text-slate-600 uppercase text-xs text-right">Amount</th>
-                <th className="py-2 text-slate-600 uppercase text-xs text-right">Due Date</th>
-                <th className="py-2 text-slate-600 uppercase text-xs text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedBillIds.map(id => {
-                const b = bills.find(x => x.billing_id === id);
-                if(!b) return null;
-                return (
-                  <tr key={id} className="border-b border-slate-100">
-                    <td className="py-3 font-semibold text-slate-800">{b.accommodation_assignment?.users ? `${b.accommodation_assignment.users.first_name} ${b.accommodation_assignment.users.last_name}` : "Unknown Tenant"}</td>
-                    <td className="py-3 font-mono text-slate-500 text-xs">{id.split("-")[0]}</td>
-                    <td className="py-3 font-bold text-right">₱{b.amount.toLocaleString()}</td>
-                    <td className="py-3 text-right">{format(new Date(b.due_date), 'MM/dd/yyyy')}</td>
-                    <td className="py-3 text-right text-xs font-bold uppercase">{b.status}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
+          <thead>
+            <tr className="border-b border-slate-300">
+              <th className="py-2 text-slate-600 uppercase text-xs">Tenant / Reference</th>
+              <th className="py-2 text-slate-600 uppercase text-xs">Invoice #</th>
+              <th className="py-2 text-slate-600 uppercase text-xs text-right">Amount</th>
+              <th className="py-2 text-slate-600 uppercase text-xs text-right">Due Date</th>
+              <th className="py-2 text-slate-600 uppercase text-xs text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedBillIds.map(id => {
+              const b = bills.find(x => x.billing_id === id);
+              if (!b) return null;
+              return (
+                <tr key={id} className="border-b border-slate-100">
+                  <td className="py-3 font-semibold text-slate-800">{b.accommodation_assignment?.users ? `${b.accommodation_assignment.users.first_name} ${b.accommodation_assignment.users.last_name}` : "Unknown Tenant"}</td>
+                  <td className="py-3 font-mono text-slate-500 text-xs">{id.split("-")[0]}</td>
+                  <td className="py-3 font-bold text-right">₱{b.amount.toLocaleString()}</td>
+                  <td className="py-3 text-right">{format(new Date(b.due_date), 'MM/dd/yyyy')}</td>
+                  <td className="py-3 text-right text-xs font-bold uppercase">{b.status}</td>
+                </tr>
+              )
+            })}
+          </tbody>
         </table>
 
         {selectedBillIds.length === 0 && (
-           <p className="mt-8 text-center text-slate-500">No invoices selected for export.</p>
+          <p className="mt-8 text-center text-slate-500">No invoices selected for export.</p>
         )}
       </div>
     </>

@@ -7,7 +7,7 @@ const CANCELLABLE_STATUSES: CancellableStatus[] = ['pending_dorm_manager', 'pend
 const INITIAL_SUBMIT_APPLICATION_STATUS = 'pending_dorm_manager' as ApplicationStatus
 
 export class CreateApplicationService {
-  
+
   // CREATE ACCOMMODATION APPLICATION WITH GUARD CHECKERS
   static async createApplication(data: CreateApplicationInput): Promise<AccommodationApplication> {
     const supabase = await createSupabaseServerClient()
@@ -21,7 +21,7 @@ export class CreateApplicationService {
       .from('accommodation_application')
       .select('application_id')
       .eq('user_id', data.user_id)
-      .eq('preferred_accommodation', data.preferred_accommodation)
+      .eq('preferred_accommodation_id', data.preferred_accommodation_id)
       .in('application_status', CANCELLABLE_STATUSES)
 
     if (unitId) {
@@ -57,7 +57,7 @@ export class CreateApplicationService {
       const { data: accommodation, error: accommodationError } = await supabase
         .from('accommodation')
         .select('accommodation_id')
-        .eq('accommodation_id', data.preferred_accommodation)
+        .eq('accommodation_id', data.preferred_accommodation_id)
         .single()
 
       if (accommodationError || !accommodation) throw new Error('Accommodation not found.')
@@ -65,7 +65,7 @@ export class CreateApplicationService {
       const { data: units, error: unitAccommodationError } = await supabase
         .from('unit')
         .select('current_occupancy, max_occupancy')
-        .eq('accommodation_id', data.preferred_accommodation)
+        .eq('accommodation_id', data.preferred_accommodation_id)
 
       if (unitAccommodationError || !units) throw new Error('Failed to fetch units for accommodation.')
 
@@ -79,7 +79,7 @@ export class CreateApplicationService {
     const { data: accommodation, error: accomError } = await supabase
       .from('accommodation')
       .select('allowed_application')
-      .eq('accommodation_id', data.preferred_accommodation)
+      .eq('accommodation_id', data.preferred_accommodation_id)
       .single()
 
     if (accomError || !accommodation) throw new Error('Accommodation not found.')
@@ -101,7 +101,7 @@ export class CreateApplicationService {
       ...data,
       unit_id: unitId,                                // normalised null
       date_submitted: new Date().toISOString(),       // authoritative timestamp
-      application_status: INITIAL_SUBMIT_APPLICATION_STATUS,    
+      application_status: INITIAL_SUBMIT_APPLICATION_STATUS,
     }
 
     const { data: application, error } = await supabase
@@ -152,7 +152,7 @@ export class CreateApplicationService {
   static validateApplication(data: Partial<CreateApplicationInput>): string[] {
     const errors: string[] = []
 
-    if (!data.preferred_accommodation) {
+    if (!data.preferred_accommodation_id) {
       errors.push('Accommodation is required')
     }
 

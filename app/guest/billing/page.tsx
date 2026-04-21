@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { getUserPaymentSummary, getStudentBillsDetailed } from "@/services/user-services";
+import { ensureInitialInvoicesForUser, getUserPaymentSummary, getStudentBillsDetailed, getStudentPaymentHistory } from "@/services/user-services";
 import { redirect } from "next/navigation";
-import BillingClient from "@/app/student/billing/BillingClient";
+import BillingClient from "./BillingClient";
 import LogoutButton from "@/components/logout-button";
 
 export default async function GuestBillingPage() {
@@ -14,8 +14,13 @@ export default async function GuestBillingPage() {
     redirect("/");
   }
 
+  // Backfill safety net for applications that reached pending payment
+  // before auto-invoice creation was introduced.
+  await ensureInitialInvoicesForUser(user.id);
+
   const { data: summary } = await getUserPaymentSummary(user.id, "guest");
   const { data: bills } = await getStudentBillsDetailed(user.id);
+  const { data: paymentHistory } = await getStudentPaymentHistory(user.id);
 
   return (
     <main className="min-h-screen p-8 bg-slate-50/50">
@@ -25,11 +30,12 @@ export default async function GuestBillingPage() {
           <p className="text-slate-500 mt-1 mb-4 text-sm">Manage your invoices and view your payment history.</p>
           <LogoutButton />
         </div>
-        
-        <BillingClient 
-          userId={user.id} 
-          summary={summary || { total: 0, paid: 0, balance: 0 }} 
-          bills={bills || []} 
+
+        <BillingClient
+          userId={user.id}
+          summary={summary || { total: 0, paid: 0, balance: 0 }}
+          bills={bills || []}
+          paymentHistory={paymentHistory || []}
         />
       </div>
     </main>

@@ -1,4 +1,4 @@
-﻿// app/api/admin/housing/managers/available-users/route.ts
+// app/api/admin/housing/managers/available-users/route.ts
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { requireApiRole } from "@/lib/auth/session";

@@ -23,16 +23,16 @@ export const studentProfileService = {
     const client = await supabase();
     const { data, error } = await client
       .from('USER')
-        .update({
-          // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
+      .update({
+        // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
         first_name: updates.first_name,
         last_name: updates.last_name,
         middle_name: updates.middle_name,
       })
       .eq("user_id", user_id)
       .select()
-      .single(); 
-    
+      .single();
+
     if (error) {
       console.error("Error updating profile:", error);
     }
@@ -163,11 +163,11 @@ not yet tested
 
   async getAccommodationHistory(user_id: string) {
     const client = await supabase();
-    
+
     // TODO (for BACKEND): Di ko gets pano yung joint database query magwork so tinanggal ko muna etong nasa baba, for me to test ung history page
     // accomodation_assignment(assignment_id, move_in_date, expected_move_out_date, actual_move_out_date)
     // pa-add nalang ung accommodation_assignment(..) later on, thanks - eunel
-    
+
     // also NOTE: ung preferred_accommodation raw uuid sya and displayed sya sa UI, so need siguro ng getAccommodationName? function or 
     // something to convert the uuid to the actual accommodation name?
     const { data, error } = await client
@@ -175,19 +175,25 @@ not yet tested
       .select(`
         application_id,
         application_status,
-        preferred_accommodation,
+        preferred_accommodation_id,
         preferred_unit_type,
         date_submitted,
         duration_of_stay,
         check_in,
         check_out,
-        number_of_companions
+        number_of_companions,
+        accommodation:preferred_accommodation_id (
+          name
+        ),
+        unit:unit_id (
+          unit_number
+        )
       `)
       .eq("user_id", user_id)
       .order("date_submitted", { ascending: false });
 
     if (error) {
-       console.error("Supabase fetch error:", error);
+      console.error("Supabase fetch error:", error);
     }
 
     return { data: data as AccommodationApplication[] | null, error };
@@ -197,7 +203,7 @@ not yet tested
   // to update the application_status to "cancelled" when the user cancels their pending application (pending_admin or pending_dorm_manager)
   async cancelAccommodationApplication(application_id: string) {
     const client = await supabase();
-    
+
     const { data, error } = await client
       .from("accommodation_application")
       .update({ application_status: "cancelled" })

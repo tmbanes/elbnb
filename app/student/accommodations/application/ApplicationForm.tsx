@@ -92,7 +92,7 @@ const formSchema = z
     //   .refine((val) => /^\d+$/.test(val), {
     //     message: "Zip code must be numbers only",
     //   }),
-    preferred_accommodation: z.string().min(1, "Dormitory is required"),
+    preferred_accommodation_id: z.string().min(1, "Dormitory is required"),
     preferred_unit_type: z.enum(unitTypes, {
       errorMap: () => ({ message: "Please select a valid unit type" }),
     }),
@@ -277,11 +277,12 @@ export default function ApplyAccommodationForm() {
     // Calculate duration in months for the backend
     const months = Math.round(
       (data.checkOut.getTime() - data.checkIn.getTime()) /
-        (1000 * 60 * 60 * 24 * 30.44),
+      (1000 * 60 * 60 * 24 * 30.44),
     );
 
     const payload = {
-      preferred_accommodation: accommodationIdFromQuery,
+      //preferred_accommodation: accommodationIdFromQuery,
+      preferred_accommodation_id: accommodationIdFromQuery,
       preferred_unit_type: unitIdFromQuery ? "" : data.preferred_unit_type,
       date_submitted: new Date().toISOString(),
       duration_of_stay: months || 1,
@@ -289,7 +290,7 @@ export default function ApplyAccommodationForm() {
       check_out: format(data.checkOut, "yyyy-MM-dd"),
       number_of_companions:
         userRole === "guest" &&
-        accommodation?.accommodation_type === "renting_space"
+          accommodation?.accommodation_type === "renting_space"
           ? 1
           : 0,
       application_status: "pending_dorm_manager" as ApplicationStatus,
@@ -439,7 +440,7 @@ export default function ApplyAccommodationForm() {
               {
                 label: "Selected Dormitory",
                 // Show the actual fetched name if available, otherwise fallback to the form data
-                value: submittedData.preferred_accommodation,
+                value: submittedData.preferred_accommodation_id,
               },
               {
                 label: "Unit Type",
@@ -448,9 +449,9 @@ export default function ApplyAccommodationForm() {
                   submittedData.preferred_unit_type === "wholeunit"
                     ? "Whole Unit"
                     : submittedData.preferred_unit_type
-                        .charAt(0)
-                        .toUpperCase() +
-                      submittedData.preferred_unit_type.slice(1),
+                      .charAt(0)
+                      .toUpperCase() +
+                    submittedData.preferred_unit_type.slice(1),
               },
               {
                 label: "Check-in Date",
@@ -792,13 +793,13 @@ export default function ApplyAccommodationForm() {
             <Field
               label="Selected Accommodation"
               required
-              error={errors.preferred_accommodation?.message}
+              error={errors.preferred_accommodation_id?.message}
             >
               <Input
                 readOnly
                 className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`}
                 value={accommodation?.name || "Loading..."}
-                {...register("preferred_accommodation")}
+                {...register("preferred_accommodation_id")}
               />
             </Field>
 
@@ -864,9 +865,8 @@ export default function ApplyAccommodationForm() {
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        className={`flex items-center justify-between w-full h-11 px-4 rounded-xl border-2 text-sm bg-white transition-all ${
-                          errors.checkIn ? "border-red-400" : "border-[#78A24C]"
-                        } ${!field.value ? "text-gray-400" : "text-gray-700"}`}
+                        className={`flex items-center justify-between w-full h-11 px-4 rounded-xl border-2 text-sm bg-white transition-all ${errors.checkIn ? "border-red-400" : "border-[#78A24C]"
+                          } ${!field.value ? "text-gray-400" : "text-gray-700"}`}
                       >
                         {field.value
                           ? format(field.value, "MMM dd, yyyy")
