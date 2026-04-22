@@ -15,6 +15,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Nunito } from 'next/font/google';
+import {
+  HeaderLg,
+  HeaderMd,
+  HeaderSm,
+  SubheaderLg,
+  SubheaderMd,
+  SubheaderSm,
+  BodyLg,
+  BodyMd,
+  BodySm
+} from '@/app/typography';
 
 // Instantiate the custom font
 const nunito = Nunito({
@@ -29,6 +40,7 @@ interface StudentDashboardProps {
 
 export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
   const [uploadPhotoOpen, setUploadPhotoOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'personal' | 'accommodations'>('personal');
 
   // Extract info from metadata
   const studentNum = metadata?.student_number || 'N/A';
@@ -68,7 +80,7 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
 
       {/* Main card container */}
       <div
-        className="relative w-full max-w-5xl mt-16 px-6 md:px-12 pt-28 pb-16 z-10"
+        className="relative w-full max-w-5xl mt-16 pt-28 z-10 flex flex-col"
       >
 
         {/* EXACT FOLDER SHAPE BACKGROUNDS */}
@@ -147,97 +159,141 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
         </div>
 
         {/* Content Container */}
-        <div className="relative z-30">
+        <div className="relative z-30 flex-1 flex flex-col">
 
           {/* Header section (Greeting & Accoms Link) */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end px-6 md:px-12">
 
             <div className="mt-[160px] md:mt-0 md:ml-[310px] leading-tight drop-shadow-sm pb-12 md:pb-0 relative z-30">
-              <h2 className="text-2xl font-bold text-[#3E2723]/90">Kumusta,</h2>
-              <h1 className="text-4xl md:text-5xl font-black text-[#3E2723] tracking-tight mt-1">
+              <h2 className={`${HeaderMd} text-[#3E2723]/90`}>Kumusta,</h2>
+              <h1 className={`${HeaderLg} text-[#3E2723] tracking-tight mt-1`}>
                 {user.first_name} {user.last_name}?
               </h1>
             </div>
 
             {/* Accommodations Link */}
-            <Link
-              href="/dashboard/accommodations"
-              className="flex items-center gap-2 mt-4 md:mt-0 mb-2 md:mr-8 text-[#3E2723] opacity-60 hover:opacity-100 transition-opacity z-30 relative"
+            <button
+              onClick={() => setActiveTab(activeTab === 'accommodations' ? 'personal' : 'accommodations')}
+              className="flex items-center gap-2 mt-4 md:mt-0 mb-2 md:mr-8 text-[#3E2723] opacity-60 hover:opacity-100 transition-opacity z-30 relative cursor-pointer"
             >
               <Home className="w-5 h-5 fill-[#3E2723]/30" />
               <span className="text-lg font-bold tracking-[0.1em] uppercase">Accommodations</span>
-            </Link>
+            </button>
           </div>
 
-          {/* Dividing section via a subtle curved overlay instead of strict line */}
-          <div className="w-full h-auto mt-12 bg-[#8bc453] rounded-[40px_100px_40px_40px] px-8 py-10 shadow-inner" style={{ filter: 'url(#grain)', backgroundBlendMode: 'multiply' }}>
-
+          {/* Accommodations Container */}
+          <div
+            onClick={() => setActiveTab('accommodations')}
+            className={`w-full overflow-hidden transition-all duration-500 ease-in-out cursor-pointer mt-12 bg-[#8bc453] shadow-inner px-6 md:px-12 ${activeTab === 'accommodations' ? 'max-h-[1000px] rounded-t-[40px] md:rounded-tr-[100px] rounded-b-[40px]' : 'max-h-[80px] rounded-[40px] hover:bg-[#8bc453]/90'}`}
+            style={activeTab === 'accommodations' ? { filter: 'url(#grain)', backgroundBlendMode: 'multiply' } : {}}
+          >
             {/* Title */}
-            <div className="flex items-center gap-3 mb-8 text-[#3E2723]">
+            <div className={`flex items-center gap-3 text-[#3E2723] transition-all duration-500 ${activeTab === 'accommodations' ? 'pt-10 mb-8' : 'py-6'}`}>
+              <Home className="w-6 h-6 stroke-[2.5]" />
+              <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Accommodations</h3>
+            </div>
+            
+            <div className={`transition-opacity duration-500 pb-10 ${activeTab === 'accommodations' ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-y-10 gap-x-6">
+                <div className="md:col-span-12">
+                  <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Past Accommodations</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>Eliazo Hall</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Dormitory Name</p>
+                    </div>
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>Room 101</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Unit Number</p>
+                    </div>
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>08/15/2023</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Contract Start Date</p>
+                    </div>
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>05/30/2024</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Contract End Date</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Personal Information Container */}
+          <div
+            onClick={() => setActiveTab('personal')}
+            className={`w-full overflow-hidden transition-all duration-500 ease-in-out cursor-pointer mt-4 bg-[#8bc453] shadow-inner px-6 md:px-12 ${activeTab === 'personal' ? 'max-h-[1000px] rounded-t-[40px] rounded-b-[40px]' : 'max-h-[80px] rounded-[40px] hover:bg-[#8bc453]/90'}`}
+            style={activeTab === 'personal' ? { filter: 'url(#grain)', backgroundBlendMode: 'multiply' } : {}}
+          >
+            {/* Title */}
+            <div className={`flex items-center gap-3 text-[#3E2723] transition-all duration-500 ${activeTab === 'personal' ? 'pt-10 mb-8' : 'py-6'}`}>
               <UserIcon className="w-6 h-6 stroke-[2.5]" />
-              <h3 className="text-xl font-bold tracking-[0.05em] uppercase">Personal Information</h3>
+              <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Personal Information</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-y-10 gap-x-6">
+            <div className={`transition-opacity duration-500 pb-10 ${activeTab === 'personal' ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-y-10 gap-x-6">
 
-              {/* Academic Info - 4 columns on large screens */}
-              <div className="md:col-span-12">
-                <h4 className="font-bold opacity-90 tracking-wide uppercase mb-3 text-sm">Academic Info</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div>
-                    <p className="text-base font-semibold leading-snug">{formattedBirthdate}</p>
-                    <p className="text-sm opacity-80 leading-snug font-medium">Birthdate</p>
-                  </div>
-                  <div>
-                    <p className="text-base font-semibold leading-snug">{studentNum}</p>
-                    <p className="text-sm opacity-80 leading-snug font-medium">Student Number</p>
-                  </div>
-                  <div>
-                    <p className="text-base font-semibold leading-snug">{degreeProg}</p>
-                    <p className="text-sm opacity-80 leading-snug font-medium">Degree Program</p>
-                  </div>
-                  <div>
-                    <p className="text-base font-semibold leading-snug">{college}</p>
-                    <p className="text-sm opacity-80 leading-snug font-medium">College</p>
+                {/* Academic Info - 4 columns on large screens */}
+                <div className="md:col-span-12">
+                  <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Academic Info</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
+                    </div>
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>{studentNum}</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Student Number</p>
+                    </div>
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>{degreeProg}</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Degree Program</p>
+                    </div>
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>{college}</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>College</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Contact Details - 3 columns, span up to 9 slots on desktop */}
-              <div className="md:col-span-9">
-                <h4 className="font-bold opacity-90 tracking-wide uppercase mb-3 text-sm">Contact Details</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <div>
-                    <p className="text-base font-semibold leading-snug break-all">{user.email}</p>
-                    <p className="text-sm opacity-80 leading-snug font-medium">Email Address</p>
-                  </div>
-                  <div>
-                    <p className="text-base font-semibold leading-snug">{contactNum}</p>
-                    <p className="text-sm opacity-80 leading-snug font-medium">Contact Number</p>
-                  </div>
-                  <div>
-                    <p className="text-base font-semibold leading-snug">{homeAddress}</p>
-                    <p className="text-sm opacity-80 leading-snug font-medium">Home Address</p>
+                {/* Contact Details - 3 columns, span up to 9 slots on desktop */}
+                <div className="md:col-span-9">
+                  <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Contact Details</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug break-all`}>{user.email}</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Email Address</p>
+                    </div>
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>{contactNum}</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Contact Number</p>
+                    </div>
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>{homeAddress}</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Home Address</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Emergency Contacts - 1 column, span remaining 3 slots */}
-              <div className="md:col-span-3">
-                <h4 className="font-bold opacity-90 tracking-wide uppercase mb-3 text-sm">Emergency Contacts</h4>
-                <div className="grid grid-cols-1 gap-6">
-                  <div>
-                    <p className="text-base font-semibold leading-snug">{emergencyContact}</p>
-                    <p className="text-sm opacity-80 leading-snug font-medium">Emergency Contact</p>
+                {/* Emergency Contacts - 1 column, span remaining 3 slots */}
+                <div className="md:col-span-3">
+                  <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Emergency Contacts</h4>
+                  <div className="grid grid-cols-1 gap-6">
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>{emergencyContact}</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Emergency Contact</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
+              </div>
             </div>
           </div>
 
           {/* Floating Action Buttons */}
-          <div className="absolute right-0 bottom-[-20px] flex gap-3 z-30">
+          <div className="absolute right-6 md:right-12 bottom-6 flex gap-3 z-30">
             <EditProfileDialog user={user} metadata={metadata} />
             <button className="w-[50px] h-[50px] bg-[#3E2723] text-[#F4F5E1] rounded-full flex items-center justify-center hover:bg-[#2B1B18] transition-colors shadow-xl">
               <Folder size={20} strokeWidth={2.5} />
