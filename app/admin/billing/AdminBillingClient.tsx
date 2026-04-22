@@ -85,12 +85,22 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case BillingStatus.PAID: return "bg-green-100 text-green-700 border-green-200";
-      case BillingStatus.UNPAID: return "bg-slate-100 text-slate-700 border-slate-200";
-      case BillingStatus.PENDING: return "bg-amber-100 text-amber-700 border-amber-200 animate-pulse";
-      case BillingStatus.OVERDUE: return "bg-red-100 text-red-700 border-red-200";
-      case BillingStatus.FAILED: return "bg-rose-100 text-rose-700 border-rose-200";
-      default: return "bg-slate-100 text-slate-700 border-slate-200";
+      case BillingStatus.PAID: 
+      case BillingStatus.PAID_LATE:
+        return "bg-green-100 text-green-700 border-green-200";
+      case BillingStatus.UNPAID: 
+        return "bg-slate-100 text-slate-700 border-slate-200";
+      case BillingStatus.PENDING: 
+      case BillingStatus.PENDING_VERIFICATION:
+        return "bg-amber-100 text-amber-700 border-amber-200 animate-pulse";
+      case BillingStatus.OVERDUE: 
+        return "bg-red-100 text-red-700 border-red-200";
+      case BillingStatus.FAILED: 
+        return "bg-rose-100 text-rose-700 border-rose-200";
+      case BillingStatus.PARTIALLY_PAID:
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      default: 
+        return "bg-gray-100 text-gray-500 border-gray-200";
     }
   };
 
@@ -182,7 +192,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     if (!editingBill) return;
     setIsSaving(true);
     try {
-      await adminUpdateInvoiceAction(
+      const result = await adminUpdateInvoiceAction(
         editingBill.billing_id,
         {
           internal_notes: editNotes,
@@ -193,6 +203,15 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
         },
         adminId,
       );
+      
+      if (result && result.error) {
+        const errorMsg = typeof result.error === "string" 
+          ? result.error 
+          : result.error.message || JSON.stringify(result.error);
+        alert("Failed to save changes: " + errorMsg);
+        return;
+      }
+      
       setEditingBill(null);
       window.location.reload();
     } catch (error) {
