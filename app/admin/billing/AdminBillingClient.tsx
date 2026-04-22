@@ -27,6 +27,13 @@ import {
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AdminBillingClient({ adminId, bills, summary, activeTenants }: { adminId: string, bills: any[], summary: any, activeTenants: any[] }) {
   const supabase = getSupabaseBrowserClient();
@@ -277,7 +284,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
       {/* FILTER & ACTIONS */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-4 rounded-2xl border border-yellow-200 shadow-sm print:hidden" style={{ backgroundColor: '#FDFFF4' }}>
-        <div className="flex bg-slate-50 border border-slate-200 rounded-xl overflow-hidden flex-1 max-w-md">
+        <div className="flex bg-white border border-[#e8e2d6] shadow-sm transition hover:shadow-md hover:border-[#44291B]/30 rounded-xl overflow-hidden flex-1 max-w-md items-center">
           <div className="pl-3 flex items-center justify-center text-slate-400">
             <Search className="w-4 h-4" />
           </div>
@@ -286,37 +293,43 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             placeholder="Search tenant or invoice #"
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-            className="w-full px-3 py-2 bg-transparent text-sm outline-none"
+            className="w-full px-3 py-2 bg-transparent text-sm outline-none font-sans"
           />
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
-            <Filter className="w-4 h-4 text-slate-400" />
-            <select
-              className="bg-transparent outline-none text-slate-700 font-medium"
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-            >
-              <option value="ALL">All Statuses</option>
+          <Select 
+            value={statusFilter} 
+            onValueChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+          >
+            <SelectTrigger className="w-[180px] h-[40px] bg-white border-[#e8e2d6] shadow-sm transition hover:shadow-md hover:border-[#44291B]/30 rounded-xl font-sans text-sm text-slate-700 font-medium px-3 focus:ring-0">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-slate-400" />
+                <SelectValue placeholder="All Statuses" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Statuses</SelectItem>
               {Object.values(BillingStatus).map(s => (
-                <option key={s} value={s}>{s.replace(/_/g, " ").toUpperCase()}</option>
+                <SelectItem key={s} value={s}>
+                  {s.replace(/_/g, " ").toUpperCase()}
+                </SelectItem>
               ))}
-            </select>
-          </div>
+            </SelectContent>
+          </Select>
 
           <div className="h-6 w-px bg-slate-200 mx-2"></div>
 
           <button
             onClick={sendReminders}
-            className="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition"
+            className="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-[#e8e2d6] px-4 py-2 rounded-xl shadow-sm transition hover:shadow-md hover:border-[#44291B]/30 font-sans"
           >
             <Send className="w-4 h-4" /> Remind
           </button>
 
           <button
             onClick={exportSelected}
-            className="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition"
+            className="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-[#e8e2d6] px-4 py-2 rounded-xl shadow-sm transition hover:shadow-md hover:border-[#44291B]/30 font-sans"
           >
             <Download className="w-4 h-4" /> PDF
           </button>
