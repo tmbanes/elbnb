@@ -27,6 +27,7 @@ import {
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Select,
   SelectContent,
@@ -44,8 +45,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const channel = supabase
       .channel('realtime_admin_billing')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, () => {
@@ -298,8 +301,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
         </div>
 
         <div className="flex items-center gap-3">
-          <Select 
-            value={statusFilter} 
+          <Select
+            value={statusFilter}
             onValueChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
           >
             <SelectTrigger className="w-[180px] h-[40px] bg-white border-[#e8e2d6] shadow-sm transition hover:shadow-md hover:border-[#44291B]/30 rounded-xl font-sans text-sm text-slate-700 font-medium px-3 focus:ring-0">
@@ -478,8 +481,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       </div>
 
       {/* RECEIPT VIEWER MODAL */}
-      {viewedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
+      {mounted && viewedReceipt && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-[2px] print:hidden">
           <div className="bg-white rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <div>
@@ -517,20 +520,25 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* EDITOR MODAL */}
-      {editingBill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
-          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><FileEdit className="w-5 h-5" /> Edit Invoice</h3>
-              <button onClick={() => setEditingBill(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
+      {mounted && editingBill && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20 backdrop-blur-[2px] print:hidden">
+          <div className="bg-[#FDFFF4] rounded-[24px] w-full max-w-xl overflow-hidden flex flex-col shadow-2xl max-h-[90vh] font-sans">
+            <div className="p-8 pb-4 flex justify-between items-start">
+              <div>
+                <h3 className="font-bold text-2xl text-[#44291B] font-heading flex items-center gap-2"><FileEdit className="w-6 h-6" /> Edit Invoice</h3>
+                <p className="text-sm text-slate-500 mt-1">Update invoice details or flag for administrative attention.</p>
+              </div>
+              <button disabled={isSaving} onClick={() => setEditingBill(null)} className="p-2 hover:bg-slate-200/50 rounded-full transition"><X className="w-5 h-5 text-slate-500" /></button>
             </div>
 
-            <div className="p-8 space-y-6">
-              <div>
+            <div className="px-8 py-4 space-y-6 overflow-y-auto">
+              {/* Flag Section */}
+              <div className="bg-[#F4F6D6] border border-[#e8e2d6]/50 p-4 rounded-2xl flex flex-col transition-all focus-within:ring-2 focus-within:ring-[#44291B]/20">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -538,198 +546,228 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                     onChange={e => setEditFlag(e.target.checked)}
                     className="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500"
                   />
-                  <span className="font-semibold text-slate-800 flex items-center gap-2">Flag this invoice <Flag className="w-4 h-4 text-amber-500" /></span>
+                  <span className="font-bold text-[#44291B] flex items-center gap-2 text-sm">Flag this invoice <Flag className="w-4 h-4 text-amber-500" /></span>
                 </label>
-                <p className="text-xs text-slate-500 ml-8 mt-1">Flagging pinpoints invoices requiring special administrative attention.</p>
+                <p className="text-xs text-[#8A8A8A] ml-8 mt-1">Flagging pinpoints invoices requiring special administrative attention.</p>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes</label>
+              {/* Internal Notes */}
+              <div className="bg-white border border-[#e8e2d6] rounded-2xl p-4 flex flex-col transition-all focus-within:ring-2 focus-within:ring-[#44291B]/20">
+                <label className="text-xs font-bold text-[#8A8A8A] mb-2 uppercase tracking-wider">Internal Notes</label>
                 <textarea
                   rows={4}
                   value={editNotes}
                   onChange={e => setEditNotes(e.target.value)}
-                  className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-4 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full text-sm font-medium text-[#44291B] bg-transparent outline-none resize-none"
                   placeholder="Record calls, disputes, or manual actions taken..."
                 ></textarea>
               </div>
 
+              {/* Amount and Date */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Amount</label>
+                <div className="bg-white border border-[#e8e2d6] rounded-2xl p-4 flex flex-col transition-all focus-within:ring-2 focus-within:ring-[#44291B]/20">
+                  <label className="text-xs font-bold text-[#8A8A8A] mb-1 uppercase tracking-wider">Invoice Amount</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={Number.isFinite(editAmount) ? editAmount : 0}
                     onChange={e => setEditAmount(Number(e.target.value || 0))}
-                    className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className="w-full text-sm font-bold text-[#44291B] bg-transparent outline-none"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
+                <div className="bg-white border border-[#e8e2d6] rounded-2xl p-4 flex flex-col transition-all focus-within:ring-2 focus-within:ring-[#44291B]/20">
+                  <label className="text-xs font-bold text-[#8A8A8A] mb-1 uppercase tracking-wider">Due Date</label>
                   <input
                     type="date"
                     value={editDueDate}
                     onChange={e => setEditDueDate(e.target.value)}
-                    className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className="w-full text-sm font-bold text-[#44291B] bg-transparent outline-none"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Status</label>
-                <select
+              {/* Status Select */}
+              <div className="bg-white border border-[#e8e2d6] rounded-2xl p-4 flex flex-col transition-all focus-within:ring-2 focus-within:ring-[#44291B]/20">
+                <label className="text-xs font-bold text-[#8A8A8A] mb-1 uppercase tracking-wider">Invoice Status</label>
+                <Select
                   value={editStatus}
-                  onChange={e => setEditStatus(e.target.value as BillingStatus)}
-                  className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  onValueChange={(val) => setEditStatus(val as BillingStatus)}
                 >
-                  {Object.values(BillingStatus).map(status => (
-                    <option key={status} value={status}>
-                      {status.replace(/_/g, " ").toUpperCase()}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full h-auto p-0 border-0 bg-transparent shadow-none text-sm font-bold text-[#44291B] focus:ring-0 focus:ring-offset-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[70]">
+                    {Object.values(BillingStatus).map(status => (
+                      <SelectItem key={status} value={status}>
+                        {status.replace(/_/g, " ").toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {editingBill.reminded_at && (
-                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs text-slate-500 flex items-center gap-2">
-                  <Clock className="w-4 h-4" /> Last reminded on: {format(new Date(editingBill.reminded_at), 'MMM dd, yyyy HH:mm')}
+                <div className="bg-[#eff6ff] text-[#1e40af] p-4 rounded-xl text-xs flex gap-3 items-center border border-[#bfdbfe]">
+                  <Clock className="w-4 h-4" /> 
+                  <p>Last reminded on: <span className="font-bold">{format(new Date(editingBill.reminded_at), 'MMM dd, yyyy HH:mm')}</span></p>
                 </div>
               )}
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-              <button onClick={() => setEditingBill(null)} className="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
-              <button disabled={isSaving} onClick={saveEdits} className="px-5 py-2.5 font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition">
+            <div className="p-8 pt-4 flex justify-end gap-4 items-center">
+              <button disabled={isSaving} onClick={() => setEditingBill(null)} className="text-sm font-bold text-slate-500 hover:text-[#44291B] transition">Cancel</button>
+              <button disabled={isSaving} onClick={saveEdits} className="px-6 py-2.5 text-sm font-bold text-white bg-[#2A3A5E] rounded-xl hover:bg-[#2A3A5E]/90 shadow-md transition flex items-center gap-2">
                 {isSaving ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* CREATE BILL MODAL */}
-      {isCreatingBill && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
-          <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden flex flex-col shadow-2xl max-h-[90vh]">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><Plus className="w-5 h-5" /> Create New Tenant Invoice</h3>
-              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
+      {mounted && isCreatingBill && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20 backdrop-blur-[2px] print:hidden">
+          <div className="bg-[#FDFFF4] rounded-[24px] w-full max-w-xl overflow-hidden flex flex-col shadow-2xl max-h-[90vh] font-sans">
+            <div className="p-8 pb-4 flex justify-between items-start">
+              <div>
+                <h3 className="font-bold text-2xl text-[#44291B] font-heading">Create New Tenant Invoice</h3>
+                <p className="text-sm text-slate-500 mt-1">Please fill in the details below to issue a new bill to a tenant.</p>
+              </div>
+              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="p-2 hover:bg-slate-200/50 rounded-full transition"><X className="w-5 h-5 text-slate-500" /></button>
             </div>
 
-            <div className="p-8 space-y-6 overflow-y-auto">
+            <div className="px-8 py-4 space-y-8 overflow-y-auto">
+              {/* INVOICE SUMMARY SECTION */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Select Target Tenant</label>
-                <select
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  value={newBillAssignmentId}
-                  onChange={e => setNewBillAssignmentId(e.target.value)}
-                >
-                  <option value="">-- Select Active Assigned Tenant --</option>
-                  {(activeTenants || []).map((t: any) => (
-                    <option key={t.assignment_id} value={t.assignment_id}>
-                      {t.users ? `${t.users.first_name} ${t.users.last_name}` : "Unknown"}
-                    </option>
-                  ))}
-                  <option value="48fc2483-6ebf-4d7a-ab9c-822d71504af6">TEST: Dummy Tenant (Overrides DB Empty State)</option>
-                </select>
+                <h4 className="text-xs font-bold text-[#8A8A8A] tracking-wider mb-3 uppercase">Invoice Summary</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div className="bg-white border border-[#e8e2d6] rounded-2xl p-4 flex flex-col transition-all focus-within:ring-2 focus-within:ring-[#44291B]/20">
+                    <label className="text-xs text-[#8A8A8A] mb-1 flex items-center gap-2">Target Tenant</label>
+                    <Select
+                      value={newBillAssignmentId || undefined}
+                      onValueChange={setNewBillAssignmentId}
+                    >
+                      <SelectTrigger className="w-full h-auto p-0 border-0 bg-transparent shadow-none text-sm font-bold text-[#44291B] focus:ring-0 focus:ring-offset-0 data-[placeholder]:font-normal">
+                        <SelectValue placeholder="Select Tenant..." />
+                      </SelectTrigger>
+                      <SelectContent className="z-[70]">
+                        {(activeTenants || []).map((t: any) => (
+                          <SelectItem key={t.assignment_id} value={t.assignment_id}>
+                            {t.users ? `${t.users.first_name} ${t.users.last_name}` : "Unknown"}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="48fc2483-6ebf-4d7a-ab9c-822d71504af6">TEST: Dummy Tenant (Overrides DB Empty State)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="bg-white border border-[#e8e2d6] rounded-2xl p-4 flex flex-col transition-all focus-within:ring-2 focus-within:ring-[#44291B]/20">
+                    <label className="text-xs text-[#8A8A8A] mb-1 flex items-center gap-2">Due Date</label>
+                    <input
+                      type="date"
+                      className="w-full text-sm font-bold text-[#44291B] bg-transparent outline-none"
+                      value={newBillDueDate}
+                      onChange={e => setNewBillDueDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-white border border-[#e8e2d6] rounded-2xl p-4 flex flex-col transition-all focus-within:ring-2 focus-within:ring-[#44291B]/20">
+                  <label className="text-xs text-[#8A8A8A] mb-1">Internal Notes (Optional)</label>
+                  <textarea
+                    rows={1}
+                    className="w-full text-sm font-medium text-[#44291B] bg-transparent outline-none resize-none"
+                    value={newBillNotes}
+                    onChange={e => setNewBillNotes(e.target.value)}
+                    placeholder="Record reasons for specific charges or adjustments..."
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
-                <input
-                  type="date"
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  value={newBillDueDate}
-                  onChange={e => setNewBillDueDate(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes <span className="font-normal text-slate-400 text-xs ml-2">(Optional)</span></label>
-                <textarea
-                  rows={2}
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  value={newBillNotes}
-                  onChange={e => setNewBillNotes(e.target.value)}
-                  placeholder="Record reasons for specific charges or adjustments..."
-                />
-              </div>
-
+              {/* FEES BREAKDOWN SECTION */}
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <label className="block text-sm font-semibold text-slate-700">Line Items</label>
+                  <h4 className="text-xs font-bold text-[#8A8A8A] tracking-wider uppercase">Fees Breakdown</h4>
                   <button
                     onClick={() => setNewBillItems([...newBillItems, { type: BillingItemType.OTHER, amount: 0 }])}
-                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition"
+                    className="text-xs font-bold text-[#1e3a8a] hover:text-[#1e3a8a]/80 flex items-center gap-1 transition"
                   >
-                    <Plus className="w-3 h-3" /> Add Item
+                    <Plus className="w-3 h-3" /> Add Fees
                   </button>
                 </div>
 
-                <div className="space-y-3">
-                  {newBillItems.map((item, index) => (
-                    <div key={index} className="flex gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      <select
-                        className="flex-1 text-sm border-0 bg-white rounded-lg p-2 outline-none shadow-sm font-medium text-slate-700"
-                        value={item.type}
-                        onChange={(e) => {
-                          const updated = [...newBillItems];
-                          updated[index].type = e.target.value as BillingItemType;
-                          setNewBillItems(updated);
-                        }}
-                      >
-                        {Object.values(BillingItemType).map(type => (
-                          <option key={type} value={type}>{type.replace(/_/g, " ").toUpperCase()}</option>
-                        ))}
-                      </select>
-                      <div className="relative w-32">
-                        <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
-                        <input
-                          type="number"
-                          className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-white outline-none rounded-lg shadow-sm border-0 text-slate-900"
-                          value={item.amount || ''}
+                <div className="bg-[#F4F6D6] border border-[#e8e2d6]/50 rounded-xl p-5 space-y-4">
+                  <div className="space-y-3">
+                    {newBillItems.map((item, index) => (
+                      <div key={index} className="flex gap-3 items-center">
+                        <select
+                          className="flex-1 text-sm bg-transparent border-b border-[#44291B]/10 pb-1 outline-none font-medium text-[#8A8A8A] focus:border-[#44291B]/40 transition-colors"
+                          value={item.type}
                           onChange={(e) => {
                             const updated = [...newBillItems];
-                            updated[index].amount = Number(e.target.value);
+                            updated[index].type = e.target.value as BillingItemType;
                             setNewBillItems(updated);
                           }}
-                          placeholder="0"
-                        />
+                        >
+                          {Object.values(BillingItemType).map(type => (
+                            <option key={type} value={type}>{type.replace(/_/g, " ").toUpperCase()}</option>
+                          ))}
+                        </select>
+                        <div className="relative w-32 flex items-center border-b border-[#44291B]/10 pb-1 focus-within:border-[#44291B]/40 transition-colors">
+                          <span className="text-[#44291B] font-bold text-sm">₱</span>
+                          <input
+                            type="number"
+                            className="w-full pl-1 pr-0 py-0 text-sm font-bold bg-transparent outline-none text-right text-[#44291B]"
+                            value={item.amount || ''}
+                            onChange={(e) => {
+                              const updated = [...newBillItems];
+                              updated[index].amount = Number(e.target.value);
+                              setNewBillItems(updated);
+                            }}
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (newBillItems.length === 1) return;
+                            const updated = [...newBillItems];
+                            updated.splice(index, 1);
+                            setNewBillItems(updated);
+                          }}
+                          className={`p-1 rounded-lg transition ${newBillItems.length > 1 ? 'text-[#44291B]/40 hover:text-red-500' : 'text-transparent cursor-default'}`}
+                          disabled={newBillItems.length <= 1}
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => {
-                          if (newBillItems.length === 1) return;
-                          const updated = [...newBillItems];
-                          updated.splice(index, 1);
-                          setNewBillItems(updated);
-                        }}
-                        className={`p-2 rounded-lg transition ${newBillItems.length > 1 ? 'text-red-500 hover:bg-red-50' : 'text-slate-300'}`}
-                        disabled={newBillItems.length <= 1}
-                      >
-                        <Trash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
 
-                <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-sm font-bold text-slate-800">
-                  <span>Calculated Total:</span>
-                  <span className="text-xl">₱{newBillItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}</span>
+                  <div className="pt-4 border-t border-[#44291B]/10 flex justify-between items-center font-bold text-[#1e3a8a]">
+                    <span>Total Calculated:</span>
+                    <span className="text-xl">₱{newBillItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
                 </div>
+              </div>
+
+              <div className="bg-[#eff6ff] text-[#1e40af] p-4 rounded-xl text-xs flex gap-3 items-start border border-[#bfdbfe]">
+                <div className="mt-0.5"><Eye className="w-4 h-4" /></div>
+                <p>Confirmation of invoice creation will automatically update the tenant's portal. Please ensure all details are correct.</p>
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
-              <button disabled={isSubmittingBill} onClick={handleCreateBill} className="px-6 py-2.5 font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm transition flex items-center gap-2">
-                {isSubmittingBill ? "Sending..." : <><Send className="w-4 h-4" /> Send Invoice</>}
+            <div className="p-8 pt-4 flex justify-end gap-4 items-center">
+              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="text-sm font-bold text-slate-500 hover:text-[#44291B] transition">Cancel</button>
+              <button disabled={isSubmittingBill} onClick={handleCreateBill} className="px-6 py-2.5 text-sm font-bold text-white bg-[#2A3A5E] rounded-xl hover:bg-[#2A3A5E]/90 shadow-md transition flex items-center gap-2">
+                {isSubmittingBill ? "Processing..." : "Create & Send"}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* PRINT OUT (PDF) EXPORT SECTION */}
