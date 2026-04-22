@@ -94,14 +94,14 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     return matchesSearch && matchesStatus;
   });
 
-  // Pagination calculations
+  // pagination calculations
   const totalPages = Math.max(1, Math.ceil(filteredBills.length / itemsPerPage));
   const safePage = Math.min(currentPage, totalPages);
   const startIndex = (safePage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, filteredBills.length);
   const paginatedBills = filteredBills.slice(startIndex, endIndex);
 
-  // Generate visible page numbers (show max 3 around current)
+  // for visible page numbers (show max 3 around current)
   const getVisiblePages = () => {
     const pages: number[] = [];
     let start = Math.max(1, safePage - 1);
@@ -428,11 +428,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={safePage <= 1}
-                className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-medium transition ${
-                  safePage <= 1
-                    ? "border-slate-200 text-slate-300 cursor-not-allowed"
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-                }`}
+                className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safePage <= 1
+                  ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -441,11 +440,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${
-                    page === safePage
-                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                      : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-                  }`}
+                  className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${page === safePage
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                    }`}
                 >
                   {page}
                 </button>
@@ -454,11 +452,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={safePage >= totalPages}
-                className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-medium transition ${
-                  safePage >= totalPages
-                    ? "border-slate-200 text-slate-300 cursor-not-allowed"
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-                }`}
+                className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safePage >= totalPages
+                  ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
