@@ -4,8 +4,12 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import {
   Table,
@@ -24,6 +28,8 @@ interface DataTableProps<TData, TValue> {
   className?: string
 }
 
+import * as React from "react"
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -31,16 +37,26 @@ export function DataTable<TData, TValue>({
   toolbar,
   className,
 }: DataTableProps<TData, TValue>) {
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 5,
+  })
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setPagination,
+    state: {
+      pagination,
+    },
   })
 
   return (
-    <div className={`overflow-hidden shadow-sm rounded-md ${className ?? ""}`}>
+    <div className={`bg-[#FDFFF4] border text-sm border-slate-200 rounded-2xl shadow-sm overflow-hidden print:hidden ${className ?? ""}`}>
       {(header || toolbar) && (
-        <div className="flex flex-col gap-4 bg-[#FDFFF4] p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 border-b border-slate-200 bg-[#FDFFF4] p-6 sm:flex-row sm:items-center sm:justify-between">
           {header && <div>{header}</div>}
           {toolbar && <div>{toolbar}</div>}
         </div>
@@ -55,9 +71,9 @@ export function DataTable<TData, TValue>({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 )
               })}
@@ -87,6 +103,29 @@ export function DataTable<TData, TValue>({
           )}
         </TableBody>
       </Table>
+      {table.getPageCount() > 1 && (
+        <div className="flex items-center justify-center space-x-4 px-4 py-3 border-t border-slate-200 bg-transparent">
+          <Button
+            className="h-8 w-8 p-0 text-slate-700 bg-[#FDFFF4] hover:bg-[#F6F8D5] hover:text-[#44291B]"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          <div className="text-sm font-medium text-[#44291B]">
+            {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+          </div>
+
+          <Button
+            className="h-8 w-8 p-0 text-slate-700 bg-[#FDFFF4] hover:bg-[#F6F8D5] hover:text-[#44291B]"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
