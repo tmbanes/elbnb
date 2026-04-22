@@ -274,33 +274,48 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     <>
       {/* SUMMARY */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:hidden">
-        <div className="p-6 rounded-2xl border border-yellow-200 shadow-sm" style={{ backgroundColor: '#FDFFF4' }}>
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500 font-subheading">Total Revenue</h3>
-            <div className="p-2 bg-emerald-50 rounded-lg"><TrendingUp className="w-5 h-5 text-emerald-500" /></div>
+        {/* Card 1: Total Revenue */}
+        <div className="p-5 rounded-2xl shadow-sm flex justify-between items-center" style={{ backgroundColor: '#598fa8' }}>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-[10px] font-bold text-white/90 uppercase tracking-wider font-heading">Total Revenue</h3>
+            <p className="text-3xl font-bold text-white" style={{ fontFamily: 'Arial, sans-serif' }}>₱{summary.totalRevenue.toLocaleString()}</p>
           </div>
-          <p className="text-3xl font-bold text-slate-900" style={{ fontFamily: 'Arial, sans-serif' }}>₱{summary.totalRevenue.toLocaleString()}</p>
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <TrendingUp className="w-6 h-6 text-white" />
+          </div>
         </div>
-        <div className="p-6 rounded-2xl border border-yellow-200 shadow-sm" style={{ backgroundColor: '#FDFFF4' }}>
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500 font-subheading">Unpaid Balance</h3>
-            <div className="p-2 bg-amber-50 rounded-lg"><Clock className="w-5 h-5 text-amber-500" /></div>
+
+        {/* Card 2: Unpaid Balance */}
+        <div className="p-5 rounded-2xl shadow-sm flex justify-between items-center" style={{ backgroundColor: '#ed880e' }}>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-[10px] font-bold text-white/90 uppercase tracking-wider font-heading">Unpaid Balance</h3>
+            <p className="text-3xl font-bold text-white" style={{ fontFamily: 'Arial, sans-serif' }}>₱{summary.unpaidBalance.toLocaleString()}</p>
           </div>
-          <p className="text-3xl font-bold text-slate-900" style={{ fontFamily: 'Arial, sans-serif' }}>₱{summary.unpaidBalance.toLocaleString()}</p>
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <Clock className="w-6 h-6 text-white" />
+          </div>
         </div>
-        <div className="p-6 rounded-2xl border border-yellow-200 shadow-sm" style={{ backgroundColor: '#FDFFF4' }}>
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500 font-subheading">Overdue</h3>
-            <div className="p-2 bg-red-50 rounded-lg"><AlertOctagon className="w-5 h-5 text-red-500" /></div>
+
+        {/* Card 3: Overdue */}
+        <div className="p-5 rounded-2xl shadow-sm flex justify-between items-center" style={{ backgroundColor: '#ffcf01' }}>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-[10px] font-bold text-white/90 uppercase tracking-wider font-heading">Overdue</h3>
+            <p className="text-3xl font-bold text-white" style={{ fontFamily: 'Arial, sans-serif' }}>₱{summary.overdueBalance.toLocaleString()}</p>
           </div>
-          <p className="text-3xl font-bold text-red-600" style={{ fontFamily: 'Arial, sans-serif' }}>₱{summary.overdueBalance.toLocaleString()}</p>
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <AlertOctagon className="w-6 h-6 text-white" />
+          </div>
         </div>
-        <div className="p-6 rounded-2xl border border-yellow-200 shadow-sm" style={{ backgroundColor: '#FDFFF4' }}>
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500 font-subheading">Total Transactions</h3>
-            <div className="p-2 bg-indigo-50 rounded-lg"><List className="w-5 h-5 text-indigo-500" /></div>
+
+        {/* Card 4: Total Transactions */}
+        <div className="p-5 rounded-2xl shadow-sm flex justify-between items-center" style={{ backgroundColor: '#29437b' }}>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-[10px] font-bold text-white/90 uppercase tracking-wider font-heading">Total Transactions</h3>
+            <p className="text-3xl font-bold text-white" style={{ fontFamily: 'Arial, sans-serif' }}>{summary.transactionCount}</p>
           </div>
-          <p className="text-3xl font-bold text-slate-900" style={{ fontFamily: 'Arial, sans-serif' }}>{summary.transactionCount}</p>
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <List className="w-6 h-6 text-white" />
+          </div>
         </div>
       </div>
 
