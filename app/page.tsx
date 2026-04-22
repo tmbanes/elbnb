@@ -1,4 +1,4 @@
-import { redirectByRole } from "@/lib/auth/client-auth";
+import { redirectByRole } from "@/lib/auth/session";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -101,7 +101,7 @@ export default async function Home() {
             <CardContent className="flex-1">
               <ul className="space-y-1 text-sm text-muted-foreground">
                 {setup.highlights.map((highlight) => (
-                  <li key={highlight}>• {highlight}</li>
+                  <li key={highlight}>â€¢ {highlight}</li>
                 ))}
               </ul>
             </CardContent>
@@ -143,15 +143,15 @@ export default async function Home() {
               <ContextMenuGroup>
                 <ContextMenuItem>
                   Back
-                  <ContextMenuShortcut>⌘[</ContextMenuShortcut>
+                  <ContextMenuShortcut>âŒ˜[</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuItem disabled>
                   Forward
-                  <ContextMenuShortcut>⌘]</ContextMenuShortcut>
+                  <ContextMenuShortcut>âŒ˜]</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuItem>
                   Reload
-                  <ContextMenuShortcut>⌘R</ContextMenuShortcut>
+                  <ContextMenuShortcut>âŒ˜R</ContextMenuShortcut>
                 </ContextMenuItem>
                 <ContextMenuSub>
                   <ContextMenuSubTrigger>More Tools</ContextMenuSubTrigger>

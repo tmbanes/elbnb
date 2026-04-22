@@ -17,6 +17,228 @@ type BillingItemInput = {
 };
 
 //======================================================//
+// BILLING BOOTSTRAP (AUTO INITIAL INVOICE)
+//======================================================//
+
+export async function ensureInitialInvoicesForUser(user_id: string) {
+  const supabase = supabaseAdmin;
+
+  const { data: assignments, error: assignmentError } = await supabase
+    .from("accommodation_assignment")
+    .select("assignment_id, application_id, unit_id, move_in_date, assignment_status")
+    .eq("user_id", user_id)
+    .in("assignment_status", ["waiting_payment", "pending", "active"]);
+
+  if (assignmentError) {
+    return { data: null, error: assignmentError ?? null };
+  }
+
+  const { data: pendingApplications, error: pendingApplicationsError } = await supabase
+    .from("accommodation_application")
+    .select("application_id, user_id, unit_id, check_in, check_out, application_status, preferred_accommodation_id, preferred_unit_type")
+    .eq("user_id", user_id)
+    .eq("application_status", "pending_payment");
+
+  if (pendingApplicationsError) {
+    return { data: null, error: pendingApplicationsError };
+  }
+
+  const assignmentList = [...(assignments ?? [])] as any[];
+  const assignmentByApplication = new Map<string, any>();
+  assignmentList.forEach((row) => {
+    if (row?.application_id) {
+      assignmentByApplication.set(row.application_id, row);
+    }
+  });
+
+  // Ensure there is an assignment row for every pending_payment application.
+  // Some old records reached pending_payment before assignment creation logic existed.
+  for (const app of pendingApplications ?? []) {
+    if (!app?.application_id) continue;
+    if (assignmentByApplication.has(app.application_id)) continue;
+    let fallbackUnitId = app.unit_id as string | null;
+
+    // Legacy recovery: if pending_payment has no saved unit_id, pick a deterministic fallback
+    // from active units in the preferred accommodation/type (lowest rental fee first).
+    if (!fallbackUnitId && app.preferred_accommodation_id && app.preferred_unit_type) {
+      const { data: candidateUnits } = await supabase
+        .from("unit")
+        .select("unit_id, rental_fee")
+        .eq("accommodation_id", app.preferred_accommodation_id)
+        .eq("unit_type", app.preferred_unit_type)
+        .eq("unit_status", "active")
+        .order("rental_fee", { ascending: true })
+        .limit(1);
+
+      if (candidateUnits?.length) {
+        fallbackUnitId = candidateUnits[0].unit_id;
+
+        await supabase
+          .from("accommodation_application")
+          .update({ unit_id: fallbackUnitId })
+          .eq("application_id", app.application_id);
+      }
+
+      // If preferred type does not exist in this accommodation, choose the cheapest active unit.
+      if (!fallbackUnitId) {
+        const { data: anyActiveUnits } = await supabase
+          .from("unit")
+          .select("unit_id, rental_fee")
+          .eq("accommodation_id", app.preferred_accommodation_id)
+          .eq("unit_status", "active")
+          .order("rental_fee", { ascending: true })
+          .limit(1);
+
+        if (anyActiveUnits?.length) {
+          fallbackUnitId = anyActiveUnits[0].unit_id;
+
+          await supabase
+            .from("accommodation_application")
+            .update({ unit_id: fallbackUnitId })
+            .eq("application_id", app.application_id);
+        }
+      }
+    }
+
+    if (!fallbackUnitId) continue;
+
+    const expectedMoveOut = app.check_out ?? app.check_in;
+
+    const { data: createdAssignment, error: createdAssignmentError } = await supabase
+      .from("accommodation_assignment")
+      .insert({
+        application_id: app.application_id,
+        unit_id: fallbackUnitId,
+        user_id: app.user_id,
+        move_in_date: app.check_in,
+        expected_move_out_date: expectedMoveOut,
+        actual_move_out_date: null,
+        assignment_status: "waiting_payment",
+      })
+      .select("assignment_id, application_id, unit_id, move_in_date, assignment_status")
+      .single();
+
+    if (createdAssignmentError) {
+      // If insert failed because assignment already exists, try fetching it.
+      const { data: fallbackAssignment } = await supabase
+        .from("accommodation_assignment")
+        .select("assignment_id, application_id, unit_id, move_in_date, assignment_status")
+        .eq("application_id", app.application_id)
+        .maybeSingle();
+
+      if (fallbackAssignment) {
+        assignmentList.push(fallbackAssignment);
+        assignmentByApplication.set(app.application_id, fallbackAssignment);
+      }
+
+      continue;
+    }
+
+    if (createdAssignment) {
+      assignmentList.push(createdAssignment);
+      assignmentByApplication.set(app.application_id, createdAssignment);
+    }
+  }
+
+  if (!assignmentList.length) {
+    return { data: [], error: null };
+  }
+
+  const assignmentIds = assignmentList
+    .map((row) => row.assignment_id)
+    .filter(Boolean);
+
+  if (!assignmentIds.length) {
+    return { data: [], error: null };
+  }
+
+  const { data: existingBills, error: existingBillsError } = await supabase
+    .from("billing")
+    .select("assignment_id")
+    .in("assignment_id", assignmentIds);
+
+  if (existingBillsError) {
+    return { data: null, error: existingBillsError };
+  }
+
+  const withBills = new Set((existingBills ?? []).map((bill: any) => bill.assignment_id));
+  const pendingAppIdSet = new Set((pendingApplications ?? []).map((app: any) => app.application_id));
+  const createdBillingIds: string[] = [];
+
+  for (const assignment of assignmentList) {
+    if (withBills.has(assignment.assignment_id)) continue;
+
+    const shouldCreateInvoice =
+      assignment.assignment_status === "waiting_payment" ||
+      (assignment.application_id && pendingAppIdSet.has(assignment.application_id));
+
+    if (!shouldCreateInvoice || !assignment.unit_id) continue;
+
+    const { data: unit } = await supabase
+      .from("unit")
+      .select("rental_fee")
+      .eq("unit_id", assignment.unit_id)
+      .single();
+
+    const monthlyRent = Number(unit?.rental_fee ?? 0);
+    if (!Number.isFinite(monthlyRent) || monthlyRent <= 0) continue;
+
+    const dueDate = assignment.move_in_date ? new Date(assignment.move_in_date) : new Date();
+    const billingPeriodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
+
+    const { data: createdBilling, error: createBillingError } = await supabase
+      .from("billing")
+      .insert({
+        assignment_id: assignment.assignment_id,
+        amount: monthlyRent,
+        billing_period_date: billingPeriodDate.toISOString(),
+        due_date: dueDate.toISOString(),
+        status: BillingStatus.UNPAID,
+        payment_method: "cash",
+        internal_notes: "Auto-generated initial invoice for pending payment assignment.",
+      })
+      .select("billing_id")
+      .single();
+
+    if (createBillingError || !createdBilling?.billing_id) continue;
+
+    await supabase.from("billing_item").insert({
+      billing_id: createdBilling.billing_id,
+      type: BillingItemType.ROOM_RENT,
+      amount: monthlyRent,
+    });
+
+    createdBillingIds.push(createdBilling.billing_id);
+  }
+
+  return { data: createdBillingIds, error: null };
+}
+
+export async function ensureInitialInvoicesForPendingPaymentApplications() {
+  const { data: apps, error } = await supabaseAdmin
+    .from("accommodation_application")
+    .select("user_id")
+    .eq("application_status", "pending_payment");
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  const userIds = Array.from(new Set((apps ?? []).map((row: any) => row.user_id).filter(Boolean)));
+  const created: string[] = [];
+
+  for (const uid of userIds) {
+    const result = await ensureInitialInvoicesForUser(uid);
+    if (result.error) continue;
+    if (Array.isArray(result.data)) {
+      created.push(...result.data);
+    }
+  }
+
+  return { data: created, error: null };
+}
+
+//======================================================//
 // ACCOMODATION SERVICES
 //======================================================//
 
@@ -103,6 +325,10 @@ export async function createBillingWithItems(
 //======================================================//
 
 export async function getStudentBillsDetailed(user_id: string) {
+  // Safety net: ensure initial invoice exists for pending-payment assignments
+  // even if caller did not trigger bootstrap beforehand.
+  await ensureInitialInvoicesForUser(user_id);
+
   const supabase = await createSupabaseServerClient();
 
   const { data, error } = await supabase
@@ -527,7 +753,16 @@ export async function getAllBillsForAdmin(role: UserRole) {
 export async function updateAdminInvoiceDetails(
   role: UserRole,
   billing_id: string,
-  updates: { admin_flag?: boolean; internal_notes?: string; reminded_at?: string }
+  updates: {
+    admin_flag?: boolean;
+    internal_notes?: string;
+    reminded_at?: string;
+    amount?: number;
+    due_date?: string;
+    billing_period_date?: string;
+    status?: BillingStatus;
+    payment_method?: string;
+  }
 ) {
   if (role !== "admin") return { data: null, error: "Unauthorized" };
 

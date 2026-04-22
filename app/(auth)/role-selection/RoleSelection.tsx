@@ -100,6 +100,7 @@ export default function RoleSelection() {
   const [roleData, setRoleData] = useState<RoleFormData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
   
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
@@ -143,8 +144,6 @@ export default function RoleSelection() {
     parsedSelectedDate && !Number.isNaN(parsedSelectedDate.valueOf())
       ? parsedSelectedDate
       : undefined;
-
-  const router = useRouter();
 
   const targetRoute: Record<Role, string> = {
     student: "/student/dashboard",

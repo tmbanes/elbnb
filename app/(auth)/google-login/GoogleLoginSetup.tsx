@@ -5,6 +5,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { signInWithGoogle } from "@/services/browser/auth";
 import { User } from "@/types/user.types";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 //ui components
 import { Button } from "@/components/ui/button";
@@ -16,9 +17,6 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import router from "next/router";
-
-
 //style constants
 const button_style = "w-full h-11 rounded-full bg-[#fbbc05] text-[#2d1a12] font-semibold hover:bg-[#f9d776]";
 
@@ -29,6 +27,7 @@ type GoogleLoginProps = {
 export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
   const supabase = getSupabaseBrowserClient();
   const [currentUser, setCurrentUser] = useState<User | null>(user);
+  const router = useRouter();
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -54,8 +53,8 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#8dbd59] p-4 font-sans selection:bg-emerald-500/30">
       <div className="w-full max-w-md space-y-6">
-        
-        
+
+
 
         {!currentUser && (
           <div>

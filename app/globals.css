@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@plugin "tailwindcss-animate";
+@import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -121,9 +121,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
@@ -144,9 +146,9 @@
     padding-bottom: 7px !important;
   }
 
-  table th:first-child, 
+  table th:first-child,
   table td:first-child {
-    padding-left: 20px !important; 
+    padding-left: 20px !important;
   }
 
   /* tr:hover td {
@@ -170,4 +172,19 @@
   td {
     @apply py-3 px-4 text-[#44291B] text-sm;
   }
+}
+/* Global Page Transitions */
+@keyframes pageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main > *:not(.page-loader) {
+  animation: pageSlideIn 0.5s ease-out forwards;
 }

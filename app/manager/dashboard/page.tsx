@@ -9,20 +9,20 @@ import ManagerDashboardUI from "./manager-dashboard-ui";
 export default function DormitoryManagerDashboardPage() {
   const supabase = getSupabaseBrowserClient();
   const [isExiting, setIsExiting] = useState(false);
-  
+
   const handleLogout = async () => {
-    setIsExiting(true); 
+    setIsExiting(true);
     await supabase.auth.signOut();
-    
+
     setTimeout(() => {
       window.location.href = "/";
-    }, 300); 
+    }, 300);
   };
-  
+
   return (
-    <ManagerDashboardUI 
-      onLogout={handleLogout} 
-      isLoggingOut={isExiting} 
+    <ManagerDashboardUI
+      onLogout={handleLogout}
+      isLoggingOut={isExiting}
     />
   );
 }
