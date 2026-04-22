@@ -307,11 +307,8 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
           </div>
 
           {/* Floating Action Buttons */}
-          <div className="absolute right-6 md:right-12 bottom-6 flex gap-3 z-50">
+          <div className="absolute right-4 md:right-6 bottom-6 flex gap-3 z-50">
             <EditProfileDialog user={user} metadata={metadata} />
-            <button className="w-[50px] h-[50px] bg-[#3E2723] text-[#F4F5E1] rounded-full flex items-center justify-center hover:bg-[#2B1B18] transition-colors shadow-xl">
-              <Folder size={20} strokeWidth={2.5} />
-            </button>
           </div>
 
         </div>
