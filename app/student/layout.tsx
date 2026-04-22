@@ -10,10 +10,9 @@ export default async function StudentLayout({ children }: { children: React.Reac
     await requireRole(["student"]);
     return (
         <TooltipProvider>
-            <SidebarProvider>
+            <SidebarProvider defaultOpen={false}>
 
                 <AppSidebar role="student" />
-                <SidebarTrigger />
 
                 <main className="flex-1">
                     {/* optional trigger button */}

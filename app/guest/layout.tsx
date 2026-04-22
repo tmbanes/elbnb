@@ -10,10 +10,9 @@ export default async function GuestLayout({ children }: { children: React.ReactN
     await requireRole(["guest"]);
     return (
         <TooltipProvider>
-            <SidebarProvider>
+            <SidebarProvider defaultOpen={false}>
 
                 <AppSidebar role="guest" />
-                <SidebarTrigger />
 
                 <main className="flex-1">
                     {/* optional trigger button */}

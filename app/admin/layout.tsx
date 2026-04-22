@@ -10,9 +10,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // await requireRole(["housing_admin"]); // Temporarily disabled for testing
     return (
         <TooltipProvider>
-            <SidebarProvider>
+            <SidebarProvider defaultOpen={false}>
                 <AppSidebar role="admin" />
-                <SidebarTrigger />
 
                 <main className="flex-1">
                     {children}

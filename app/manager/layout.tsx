@@ -10,9 +10,8 @@ export default async function ManagerLayout({ children }: { children: React.Reac
     await requireRole(["dormitory_manager"]);
     return (
         <TooltipProvider>
-            <SidebarProvider>
+            <SidebarProvider defaultOpen={false}>
                 <AppSidebar role="manager" />
-                <SidebarTrigger />
 
                 <main className="flex-1">
                     {children}

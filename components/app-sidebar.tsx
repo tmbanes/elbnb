@@ -16,6 +16,9 @@ import {
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
+import Link from "next/link"
 import {
   Sidebar,
   SidebarContent,
@@ -72,53 +75,100 @@ const sidebarConfig = {
   },
 }
 
-//sample user 
-const user = {
-  name: "shadcn",
-  email: "m@example.com",
-  avatar: "/avatars/shadcn.jpg",
-}
-
 export function AppSidebar({
-  role = "student",
+  role = "admin", // Defaulted to admin to see the exact menu from your image
   ...props
 }: React.ComponentProps<typeof Sidebar> & { role?: Role }) {
   const config = sidebarConfig[role]
+  const supabase = getSupabaseBrowserClient()
+
+  const [userData, setUserData] = React.useState({
+    name: "Loading...",
+    email: "",
+    avatar: "/avatars/shadcn.jpg",
+  })
+
+  React.useEffect(() => {
+    async function fetchUser() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: userProfile } = await supabase
+          .from("users")
+          .select("first_name, last_name, email, profile_picture_url")
+          .eq("user_id", user.id)
+          .single()
+        
+        if (userProfile) {
+          setUserData({
+            name: `${userProfile.first_name} ${userProfile.last_name}`.trim() || user.email?.split("@")[0] || "User",
+            email: userProfile.email || user.email || "",
+            avatar: userProfile.profile_picture_url || "/avatars/shadcn.jpg",
+          })
+        } else {
+          setUserData({
+            name: user.email?.split("@")[0] || "User",
+            email: user.email || "",
+            avatar: "/avatars/shadcn.jpg",
+          })
+        }
+      } else {
+        setUserData({
+          name: "Not logged in",
+          email: "",
+          avatar: "/avatars/shadcn.jpg",
+        })
+      }
+    }
+    fetchUser()
+  }, [supabase])
+
+  const { toggleSidebar, state } = useSidebar()
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarContent>
+    <>
+    <Sidebar 
+      collapsible="offcanvas" 
+      className="bg-[#8ba665] text-white border-none shadow-xl z-40" 
+      {...props}
+    >
+      <SidebarContent className="bg-[#8ba665] text-white">
 
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild>
-                <a href={config.nav[0].url}>
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    <Bot className="h-4 w-4" />
-                  </div>
-
-                  <div className="flex flex-col gap-0.5 leading-none">
-                    <span className="font-medium">{config.label}</span>
-                    <span className="text-xs text-muted-foreground">
-                      ELbnb
-                    </span>
-                  </div>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+        <SidebarHeader className="pt-8 pb-8 px-6 group-data-[collapsible=icon]:px-2 flex items-center justify-center overflow-hidden">
+          <Link href="/" className="flex items-center justify-center gap-2 group w-full">
+            <img 
+              src="/logo/logo_text.png" 
+              alt="ELbnb Logo" 
+              className="h-12 w-auto object-contain transition-all duration-300 ease-out group-hover:scale-105 group-hover:opacity-90 drop-shadow-sm group-data-[collapsible=icon]:hidden" 
+            />
+          </Link>
         </SidebarHeader>
 
 
         <NavMain items={config.nav} />
       </SidebarContent>
 
-      <SidebarFooter>
-        <NavUser user={user} />
+      <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2 bg-[#8ba665] overflow-hidden">
+        <NavUser user={userData} />
       </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>
+
+    {/* Custom Bottom-Left Trigger */}
+    {state === "collapsed" && (
+      <button 
+        id="custom-sidebar-trigger"
+        onClick={toggleSidebar}
+        className="fixed -bottom-20 -left-6 w-40 h-40 bg-[#8ba665] rounded-full z-30 transition-transform duration-500 ease-out hover:-translate-y-6 outline-none shadow-2xl cursor-pointer group"
+        title="Open Sidebar"
+      >
+        <img 
+          src="/logo/logo_house.png" 
+          alt="Open Sidebar" 
+          className="absolute -top-2 right-10 w-16 h-auto drop-shadow-lg transition-transform duration-500 ease-out group-hover:scale-110 group-hover:-translate-y-2 group-hover:rotate-3" 
+        />
+      </button>
+    )}
+    </>
   )
 }
