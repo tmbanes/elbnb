@@ -7,10 +7,6 @@ import { Property } from "../../../../types/housing/types";
 
 // ui components
 import { DataTable } from "@/components/ui/data-table";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,11 +15,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Card,
   CardTitle,
   CardHeader
 } from "@/components/ui/card";
-import { ChevronLeft, Plus, Building2, Home, Users, Bed } from "lucide-react";
+import { ChevronLeft, Plus, Building2, Home, Users, Bed, Search, Filter } from "lucide-react";
 
 interface SummaryStats {
   totalDorms: number;
@@ -56,41 +59,42 @@ interface PropertiesListProps {
   onBackToHousing: () => void;
 }
 
+//Stat Card Function
 function StatCard({
   label,
   value,
   icon,
-  description,
-  accentColor,
+  bgColor,
   iconBg,
 }: {
   label: string;
   value: number;
   icon: React.ReactNode;
-  description?: string;
-  accentColor: string;
+  bgColor: string;
   iconBg: string;
 }) {
   return (
+    //Stat Card UI
     <Card
-      className="shadow-sm bg-[#FDFFF4] transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-md cursor-default"
-      style={{ borderTop: `6px solid ${accentColor}` }}
+      className="shadow-sm cursor-default text-white"
+      style={{ backgroundColor: bgColor }}
     >
       <CardHeader className="p-3.5">
         <div className="flex items-center justify-between gap-3.5">
           <div className="flex flex-col gap-0.5 pl-3">
-            <p className="text-[11px] font-medium text-[#44291B] uppercase tracking-widest">
+            <p className="text-[11px] font-medium text-[#FDFFF4] uppercase tracking-widest">
               {label}
             </p>
-            <CardTitle className="text-3xl font-bold text-[#44291B] leading-tight">
+            <CardTitle className="text-3xl font-bold text-[#FDFFF4] leading-tight">
               {value.toLocaleString()}
             </CardTitle>
           </div>
+
+          {/* Icon UI Styling */}
           <div
-            className="h-12 w-12 rounded-md flex items-center justify-center shrink-0"
-            style={{ backgroundColor: iconBg }}
+            className="h-12 w-12 rounded-md flex items-center justify-center shrink-0 bg-white/20"
           >
-            {React.cloneElement(icon as React.ReactElement)}
+            {React.cloneElement(icon as React.ReactElement<any>, { style: { color: iconBg } })}
           </div>
         </div>
       </CardHeader>
@@ -110,6 +114,7 @@ export default function PropertiesList({
   onDeleteProperty,
   onBackToHousing,
 }: PropertiesListProps) {
+  const [searchQuery, setSearchQuery] = useState("");
   const [stats, setStats] = useState<SummaryStats>({
     totalDorms: 0,
     totalRentalSpaces: 0,
@@ -169,34 +174,90 @@ export default function PropertiesList({
           label="Dormitories"
           value={stats.totalDorms}
           icon={<Building2 style={{ color: "#5591AB" }} />}
-          description="Active dorm buildings"
-          accentColor="#5591AB"
+          bgColor="#5591AB"
           iconBg="#ebf2f4"
         />
         <StatCard
           label="Rental Spaces"
           value={stats.totalRentalSpaces}
           icon={<Home style={{ color: "#EB8A0B" }} />}
-          description="Private rental units"
-          accentColor="#EB8A0B"
+          bgColor="#EB8A0B"
           iconBg="#fbecd7"
         />
         <StatCard
           label="Managers"
           value={stats.totalManagers}
           icon={<Users style={{ color: "#F2C908" }} />}
-          description="Assigned staff"
-          accentColor="#F2C908"
-          iconBg="#f2c70823"
+          bgColor="#F2C908"
+          iconBg="#efebd5d6"
         />
         <StatCard
           label="Total Capacity"
           value={stats.totalUnits}
           icon={<Bed style={{ color: "#264384" }} />}
-          description="Total beds available"
-          accentColor="#264384"
+          bgColor="#264384"
           iconBg="#e6e8ef"
         />
+      </div>
+
+      {/* FILTER & ACTIONS */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm mt-4">
+        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md">
+          <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
+            <Search className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search property name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-2 bg-transparent text-sm outline-none text-[#44291B] placeholder:text-[#44291B]/50"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6]">
+            <Filter className="w-4 h-4 text-[#44291B]/50" />
+            <Select
+              value={typeFilter || "all"}
+              onValueChange={(val) => onFilterChange(val === "all" ? "" : val)}
+            >
+              <SelectTrigger className="w-[140px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
+                <SelectValue placeholder="All Properties" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md">
+                <SelectItem value="all" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
+                <SelectItem value="dormitory" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Dorms</SelectItem>
+                <SelectItem value="renting_space" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Rental Spaces</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="h-6 w-px bg-[#e8e2d6] mx-2"></div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={managerCount === 0}
+                title={managerCount === 0 ? "Please add a Property Manager first" : ""}
+                className="flex items-center gap-2 text-sm font-medium text-white bg-[#264384] hover:bg-[#5273BC] px-4 py-2 rounded-xl transition h-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Property</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#FDFFF4] text-[#44291B]">
+              <DropdownMenuItem onClick={() => onAddProperty("dormitory")}>
+                <Building2 className="mr-2 h-4 w-4" />
+                <span>Add Dorm</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onAddProperty("renting_space")}>
+                <Home className="mr-2 h-4 w-4" />
+                <span>Add Rental Space</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {(filtered?.length === 0) && !loading ? (
@@ -206,59 +267,7 @@ export default function PropertiesList({
       ) : (
         <DataTable
           columns={getPropertyColumns(onEditProperty, onDeleteProperty)}
-          data={tableData}
-          header={
-            <div>
-              <h1 className="text-2xl font-bold text-[#44291B]">Properties</h1>
-              <p className="text-sm text-[#44291B]">Manage your Dormitory or Rental Space Properties</p>
-            </div>
-          }
-          toolbar={
-            <div className="flex items-center gap-4">
-              <ToggleGroup
-                className="text-[#44291B]"
-                type="single"
-                variant="outline"
-                value={typeFilter ?? ""}
-                onValueChange={(value) => {
-                  if (value !== undefined) onFilterChange(value);
-                }}
-              >
-                <ToggleGroupItem value=" " aria-label="All">
-                  All
-                </ToggleGroupItem>
-                <ToggleGroupItem value="dormitory" aria-label="Dormitories">
-                  Dorms
-                </ToggleGroupItem>
-                <ToggleGroupItem value="renting_space" aria-label="Rental Spaces">
-                  Rental Spaces
-                </ToggleGroupItem>
-              </ToggleGroup>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    disabled={managerCount === 0}
-                    title={managerCount === 0 ? "Please add a Property Manager first" : ""}
-                    className="bg-[#264384] hover:bg-[#5273BC] text-white"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    <span className="mr-4">Add Property</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[#FDFFF4] text-[#44291B]">
-                  <DropdownMenuItem onClick={() => onAddProperty("dormitory")}>
-                    <Building2 className="mr-2 h-4 w-4" />
-                    <span>Add Dorm</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onAddProperty("renting_space")}>
-                    <Home className="mr-2 h-4 w-4" />
-                    <span>Add Rental Space</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          }
+          data={tableData.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))}
         />
       )}
     </div>
