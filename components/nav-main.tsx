@@ -2,6 +2,10 @@
 "use client"
 
 import { type LucideIcon } from "lucide-react"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
+import { useSidebar } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
 
 import {
   SidebarGroup,
@@ -24,19 +28,41 @@ export function NavMain({
     isActive?: boolean
   }[]
 }) {
+  const pathname = usePathname()
+  const { setOpen, isMobile } = useSidebar()
+
   return (
     <SidebarGroup>
-      <SidebarMenu>
-        {items.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton tooltip={item.title} asChild>
-              <a href={item.url}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
+      <SidebarMenu className="gap-1.5 px-3">
+        {items.map((item) => {
+          const isActive = pathname === item.url || item.isActive
+
+          return (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton 
+                tooltip={item.title} 
+                asChild
+                className={cn(
+                  "h-12 px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center w-full text-white/80 hover:bg-white/10 hover:text-white transition-all duration-300 ease-out rounded-lg group",
+                  isActive && "bg-white/20 text-white font-medium shadow-sm"
+                )}
+              >
+                <Link 
+                  href={item.url} 
+                  className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center"
+                  onClick={() => {
+                    if (!isMobile) setOpen(false)
+                  }}
+                >
+                  <div className="flex items-center gap-3 transition-transform duration-300 ease-out group-hover:translate-x-1 group-data-[collapsible=icon]:justify-center">
+                    {item.icon && <item.icon className={cn("h-5 w-5 transition-all duration-300", isActive ? "opacity-100 scale-110" : "opacity-80 group-hover:opacity-100")} />}
+                    <span className="text-[15px] tracking-wide group-data-[collapsible=icon]:hidden">{item.title}</span>
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )
+        })}
       </SidebarMenu>
     </SidebarGroup>
   )

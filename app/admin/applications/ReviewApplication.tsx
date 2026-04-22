@@ -97,18 +97,18 @@ export default function ReviewApplication({
     }
   }
 
+  const userData = Array.isArray(appData?.users) ? appData.users[0] : appData?.users;
+  console.log(userData)
+
   const data = {
     id: appData?.application_id || "",
     status: appData?.application_status || "Pending",
     submitted: new Date(appData.date_submitted).toLocaleDateString(),
     unit: appData.units?.unit_number || "Not yet assigned",
 
-    firstName: appData.users?.first_name || "Unknown",
-    lastName: appData.users?.last_name || "",
-    email: appData.users?.email || "No email",
-    // program: appData.users?.course || "N/A",
-    // year: appData.users?.year_level || "N/A",
-    // studentNum: appData.users?.student_number || "N/A",
+    firstName: userData?.first_name || "Unknown",
+    lastName: userData?.last_name || "",
+    email: userData?.email || "No email",
 
     stay: {
       duration: `${appData.duration_of_stay} months`,
@@ -125,6 +125,8 @@ export default function ReviewApplication({
       `Application Submitted - ${new Date(appData.date_submitted).toLocaleDateString()}`,
     ],
   };
+
+  console.log(appData.users);
   return (
     <div className="p-6 space-y-6 bg-[#F6F8D5] h-full overflow-y-auto">
       {/* HEADER */}
@@ -268,29 +270,29 @@ export default function ReviewApplication({
       {/* ACTIONS & CONFIRMATION SECTION */}
       <div className="pt-4 border-t border-gray-300">
         {data.status === "pending_payment" ? (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
-          <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">
-            ✓ Application Approved
-          </p>
-          <p className="text-xs text-blue-600 mt-1">
-            Status updated to: <b>Pending Payment</b>. The user has been notified to settle their dues.
-          </p>
-        </div>
-      ) : data.status === "approved" ? (
-         <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-      <p className="text-sm font-semibold text-green-700 uppercase tracking-wide">
-        ✓ Application Approved
-      </p>
-      <p className="text-xs text-green-600 mt-1">
-        This application has been finalized and a unit has been assigned.
-      </p>
-    </div>
-    ): data.status === "rejected" ? (
-         <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+            <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">
+              ✓ Application Approved
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Status updated to: <b>Pending Payment</b>. The user has been notified to settle their dues.
+            </p>
+          </div>
+        ) : data.status === "approved" ? (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+            <p className="text-sm font-semibold text-green-700 uppercase tracking-wide">
+              ✓ Application Approved
+            </p>
+            <p className="text-xs text-green-600 mt-1">
+              This application has been finalized and a unit has been assigned.
+            </p>
+          </div>
+        ) : data.status === "rejected" ? (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
             <p className="text-sm font-semibold text-red-700 uppercase tracking-wide">
               Application Rejected
             </p>
-         </div>
+          </div>
         ) : (
           <>
             {error && (
@@ -319,11 +321,10 @@ export default function ReviewApplication({
                     Cancel
                   </Button>
                   <Button
-                    className={`flex-1 text-white ${
-                      confirmAction === "approve"
+                    className={`flex-1 text-white ${confirmAction === "approve"
                         ? "bg-green-600 hover:bg-green-700"
                         : "bg-red-600 hover:bg-red-700"
-                    }`}
+                      }`}
                     onClick={handleConfirm}
                     disabled={loading}
                   >
