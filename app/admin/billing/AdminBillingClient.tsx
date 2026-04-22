@@ -245,38 +245,38 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     <>
       {/* SUMMARY */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:hidden">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="p-6 rounded-2xl border border-yellow-200 shadow-sm" style={{ backgroundColor: '#FDFFF4' }}>
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Total Revenue</h3>
+            <h3 className="text-sm font-medium text-slate-500 font-subheading">Total Revenue</h3>
             <div className="p-2 bg-emerald-50 rounded-lg"><TrendingUp className="w-5 h-5 text-emerald-500" /></div>
           </div>
-          <p className="text-3xl font-bold text-slate-900">₱{summary.totalRevenue.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-slate-900" style={{ fontFamily: 'Arial, sans-serif' }}>₱{summary.totalRevenue.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="p-6 rounded-2xl border border-yellow-200 shadow-sm" style={{ backgroundColor: '#FDFFF4' }}>
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Unpaid Balance</h3>
+            <h3 className="text-sm font-medium text-slate-500 font-subheading">Unpaid Balance</h3>
             <div className="p-2 bg-amber-50 rounded-lg"><Clock className="w-5 h-5 text-amber-500" /></div>
           </div>
-          <p className="text-3xl font-bold text-slate-900">₱{summary.unpaidBalance.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-slate-900" style={{ fontFamily: 'Arial, sans-serif' }}>₱{summary.unpaidBalance.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="p-6 rounded-2xl border border-yellow-200 shadow-sm" style={{ backgroundColor: '#FDFFF4' }}>
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Overdue</h3>
+            <h3 className="text-sm font-medium text-slate-500 font-subheading">Overdue</h3>
             <div className="p-2 bg-red-50 rounded-lg"><AlertOctagon className="w-5 h-5 text-red-500" /></div>
           </div>
-          <p className="text-3xl font-bold text-red-600">₱{summary.overdueBalance.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-red-600" style={{ fontFamily: 'Arial, sans-serif' }}>₱{summary.overdueBalance.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="p-6 rounded-2xl border border-yellow-200 shadow-sm" style={{ backgroundColor: '#FDFFF4' }}>
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Total Transactions</h3>
+            <h3 className="text-sm font-medium text-slate-500 font-subheading">Total Transactions</h3>
             <div className="p-2 bg-indigo-50 rounded-lg"><List className="w-5 h-5 text-indigo-500" /></div>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{summary.transactionCount}</p>
+          <p className="text-3xl font-bold text-slate-900" style={{ fontFamily: 'Arial, sans-serif' }}>{summary.transactionCount}</p>
         </div>
       </div>
 
       {/* FILTER & ACTIONS */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm print:hidden">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-4 rounded-2xl border border-yellow-200 shadow-sm print:hidden" style={{ backgroundColor: '#FDFFF4' }}>
         <div className="flex bg-slate-50 border border-slate-200 rounded-xl overflow-hidden flex-1 max-w-md">
           <div className="pl-3 flex items-center justify-center text-slate-400">
             <Search className="w-4 h-4" />
@@ -331,19 +331,19 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       </div>
 
       {/* DATA TABLE */}
-      <div className="bg-white border text-sm border-slate-200 rounded-2xl shadow-sm overflow-hidden print:hidden">
-        <div className="overflow-x-auto text-slate-700">
+      <div className="border text-sm border-yellow-200 rounded-2xl shadow-sm overflow-hidden print:hidden" style={{ backgroundColor: '#FDFFF4' }}>
+        <div className="overflow-x-auto text-slate-700" style={{ fontFamily: 'Arial, sans-serif' }}>
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-4 font-semibold w-12 pt-[18px]">
                   <input type="checkbox" checked={selectedBillIds.length === filteredBills.length && filteredBills.length > 0} onChange={handleSelectAll} className="rounded border-slate-300" />
                 </th>
-                <th className="px-6 py-4 font-semibold">Tenant / Property</th>
-                <th className="px-6 py-4 font-semibold">Invoice #</th>
-                <th className="px-6 py-4 font-semibold">Amount / Date</th>
-                <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                <th className="px-6 py-4 font-semibold font-subheading">Tenant / Property</th>
+                <th className="px-6 py-4 font-semibold font-subheading">Invoice #</th>
+                <th className="px-6 py-4 font-semibold font-subheading">Amount / Date</th>
+                <th className="px-6 py-4 font-semibold font-subheading">Status</th>
+                <th className="px-6 py-4 font-semibold text-right font-subheading">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -417,7 +417,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
         {/* PAGINATION BAR */}
         {filteredBills.length > 0 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-white">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-yellow-200" style={{ backgroundColor: '#FDFFF4' }}>
             <p className="text-sm text-slate-500">
               Showing <span className="font-semibold text-slate-700">{startIndex + 1}</span> to{" "}
               <span className="font-semibold text-slate-700">{endIndex}</span> of{" "}
