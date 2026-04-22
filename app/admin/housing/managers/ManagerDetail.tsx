@@ -7,18 +7,16 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card";
-import { ChevronLeft, Mail, MapPin, Pencil, Trash2 } from "lucide-react"
+import { Mail, MapPin, Pencil, Trash2 } from "lucide-react"
 
 interface ManagerDetailProps {
   manager: Manager;
-  onBack: () => void;
   onEdit: (manager: Manager) => void;
   onDelete: (id: string) => void;
 }
 
 export default function ManagerDetail({
   manager,
-  onBack,
   onEdit,
   onDelete,
 }: ManagerDetailProps) {
@@ -26,13 +24,6 @@ export default function ManagerDetail({
 
   return (
     <div className="p-6 space-y-6 max-w-full overflow-hidden">
-      <div className="flex items-center justify-between gap-4">
-        <Button variant="ghost" size="sm" onClick={onBack} className="text-[#264384] hover:bg-[#e8edf7]">
-          <ChevronLeft className="mr-2 h-3.5 w-3.5" />
-          Close
-        </Button>
-      </div>
-
       <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm overflow-hidden">
         <CardContent className="px-5 py-4">
           
