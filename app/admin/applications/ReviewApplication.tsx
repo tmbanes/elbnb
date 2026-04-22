@@ -270,29 +270,29 @@ export default function ReviewApplication({
       {/* ACTIONS & CONFIRMATION SECTION */}
       <div className="pt-4 border-t border-gray-300">
         {data.status === "pending_payment" ? (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
-          <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">
-            ✓ Application Approved
-          </p>
-          <p className="text-xs text-blue-600 mt-1">
-            Status updated to: <b>Pending Payment</b>. The user has been notified to settle their dues.
-          </p>
-        </div>
-      ) : data.status === "approved" ? (
-         <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-      <p className="text-sm font-semibold text-green-700 uppercase tracking-wide">
-        ✓ Application Approved
-      </p>
-      <p className="text-xs text-green-600 mt-1">
-        This application has been finalized and a unit has been assigned.
-      </p>
-    </div>
-    ): data.status === "rejected" ? (
-         <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+            <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">
+              ✓ Application Approved
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Status updated to: <b>Pending Payment</b>. The user has been notified to settle their dues.
+            </p>
+          </div>
+        ) : data.status === "approved" ? (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+            <p className="text-sm font-semibold text-green-700 uppercase tracking-wide">
+              ✓ Application Approved
+            </p>
+            <p className="text-xs text-green-600 mt-1">
+              This application has been finalized and a unit has been assigned.
+            </p>
+          </div>
+        ) : data.status === "rejected" ? (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
             <p className="text-sm font-semibold text-red-700 uppercase tracking-wide">
               Application Rejected
             </p>
-         </div>
+          </div>
         ) : (
           <>
             {error && (
@@ -321,11 +321,10 @@ export default function ReviewApplication({
                     Cancel
                   </Button>
                   <Button
-                    className={`flex-1 text-white ${
-                      confirmAction === "approve"
+                    className={`flex-1 text-white ${confirmAction === "approve"
                         ? "bg-green-600 hover:bg-green-700"
                         : "bg-red-600 hover:bg-red-700"
-                    }`}
+                      }`}
                     onClick={handleConfirm}
                     disabled={loading}
                   >

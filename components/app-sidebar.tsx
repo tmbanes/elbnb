@@ -53,7 +53,7 @@ const sidebarConfig = {
 
   manager: {
     label: "Dorm Manager",
-    nav: [ 
+    nav: [
       { title: "Dashboard", url: "/dashboard", icon: PieChart },
       { title: "Applications", url: "/manager/applications", icon: Newspaper },
       { title: "Sample", url: "#", icon: Users },

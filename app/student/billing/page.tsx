@@ -30,10 +30,10 @@ export default async function StudentBillingPage() {
           <p className="text-slate-500 mt-1 mb-4 text-sm">Manage your invoices and view your payment history.</p>
           <LogoutButton />
         </div>
-        
-        <BillingClient 
-          userId={user.id} 
-          summary={summary || { total: 0, paid: 0, balance: 0 }} 
+
+        <BillingClient
+          userId={user.id}
+          summary={summary || { total: 0, paid: 0, balance: 0 }}
           bills={bills || []}
           paymentHistory={paymentHistory || []}
           uploadEndpoint="/api/student/billing/upload-receipt"

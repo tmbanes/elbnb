@@ -353,11 +353,11 @@ export default function ApplicationList({
                 const status = app.application_status?.toLowerCase();
                 const userData = Array.isArray(app.users) ? app.users[0] : app.users;
                 const applicantName = userData
-    ? `${userData.first_name} ${userData.last_name}`
-    : "Unknown Applicant";
+                  ? `${userData.first_name} ${userData.last_name}`
+                  : "Unknown Applicant";
                 const accName =
-  app.accommodation?.name ||
-  "N/A";
+                  app.accommodation?.name ||
+                  "N/A";
 
 
                 const statusConfig: any = {
@@ -419,7 +419,7 @@ export default function ApplicationList({
                         className={cn(
                           "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium capitalize",
                           statusConfig[status]?.class ||
-                            "bg-gray-100 text-gray-600",
+                          "bg-gray-100 text-gray-600",
                         )}
                       >
                         {statusConfig[status]?.icon}

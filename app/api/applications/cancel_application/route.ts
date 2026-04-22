@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { CreateApplicationService } from '@/services/application_workflow/create_application'
 import { CancelApplicationService } from '@/services/application_workflow/cancel_application'
 import { AccommodationApplication, ApplicationStatus, CancellableStatus } from '@/types/application_workflow'
-import { requireApiRole } from '@/lib/auth/server-auth'
+import { requireApiRole } from '@/lib/auth/session'
 
 // CANCEL AN APPLICATION -- user should be authenticated AND either student or guest to cancel an application
 export async function PATCH(request: NextRequest) {
@@ -28,9 +28,9 @@ export async function PATCH(request: NextRequest) {
         { status: 400 }
       )
     }
-    
+
     const validationErrors = CancelApplicationService.validateCancellation(applicationData)
-    
+
     if (validationErrors.length > 0) {
       return NextResponse.json(
         { error: validationErrors.join(', ') },

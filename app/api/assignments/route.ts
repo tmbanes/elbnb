@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AssignmentService } from '@/services/assignment_workflow'
-import { requireApiRole } from '@/lib/auth/server-auth';
+import { requireApiRole } from '@/lib/auth/session';
 
 // ─── GET — fetch all assignments for the authenticated user ───────────────────
 export async function GET(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = auth.user;
-    
+
     const assignments = await AssignmentService.getAssignmentsByUser(user.user_id)
 
     return NextResponse.json({ success: true, data: assignments })

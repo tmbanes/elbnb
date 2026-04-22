@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
-import { requireApiRole } from "@/lib/auth/server-auth";
+import { requireApiRole } from "@/lib/auth/session";
 
 export async function POST(req: NextRequest) {
   // TO DO: Protect this API route. Make this only accessible to admin (if admin lang talaga pwede maka-access nito).

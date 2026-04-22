@@ -25,7 +25,7 @@ export default async function AdminBillingPage() {
   let totalRevenue = 0;
   let unpaidBalance = 0;
   let overdueBalance = 0;
-  
+
   (bills || []).forEach((bill: any) => {
     if (bill.status === "paid") totalRevenue += bill.amount;
     if (bill.status === "unpaid") unpaidBalance += bill.amount;
@@ -47,10 +47,10 @@ export default async function AdminBillingPage() {
           <p className="text-slate-500 mt-1 mb-4 text-sm">Overview of all tenant invoices, payments, and revenue.</p>
           <LogoutButton />
         </div>
-        
-        <AdminBillingClient 
-          adminId={user.id} 
-          bills={bills || []} 
+
+        <AdminBillingClient
+          adminId={user.id}
+          bills={bills || []}
           summary={summary}
           activeTenants={activeTenants || []}
         />

@@ -5,8 +5,6 @@ import NotificationEmail, {templates} from './email_templates'
 //can only use email domain @resend.dev or rplaqui@up.edu.ph
 //put in .env EMAIL_FROM= ElBnB@resend.dev and RESEND_API_KEY=re_PkvGvFkC_H6mdAuNTQJPvjbRkF31gzkJu
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function sendEmail({
     to,
   template,
@@ -16,6 +14,7 @@ export async function sendEmail({
   template: 'applicationApproved' | 'applicationRejected' | 'billingReminder'|'billingOverdue' | 'applicationCancelled'
   name: string
 }){
+  const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy")
   //get template data 
   const emailData = templates[template](name ?? '')
 

@@ -9,7 +9,7 @@ export default async function AccommodationHistoryPage() {
 
   // Redirect if not authenticated
   if (!user || authError) {
-    redirect("/onboarding"); 
+    redirect("/onboarding");
   }
 
   // Fetch data from service layer
