@@ -143,7 +143,6 @@
     @apply w-full bg-[#FDFFF4] text-[#44291B];
     border-collapse: separate !important;
     border-spacing: 0 !important;
-    padding-bottom: 7px !important;
   }
 
   table th:first-child,
@@ -173,18 +172,20 @@
     @apply py-3 px-4 text-[#44291B] text-sm;
   }
 }
+
 /* Global Page Transitions */
 @keyframes pageSlideIn {
   from {
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-main > *:not(.page-loader) {
+main>*:not(.page-loader) {
   animation: pageSlideIn 0.5s ease-out forwards;
 }
