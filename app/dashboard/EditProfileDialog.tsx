@@ -108,7 +108,6 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                   onChange={(e) => setContactNum(e.target.value)}
                   className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
                   placeholder="e.g. 09123456789"
-                  required
                 />
               </div>
               <div className="space-y-1">
@@ -119,7 +118,6 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                   onChange={(e) => setEmergencyContact(e.target.value)}
                   className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
                   placeholder="e.g. 09123456789 or Name"
-                  required
                 />
               </div>
             </div>
@@ -131,7 +129,6 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                 onChange={(e) => setHomeAddress(e.target.value)}
                 className="w-full min-h-[80px] bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors resize-y"
                 placeholder="Full address"
-                required
               />
             </div>
           </div>
