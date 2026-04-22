@@ -20,7 +20,9 @@ import {
   FileEdit,
   Image as ImageIcon,
   Plus,
-  Trash
+  Trash,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -32,6 +34,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedBillIds, setSelectedBillIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   const router = useRouter();
 
   useEffect(() => {
@@ -89,6 +93,23 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
     return matchesSearch && matchesStatus;
   });
+
+  // Pagination calculations
+  const totalPages = Math.max(1, Math.ceil(filteredBills.length / itemsPerPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredBills.length);
+  const paginatedBills = filteredBills.slice(startIndex, endIndex);
+
+  // Generate visible page numbers (show max 3 around current)
+  const getVisiblePages = () => {
+    const pages: number[] = [];
+    let start = Math.max(1, safePage - 1);
+    let end = Math.min(totalPages, start + 2);
+    start = Math.max(1, end - 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  };
 
   const toggleSelection = (id: string) => {
     setSelectedBillIds(prev =>
@@ -264,7 +285,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             type="text"
             placeholder="Search tenant or invoice #"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
             className="w-full px-3 py-2 bg-transparent text-sm outline-none"
           />
         </div>
@@ -275,7 +296,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             <select
               className="bg-transparent outline-none text-slate-700 font-medium"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
             >
               <option value="ALL">All Statuses</option>
               {Object.values(BillingStatus).map(s => (
@@ -326,7 +347,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               </tr>
             </thead>
             <tbody>
-              {filteredBills.map((bill: any) => (
+              {paginatedBills.map((bill: any) => (
                 <tr key={bill.billing_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <input
@@ -393,6 +414,57 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             </tbody>
           </table>
         </div>
+
+        {/* PAGINATION BAR */}
+        {filteredBills.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-white">
+            <p className="text-sm text-slate-500">
+              Showing <span className="font-semibold text-slate-700">{startIndex + 1}</span> to{" "}
+              <span className="font-semibold text-slate-700">{endIndex}</span> of{" "}
+              <span className="font-semibold text-slate-700">{filteredBills.length}</span> results
+            </p>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-medium transition ${
+                  safePage <= 1
+                    ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {getVisiblePages().map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${
+                    page === safePage
+                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-medium transition ${
+                  safePage >= totalPages
+                    ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* RECEIPT VIEWER MODAL */}
