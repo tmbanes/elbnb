@@ -1,11 +1,11 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { ProfileUpload } from './ProfileUpload';
 import { EditProfileDialog } from './EditProfileDialog';
 import { User } from '@/types/user.types';
-import { Home, Edit3, Folder, User as UserIcon } from 'lucide-react';
+import { Home, Edit3, Folder, User as UserIcon, Upload } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,8 @@ interface StudentDashboardProps {
 }
 
 export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
+  const [uploadPhotoOpen, setUploadPhotoOpen] = useState(false);
+
   // Extract info from metadata
   const studentNum = metadata?.student_number || 'N/A';
   const degreeProg = metadata?.degree_program || 'N/A';
@@ -103,27 +105,41 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
               />
             </div>
             
-            {/* Circular Profile Picture wrapped in a Dialog for uploading - Ultra Supersized */}
-            <EditProfileDialog user={user} metadata={metadata} >
-              <button 
-                className="absolute top-[-30px] left-[10px] md:left-[30px] w-[200px] h-[200px] bg-[#F4F5E1] rounded-full overflow-hidden border-[14px] border-[#3E2723] shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 group z-10"
-              >
-                {user.profile_picture_url ? (
-                  <img 
-                    src={user.profile_picture_url} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <UserIcon className="w-20 h-20 text-[#3E2723]/30" />
-                )}
-                {/* Hover overlay hint */}
-                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Edit3 size={36} className="text-white mb-1" />
-                  <span className="text-white text-[12px] font-bold tracking-wider">EDIT</span>
+            {/* Circular Profile Picture wrapped in Dialog to trigger Photo Upload directly */}
+            <Dialog open={uploadPhotoOpen} onOpenChange={setUploadPhotoOpen}>
+              <DialogTrigger asChild>
+                <button 
+                  className="absolute top-[-30px] left-[10px] md:left-[30px] w-[200px] h-[200px] bg-[#F4F5E1] rounded-full overflow-hidden border-[14px] border-[#3E2723] shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 group z-10"
+                >
+                  {user.profile_picture_url ? (
+                    <img 
+                      src={user.profile_picture_url} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <UserIcon className="w-20 h-20 text-[#3E2723]/30" />
+                  )}
+                  {/* Hover overlay hint */}
+                  <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Edit3 size={36} className="text-white mb-1" />
+                    <span className="text-white text-[12px] font-bold tracking-wider">EDIT</span>
+                  </div>
+                </button>
+              </DialogTrigger>
+
+              <DialogContent className="sm:max-w-md bg-[#F4F5E1] border-[#7EB647]">
+                <DialogHeader>
+                  <DialogTitle className="text-[#3E2723] font-bold">Update Profile Picture</DialogTitle>
+                  <DialogDescription className="text-[#3E2723]/70">
+                    Upload a new photo to your account.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="mt-4">
+                  <ProfileUpload initialProfileUrl={user.profile_picture_url} />
                 </div>
-              </button>
-            </EditProfileDialog>
+              </DialogContent>
+            </Dialog>
         </div>
 
         {/* Content Container */}

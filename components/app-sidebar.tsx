@@ -92,11 +92,13 @@ export function AppSidebar({
     async function fetchUser() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: userProfile } = await supabase
+        const { data } = await (supabase as any)
           .from("users")
           .select("first_name, last_name, email, profile_picture_url")
           .eq("user_id", user.id)
           .single()
+          
+        const userProfile = data;
         
         if (userProfile) {
           setUserData({
@@ -122,10 +124,18 @@ export function AppSidebar({
     fetchUser()
   }, [supabase])
 
-  const { toggleSidebar, state } = useSidebar()
+  const { toggleSidebar, state, setOpen } = useSidebar()
 
   return (
     <>
+    {/* Click-away overlay for explicitly closing the sidebar when it is expanded */}
+    {state === "expanded" && (
+      <div 
+        className="fixed inset-0 z-30 bg-black/5 backdrop-blur-sm cursor-pointer"
+        onClick={() => setOpen ? setOpen(false) : toggleSidebar()}
+      />
+    )}
+
     <Sidebar 
       collapsible="offcanvas" 
       className="bg-[#8ba665] text-white border-none shadow-xl z-40" 

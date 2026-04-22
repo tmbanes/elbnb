@@ -18,11 +18,16 @@ interface EditProfileDialogProps {
   user: UserType;
   metadata: any;
   children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function EditProfileDialog({ user, metadata, children }: EditProfileDialogProps) {
+export function EditProfileDialog({ user, metadata, children, open, onOpenChange }: EditProfileDialogProps) {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  const isActuallyOpen = open !== undefined ? open : internalOpen;
+  const toggleOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +61,7 @@ export function EditProfileDialog({ user, metadata, children }: EditProfileDialo
 
       if (updateError) throw updateError;
       
-      setIsOpen(false);
+      toggleOpen(false);
       router.refresh();
     } catch (err: any) {
       console.error(err);
@@ -67,7 +72,7 @@ export function EditProfileDialog({ user, metadata, children }: EditProfileDialo
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isActuallyOpen} onOpenChange={toggleOpen}>
       <DialogTrigger asChild>
         {children || (
           <button className="w-[50px] h-[50px] bg-[#3E2723] text-[#F4F5E1] rounded-full flex items-center justify-center hover:bg-[#2B1B18] transition-colors shadow-xl">
@@ -185,7 +190,7 @@ export function EditProfileDialog({ user, metadata, children }: EditProfileDialo
           <div className="pt-4 flex justify-end gap-3">
             <button 
               type="button" 
-              onClick={() => setIsOpen(false)}
+              onClick={() => toggleOpen(false)}
               className="px-6 py-2.5 rounded-xl font-bold bg-[#3E2723]/10 text-[#3E2723] hover:bg-[#3E2723]/20 transition-colors"
             >
               Cancel
