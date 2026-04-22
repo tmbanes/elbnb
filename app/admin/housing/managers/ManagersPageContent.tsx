@@ -113,7 +113,7 @@ export default function ManagersContent() {
       {/* LEFT: Managers List */}
       <div
         className={`
-          ${selectedId ? "w-[65%]" : "w-full"}
+          w-[65%]
           transition-all duration-300
           overflow-y-auto
           pt-2
@@ -136,30 +136,31 @@ export default function ManagersContent() {
       </div>
 
       {/* RIGHT: Detail Panel */}
-      {selectedId ? (
-        <div
-          className="
-            w-1/2 min-w-[400px]
-            border-l border-[#e8e2d6]
-            bg-[#F6F8D5]
-            transition-all duration-300
-            overflow-y-auto
-          "
-        >
-          {selectedId && selectedManager && !detailLoading ? (
-            <ManagerDetail
-              manager={selectedManager}
-              onBack={handleCloseDetail}
-              onEdit={openEditModal}
-              onDelete={handleDelete}
-            />
-          ) : selectedId && detailLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-[#44291B]">Loading...</p>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      <div
+        className="
+          w-1/2 min-w-[400px]
+          border-l border-[#e8e2d6]
+          bg-[#F6F8D5]
+          transition-all duration-300
+          overflow-y-auto
+        "
+      >
+        {selectedId && selectedManager && !detailLoading ? (
+          <ManagerDetail
+            manager={selectedManager}
+            onEdit={openEditModal}
+            onDelete={handleDelete}
+          />
+        ) : selectedId && detailLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-[#44291B]">Loading...</p>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-[#44291B]">Select a manager to view details</p>
+          </div>
+        )}
+      </div>
 
       <AddManagerModal
         isOpen={modalOpen}
