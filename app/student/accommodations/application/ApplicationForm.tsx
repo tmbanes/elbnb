@@ -322,22 +322,22 @@ export default function ApplyAccommodationForm() {
   };
 
   // Fetch current user and check
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/auth");
-        if (!res.ok) throw new Error("Auth failed");
-        const data = await res.json();
-        if (data.user?.user_id) {
-          setUserId(data.user.user_id);
-          setUserRole(data.user.role);
-        }
-      } catch (err) {
-        console.error("Auth error:", err);
-      }
-    };
-    fetchUser();
-  }, []);
+  // useEffect(() => {
+  //   const fetchUser = async () => {
+  //     try {
+  //       const res = await fetch("/api/auth");
+  //       if (!res.ok) throw new Error("Auth failed");
+  //       const data = await res.json();
+  //       if (data.user?.user_id) {
+  //         setUserId(data.user.user_id);
+  //         setUserRole(data.user.role);
+  //       }
+  //     } catch (err) {
+  //       console.error("Auth error:", err);
+  //     }
+  //   };
+  //   fetchUser();
+  // }, []);
 
   // FETCH ACCOMMODATION + UNIT details for display
   useEffect(() => {
