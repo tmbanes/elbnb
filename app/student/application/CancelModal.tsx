@@ -51,7 +51,7 @@ export function CancelApplicationModal({ applicationId }: { applicationId: strin
             variant={"ghost"}
             className="bg-[#FDFFF4] text-[#44291B]/60 hover:text-[#44291B] hover:bg-gray-100 border-transparent"
             >
-              Cancel
+              Go Back
             </Button>
 
           </AlertDialogCancel>
