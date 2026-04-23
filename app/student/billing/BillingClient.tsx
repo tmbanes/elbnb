@@ -626,8 +626,74 @@ export default function BillingClient({
                                   </div>
                                 </div>
 
-                                <div className="pt-2 flex justify-end">
-                                  <Button variant="outline" size="sm" onClick={handlePrint}>
+                                <Separator />
+
+                                <div className="space-y-3">
+                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
+                                    <span>Payment Receipt</span>
+                                  </div>
+                                  
+                                  {isLoadingReceiptPreview ? (
+                                    <div className="text-sm text-slate-500 flex items-center gap-2 py-2">
+                                      <Clock className="w-4 h-4 animate-spin"/> Loading receipt...
+                                    </div>
+                                  ) : receiptPreviewUrl ? (
+                                    <div className="flex flex-col sm:flex-row gap-4 items-start bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                      <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0">
+                                        <img src={receiptPreviewUrl} alt="Receipt preview" className="w-full h-full object-cover" />
+                                      </div>
+                                      <div className="flex-1 space-y-3">
+                                        <div className="text-sm text-slate-600">
+                                          A receipt has been uploaded for this invoice and is currently under review by the management.
+                                        </div>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm" 
+                                          onClick={handleCancelReceipt}
+                                          disabled={isCancellingReceipt}
+                                          className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                        >
+                                          {isCancellingReceipt ? "Cancelling..." : "Cancel Upload"}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    (bill?.status === BillingStatus.UNPAID || bill?.status === BillingStatus.OVERDUE || bill?.status === BillingStatus.FAILED) ? (
+                                      <div className="rounded-xl border border-dashed border-[#769C51]/40 bg-[#769C51]/5 p-4">
+                                        <div className="text-sm text-slate-600 mb-3">
+                                          If you paid via cash at the management office, upload a clear photo of your receipt for verification.
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row gap-3 items-center">
+                                          <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                                            className="flex-1 block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white file:text-slate-700 hover:file:bg-slate-50 transition cursor-pointer shadow-sm border border-slate-200"
+                                          />
+                                          <Button
+                                            disabled={!uploadFile || isUploading || USE_DUMMY_BILLING_DATA}
+                                            onClick={() => handleUploadPayment(billId)}
+                                            className="w-full sm:w-auto bg-[#769C51] hover:bg-[#608240] text-white"
+                                          >
+                                            {USE_DUMMY_BILLING_DATA ? "Disabled" : isUploading ? "Uploading..." : (
+                                              <>
+                                                <UploadCloud className="size-4 mr-2" /> Submit
+                                              </>
+                                            )}
+                                          </Button>
+                                        </div>
+                                        {uploadError && <div className="mt-2 text-sm text-red-600">{uploadError}</div>}
+                                      </div>
+                                    ) : (
+                                      <div className="text-sm text-slate-500 italic py-2">
+                                        Receipt upload is not required for this invoice.
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+
+                                <div className="pt-4 flex justify-end">
+                                  <Button variant="outline" size="sm" onClick={handlePrint} className="bg-white">
                                     <Printer className="size-4 mr-2" />
                                     Download Invoice
                                   </Button>
