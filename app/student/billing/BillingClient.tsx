@@ -30,13 +30,18 @@ export default function BillingClient({
   bills,
   paymentHistory,
   uploadEndpoint = "/api/student/billing/upload-receipt",
+  cancelEndpoint = "/api/student/billing/cancel-receipt",
 }: any) {
   const supabase = getSupabaseBrowserClient();
 
   const [selectedBill, setSelectedBill] = useState<any>(null);
+  const [printMode, setPrintMode] = useState<"bill" | "statement" | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCancellingReceipt, setIsCancellingReceipt] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null);
+  const [isLoadingReceiptPreview, setIsLoadingReceiptPreview] = useState(false);
   const router = useRouter();
 
   const USE_DUMMY_BILLING_DATA = false;
@@ -166,6 +171,16 @@ export default function BillingClient({
 
   const focusedBill = selectedBill;
 
+  const getInvoiceLineItems = (bill: any) => {
+    const rawItems = bill?.breakdown ?? bill?.billing_item ?? bill?.billing_items ?? bill?.items ?? [];
+    const itemsArray = Array.isArray(rawItems) ? rawItems : [rawItems].filter(Boolean);
+
+    return itemsArray.map((item: any) => ({
+      label: String(item?.label ?? item?.type ?? item?.name ?? "Line Item"),
+      amount: Number(item?.amount ?? 0),
+    }));
+  };
+
   const toCurrencyNumber = (value: unknown) => {
     const n = Number(value ?? 0);
     return Number.isFinite(n) ? n : 0;
@@ -206,6 +221,55 @@ export default function BillingClient({
       setSelectedBill(null);
     }
   }, [normalizedBills, selectedBill]);
+
+  useEffect(() => {
+    const receiptPath = selectedBill?.transaction_reference || selectedBill?.receipt_files?.[selectedBill?.receipt_files?.length - 1];
+
+    if (!receiptPath) {
+      setReceiptPreviewUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadPreview = async () => {
+      setIsLoadingReceiptPreview(true);
+      try {
+        const response = await fetch(`/api/admin/billing/receipt-url?path=${encodeURIComponent(receiptPath)}`);
+        const payload = await response.json().catch(() => ({}));
+
+        if (response.ok && payload.signedUrl && !cancelled) {
+          setReceiptPreviewUrl(payload.signedUrl);
+        } else if (!cancelled) {
+          setReceiptPreviewUrl(null);
+        }
+      } catch {
+        if (!cancelled) setReceiptPreviewUrl(null);
+      } finally {
+        if (!cancelled) setIsLoadingReceiptPreview(false);
+      }
+    };
+
+    loadPreview();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedBill?.billing_id, selectedBill?.transaction_reference, selectedBill?.receipt_files]);
+
+  useEffect(() => {
+    if (!printMode) return;
+
+    const timer = window.setTimeout(() => window.print(), 75);
+    const handleAfterPrint = () => setPrintMode(null);
+
+    window.addEventListener("afterprint", handleAfterPrint);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("afterprint", handleAfterPrint);
+    };
+  }, [printMode]);
 
   const getStatusColor = (status?: string) => {
     switch (status) {
@@ -280,19 +344,62 @@ export default function BillingClient({
     }
   };
 
+  const handleCancelReceipt = async () => {
+    if (!focusedBill?.billing_id) return;
+
+    if (!confirm("Cancel the uploaded receipt? You can reupload a new one after this.")) return;
+
+    setIsCancellingReceipt(true);
+    setUploadError("");
+
+    try {
+      const response = await fetch(cancelEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billingId: focusedBill.billing_id }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to cancel receipt.");
+      }
+
+      setUploadFile(null);
+      router.refresh();
+    } catch (err: any) {
+      setUploadError(err.message || "Failed to cancel receipt.");
+    } finally {
+      setIsCancellingReceipt(false);
+    }
+  };
+
   const handlePrint = () => {
-    window.print();
+    if (!focusedBill) return;
+    setPrintMode("bill");
   };
 
   const handleDownloadStatement = () => {
-    // For now we reuse print-to-PDF behavior; later you can replace with a real statement generator.
-    window.print();
+    setPrintMode("statement");
   };
 
   return (
     <>
       <style jsx global>{`
       @media print {
+        @page {
+          margin: 6mm;
+        }
+
+        html,
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          background: #fff !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
         body * {
           visibility: hidden !important;
         }
@@ -303,11 +410,13 @@ export default function BillingClient({
         }
 
         #invoice-print-root {
-          position: fixed;
-          inset: 0;
+          position: static !important;
           width: 100%;
+          min-height: auto;
           background: #fff;
           z-index: 9999;
+          box-sizing: border-box;
+          padding: 0;
         }
       }
     `}</style>
@@ -706,12 +815,12 @@ export default function BillingClient({
       </div>
 
       {/* Printable View (Hidden in normal screen, block in print) */}
-      {selectedBill && (
-        <div id="invoice-print-root" className="hidden print:block font-sans text-black bg-white p-8 absolute inset-0 text-sm">
-          <div className="flex justify-between items-end border-b-2 border-slate-900 pb-6 mb-8">
+      {printMode === "bill" && focusedBill && (
+        <div id="invoice-print-root" className="hidden print:block font-sans text-black bg-white p-4 text-sm w-full">
+          <div className="flex justify-between items-end border-b-2 border-slate-900 pb-3 mb-4">
             <div>
               <h1 className="text-4xl font-extrabold text-slate-900 uppercase tracking-tighter">INVOICE</h1>
-              <p className="text-slate-500 mt-1 font-mono">#{selectedBill?.billing_id || "N/A"}</p>
+              <p className="text-slate-500 mt-1 font-mono">#{focusedBill?.billing_id || "N/A"}</p>
             </div>
             <div className="text-right">
               <p className="font-bold text-slate-800 text-xl">ELbnb Housing</p>
@@ -719,21 +828,21 @@ export default function BillingClient({
             </div>
           </div>
 
-          <div className="flex justify-between mb-10">
+          <div className="flex justify-between mb-5">
             <div>
               <p className="text-slate-500 font-bold mb-1">BILLED TO:</p>
-              <p className="font-semibold text-lg">{selectedBill?.accommodation_assignment?.users ? `${selectedBill.accommodation_assignment.users.first_name} ${selectedBill.accommodation_assignment.users.last_name}` : "Student Resident"}</p>
+              <p className="font-semibold text-lg">{focusedBill?.accommodation_assignment?.users ? `${focusedBill.accommodation_assignment.users.first_name} ${focusedBill.accommodation_assignment.users.last_name}` : "Student Resident"}</p>
               <p className="text-slate-600">ID: {userId}</p>
             </div>
             <div className="text-right">
               <p className="text-slate-500 font-bold mb-1">DETAILS:</p>
-              <p><span className="font-semibold">Billed Date:</span> {safeDateLabel(selectedBill?.created_at, "MM/dd/yyyy")}</p>
-              <p><span className="font-semibold">Due Date:</span> {safeDateLabel(selectedBill?.due_date, "MM/dd/yyyy")}</p>
-              <p className="mt-2"><span className="font-bold">Status:</span> {getStatusFormat(selectedBill?.status).toUpperCase()}</p>
+              <p><span className="font-semibold">Billed Date:</span> {safeDateLabel(focusedBill?.created_at, "MM/dd/yyyy")}</p>
+              <p><span className="font-semibold">Due Date:</span> {safeDateLabel(focusedBill?.due_date, "MM/dd/yyyy")}</p>
+              <p className="mt-2"><span className="font-bold">Status:</span> {getStatusFormat(focusedBill?.status).toUpperCase()}</p>
             </div>
           </div>
 
-          <table className="w-full text-left border-collapse mb-10">
+          <table className="w-full text-left border-collapse mb-5">
             <thead>
               <tr className="border-b border-slate-300">
                 <th className="py-3 font-bold uppercase text-xs text-slate-500 w-2/3">Item Description</th>
@@ -741,16 +850,19 @@ export default function BillingClient({
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-slate-100">
-                <td className="py-4 font-semibold">{selectedBill?.billing_period_date ? `Invoice for ${safeDateLabel(selectedBill.billing_period_date, "MMMM yyyy")}` : "Student Invoice"} - Base</td>
-                <td className="py-4 text-right font-medium">₱{formatPeso(selectedBill?.amount)}</td>
-              </tr>
-              {selectedBill?.breakdown?.map((item: any, i: number) => (
-                <tr key={i} className="border-b border-slate-100">
-                  <td className="py-3 capitalize text-slate-700 pl-4">↳ {item.label.replace(/_/g, " ")}</td>
-                  <td className="py-3 text-right">₱{formatPeso(item?.amount)}</td>
+              {focusedBill?.breakdown && focusedBill.breakdown.length > 0 ? (
+                focusedBill.breakdown.map((item: any, i: number) => (
+                  <tr key={i} className="border-b border-slate-100">
+                    <td className="py-3 capitalize text-slate-700">{String(item.label || "").replace(/_/g, " ")}</td>
+                    <td className="py-3 text-right">₱{formatPeso(item?.amount)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr className="border-b border-slate-100">
+                  <td className="py-4 font-semibold">Total Amount</td>
+                  <td className="py-4 text-right font-medium">₱{formatPeso(focusedBill?.amount)}</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
 
@@ -758,12 +870,99 @@ export default function BillingClient({
             <div className="w-1/2">
               <div className="border-t-2 border-slate-900 pt-4 flex justify-between">
                 <span className="text-lg font-bold">TOTAL DUE</span>
-                <span className="text-2xl font-black">₱{formatPeso(selectedBill?.summary?.total ?? selectedBill?.amount ?? 0)}</span>
+                <span className="text-2xl font-black">₱{formatPeso(focusedBill?.summary?.total ?? focusedBill?.amount ?? 0)}</span>
               </div>
             </div>
           </div>
 
-          <div className="mt-20 border-t border-slate-300 pt-4 text-center text-slate-400 text-xs">
+          <div className="mt-8 border-t border-slate-300 pt-3 text-center text-slate-400 text-xs">
+            This is an electronically generated statement. No physical signature is required.
+          </div>
+        </div>
+      )}
+
+      {printMode === "statement" && (
+        <div id="invoice-print-root" className="hidden print:block font-sans text-black bg-white p-4 text-sm w-full">
+          <div className="flex justify-between items-end border-b-2 border-slate-900 pb-3 mb-4">
+            <div>
+              <h1 className="text-4xl font-extrabold text-slate-900 uppercase tracking-tighter">INVOICE HISTORY</h1>
+              <p className="text-slate-500 mt-1">All billing records for this account</p>
+            </div>
+            <div className="text-right">
+              <p className="font-bold text-slate-800 text-xl">ELbnb Housing</p>
+              <p className="text-slate-500">Student Residence Account</p>
+            </div>
+          </div>
+
+          <div className="flex justify-between mb-5">
+            <div>
+              <p className="text-slate-500 font-bold mb-1">BILLED TO:</p>
+              <p className="font-semibold text-lg">{normalizedBills[0]?.accommodation_assignment?.users ? `${normalizedBills[0].accommodation_assignment.users.first_name} ${normalizedBills[0].accommodation_assignment.users.last_name}` : "Student Resident"}</p>
+              <p className="text-slate-600">ID: {userId}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-slate-500 font-bold mb-1">SUMMARY:</p>
+              <p><span className="font-semibold">Invoices:</span> {normalizedBills.length}</p>
+              <p><span className="font-semibold">Paid:</span> ₱{formatPeso(displaySummary?.paid)}</p>
+              <p><span className="font-semibold">Balance:</span> ₱{formatPeso(displaySummary?.balance)}</p>
+            </div>
+          </div>
+
+          <table className="w-full text-left border-collapse mb-5">
+            <thead>
+              <tr className="border-b border-slate-300">
+                <th className="py-3 font-bold uppercase text-xs text-slate-500">Invoice</th>
+                <th className="py-3 font-bold uppercase text-xs text-slate-500">Period</th>
+                <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Amount</th>
+                <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Due Date</th>
+                <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {normalizedBills.map((bill: any) => (
+                <tr key={bill?.billing_id || bill?.created_at} className="border-b border-slate-100">
+                  <td className="py-3 font-mono text-xs">{String(bill?.billing_id || "N/A").split("-")[0]}</td>
+                  <td className="py-3 font-semibold">{bill?.billing_period_date ? safeDateLabel(bill.billing_period_date, "MMMM yyyy") : "Student Invoice"}</td>
+                  <td className="py-3 text-right">₱{formatPeso(bill?.amount)}</td>
+                  <td className="py-3 text-right">{safeDateLabel(bill?.due_date, "MM/dd/yyyy")}</td>
+                  <td className="py-3 text-right">{getStatusFormat(bill?.status).toUpperCase()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {normalizedPaymentHistory.length > 0 && (
+            <>
+              <div className="mb-3 font-bold uppercase text-xs text-slate-500">Payment History</div>
+              <table className="w-full text-left border-collapse mb-5">
+                <thead>
+                  <tr className="border-b border-slate-300">
+                    <th className="py-3 font-bold uppercase text-xs text-slate-500">Date</th>
+                    <th className="py-3 font-bold uppercase text-xs text-slate-500">Invoice</th>
+                    <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Amount</th>
+                    <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {normalizedPaymentHistory.map((entry: any, index: number) => {
+                    const nestedBilling = Array.isArray(entry?.billing) ? entry.billing[0] : entry?.billing;
+                    const historyAmount = nestedBilling?.amount ?? entry?.amount ?? 0;
+
+                    return (
+                      <tr key={`${entry?.billing_id || "unknown"}-${entry?.created_at || index}`} className="border-b border-slate-100">
+                        <td className="py-3">{safeDateLabel(entry?.created_at, "MM/dd/yyyy HH:mm")}</td>
+                        <td className="py-3 font-mono text-xs">{String(entry?.billing_id || "N/A").split("-")[0]}</td>
+                        <td className="py-3 text-right">₱{formatPeso(historyAmount)}</td>
+                        <td className="py-3 text-right">{getStatusFormat(entry?.status).toUpperCase()}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </>
+          )}
+
+          <div className="mt-8 border-t border-slate-300 pt-3 text-center text-slate-400 text-xs">
             This is an electronically generated statement. No physical signature is required.
           </div>
         </div>
@@ -771,3 +970,4 @@ export default function BillingClient({
     </>
   );
 }
+

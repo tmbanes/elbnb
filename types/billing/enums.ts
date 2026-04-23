@@ -1,7 +1,7 @@
 export enum BillingStatus {
   PARTIALLY_PAID = "partially_paid",
   PAID = "paid",
-  UNPAID = "unpaid",  
+  UNPAID = "unpaid",
   OVERDUE = "overdue",
   PAID_LATE = "paid_late",
 
@@ -13,6 +13,7 @@ export enum BillingStatus {
 
 export enum BillingItemType {
   ROOM_RENT = "room_rent",
+  RESERVATION_FEE = "reservation_fee",
   SECURITY_DEPOSIT = "security_deposit",
   UTILITY = "utility",
   WATER = "water",
