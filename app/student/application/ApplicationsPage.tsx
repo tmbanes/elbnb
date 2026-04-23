@@ -37,75 +37,104 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
     pending_dorm_manager: { class: "bg-[#F2C908] text-black", icon: <Clock className="w-3 h-3" /> },
   };
 
-  const activeStatuses = ['pending_admin', 'pending_dorm_manager', 'pending_payment', 'approved'];
+  const activeStatuses = ['pending_admin', 'pending_dorm_manager', 'pending_payment'];
   const activeApplications = records.filter(r => activeStatuses.includes(r.application_status));
   const historicalRecords = records.filter(r => !activeStatuses.includes(r.application_status));
 
+  // --- NEW GRID LOGIC ---
+  const MAX_CARDS = 3;
+  const displayedApps = activeApplications.slice(0, MAX_CARDS);
+  const emptySlotsCount = MAX_CARDS - displayedApps.length;
+  // Create an array of empty slots to map over for the dashed cards
+  const emptyPlaceholders = Array.from({ length: Math.max(0, emptySlotsCount) });
+
   return (
-    /* Main Page Wrapper with matching background color */
     <div className="min-h-screen w-full py-8" style={{ backgroundColor: '#F6F8D5' }}>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         
         {/* SECTION 1: ACTIVE APPLICATIONS */}
         <section className="space-y-4">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-4">
             <div className="w-1.5 h-8 bg-[#264384] rounded-full" />
             <h2 className="text-2xl font-bold text-[#44291B]">Active Applications</h2>
           </div>
           
           {activeApplications.length > 0 ? (
-            activeApplications.map((app) => (
-              <Card key={app.application_id} className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                <CardContent className="p-0">
-                  <div className="flex flex-col md:flex-row items-stretch">
-                    <div className={cn("w-2 hidden md:block", statusConfig[app.application_status]?.class.split(' ')[0] || "bg-gray-300")} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+              
+              {/* RENDER ACTUAL APPLICATIONS (Max 3) */}
+              {displayedApps.map((app) => (
+                <Card key={app.application_id} className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm hover:shadow-md transition-all flex flex-col h-full relative overflow-hidden">
+                  {/* Top Color Accent Line based on Status */}
+                  <div className={cn("absolute top-0 left-0 w-full h-1.5", statusConfig[app.application_status]?.class.split(' ')[0] || "bg-gray-300")} />
+                  
+                  <CardContent className="p-6 pt-7 flex flex-col flex-1 gap-5">
                     
-                    <div className="flex-1 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4 text-sm">
-                        <div className="space-y-1">
-                          <p className="text-[#44291B]/50 text-xs uppercase font-bold tracking-widest">Dormitory</p>
-                          <p className="font-bold text-[#44291B] text-lg">{app.accommodation?.name || "N/A"}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[#44291B]/50 text-xs uppercase font-bold tracking-widest">Room Type</p>
-                          <p className="font-semibold text-[#44291B]">{app.preferred_unit_type}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[#44291B]/50 text-xs uppercase font-bold tracking-widest">Date Submitted</p>
-                          <p className="text-[#44291B]">{new Date(app.date_submitted).toLocaleDateString()}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[#44291B]/50 text-xs uppercase font-bold tracking-widest">Target Check-in</p>
-                          <p className="text-[#44291B]">{app.check_in || "To be confirmed"}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col items-end gap-4 min-w-[180px]">
-                        <span className={cn(
-                          "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-tight",
-                          statusConfig[app.application_status]?.class || "bg-gray-100 text-gray-600"
-                        )}>
-                          {statusConfig[app.application_status]?.icon}
-                          {formatStatusLabel(app.application_status)}
-                        </span>
-                        {app.application_status === 'pending_payment' && (
-                          <PaymentModal 
-                            applicationId={app.application_id} 
-                            accommodation={app.accommodation?.name || "Unknown Dormitory"} 
-                            unit={app.unit?.unit_number || "Unknown Unit"} 
-                          />
-                        )}
-
-                        {app.application_status.includes('pending') && (
-                          <CancelApplicationModal applicationId={app.application_id} />
-                        )}
+                    {/* Header: Dorm & Unit Info */}
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="space-y-1 pr-2">
+                        <p className="text-[#44291B]/50 text-[10px] uppercase font-extrabold tracking-widest">Dormitory</p>
+                        <p className="font-bold text-[#44291B] text-lg leading-tight">{app.accommodation?.name || "N/A"}</p>
+                        <p className="font-medium text-[#44291B]/80 text-sm">{app.preferred_unit_type}</p>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                    
+                    {/* Status Badge */}
+                    <div>
+                      <span className={cn(
+                        "inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-tight",
+                        statusConfig[app.application_status]?.class || "bg-gray-100 text-gray-600"
+                      )}>
+                        {statusConfig[app.application_status]?.icon}
+                        {formatStatusLabel(app.application_status)}
+                      </span>
+                    </div>
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-2 gap-4 mt-auto pt-4 border-t border-[#e8e2d6]/60">
+                      <div>
+                        <p className="text-[#44291B]/50 text-[10px] uppercase font-bold tracking-widest mb-0.5">Date Submitted</p>
+                        <p className="text-[#44291B] text-sm font-bold">{new Date(app.date_submitted).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-[#44291B]/50 text-[10px] uppercase font-bold tracking-widest mb-0.5">Target Check-in</p>
+                        <p className="text-[#44291B] text-sm font-bold">{app.check_in || "TBC"}</p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col gap-2 pt-2">
+                      {app.application_status === 'pending_payment' && (
+                        <PaymentModal 
+                          applicationId={app.application_id} 
+                          accommodation={app.accommodation?.name || "Unknown Dormitory"} 
+                          unit={app.unit?.unit_number || "Unknown Unit"} 
+                        />
+                      )}
+                      {app.application_status.includes('pending') && (
+                        <div className="w-full [&>button]:w-full">
+                          <CancelApplicationModal applicationId={app.application_id} />
+                        </div>
+                      )}
+                    </div>
+
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* RENDER EMPTY PLACEHOLDERS TO FILL THE 3 SLOTS */}
+              {emptyPlaceholders.map((_, idx) => (
+                <Card key={`empty-slot-${idx}`} className="bg-[#FDFFF4]/40 border-[#e8e2d6] border-2 border-dashed shadow-none flex flex-col items-center justify-center min-h-[300px]">
+                  <CardContent className="p-6 text-center text-[#44291B]/40 flex flex-col items-center justify-center gap-2">
+                    <span className="text-sm font-bold uppercase tracking-widest opacity-60">Empty Slot</span>
+                    <span className="text-xs font-medium">Available for new application</span>
+                  </CardContent>
+                </Card>
+              ))}
+
+            </div>
           ) : (
+            // PRESERVED EMPTY STATE FOR 0 APPLICATIONS
             <Card className="bg-[#FDFFF4] border-[#e8e2d6] border-dashed">
               <CardContent className="p-10 text-center text-[#44291B]/40">
                 No active applications at the moment.
