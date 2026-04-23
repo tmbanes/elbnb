@@ -12,7 +12,7 @@ import { Mail, MapPin, Pencil, Trash2, ChevronLeft } from "lucide-react"
 interface ManagerDetailProps {
   manager: Manager;
   onEdit: (manager: Manager) => void;
-  onDelete: (id: string) => void;
+  onDelete: (manager: Manager) => void;
   onBack?: () => void;
 }
 
@@ -84,7 +84,7 @@ export default function ManagerDetail({
               <Button
                 variant="destructive"
                 size="icon"
-                onClick={() => onDelete(manager.employee_id)}
+                onClick={() => onDelete(manager)}
                 title="Delete"
               >
                 <Trash2 className="h-4 w-4" />
