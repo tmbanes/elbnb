@@ -7,6 +7,8 @@ import { AccommodationCard } from '@/components/SearchAccommodations/Accommodati
 import { UnitCard } from '@/components/SearchAccommodations/UnitCard'
 import { AccommodationFilters } from '@/components/SearchAccommodations/AccommodationFilters'
 import { UnitFilters } from '@/components/SearchAccommodations/UnitFilters'
+import { AccommodationListView } from '@/components/SearchAccommodations/Accommodation-list-view'
+import { UnitsListView } from '@/components/SearchAccommodations/Units-list-view'
 import next from 'next'
 import Link from 'next/link'
 
@@ -24,6 +26,7 @@ interface UnitFiltersType {
   availability: 'vacant' | 'all'
   propertyType: PropertyType | ''
   accommodationType: AccommodationType | ''
+  accommodationId: string | ''
 }
 
 export default function SearchAccommodationsPage() {
@@ -48,14 +51,22 @@ export default function SearchAccommodationsPage() {
     availability: 'vacant',
     propertyType: '',
     accommodationType: '',
+    accommodationId: '',
   })
 
   // Loading & Error states
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
+
+  // View mode state
+  const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel')
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 3
 
   // Apply accommodation filters
   const applyAccommodationFilters = useCallback(
@@ -90,6 +101,7 @@ export default function SearchAccommodationsPage() {
       }
 
       setFilteredAccommodations(filtered)
+      setCurrentPage(1)
     },
     []
   )
@@ -129,6 +141,10 @@ export default function SearchAccommodationsPage() {
         filtered = filtered.filter((u) => matchingAccomIds.has(u.accommodation_id))
       }
 
+      if (filters.accommodationId) {
+        filtered = filtered.filter((u) => u.accommodation_id === filters.accommodationId)
+      }
+
       // Apply search filter
       if (search.trim()) {
         const query = search.toLowerCase()
@@ -141,6 +157,7 @@ export default function SearchAccommodationsPage() {
       }
 
       setFilteredUnits(filtered)
+      setCurrentPage(1)
     },
     []
   )
@@ -175,7 +192,7 @@ export default function SearchAccommodationsPage() {
     }
 
     fetchData()
-  }, []) 
+  }, [])
 
   // Handle accommodation filter changes
   const handleAccommodationFilterChange = useCallback(
@@ -216,6 +233,7 @@ export default function SearchAccommodationsPage() {
       availability: 'vacant',
       propertyType: '',
       accommodationType: '',
+      accommodationId: '',
     }
     setUnitFilters(defaults)
     applyUnitFilters(units, defaults, accommodations, searchQuery)
@@ -230,10 +248,37 @@ export default function SearchAccommodationsPage() {
     console.log('View details for:', accommodation)
   }
 
+  const handleSeeUnitsClick = useCallback((accommodation: Accommodation) => {
+    setActiveTab('units')
+    setCurrentPage(1)
+
+    const newFilters = { ...unitFilters, accommodationId: accommodation.accommodation_id }
+    setUnitFilters(newFilters)
+    applyUnitFilters(units, newFilters, accommodations, searchQuery)
+
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [units, accommodations, unitFilters, applyUnitFilters, searchQuery])
+
   const handleUnitDetailsClick = (unit: Unit) => {
     // Navigate to detail page or open modal
     console.log('View details for:', unit)
   }
+
+  const totalAccommodationsPages = Math.ceil(filteredAccommodations.length / pageSize) || 1;
+  const validCurrentPage = Math.min(currentPage, totalAccommodationsPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const paginatedAccommodations = filteredAccommodations.slice(
+    startIndex,
+    startIndex + pageSize
+  );
+
+  const totalUnitsPages = Math.ceil(filteredUnits.length / pageSize) || 1;
+  const validCurrentUnitsPage = Math.min(currentPage, totalUnitsPages);
+  const startUnitsIndex = (validCurrentUnitsPage - 1) * pageSize;
+  const paginatedUnits = filteredUnits.slice(
+    startUnitsIndex,
+    startUnitsIndex + pageSize
+  );
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F6F8D5' }}>
@@ -281,12 +326,11 @@ export default function SearchAccommodationsPage() {
         {/* Tab Navigation */}
         <div className="flex gap-3 mb-8">
           <button
-            onClick={() => setActiveTab('accommodations')}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'accommodations'
-                ? 'text-white shadow-md'
-                : 'border border-gray-200 hover:border-gray-300'
-            }`}
+            onClick={() => { setActiveTab('accommodations'); setCurrentPage(1); }}
+            className={`px-6 py-3 rounded-lg font-semibold transition ${activeTab === 'accommodations'
+              ? 'text-white shadow-md'
+              : 'border border-gray-200 hover:border-gray-300'
+              }`}
             style={{
               backgroundColor: activeTab === 'accommodations' ? '#264384' : '#FDFFF4',
               color: activeTab === 'accommodations' ? 'white' : '#44291B',
@@ -295,12 +339,11 @@ export default function SearchAccommodationsPage() {
             Accommodations
           </button>
           <button
-            onClick={() => setActiveTab('units')}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'units'
-                ? 'text-white shadow-md'
-                : 'border border-gray-200 hover:border-gray-300'
-            }`}
+            onClick={() => { setActiveTab('units'); setCurrentPage(1); }}
+            className={`px-6 py-3 rounded-lg font-semibold transition ${activeTab === 'units'
+              ? 'text-white shadow-md'
+              : 'border border-gray-200 hover:border-gray-300'
+              }`}
             style={{
               backgroundColor: activeTab === 'units' ? '#264384' : '#FDFFF4',
               color: activeTab === 'units' ? 'white' : '#44291B',
@@ -308,16 +351,16 @@ export default function SearchAccommodationsPage() {
           >
             All Units
           </button>
-          <Link 
-            href="/student/accommodations/list"
+          <button
+            onClick={() => setViewMode(viewMode === 'list' ? 'carousel' : 'list')}
             className="px-6 py-3 rounded-lg font-semibold border border-gray-200 hover:border-gray-300 transition shadow-sm"
             style={{
-              backgroundColor: '#FDFFF4',
-              color: '#44291B',
+              backgroundColor: viewMode === 'list' ? '#264384' : '#FDFFF4',
+              color: viewMode === 'list' ? 'white' : '#44291B',
             }}
           >
-            List View
-          </Link>
+            {viewMode === 'list' ? 'Carousel View' : 'List View'}
+          </button>
         </div>
 
         {/* Error Message */}
@@ -335,7 +378,7 @@ export default function SearchAccommodationsPage() {
               accommodationType={accommodationFilters.accommodationType}
               propertyType={accommodationFilters.propertyType}
               availability={accommodationFilters.availability}
-              onAccommodationTypeChange={(v) => 
+              onAccommodationTypeChange={(v) =>
                 handleAccommodationFilterChange({ accommodationType: v, propertyType: '' })
               }
               onPropertyTypeChange={(v) => handleAccommodationFilterChange({ propertyType: v })}
@@ -385,18 +428,30 @@ export default function SearchAccommodationsPage() {
               </div>
             )}
 
-            {/* Carousel */}
+            {/* Carousel or List View */}
             {!loading && filteredAccommodations.length > 0 && (
-              <Carousel>
-                {filteredAccommodations.map((accommodation) => (
-                  <AccommodationCard
-                    key={accommodation.accommodation_id}
-                    accommodation={accommodation}
-                    units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
-                    onDetailsClick={handleAccommodationDetailsClick}
-                  />
-                ))}
-              </Carousel>
+              viewMode === 'carousel' ? (
+                <Carousel>
+                  {filteredAccommodations.map((accommodation) => (
+                    <AccommodationCard
+                      key={accommodation.accommodation_id}
+                      accommodation={accommodation}
+                      units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
+                      onDetailsClick={handleAccommodationDetailsClick}
+                    />
+                  ))}
+                </Carousel>
+              ) : (
+                <AccommodationListView
+                  paginatedAccommodations={paginatedAccommodations}
+                  totalPages={totalAccommodationsPages}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  validCurrentPage={validCurrentPage}
+                  basePath="/student/accommodations"
+                  onSeeUnitsClick={handleSeeUnitsClick}
+                />
+              )
             )}
           </div>
         )}
@@ -460,23 +515,35 @@ export default function SearchAccommodationsPage() {
               </div>
             )}
 
-            {/* Carousel */}
+            {/* Carousel or List View */}
             {!loading && filteredUnits.length > 0 && (
-              <Carousel>
-                {filteredUnits.map((unit) => {
-                  const accommodation = accommodations.find(
-                    (a) => a.accommodation_id === unit.accommodation_id
-                  )
-                  return (
-                    <UnitCard
-                      key={unit.unit_id}
-                      unit={unit}
-                      accommodation={accommodation}
-                      onDetailsClick={handleUnitDetailsClick}
-                    />
-                  )
-                })}
-              </Carousel>
+              viewMode === 'carousel' ? (
+                <Carousel>
+                  {filteredUnits.map((unit) => {
+                    const accommodation = accommodations.find(
+                      (a) => a.accommodation_id === unit.accommodation_id
+                    )
+                    return (
+                      <UnitCard
+                        key={unit.unit_id}
+                        unit={unit}
+                        accommodation={accommodation}
+                        onDetailsClick={handleUnitDetailsClick}
+                      />
+                    )
+                  })}
+                </Carousel>
+              ) : (
+                <UnitsListView
+                  paginatedUnits={paginatedUnits}
+                  accommodations={accommodations}
+                  totalPages={totalUnitsPages}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  validCurrentPage={validCurrentUnitsPage}
+                  basePath="/student/accommodations"
+                />
+              )
             )}
           </div>
         )}
