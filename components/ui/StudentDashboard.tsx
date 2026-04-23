@@ -59,7 +59,7 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
   }
 
   return (
-    <div className={`min-h-screen bg-[#F4F5E1] p-4 md:p-12 flex justify-center items-start ${nunito.className} text-[#3E2723]`}>
+    <div className={`min-h-screen bg-[#F4F5E1] p-3 sm:p-4 md:p-12 flex justify-center items-start ${nunito.className} text-[#3E2723]`}>
 
       {/* SVG grain filter */}
       <svg className="hidden">
@@ -76,18 +76,18 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
       </svg>
 
       {/* Main card container */}
-      <div className="relative w-full max-w-5xl mt-16 pt-12 z-10 flex flex-col">
+      <div className="relative w-full max-w-5xl mt-10 sm:mt-16 pt-10 sm:pt-12 z-10 flex flex-col">
 
         {/* Folder shape background */}
         <div className="absolute inset-0 z-0 pointer-events-none drop-shadow-[0_25px_25px_rgba(0,0,0,0.15)]" style={{ filter: 'url(#grain)' }}>
-          <div className="absolute inset-0 w-full h-full bg-[#7EB647] rounded-t-[300px] rounded-bl-[40px] rounded-br-[40px]" />
+          <div className="absolute inset-0 w-full h-full bg-[#7EB647] rounded-t-[150px] sm:rounded-t-[300px] rounded-bl-[40px] rounded-br-[40px]" />
         </div>
 
         {/* House & Profile breakout — increase top value to move everything down */}
-        <div className="absolute top-[-60px] md:top-[-70px] left-[20px] md:left-[30px] z-20 w-[240px] h-[240px] md:w-[280px] md:h-[280px] flex items-center justify-center">
+        <div className="absolute top-[-40px] sm:top-[-60px] md:top-[-70px] left-[10px] sm:left-[20px] md:left-[30px] z-20 w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] md:w-[280px] md:h-[280px] flex items-center justify-center">
 
           {/* Circular Profile Picture — behind the frame */}
-          <div className="relative z-10 top-[60px] md:top-[40px] w-[155px] h-[155px] md:w-[177px] md:h-[177px] rounded-full overflow-hidden bg-[#3E2723] flex items-center justify-center">
+          <div className="relative z-10 top-[30px] sm:top-[50px] md:top-[40px] w-[100px] h-[100px] sm:w-[138px] sm:h-[138px] md:w-[177px] md:h-[177px] rounded-full overflow-hidden bg-[#3E2723] flex items-center justify-center">
             {user.profile_picture_url ? (
               <img
                 src={user.profile_picture_url}
@@ -114,7 +114,7 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
                 />
 
                 {/* Hover overlay — same size and top offset as profile picture */}
-                <div className="relative z-10 top-[35px] md:top-[40px] w-[155px] h-[155px] md:w-[177px] md:h-[177px] rounded-full overflow-hidden flex items-center justify-center">
+                <div className="relative z-10 top-[30px] sm:top-[50px] md:top-[40px] w-[100px] h-[100px] sm:w-[138px] sm:h-[138px] md:w-[177px] md:h-[177px] rounded-full overflow-hidden flex items-center justify-center">
                   <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <Edit3 size={36} className="text-white mb-1" />
                     <span className="text-white text-[12px] font-bold tracking-wider">EDIT</span>
@@ -143,7 +143,7 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
 
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end px-6 md:px-12">
-            <div className="mt-[160px] md:mt-0 md:ml-[270px] leading-tight drop-shadow-sm pb-12 md:pb-0 relative z-30">
+            <div className="mt-[110px] sm:mt-[140px] md:mt-0 md:ml-[270px] leading-tight drop-shadow-sm pb-6 sm:pb-10 md:pb-0 relative z-30">
               <h2 className={`${HeaderMd} text-[#3E2723]/90`}>Kumusta,</h2>
               <h1 className={`${HeaderLg} text-[#3E2723] tracking-tight mt-1`}>
                 {user.first_name} {user.last_name}?
@@ -153,12 +153,12 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
 
           {/* Overlapping containers — clipped to uniform rounded corners */}
           <div className="overflow-hidden rounded-bl-[40px] rounded-br-[40px]">
-          <div className="grid grid-cols-1 grid-rows-1 mt-6 relative w-full min-h-[350px] md:min-h-[400px]">
+          <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full min-h-[280px] sm:min-h-[350px] md:min-h-[400px]">
 
             {/* Accommodations Container */}
             <div
               onClick={() => setActiveTab('accommodations')}
-              className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-6 md:px-12 rounded-tl-[700px] rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations'
+              className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 rounded-tl-[200px] sm:rounded-tl-[400px] md:rounded-tl-[700px] rounded-tr-[40px] sm:rounded-tr-[60px] md:rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations'
                 ? 'h-full'
                 : 'hover:bg-[#8bc453]/90 hover:shadow-lg'
                 }`}
@@ -170,12 +170,12 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
                 <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Accommodations</h3>
               </div>
 
-              <div className="pb-8 pt-4 pl-16 md:pl-[180px] pr-8 md:pr-12">
+              <div className="pb-6 pt-3 pl-4 sm:pl-10 md:pl-[180px] pr-4 sm:pr-6 md:pr-12">
                 <div className="grid grid-cols-2 gap-y-8 gap-x-6 md:gap-x-8 w-full">
                   <div className="md:col-span-12">
                     <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Current Residence</h4>
 
-                    <div className="grid grid-cols-2 gap-y-8 gap-x-12 md:gap-x-16 w-full">
+                    <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
 
                       {/* Row 1 */}
                       <div>
@@ -234,9 +234,9 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
             {/* Personal Information Container */}
             <div
               onClick={() => setActiveTab('personal')}
-              className={`col-start-1 row-start-1 w-full self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer relative z-40 bg-[#8bc453] shadow-inner px-6 md:px-12 ${activeTab === 'personal'
-                ? 'min-h-[350px] md:min-h-[380px] mt-[50px] max-h-[950px] rounded-tl-[40px] rounded-tr-[300px] rounded-b-[40px]'
-                : 'mt-[80px] max-h-[105px] rounded-[40px] hover:bg-[#8bc453]/90 hover:mt-[60px] hover:max-h-[110px] hover:shadow-lg'
+              className={`col-start-1 row-start-1 w-full self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer relative z-40 bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 ${activeTab === 'personal'
+                ? 'min-h-[300px] sm:min-h-[350px] md:min-h-[380px] mt-[36px] sm:mt-[50px] max-h-[950px] rounded-tl-[40px] rounded-tr-[150px] sm:rounded-tr-[300px] rounded-b-[40px]'
+                : 'mt-[60px] sm:mt-[80px] max-h-[90px] sm:max-h-[105px] rounded-[40px] hover:bg-[#8bc453]/90 hover:mt-[44px] sm:hover:mt-[60px] hover:shadow-lg'
                 }`}
               style={activeTab === 'personal' ? { filter: 'url(#grain)', backgroundBlendMode: 'multiply' } : {}}
             >
@@ -252,7 +252,7 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
                   {/* Academic Info */}
                   <div className="md:col-span-12">
                     <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Academic Info</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
                       <div>
                         <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
                         <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
