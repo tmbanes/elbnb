@@ -83,41 +83,36 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
           <div className="absolute inset-0 w-full h-full bg-[#7EB647] rounded-t-[150px] sm:rounded-t-[300px] rounded-bl-[40px] rounded-br-[40px]" />
         </div>
 
-        {/* House & Profile breakout — increase top value to move everything down */}
-        <div className="absolute top-[-40px] sm:top-[-60px] md:top-[-70px] left-[10px] sm:left-[20px] md:left-[30px] z-20 w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] md:w-[280px] md:h-[280px] flex items-center justify-center">
+        {/* House & Profile breakout */}
+        <div className="absolute top-[-40px] sm:top-[-60px] md:top-[-70px] left-[10px] sm:left-[20px] md:left-[30px] z-20 w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] md:w-[280px] md:h-[280px]">
 
-          {/* Circular Profile Picture — behind the frame */}
-          <div className="relative z-10 top-[30px] sm:top-[50px] md:top-[40px] w-[100px] h-[100px] sm:w-[138px] sm:h-[138px] md:w-[177px] md:h-[177px] rounded-full overflow-hidden bg-[#3E2723] flex items-center justify-center">
+          {/* Avatar — percentage-positioned to match the frame circle at all sizes */}
+          <div className="absolute left-1/2 top-[64%] -translate-x-1/2 -translate-y-1/2 w-[63%] h-[63%] z-10 rounded-full overflow-hidden bg-[#3E2723] flex items-center justify-center">
             {user.profile_picture_url ? (
-              <img
-                src={user.profile_picture_url}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
+              <img src={user.profile_picture_url} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              <UserIcon className="w-20 h-20 text-[#F4F5E1]/30" />
+              <UserIcon className="w-1/2 h-1/2 text-[#F4F5E1]/30" />
             )}
           </div>
 
-          {/* Frame as clickable edit button — front layer */}
+          {/* Frame as clickable edit button — covers full container, in front of avatar */}
           <Dialog open={uploadPhotoOpen} onOpenChange={setUploadPhotoOpen}>
             <DialogTrigger asChild>
               <button
-                className="absolute inset-0 z-50 flex items-center justify-center group cursor-pointer"
+                className="absolute inset-0 z-20 group cursor-pointer"
                 aria-label="Edit profile picture"
               >
-                {/* Frame image — same scale as profile */}
+                {/* Frame image fills the container */}
                 <img
                   src="/assets/user-profile-frame.png"
                   alt="Profile Frame"
-                  className="absolute inset-0 w-full h-full object-contain scale-[1] transition-transform duration-300"
+                  className="absolute inset-0 w-full h-full object-contain"
                 />
-
-                {/* Hover overlay — same size and top offset as profile picture */}
-                <div className="relative z-10 top-[30px] sm:top-[50px] md:top-[40px] w-[100px] h-[100px] sm:w-[138px] sm:h-[138px] md:w-[177px] md:h-[177px] rounded-full overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <Edit3 size={36} className="text-white mb-1" />
-                    <span className="text-white text-[12px] font-bold tracking-wider">EDIT</span>
+                {/* Hover overlay — same % position as avatar */}
+                <div className="absolute left-1/2 top-[64%] -translate-x-1/2 -translate-y-1/2 w-[63%] h-[63%] rounded-full overflow-hidden">
+                  <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Edit3 size={28} className="text-white mb-1" />
+                    <span className="text-white text-[11px] font-bold tracking-wider">EDIT</span>
                   </div>
                 </div>
               </button>
