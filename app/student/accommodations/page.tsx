@@ -16,6 +16,7 @@ interface AccommodationFiltersType {
   accommodationType: AccommodationType | ''
   propertyType: PropertyType | ''
   availability: 'vacant' | 'all'
+  sex: 'male' | 'female' | 'COED' | 'all'
 }
 
 interface UnitFiltersType {
@@ -40,6 +41,7 @@ export default function SearchAccommodationsPage() {
     accommodationType: '',
     propertyType: '',
     availability: 'all',
+    sex: 'all'
   })
 
   const [unitFilters, setUnitFilters] = useState<UnitFiltersType>({
@@ -53,7 +55,7 @@ export default function SearchAccommodationsPage() {
   // Loading & Error states
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -79,6 +81,10 @@ export default function SearchAccommodationsPage() {
             .map((u) => u.accommodation_id)
         )
         filtered = filtered.filter((a) => accomIdsWithVacancy.has(a.accommodation_id))
+      }
+
+      if (filters.sex !== 'all') {
+        filtered = filtered.filter((a) => a.accomm_sex === filters.sex)
       }
 
       // Apply search filter
@@ -175,7 +181,7 @@ export default function SearchAccommodationsPage() {
     }
 
     fetchData()
-  }, []) 
+  }, [])
 
   // Handle accommodation filter changes
   const handleAccommodationFilterChange = useCallback(
@@ -203,6 +209,7 @@ export default function SearchAccommodationsPage() {
       accommodationType: '',
       propertyType: '',
       availability: 'all',
+      sex: 'all',
     }
     setAccommodationFilters(defaults)
     applyAccommodationFilters(accommodations, units, defaults, searchQuery)
@@ -282,11 +289,10 @@ export default function SearchAccommodationsPage() {
         <div className="flex gap-3 mb-8">
           <button
             onClick={() => setActiveTab('accommodations')}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'accommodations'
-                ? 'text-white shadow-md'
-                : 'border border-gray-200 hover:border-gray-300'
-            }`}
+            className={`px-6 py-3 rounded-lg font-semibold transition ${activeTab === 'accommodations'
+              ? 'text-white shadow-md'
+              : 'border border-gray-200 hover:border-gray-300'
+              }`}
             style={{
               backgroundColor: activeTab === 'accommodations' ? '#264384' : '#FDFFF4',
               color: activeTab === 'accommodations' ? 'white' : '#44291B',
@@ -296,11 +302,10 @@ export default function SearchAccommodationsPage() {
           </button>
           <button
             onClick={() => setActiveTab('units')}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'units'
-                ? 'text-white shadow-md'
-                : 'border border-gray-200 hover:border-gray-300'
-            }`}
+            className={`px-6 py-3 rounded-lg font-semibold transition ${activeTab === 'units'
+              ? 'text-white shadow-md'
+              : 'border border-gray-200 hover:border-gray-300'
+              }`}
             style={{
               backgroundColor: activeTab === 'units' ? '#264384' : '#FDFFF4',
               color: activeTab === 'units' ? 'white' : '#44291B',
@@ -308,7 +313,7 @@ export default function SearchAccommodationsPage() {
           >
             All Units
           </button>
-          <Link 
+          <Link
             href="/student/accommodations/list"
             className="px-6 py-3 rounded-lg font-semibold border border-gray-200 hover:border-gray-300 transition shadow-sm"
             style={{
@@ -335,11 +340,11 @@ export default function SearchAccommodationsPage() {
               accommodationType={accommodationFilters.accommodationType}
               propertyType={accommodationFilters.propertyType}
               availability={accommodationFilters.availability}
-              onAccommodationTypeChange={(v) => 
-                handleAccommodationFilterChange({ accommodationType: v, propertyType: '' })
-              }
+              sex={accommodationFilters.sex}
+              onAccommodationTypeChange={(v) => handleAccommodationFilterChange({ accommodationType: v, propertyType: '' })}
               onPropertyTypeChange={(v) => handleAccommodationFilterChange({ propertyType: v })}
               onAvailabilityChange={(v) => handleAccommodationFilterChange({ availability: v })}
+              onSexChange={(v) => handleAccommodationFilterChange({ sex: v })}
               onResetFilters={resetAccommodationFilters}
               resultCount={filteredAccommodations.length}
               loading={loading}

@@ -8,6 +8,7 @@ export type BillingPeriod = "daily" | "weekly" | "monthly" | "one-time";
 // ACCOMMODATION ENUM TYPES
 export type AccommodationType = "dormitory" | "renting_space"
 export type UnitAccommodationStatus = "active" | "inactive";
+export type Sex = "male" | "female" | "COED" | "all";
 
 // RENTING_SPACE ACCOMMODATION ENUM TYPES
 export type PropertyType = "apartment" | "boarding" | "transient" | "house";
@@ -60,6 +61,7 @@ export interface Accommodation {
     allowed_application: string; // ISO date string
     property_type?: PropertyType;
     no_of_units: number;
+    accomm_sex: Sex;
 }
 
 // BASED ON SUPABASE PROPERTIES

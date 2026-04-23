@@ -8,9 +8,11 @@ interface AccommodationFiltersProps {
   accommodationType: AccommodationType | ''
   propertyType: PropertyType | ''
   availability: 'vacant' | 'all'
+  sex: 'male' | 'female' | 'COED' | 'all'
   onAccommodationTypeChange: (value: AccommodationType | '') => void
   onPropertyTypeChange: (value: PropertyType | '') => void
   onAvailabilityChange: (value: 'vacant' | 'all') => void
+  onSexChange: (value: 'male' | 'female' | 'COED' | 'all') => void
   onResetFilters: () => void
   resultCount: number
   loading?: boolean
@@ -21,9 +23,11 @@ export function AccommodationFilters({
   accommodationType,
   propertyType,
   availability,
+  sex,
   onAccommodationTypeChange,
   onPropertyTypeChange,
   onAvailabilityChange,
+  onSexChange,
   onResetFilters,
   resultCount,
   loading = false,
@@ -77,6 +81,19 @@ export function AccommodationFilters({
           options={[
             { value: 'vacant', label: 'With Vacant Slots' },
             { value: 'all', label: 'All Accommodations' },
+          ]}
+        />
+
+        <FilterDropdown
+          label="Sex"
+          value={sex}
+          onChange={(v) => onSexChange(v as 'male' | 'female' | 'COED' | 'all')}
+          disabled={loading}
+          options={[
+            { value: 'all', label: 'All' },
+            { value: 'male', label: 'Male' },
+            { value: 'female', label: 'Female' },
+            { value: 'COED', label: 'COED' },
           ]}
         />
 
