@@ -1,7 +1,7 @@
 // app/admin/housing/properties/PropertiesList.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { getPropertyColumns } from "@/app/admin/housing/components/columns/propertyColumns";
 import { Property } from "../../../../types/housing/types";
 
@@ -37,6 +37,7 @@ interface SummaryStats {
 }
 
 interface PropertiesListProps {
+  properties: Property[];
   filtered: Property[];
   tableData: Array<{
     id: string;
@@ -104,6 +105,7 @@ function StatCard({
 }
 
 export default function PropertiesList({
+  properties = [],
   filtered = [],
   tableData = [],
   typeFilter,
@@ -116,53 +118,25 @@ export default function PropertiesList({
   onBackToHousing,
 }: PropertiesListProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [stats, setStats] = useState<SummaryStats>({
-    totalDorms: 0,
-    totalRentalSpaces: 0,
-    totalManagers: 0,
-    totalUnits: 0,
-  });
-  const [loading, setLoading] = useState(true);
   const [activeProperty, setActiveProperty] = useState<Property | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const [dormsRes, rentalRes, managersRes] = await Promise.all([
-          fetch("/api/admin/housing/dorms"),
-          fetch("/api/admin/housing/rental-spaces"),
-          fetch("/api/admin/housing/managers"),
-        ]);
+  const stats: SummaryStats = useMemo(() => {
+    const totalCapacity = properties.reduce(
+      (acc, curr) => acc + Number(curr.total_capacity || 0),
+      0
+    );
 
-        if (dormsRes.ok && rentalRes.ok && managersRes.ok) {
-          const [dorms, rentals, managers] = await Promise.all([
-            dormsRes.json(),
-            rentalRes.json(),
-            managersRes.json(),
-          ]);
-
-          const totalCapacity = [...dorms, ...rentals].reduce(
-            (acc, curr) => acc + (curr.total_capacity || 0),
-            0
-          );
-
-          setStats({
-            totalDorms: dorms.length,
-            totalRentalSpaces: rentals.length,
-            totalManagers: managers.length,
-            totalUnits: totalCapacity,
-          });
-        }
-      } catch (err) {
-        console.error("Failed to fetch stats:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchStats();
-  }, []);
+    return {
+      totalDorms: properties.filter((p) => p.accommodation_type === "dormitory")
+        .length,
+      totalRentalSpaces: properties.filter(
+        (p) => p.accommodation_type === "renting_space"
+      ).length,
+      totalManagers: managerCount,
+      totalUnits: totalCapacity,
+    };
+  }, [managerCount, properties]);
 
   return (
     <div className="p-6 space-y-4 font-[family-name:var(--font-archivo)]">
@@ -272,7 +246,7 @@ export default function PropertiesList({
         </div>
       </div>
 
-      {(filtered?.length === 0) && !loading ? (
+      {filtered?.length === 0 ? (
         <div className="flex h-[200px] items-center justify-center rounded-md border border-dashed mt-4">
           <p className="text-muted-foreground">No properties yet. Click Add Property to get started.</p>
         </div>
