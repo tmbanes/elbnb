@@ -187,7 +187,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label className="text-sm font-semibold text-[#3d2000]">
+      <Label className="text-sm font-semibold text-[#3d2000] whitespace-nowrap">
         {label}
         {italic && (
           <span className="font-normal italic text-[#6a5a3a] ml-1">
@@ -376,7 +376,7 @@ export default function ApplyAccommodationForm() {
   if (submittedData && !showSuccess) {
     return (
       <div
-        className={`${archivo.className} min-h-[calc(100vh-4rem)] bg-[#F6F8D5] p-6 overflow-y-auto`}
+        className={`${archivo.className} min-h-[calc(100vh-4rem)] bg-[#F6F8D5] py-6 px-6 md:px-[1.5in] overflow-y-auto`}
       >
         <div className="flex items-center gap-3 mb-2">
           <CheckCircle className="h-7 w-7 text-[#78A24C]" />
@@ -506,7 +506,7 @@ export default function ApplyAccommodationForm() {
   // Application form screen
   return (
     <div
-      className={`${archivo.className} min-h-[calc(100vh-4rem)] bg-[#F6F8D5] p-6 overflow-y-auto`}
+      className={`${archivo.className} min-h-[calc(100vh-4rem)] bg-[#F6F8D5] py-6 px-6 md:px-[1.5in] overflow-y-auto`}
     >
       <h1 className="text-2xl font-black uppercase tracking-widest text-[#3d2000] mb-1">
         Apply for Accommodation
