@@ -26,7 +26,11 @@ import { PanelLeftIcon } from "lucide-react"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+<<<<<<< HEAD
 const SIDEBAR_WIDTH = "16rem"
+=======
+const SIDEBAR_WIDTH = "14rem"
+>>>>>>> origin/develop
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
@@ -217,7 +221,11 @@ function Sidebar({
       <div
         data-slot="sidebar-gap"
         className={cn(
+<<<<<<< HEAD
           "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
+=======
+          "relative w-(--sidebar-width) bg-transparent transition-[width] duration-500 ease-in-out",
+>>>>>>> origin/develop
           "group-data-[collapsible=offcanvas]:w-0",
           "group-data-[side=right]:rotate-180",
           variant === "floating" || variant === "inset"
@@ -229,7 +237,11 @@ function Sidebar({
         data-slot="sidebar-container"
         data-side={side}
         className={cn(
+<<<<<<< HEAD
           "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
+=======
+          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-500 ease-in-out data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
+>>>>>>> origin/develop
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
@@ -241,7 +253,11 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
+<<<<<<< HEAD
           className="flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
+=======
+          className="flex size-full flex-col bg-inherit group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
+>>>>>>> origin/develop
         >
           {children}
         </div>
@@ -262,15 +278,24 @@ function SidebarTrigger({
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
       variant="ghost"
+<<<<<<< HEAD
       size="icon-sm"
       className={cn(className)}
+=======
+      size="icon"
+      className={cn("text-[#8ba665] hover:bg-[#8ba665]/10 hover:text-[#8ba665] transition-colors rounded-lg bg-white/50 backdrop-blur-sm border border-[#8ba665]/20 shadow-sm", className)}
+>>>>>>> origin/develop
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
+<<<<<<< HEAD
       <PanelLeftIcon />
+=======
+      <PanelLeftIcon className="h-5 w-5" />
+>>>>>>> origin/develop
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
@@ -401,7 +426,11 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
+<<<<<<< HEAD
         "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+=======
+        "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-500 ease-in-out group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+>>>>>>> origin/develop
         className
       )}
       {...props}

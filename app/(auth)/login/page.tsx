@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import LoginWithEmailSetup from "./LoginWithEmailSetup";
 import { getUserWithRole } from "@/lib/utils/auth-utils";
 import { UserWithRole } from "@/types/user.types";
@@ -11,4 +12,19 @@ export default async function LoginPage() {
   }
 
   return <LoginWithEmailSetup user={userWithRole} />;
+=======
+import LoginWithEmailSetup from "./LoginWithEmailSetup";
+import { getUserWithRole } from "@/lib/auth/session";
+import { User } from "@/types/user.types";
+import { redirect } from "next/navigation";
+
+export default async function LoginPage() {
+  const user: User | null = await getUserWithRole();
+
+  if (user) {
+    redirect(`/`);
+  }
+
+  return <LoginWithEmailSetup user={user} />;
+>>>>>>> origin/develop
 }
