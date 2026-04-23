@@ -2,7 +2,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server-client"
 import { redirect } from "next/navigation"
-import { studentProfileService } from "@/services/student_profile"
+import { userProfileService } from "@/services/user_profile"
 import {
   Card,
   CardContent,
@@ -56,7 +56,7 @@ export default async function AccommodationHistoryPage() {
 
   const userId = user.id; // uncomment this when you want to use actual logged-in user ID
 
-  const { data: records, error } = await studentProfileService.getAccommodationHistory(userId);
+  const { data: records, error } = await userProfileService.getAccommodationHistory(userId);
 
   if (error) {
     return <div className="p-6 text-red-500">Error loading data: {error.message}</div>;

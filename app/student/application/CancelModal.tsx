@@ -14,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { cancelApplicationAction } from "@/lib/actions/cancel-application-action"
+import { cancelApplicationAction } from "./actions"
 
 export function CancelApplicationModal({ applicationId }: { applicationId: string }) {
   const [isPending, startTransition] = useTransition()

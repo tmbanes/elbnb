@@ -5,9 +5,9 @@ import {
   UserProfile,
   AccommodationAssignment,
   AccommodationApplication,
-} from "@/types/student_profile";
+} from "@/types/user_profile";
 
-export const studentProfileService = {
+export const userProfileService = {
   async getProfile(user_id: string) {
     const client = await supabase();
     const { data, error } = await client

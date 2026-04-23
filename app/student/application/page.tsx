@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client"
 import { redirect } from "next/navigation"
-import { studentProfileService } from "@/services/student_profile"
+import { userProfileService } from "@/services/user_profile"
 import ApplicationsPage from "./ApplicationsPage";
 
 export default async function AccommodationHistoryPage() {
@@ -13,7 +13,7 @@ export default async function AccommodationHistoryPage() {
   }
 
   // Fetch data from service layer
-  const { data: records, error } = await studentProfileService.getAccommodationHistory(user.id);
+  const { data: records, error } = await userProfileService.getAccommodationHistory(user.id);
 
   if (error) {
     return (

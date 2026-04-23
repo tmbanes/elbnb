@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CancelApplicationModal } from "./CancelModal";
-import { AccommodationApplication } from "@/types/student_profile";
+import { AccommodationApplication } from "@/types/user_profile";
 import { Check, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils/ui-utils";
 import { PaymentModal } from "./PaymentModal";
@@ -45,21 +45,21 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
     /* Main Page Wrapper with matching background color */
     <div className="min-h-screen w-full py-8" style={{ backgroundColor: '#F6F8D5' }}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        
+
         {/* SECTION 1: ACTIVE APPLICATIONS */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-1.5 h-8 bg-[#264384] rounded-full" />
             <h2 className="text-2xl font-bold text-[#44291B]">Active Applications</h2>
           </div>
-          
+
           {activeApplications.length > 0 ? (
             activeApplications.map((app) => (
               <Card key={app.application_id} className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                 <CardContent className="p-0">
                   <div className="flex flex-col md:flex-row items-stretch">
                     <div className={cn("w-2 hidden md:block", statusConfig[app.application_status]?.class.split(' ')[0] || "bg-gray-300")} />
-                    
+
                     <div className="flex-1 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4 text-sm">
                         <div className="space-y-1">
@@ -89,10 +89,10 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                           {formatStatusLabel(app.application_status)}
                         </span>
                         {app.application_status === 'pending_payment' && (
-                          <PaymentModal 
-                            applicationId={app.application_id} 
-                            accommodation={app.accommodation?.name || "Unknown Dormitory"} 
-                            unit={app.unit?.unit_number || "Unknown Unit"} 
+                          <PaymentModal
+                            applicationId={app.application_id}
+                            accommodation={app.accommodation?.name || "Unknown Dormitory"}
+                            unit={app.unit?.unit_number || "Unknown Unit"}
                           />
                         )}
 
@@ -161,8 +161,8 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                         </span>
                       </TableCell>
                       <TableCell className="text-right pr-6 text-[#44291B]/60 italic text-sm">
-                        {record.accomodation_assignment?.actual_Move_Out_Date 
-                          ? new Date(record.accomodation_assignment.actual_Move_Out_Date).toLocaleDateString() 
+                        {record.accomodation_assignment?.actual_Move_Out_Date
+                          ? new Date(record.accomodation_assignment.actual_Move_Out_Date).toLocaleDateString()
                           : "—"}
                       </TableCell>
                     </TableRow>

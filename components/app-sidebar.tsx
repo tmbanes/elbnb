@@ -18,6 +18,7 @@ import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
+import { UserProfile } from "@/types/user_profile"
 import Link from "next/link"
 import {
   Sidebar,
@@ -93,16 +94,18 @@ export function AppSidebar({
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: userProfile } = await supabase
-          .from("users")
+          .from("USER")
           .select("first_name, last_name, email, profile_picture_url")
           .eq("user_id", user.id)
           .single()
         
-        if (userProfile) {
+        const profile = userProfile as UserProfile | null;
+        
+        if (profile) {
           setUserData({
-            name: `${userProfile.first_name} ${userProfile.last_name}`.trim() || user.email?.split("@")[0] || "User",
-            email: userProfile.email || user.email || "",
-            avatar: userProfile.profile_picture_url || "/avatars/shadcn.jpg",
+            name: `${profile.first_name} ${profile.last_name}`.trim() || user.email?.split("@")[0] || "User",
+            email: profile.email || user.email || "",
+            avatar: profile.profile_picture_url || "/avatars/shadcn.jpg",
           })
         } else {
           setUserData({
