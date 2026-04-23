@@ -8,6 +8,7 @@ import { Property } from "../../../../types/housing/types";
 // ui components
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
+import Modal from "@/app/admin/housing/components/modals/Modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -122,6 +123,8 @@ export default function PropertiesList({
     totalUnits: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [activeProperty, setActiveProperty] = useState<Property | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchStats() {
@@ -275,10 +278,42 @@ export default function PropertiesList({
         </div>
       ) : (
         <DataTable
-          columns={getPropertyColumns(onEditProperty, onDeleteProperty)}
+          columns={getPropertyColumns(onEditProperty, (id, type) => {
+            const prop = filtered.find(p => p.accommodation_id === id);
+            if (prop) {
+              setActiveProperty(prop);
+              setDeleteModalOpen(true);
+            }
+          })}
           data={tableData.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))}
+          onRowClick={(row: any) => onSelectProperty(row.id)}
         />
       )}
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Property"
+        description={`Are you sure you want to delete ${activeProperty?.name}? This action cannot be undone and will delete all associated units.`}
+      >
+        <div className="space-y-4">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (activeProperty) {
+                  onDeleteProperty(activeProperty.accommodation_id, activeProperty.accommodation_type);
+                  setDeleteModalOpen(false);
+                  setActiveProperty(null);
+                }
+              }}
+            >
+              Delete Property
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
