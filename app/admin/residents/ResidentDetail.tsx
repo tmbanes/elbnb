@@ -33,6 +33,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 
 interface Props {
@@ -55,6 +62,8 @@ export default function ResidentDetail({
   const [overrideReason, setOverrideReason] = useState("");
   const [targetUnit, setTargetUnit] = useState("");
   const [isForced, setIsForced] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastTargetUnit, setLastTargetUnit] = useState("");
 
   // Reset confirmation state when resident changes
   useEffect(() => {
@@ -95,7 +104,7 @@ export default function ResidentDetail({
           <CardContent className="p-0">
             <div className="flex flex-col md:flex-row items-stretch">
 
-              {/* Left Section: Room Info - Reduced padding and font size */}
+              {/* Left Section: Room Info */}
               <div className="flex flex-1 gap-4 items-center px-4 py-3 border-b md:border-b-0 md:border-r border-[#e8e2d6]/60">
                 <div>
                   <p className="text-[9px] text-[#44291B]/50 font-black uppercase tracking-[0.15em] mb-0.5">
@@ -107,7 +116,7 @@ export default function ResidentDetail({
                 </div>
               </div>
 
-              {/* Right Section: Dates - Tightened gap and padding */}
+              {/* Right Section: Dates */}
               <div className="flex items-center gap-5 px-4 py-3 bg-white/30">
                 <div>
                   <p className="text-sm font-bold text-[#44291B] tabular-nums leading-none mt-2">
@@ -221,13 +230,13 @@ export default function ResidentDetail({
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#44291B]/40 ml-1">Current Unit</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#44291B] ml-1">Current Unit</label>
                         <div className="bg-gray-100 border border-[#e8e2d6] rounded-xl py-2.5 px-4 text-sm font-bold text-[#44291B]/50">
                           {resident.unit.unit_number}
                         </div>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#44291B]/40 ml-1">New Unit #</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#44291B] ml-1">New Unit #</label>
                         <input
                           type="text"
                           value={targetUnit}
@@ -237,29 +246,6 @@ export default function ResidentDetail({
                         />
                       </div>
                     </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-[#44291B]/40 ml-1">Reason for Transfer</label>
-                      <textarea
-                        value={overrideReason}
-                        onChange={(e) => setOverrideReason(e.target.value)}
-                        placeholder="Explain why this manual override is necessary..."
-                        className="w-full bg-[#F6F8D5]/30 border border-[#e8e2d6] rounded-xl py-2.5 px-4 text-sm font-medium text-[#44291B] outline-none focus:ring-2 focus:ring-[#264384]/10 focus:border-[#264384] transition-all h-20 resize-none"
-                      />
-                    </div>
-
-                    <label className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={isForced}
-                        onChange={(e) => setIsForced(e.target.checked)}
-                        className="w-4 h-4 rounded border-[#e8e2d6] text-amber-600 focus:ring-amber-500"
-                      />
-                      <div className="flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4 text-amber-600" />
-                        <span className="text-xs font-bold text-amber-900">Force assignment (bypass occupancy checks)</span>
-                      </div>
-                    </label>
                   </>
                 ) : (
                   <div className="space-y-1.5">
@@ -307,14 +293,26 @@ export default function ResidentDetail({
                   <Button
                     onClick={() => {
                       const details = confirmingAction === "override" ? { targetUnit, reason: overrideReason, force: isForced } : undefined;
+                      const isOverride = confirmingAction === "override";
+                      const savedTarget = targetUnit;
+
                       onAction(resident.assignment_id, confirmingAction, actionDate, details);
                       setConfirmingAction(null);
+
+                      if (isOverride) {
+                        setLastTargetUnit(savedTarget);
+                        setShowSuccessModal(true);
+                      }
                     }}
                     className={cn(
-                      "flex-[2] text-white font-bold h-11 rounded-xl shadow-lg",
-                      confirmingAction === "override" ? "bg-amber-600 hover:bg-amber-700 shadow-amber-600/20" : "bg-[#264384] hover:bg-[#1a2d5a] shadow-[#264384]/20"
+                      "flex-[2] font-bold h-11 rounded-xl shadow-lg transition-all duration-200",
+                      confirmingAction === "override"
+                        ? (targetUnit
+                          ? "bg-[#EB8A0B] hover:bg-[#EFC58F] text-white shadow-amber-600/20"
+                          : "bg-[#44291B]/5 text-[#44291B]/30 shadow-none")
+                        : "bg-[#264384] hover:bg-[#1a2d5a] text-white shadow-[#264384]/20"
                     )}
-                    disabled={isLoading || (confirmingAction === "override" && (!targetUnit || !overrideReason))}
+                    disabled={isLoading || (confirmingAction === "override" && !targetUnit)}
                   >
                     {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> :
                       confirmingAction === "override" ? "Confirm Transfer" : "Confirm Action"}
@@ -397,24 +395,23 @@ export default function ResidentDetail({
                       <ShieldAlert className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
-
-                  {showOverride && (
-                    <Button
-                      onClick={() => {
-                        setConfirmingAction("override");
-                        setTargetUnit("");
-                        setOverrideReason("");
-                        setIsForced(false);
-                      }}
-                      variant="ghost"
-                      className="w-full text-amber-700 hover:text-amber-800 hover:bg-amber-50 font-bold text-xs flex items-center justify-center gap-2 border border-dashed border-amber-200 rounded-xl py-6"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      Admin Override: Transfer to Different Unit
-                    </Button>
-                  )}
                 </div>
+              )}
 
+              {showOverride && !isCheckedOut && (
+                <Button
+                  onClick={() => {
+                    setConfirmingAction("override");
+                    setTargetUnit("");
+                    setOverrideReason("");
+                    setIsForced(false);
+                  }}
+                  variant="ghost"
+                  className="w-full text-amber-700 hover:text-amber-800 hover:bg-amber-50 font-bold text-xs flex items-center justify-center gap-2 border border-dashed border-amber-200 rounded-xl py-6"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Admin Override: Transfer to Different Unit
+                </Button>
               )}
 
               {isCheckedOut && (
@@ -442,6 +439,20 @@ export default function ResidentDetail({
           <History className="h-4 w-4" />
         </div>
       </div>
+
+      {/* Success Modal for Override */}
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:max-w-md bg-[#FDFFF4] border-[#e8e2d6] rounded-3xl p-0 overflow-hidden">
+          <div className="bg-[#78A24C] p-5 flex flex-col items-center justify-center text-white text-center">
+            <DialogTitle className="text-2xl font-[family-name:var(--font-archivo-black)] tracking-tight">
+              Transfer Successful!
+            </DialogTitle>
+            <p className="text-white/80 text-sm font-medium mt-2">
+              The resident has been officially reassigned.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
