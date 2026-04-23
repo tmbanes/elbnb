@@ -2,13 +2,10 @@
 "use client"
 
 import { type LucideIcon } from "lucide-react"
-<<<<<<< HEAD
-=======
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useSidebar } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
->>>>>>> origin/develop
 
 import {
   SidebarGroup,
@@ -31,21 +28,6 @@ export function NavMain({
     isActive?: boolean
   }[]
 }) {
-<<<<<<< HEAD
-  return (
-    <SidebarGroup>
-      <SidebarMenu>
-        {items.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton tooltip={item.title} asChild>
-              <a href={item.url}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-=======
   const pathname = usePathname()
   const { setOpen, isMobile } = useSidebar()
 
@@ -81,7 +63,6 @@ export function NavMain({
             </SidebarMenuItem>
           )
         })}
->>>>>>> origin/develop
       </SidebarMenu>
     </SidebarGroup>
   )
