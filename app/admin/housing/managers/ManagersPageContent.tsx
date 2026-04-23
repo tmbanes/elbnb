@@ -103,28 +103,39 @@ export default function ManagersContent() {
     handleCloseDetail();
   }
 
-  if (loading) return <p className="p-6">Loading managers...</p>;
-  if (error) return <p className="p-6 text-red-500">Error: {error}</p>;
+  // Centered Full Page Loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F6F8D5]">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-4 border-[#264384] border-t-transparent rounded-full animate-spin" />
+          <p className="text-[#44291B] font-medium">Loading managers...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F6F8D5]">
+        <p className="p-6 text-red-500 bg-red-50 border border-red-200 rounded-lg">
+          Error: {error}
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex overflow-hidden">
-
-      
+    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden bg-[#F6F8D5]">
       {/* LEFT: Managers List */}
       <div
         className={`
-          w-[65%]
+          flex-1
           transition-all duration-300
           overflow-y-auto
-          pt-2
+          ${selectedId ? "hidden lg:block" : "block"}
         `}
       >
-
-        <div className="pt-6 pl-7">
-          <h1 className="text-4xl font-bold text-[#44291B]">Managers Page</h1>
-          <p className="text-sm text-[#44291B] mt-1">View and manage your property managers</p>
-        </div>
-        
         <ManagersList
           managers={managers}
           onBackToHousing={handleBackToHousing}
@@ -132,32 +143,47 @@ export default function ManagersContent() {
           onSelect={handleSelect}
           onEdit={openEditModal}
           onDelete={handleDelete}
+          selectedId={selectedId}
         />
       </div>
 
       {/* RIGHT: Detail Panel */}
       <div
-        className="
-          w-1/2 min-w-[400px]
-          border-l border-[#e8e2d6]
+        className={`
+          w-full lg:w-[450px]
+          lg:border-l border-[#e8e2d6]
           bg-[#F6F8D5]
           transition-all duration-300
           overflow-y-auto
-        "
+          flex flex-col
+          ${selectedId ? "block" : "hidden lg:flex"}
+        `}
       >
         {selectedId && selectedManager && !detailLoading ? (
           <ManagerDetail
             manager={selectedManager}
             onEdit={openEditModal}
             onDelete={handleDelete}
+            onBack={handleCloseDetail}
           />
         ) : selectedId && detailLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-[#44291B]">Loading...</p>
+
+          <div className="flex flex-1 items-center justify-center p-20">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 border-4 border-[#264384] border-t-transparent rounded-full animate-spin" />
+              <p className="text-[#44291B] text-sm">Loading details...</p>
+            </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-[#44291B]">Select a manager to view details</p>
+
+
+          <div className="hidden lg:flex flex-1 items-center justify-center p-10 text-center">
+            <div className="max-w-[200px] space-y-2">
+              <p className="text-[#44291B] font-bold text-lg">No Manager Selected</p>
+              <p className="text-[#44291B] text-sm">
+                Select a manager from the list to view their full profile and office details.
+              </p>
+            </div>
           </div>
         )}
       </div>
