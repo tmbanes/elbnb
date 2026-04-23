@@ -63,7 +63,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
 
   // Common UI Wrapper
   const renderContent = () => {
-    if (role === "student") {
+    if (role === "student" || role === "guest") {
       return (
         <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full min-h-[280px] sm:min-h-[350px] md:min-h-[400px]">
           {/* Accommodations Container */}

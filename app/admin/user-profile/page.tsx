@@ -3,16 +3,13 @@ import { ProfileComponent } from '@/components/ui/profile-component'
 import { getApiAuthenticatedUser } from '@/lib/auth/session'
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 
-export default async function StudentProfilePage() {
+export default async function AdminProfilePage() {
   const auth = await getApiAuthenticatedUser()
-  
-  if ("error" in auth) {
-    redirect("/");
-  }
+  if ("error" in auth) redirect("/");
 
   const user = auth.user;
+  if (user.role !== "housing_admin") redirect("/dashboard");
 
-  // Fetch metadata from supabase auth
   const supabase = await createSupabaseServerClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
 

@@ -9,6 +9,7 @@ import {
   LogOut,
   Sparkles,
 } from "lucide-react"
+import Link from "next/link"
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
 
@@ -35,12 +36,14 @@ import {
 
 export function NavUser({
   user,
+  role = "student",
 }: {
   user: {
     name: string
     email: string
     avatar: string
   }
+  role?: string
 }) {
   const { isMobile } = useSidebar()
   const supabase = getSupabaseBrowserClient()
@@ -90,11 +93,13 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+              <DropdownMenuItem asChild>
+                <Link href={`/${role}/user-profile`} className="w-full flex items-center gap-2 cursor-pointer">
+                  <BadgeCheck className="size-4" />
+                  Account
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
                 <Bell />
                 Notifications
               </DropdownMenuItem>

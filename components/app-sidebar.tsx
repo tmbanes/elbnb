@@ -158,7 +158,7 @@ export function AppSidebar({
         </SidebarContent>
 
         <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2 bg-[#8ba665] overflow-hidden">
-          <NavUser user={userData} />
+          <NavUser user={userData} role={role} />
         </SidebarFooter>
 
         <SidebarRail />
