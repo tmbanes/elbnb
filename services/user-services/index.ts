@@ -1,4 +1,4 @@
-<<<<<<< Updated upstream
+/*
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { AccomodationHistory } from "@/types/accomodation/accomodationHistory";
@@ -755,7 +755,7 @@ export async function updateAdminInvoiceDetails(
   role: UserRole,
   billing_id: string,
   updates: {
-    admin_flag?: boolean;
+    legacyAdminFlag?: boolean;
     internal_notes?: string;
     reminded_at?: string;
     amount?: number;
@@ -793,7 +793,7 @@ export async function getActiveTenants() {
     `)
     .in("assignment_status", ["active", "waiting_payment", "pending"]);
 }
-=======
+*/
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { AccomodationHistory } from "@/types/accomodation/accomodationHistory";
@@ -1646,4 +1646,4 @@ export async function getActiveTenants() {
     `)
     .in("assignment_status", ["active", "waiting_payment", "pending"]);
 }
->>>>>>> Stashed changes
+
