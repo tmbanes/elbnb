@@ -156,7 +156,11 @@ export const getPropertyColumns = (
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-transparent">
+              <Button 
+                variant="ghost" 
+                className="h-8 w-8 p-0 hover:bg-transparent"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -164,7 +168,10 @@ export const getPropertyColumns = (
             <DropdownMenuContent align="end" className="bg-[#FDFFF4] text-[#44291B]">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem asChild className="focus:bg-[#F6F8D5] focus:text-[#44291B] focus:**:text-[#44291B] cursor-pointer">
-                <Link href={`/admin/housing?id=${p.accommodation_id}`}>
+                <Link 
+                  href={`/admin/housing?id=${p.accommodation_id}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="flex items-center">
                     <Eye className="mr-2 h-4 w-4" />
                     <span>View</span>
@@ -175,7 +182,10 @@ export const getPropertyColumns = (
 
               <DropdownMenuItem
                 className="focus:bg-[#F6F8D5] focus:text-[#44291B] focus:**:text-[#44291B] cursor-pointer"
-                onClick={() => openEditModal(p)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEditModal(p);
+                }}
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 <span>Edit</span>
@@ -184,11 +194,13 @@ export const getPropertyColumns = (
 
               <DropdownMenuItem
                 className="focus:bg-[#F6F8D5] focus:text-[#DF3538] focus:**:text-[#DF3538] cursor-pointer"
-                onClick={() =>
+                onClick={(e) => {
+                  e.stopPropagation();
                   handleDeleteProperty(
                     p.accommodation_id,
                     p.accommodation_type
-                  )}
+                  );
+                }}
               >
                 <Trash2 className="mr-2 h-4 w-4 text-[#DF3538]" />
                 <span className="text-[#DF3538]">Delete</span>
