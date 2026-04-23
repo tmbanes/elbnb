@@ -62,6 +62,9 @@ export interface Accommodation {
     property_type?: PropertyType;
     no_of_units: number;
     accomm_sex: Sex;
+    min_price?: number | null;
+    max_price?: number | null;
+    billing_period?: BillingPeriod | null;
 }
 
 // BASED ON SUPABASE PROPERTIES

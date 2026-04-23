@@ -1,21 +1,66 @@
-import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation";
+"use client";
+import { useState, useMemo } from "react";
 import { Accommodation } from "@/types/accommodation_units";
 import Link from "next/link";
 
-export default async function ListOfAccommodationsPage() {
-  const { data: accommodations, error } =
-    await UnitAccomodationsDisplayService.listAccomodations("student");
+export default function ListOfAccommodationsPage({ initialAccommodations }: { initialAccommodations: Accommodation[] }) {
 
-  if (error) {
-    return <div className="p-10 text-red-500">Error: {error}</div>;
-  }
+  // Form states
+  const [locationStr, setLocationStr] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [roomTypes, setRoomTypes] = useState({ single: false, shared: false, entire: false });
+  const [availabilityStr, setAvailabilityStr] = useState("");
+
+  // Applied filters (to only trigger on Apply)
+  const [appliedFilters, setAppliedFilters] = useState({
+    locationStr: "",
+    minPrice: "",
+    maxPrice: "",
+    roomTypes: { single: false, shared: false, entire: false },
+    availabilityStr: ""
+  });
+
+  const handleApplyFilters = () => {
+    setAppliedFilters({ locationStr, minPrice, maxPrice, roomTypes, availabilityStr });
+  };
+
+  // Filter logic
+  const filteredAccommodations = useMemo(() => {
+    return initialAccommodations.filter((acc) => {
+      // Location filter
+      if (appliedFilters.locationStr && !acc.location.toLowerCase().includes(appliedFilters.locationStr.toLowerCase())) {
+        return false;
+      }
+
+      // Price filter
+      if (appliedFilters.minPrice !== "") {
+        const filterMin = Number(appliedFilters.minPrice);
+        if (acc.max_price === null || acc.max_price === undefined || acc.max_price < filterMin) {
+          return false;
+        }
+      }
+
+      if (appliedFilters.maxPrice !== "") {
+        const filterMax = Number(appliedFilters.maxPrice);
+        if (acc.min_price === null || acc.min_price === undefined || acc.min_price > filterMax) {
+          return false;
+        }
+      }
+
+      // Add other filters here when data is available (e.g. roomType, availability)
+      // Currently `Accommodation` model doesn't expose room types, or availability
+
+      return true;
+    });
+  }, [initialAccommodations, appliedFilters]);
 
   // LIMIT TO 3 ITEMS ONLY (TEMP FRONTEND PAGINATION)
   // TODO: Implement proper pagination with backend support
   const pageSize = 3;
   const page = 1; // static for now
   const start = (page - 1) * pageSize;
-  const paginated = accommodations?.slice(start, start + pageSize);
+  const paginated = filteredAccommodations?.slice(start, start + pageSize);
 
   return (
     <div
@@ -23,7 +68,7 @@ export default async function ListOfAccommodationsPage() {
       style={{ backgroundImage: "url('/assets/textured-white-1.png')" }}
     >
       <div className="max-w-[1240px] mx-auto px-6 py-10">
-        
+
         {/* FLEXIBLE LAYOUT */}
         <div className="flex flex-col md:flex-row gap-6 items-start">
 
@@ -40,6 +85,8 @@ export default async function ListOfAccommodationsPage() {
               <div className="space-y-1">
                 <label className="text-[13px] text-[#44291B]">Location</label>
                 <input
+                  value={locationStr}
+                  onChange={(e) => setLocationStr(e.target.value)}
                   placeholder="City or Region"
                   className="w-full bg-white/80 border border-[#E5E7EB] rounded-md px-3 py-2 text-sm"
                 />
@@ -52,10 +99,16 @@ export default async function ListOfAccommodationsPage() {
                 </label>
                 <div className="flex gap-2">
                   <input
+                    type="number"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
                     placeholder="Min"
                     className="w-full bg-white/80 border border-[#E5E7EB] rounded-md px-3 py-2 text-sm"
                   />
                   <input
+                    type="number"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
                     placeholder="Max"
                     className="w-full bg-white/80 border border-[#E5E7EB] rounded-md px-3 py-2 text-sm"
                   />
@@ -68,17 +121,32 @@ export default async function ListOfAccommodationsPage() {
 
                 <div className="space-y-1 text-sm text-[#44291B]">
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" className="accent-[#1F3C88]" />
+                    <input
+                      type="checkbox"
+                      className="accent-[#1F3C88]"
+                      checked={roomTypes.single}
+                      onChange={(e) => setRoomTypes(prev => ({ ...prev, single: e.target.checked }))}
+                    />
                     Single Room
                   </label>
 
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" className="accent-[#1F3C88]" />
+                    <input
+                      type="checkbox"
+                      className="accent-[#1F3C88]"
+                      checked={roomTypes.shared}
+                      onChange={(e) => setRoomTypes(prev => ({ ...prev, shared: e.target.checked }))}
+                    />
                     Shared Room
                   </label>
 
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" className="accent-[#1F3C88]" />
+                    <input
+                      type="checkbox"
+                      className="accent-[#1F3C88]"
+                      checked={roomTypes.entire}
+                      onChange={(e) => setRoomTypes(prev => ({ ...prev, entire: e.target.checked }))}
+                    />
                     Entire Apartment
                   </label>
                 </div>
@@ -88,13 +156,19 @@ export default async function ListOfAccommodationsPage() {
               <div className="space-y-1">
                 <label className="text-[13px] text-[#44291B]">Availability</label>
                 <input
+                  type="date"
+                  value={availabilityStr}
+                  onChange={(e) => setAvailabilityStr(e.target.value)}
                   placeholder="mm/dd/yyyy"
                   className="w-full bg-white/80 border border-[#E5E7EB] rounded-md px-3 py-2 text-sm"
                 />
               </div>
 
               {/* APPLY BUTTON */}
-              <button className="w-full mt-2 bg-[#264384] hover:bg-[#182f6b] text-white py-2.5 rounded-md font-medium transition">
+              <button
+                onClick={handleApplyFilters}
+                className="w-full mt-2 bg-[#264384] hover:bg-[#182f6b] text-white py-2.5 rounded-md font-medium transition"
+              >
                 Apply Filters
               </button>
 
@@ -140,14 +214,19 @@ export default async function ListOfAccommodationsPage() {
                         {acc.name}
                       </h2>
 
-                      {/* !! ADD PROPER PRICE !! */}
+                      {/* PROPER PRICE RANGE */}
                       <div className="flex flex-col items-end whitespace-nowrap">
                         <span className="font-archivo font-bold text-[#44291B] text-2xl">
-                          ₱ 500
+                          {acc.min_price === null || acc.min_price === undefined ? (
+                            "Price unavailable"
+                          ) : acc.min_price === acc.max_price ? (
+                            `₱ ${acc.min_price}`
+                          ) : (
+                            `₱ ${acc.min_price} - ₱ ${acc.max_price}`
+                          )}
                         </span>
-
                         <span className="text-xs text-[#6B7280] font-sans">
-                          / month
+                          {acc.min_price !== null && acc.min_price !== undefined ? `/ ${acc.billing_period || 'month'}` : ""}
                         </span>
                       </div>
                     </div>
@@ -172,7 +251,7 @@ export default async function ListOfAccommodationsPage() {
                         View Details
                       </button>
 
-                      <Link 
+                      <Link
                         href={`/student/accommodations/application?accommodationId=${acc.accommodation_id}`}
                         className="px-8 py-2 bg-[#2B4A8B] text-white rounded-lg text-sm inline-block"
                       >
@@ -186,7 +265,7 @@ export default async function ListOfAccommodationsPage() {
 
             {/* CRUMB PAGINATION !! NEEDS LOGIC */}
             <div className="flex items-center justify-center gap-2 mt-6 text-sm">
-              
+
               {/* Prev */}
               <button className="px-3 py-1 border border-[#D1D5DB] rounded text-[#1F2937]">
                 &lt;
