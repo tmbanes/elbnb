@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ProfileUpload } from './ProfileUpload';
-import { EditProfileDialog } from './EditProfileDialog';
+import { ProfileUpload } from '@/app/dashboard/ProfileUpload';
+import { EditProfileDialog } from '@/app/dashboard/EditProfileDialog';
 import { User } from '@/types/user.types';
 import { Home, Edit3, Folder, User as UserIcon, Upload } from 'lucide-react';
 import {
@@ -80,7 +80,7 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
 
         {/* Folder shape background */}
         <div className="absolute inset-0 z-0 pointer-events-none drop-shadow-[0_25px_25px_rgba(0,0,0,0.15)]" style={{ filter: 'url(#grain)' }}>
-          <div className="absolute inset-0 w-full h-full bg-[#7EB647] rounded-t-[300px] rounded-b-[40px]" />
+          <div className="absolute inset-0 w-full h-full bg-[#7EB647] rounded-t-[300px] rounded-bl-[40px] rounded-br-[40px]" />
         </div>
 
         {/* House & Profile breakout — increase top value to move everything down */}
@@ -151,13 +151,14 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
             </div>
           </div>
 
-          {/* Overlapping containers */}
+          {/* Overlapping containers — clipped to uniform rounded corners */}
+          <div className="overflow-hidden rounded-bl-[40px] rounded-br-[40px]">
           <div className="grid grid-cols-1 grid-rows-1 mt-6 relative w-full min-h-[350px] md:min-h-[400px]">
 
             {/* Accommodations Container */}
             <div
               onClick={() => setActiveTab('accommodations')}
-              className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-6 md:px-12 rounded-tl-[700px] rounded-tr-[100px] rounded-b-[40px] ${activeTab === 'accommodations'
+              className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-6 md:px-12 rounded-tl-[700px] rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations'
                 ? 'h-full'
                 : 'hover:bg-[#8bc453]/90 hover:shadow-lg'
                 }`}
@@ -169,7 +170,7 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
                 <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Accommodations</h3>
               </div>
 
-              <div className="pb-8 pt-10 pl-8 md:pl-[120px] pr-8 md:pr-12">
+              <div className="pb-8 pt-4 pl-16 md:pl-[180px] pr-8 md:pr-12">
                 <div className="grid grid-cols-2 gap-y-8 gap-x-6 md:gap-x-8 w-full">
                   <div className="md:col-span-12">
                     <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Current Residence</h4>
@@ -305,6 +306,8 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
               </div>
             </div>
           </div>
+          </div>
+
 
           {/* Floating Action Buttons */}
           <div className="absolute right-4 md:right-6 bottom-6 flex gap-3 z-50">

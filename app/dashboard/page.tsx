@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { StudentDashboard } from './StudentDashboard'
+import { StudentDashboard } from '@/components/ui/StudentDashboard'
 import { getApiAuthenticatedUser } from '@/lib/auth/session'
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 
