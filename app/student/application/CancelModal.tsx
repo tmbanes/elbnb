@@ -38,7 +38,7 @@ export function CancelApplicationModal({ applicationId }: { applicationId: strin
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="sm">Cancel Application</Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="!bg-[#FDFFF4] !text-[#44291B]">
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -46,14 +46,22 @@ export function CancelApplicationModal({ applicationId }: { applicationId: strin
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Keep Application</AlertDialogCancel>
+          <AlertDialogCancel asChild disabled={isPending}>
+            <Button
+            variant={"ghost"}
+            className="bg-[#FDFFF4] text-[#44291B]/60 hover:text-[#44291B] hover:bg-gray-100 border-transparent"
+            >
+              Cancel
+            </Button>
+
+          </AlertDialogCancel>
           <AlertDialogAction 
             onClick={(e) => {
               e.preventDefault() 
               handleCancel()
             }}
             disabled={isPending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="!bg-[#DF3538] !text-white hover:!bg-[#DF3538]/80 border-transparent"
           >
             {isPending ? "Canceling..." : "Cancel Application"}
           </AlertDialogAction>
