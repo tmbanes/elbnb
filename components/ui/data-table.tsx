@@ -26,6 +26,7 @@ interface DataTableProps<TData, TValue> {
   header?: React.ReactNode
   toolbar?: React.ReactNode
   className?: string
+  onRowClick?: (data: TData) => void
 }
 
 import * as React from "react"
@@ -36,6 +37,7 @@ export function DataTable<TData, TValue>({
   header,
   toolbar,
   className,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
@@ -86,6 +88,8 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                className={onRowClick ? "cursor-pointer hover:bg-[#F6F8D5] transition-colors" : ""}
+                onClick={() => onRowClick?.(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
