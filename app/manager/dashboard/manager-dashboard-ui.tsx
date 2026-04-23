@@ -287,7 +287,7 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
             {/* MAIN CONTENT */}
             <main className="flex-1 flex flex-col h-full overflow-hidden">
                 {/* TOP HEADER */}
-                <header className="flex justify-between items-center px-8 lg:px-10 mt-6 mb-4">
+                <header className="flex justify-between items-center px-8 lg:px-16 xl:px-24 mt-6 mb-4">
                     <div className="relative w-full max-w-[400px]">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
@@ -333,7 +333,7 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                     </div>
                 </header>
 
-                <div className="px-8 lg:px-10 flex-1 overflow-auto pb-10">
+                <div className="px-8 lg:px-16 xl:px-24 flex-1 overflow-auto pb-10">
                     {/* TITLE BLOCK */}
                     <div className="mb-6">
                         <h1 className="text-[32px] md:text-[38px] font-black text-[#0B3A64] tracking-tight leading-none mb-1">
@@ -401,10 +401,10 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                         <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100/50 flex flex-col justify-between h-[180px]">
                             <div className="flex justify-between items-center">
                                 <h3 className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">Pending Assignment</h3>
-                                <span className="bg-[#5D6BDE]/10 text-[#5D6BDE] text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Waitlist</span>
+                                <span className="bg-[#5591AB]/10 text-[#5591AB] text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Waitlist</span>
                             </div>
                             <div>
-                                <p className="text-[38px] font-black text-[#5D6BDE] leading-none mb-1">{waitlistCount}</p>
+                                <p className="text-[38px] font-black text-[#5591AB] leading-none mb-1">{waitlistCount}</p>
                                 <p className="text-[11px] text-slate-500 font-medium">Approved Students Waiting</p>
                             </div>
                         </div>
