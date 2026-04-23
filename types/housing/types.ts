@@ -8,7 +8,7 @@ export interface Unit {
   max_occupancy: number;
   current_occupancy: number;
   rental_fee: number;
-  unit_status: "reserved" | "occupied" | "occupied" | "under_maintenance" | "inactive";
+  unit_status: "active" | "reserved" | "occupied" | "under_maintenance" | "inactive";
 }
 
 export interface Property {
