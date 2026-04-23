@@ -109,7 +109,7 @@ export default function PropertyDetail({
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 font-[family-name:var(--font-archivo)]">
       <Button variant="link" onClick={onBack} className="pl-0 text-[#264384] h-auto py-0">
         <ChevronLeft className="mr-1 h-4 w-4" /> Back
       </Button>
@@ -121,7 +121,7 @@ export default function PropertyDetail({
 
             <div className="flex flex-col gap-2 shrink-0 min-w-0">
               <div>
-                <h1 className="text-3xl font-bold text-[#44291B] leading-tight">{property.name}</h1>
+                <h1 className="text-3xl font-[family-name:var(--font-archivo-black)] text-[#44291B] leading-tight">{property.name}</h1>
                 <div className="flex items-center text-[#6b6a62] text-xs mt-0.5 gap-1">
                   <MapPin className="w-3 h-3 shrink-0" />
                   {property.location}
@@ -193,7 +193,7 @@ export default function PropertyDetail({
             data={property.units ?? []}
             header={
               <div>
-                <h2 className="text-xl font-bold text-[#44291B]">Units</h2>
+                <h2 className="text-xl font-[family-name:var(--font-archivo-black)] text-[#44291B]">Units</h2>
                 <p className="text-sm text-[#44291B]">Manage all units under this property</p>
               </div>
             }
@@ -272,7 +272,7 @@ export default function PropertyDetail({
           {/* Property details card */}
           <Card className="bg-[#FDFFF4] shadow-sm">
             <CardHeader className="grid flex-1">
-              <CardTitle className="font-bold text-[#44291B]">
+              <CardTitle className="font-[family-name:var(--font-archivo-black)] text-[#44291B]">
                 {isDorm ? "Dormitory Details" : "Rental Space Details"}
               </CardTitle>
             </CardHeader>
@@ -308,7 +308,7 @@ export default function PropertyDetail({
           {property.dormitory_manager && (
             <Card className="bg-[#FDFFF4] shadow-sm">
               <CardHeader className="grid flex-1">
-                <CardTitle className="font-bold text-[#44291B]">Assigned Manager</CardTitle>
+                <CardTitle className="font-[family-name:var(--font-archivo-black)] text-[#44291B]">Assigned Manager</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-3">
@@ -403,7 +403,7 @@ function ComplaintsPanel({ complaints, onStatusChange }: ComplaintsPanelProps) {
       <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#e2e4c0]">
           <div>
-            <h2 className="text-xl font-bold text-[#44291B]">Complaints</h2>
+            <h2 className="text-xl font-[family-name:var(--font-archivo-black)] text-[#44291B]">Complaints</h2>
             <p className="text-sm text-[#8c8b82]">{complaints.length} total</p>
           </div>
           <ToggleGroup
