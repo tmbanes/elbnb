@@ -71,7 +71,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
             onClick={() => setActiveTab('accommodations')}
             className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 rounded-tl-[200px] sm:rounded-tl-[400px] md:rounded-tl-[700px] rounded-tr-[40px] sm:rounded-tr-[60px] md:rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations'
               ? 'h-full'
-              : 'hover:bg-[#8bc453]/90 hover:shadow-lg'
+              : 'hover:bg-[#8bc453] hover:shadow-lg'
               }`}
             style={{ filter: 'url(#grain)', backgroundBlendMode: 'multiply' }}
           >
@@ -84,7 +84,26 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
             <div className="pb-6 pt-3 pl-4 sm:pl-10 md:pl-[180px] pr-4 sm:pr-6 md:pr-12">
               <div className="grid grid-cols-2 gap-y-8 gap-x-6 md:gap-x-8 w-full">
                 <div className="md:col-span-12">
-                  <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Current Residence</h4>
+                  <div className="flex items-center justify-start gap-4 mb-3">
+                    <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase`}>Current Residence</h4>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[#3E2723] opacity-70 hover:opacity-100 transition-opacity text-[10px] font-bold tracking-widest uppercase underline underline-offset-4 whitespace-nowrap"
+                        >
+                          View Previous Residences
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md bg-[#F4F5E1] border-[#7EB647]">
+                        <DialogHeader>
+                          <DialogTitle className="text-[#3E2723] font-bold">Previous Accommodations</DialogTitle>
+                          <DialogDescription className="text-[#3E2723]/70">A history of your past dormitory assignments.</DialogDescription>
+                        </DialogHeader>
+                        <div className="mt-4"></div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                   <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
                     <div>
                       <p className={`${SubheaderLg} leading-snug`}>Eliazo Hall</p>
@@ -98,28 +117,9 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                       <p className={`${SubheaderLg} leading-snug`}>08/15/2023</p>
                       <p className={`${SubheaderMd} opacity-80 leading-snug`}>Contract Start Date</p>
                     </div>
-                    <div className="flex items-end justify-between gap-4">
-                      <div>
-                        <p className={`${SubheaderLg} leading-snug`}>05/30/2024</p>
-                        <p className={`${SubheaderMd} opacity-80 leading-snug`}>Contract End Date</p>
-                      </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <button
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[#3E2723] opacity-70 hover:opacity-100 transition-opacity text-[10px] font-bold tracking-widest uppercase underline underline-offset-4 text-right leading-snug pb-1"
-                          >
-                            View Previous<br />Accommodations
-                          </button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md bg-[#F4F5E1] border-[#7EB647]">
-                          <DialogHeader>
-                            <DialogTitle className="text-[#3E2723] font-bold">Previous Accommodations</DialogTitle>
-                            <DialogDescription className="text-[#3E2723]/70">A history of your past dormitory assignments.</DialogDescription>
-                          </DialogHeader>
-                          <div className="mt-4"></div>
-                        </DialogContent>
-                      </Dialog>
+                    <div>
+                      <p className={`${SubheaderLg} leading-snug`}>05/30/2024</p>
+                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Contract End Date</p>
                     </div>
                   </div>
                 </div>
@@ -135,7 +135,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
             transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
             ${activeTab === 'personal'
                 ? 'rounded-tl-[40px] rounded-tr-[150px] sm:rounded-tr-[300px] rounded-b-[40px]'
-                : 'rounded-[40px] hover:bg-[#8bc453]/90 hover:shadow-lg'
+                : 'rounded-[40px] hover:bg-[#8bc453] hover:shadow-lg'
               }`}
             style={activeTab === 'personal' ? { filter: 'url(#grain)', backgroundBlendMode: 'multiply' } : {}}
           >
@@ -208,10 +208,10 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
           <h3 className={`${HeaderMd} text-[#3E2723]`}>Role: {role.replace('_', ' ').toUpperCase()}</h3>
           <p className={`${BodyLg} mt-4`}>This profile view is currently identical for Admin and Dorm Managers.</p>
           <div className="mt-8 space-y-4">
-             <div className="p-6 bg-white/20 rounded-xl">
-                <p className={`${SubheaderLg}`}>User ID: {user.user_id}</p>
-                <p className={`${SubheaderMd}`}>Email: {user.email}</p>
-             </div>
+            <div className="p-6 bg-white/20 rounded-xl">
+              <p className={`${SubheaderLg}`}>User ID: {user.user_id}</p>
+              <p className={`${SubheaderMd}`}>Email: {user.email}</p>
+            </div>
           </div>
         </div>
       );
