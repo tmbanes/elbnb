@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { StudentDashboard } from '@/components/ui/StudentDashboard'
+import { ProfileComponent } from '@/components/ui/profile-component'
 import { getApiAuthenticatedUser } from '@/lib/auth/session'
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 
@@ -17,7 +17,7 @@ export default async function DashboardPage() {
 
   if (user.role === "student" || user.role === "guest") {
     return (
-      <StudentDashboard user={user} metadata={authUser?.user_metadata} />
+      <ProfileComponent user={user} metadata={authUser?.user_metadata} />
     )
   }
 
