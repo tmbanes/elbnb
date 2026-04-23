@@ -5,6 +5,8 @@ import { Manager } from "../../../../types/housing/types";
 import AddManagerModal from "@/app/admin/housing/components/modals/AddManagerModal";
 import ManagersList from "./ManagersList";
 import ManagerDetail from "./ManagerDetail";
+import Modal from "@/app/admin/housing/components/modals/Modal";
+import { Button } from "@/components/ui/button";
 
 export default function ManagersContent() {
   const [managers, setManagers] = useState<Manager[]>([]);
@@ -15,6 +17,8 @@ export default function ManagersContent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingManager, setEditingManager] = useState<any | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [managerToDelete, setManagerToDelete] = useState<Manager | null>(null);
 
   async function fetchManagers() {
     try {
@@ -79,8 +83,14 @@ export default function ManagersContent() {
     setEditingManager(null);
   }
 
-  async function handleDelete(employeeId: string) {
-    if (!confirm("Are you sure you want to delete this manager?")) return;
+  function requestDelete(manager: Manager) {
+    setManagerToDelete(manager);
+    setDeleteModalOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!managerToDelete) return;
+    const employeeId = managerToDelete.employee_id;
 
     const res = await fetch(`/api/admin/housing/managers?id=${employeeId}`, {
       method: "DELETE",
@@ -97,6 +107,8 @@ export default function ManagersContent() {
     );
 
     if (selectedId === employeeId) handleCloseDetail();
+    setDeleteModalOpen(false);
+    setManagerToDelete(null);
   }
 
   function handleBackToHousing() {
@@ -142,7 +154,7 @@ export default function ManagersContent() {
           onAdd={openAddModal}
           onSelect={handleSelect}
           onEdit={openEditModal}
-          onDelete={handleDelete}
+          onDelete={requestDelete}
           selectedId={selectedId}
         />
       </div>
@@ -163,7 +175,7 @@ export default function ManagersContent() {
           <ManagerDetail
             manager={selectedManager}
             onEdit={openEditModal}
-            onDelete={handleDelete}
+            onDelete={requestDelete}
             onBack={handleCloseDetail}
           />
         ) : selectedId && detailLoading ? (
@@ -197,6 +209,25 @@ export default function ManagersContent() {
         }}
         existingManager={editingManager}
       />
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Manager"
+        description={`Are you sure you want to remove ${managerToDelete?.users.first_name} ${managerToDelete?.users.last_name}? This action will unassign them from any properties they manage.`}
+      >
+        <div className="space-y-4">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              Delete Manager
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
