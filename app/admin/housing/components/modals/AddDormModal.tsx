@@ -78,7 +78,7 @@ export default function AddDormModal({
     fetch("/api/admin/housing/managers")
       .then((r) => r.json())
       .then(setManagers)
-      .catch(() => {});
+      .catch(() => { });
   }, [isOpen]);
 
   useEffect(() => {
@@ -172,11 +172,11 @@ export default function AddDormModal({
           isEditing
             ? payload
             : {
-                ...payload.accommodationFields,
-                ...payload.dormitoryFields,
-                number_of_semesters_allowed:
-                  payload.dormitoryFields.number_of_semestersAllowed,
-              }
+              ...payload.accommodationFields,
+              ...payload.dormitoryFields,
+              number_of_semesters_allowed:
+                payload.dormitoryFields.number_of_semestersAllowed,
+            }
         ),
       });
 
@@ -235,21 +235,19 @@ export default function AddDormModal({
           <div key={i} className="flex items-center gap-2">
             <div
               className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors
-              ${
-                step === i + 1
+              ${step === i + 1
                   ? "bg-[#5591AB] text-white"
                   : step > i + 1
-                  ? "bg-[#5591AB] text-white opacity-80"
-                  : "bg-muted text-muted-foreground"
-              }`}
+                    ? "bg-[#5591AB] text-white opacity-80"
+                    : "bg-muted text-muted-foreground"
+                }`}
             >
               {step > i + 1 ? "✓" : i + 1}
             </div>
             {i < totalSteps - 1 && (
               <div
-                className={`h-[2px] w-6 ${
-                  step > i + 1 ? "bg-[#5591AB]" : "bg-muted"
-                }`}
+                className={`h-[2px] w-6 ${step > i + 1 ? "bg-[#5591AB]" : "bg-muted"
+                  }`}
               />
             )}
           </div>
@@ -459,8 +457,8 @@ export default function AddDormModal({
             {loading
               ? "Saving..."
               : isEditing
-              ? "Save Changes"
-              : "Create Dormitory"}
+                ? "Save Changes"
+                : "Create Dormitory"}
           </Button>
         )}
       </div>
