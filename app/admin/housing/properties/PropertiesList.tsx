@@ -85,7 +85,7 @@ function StatCard({
             <p className="text-[11px] font-medium text-[#FDFFF4] uppercase tracking-widest">
               {label}
             </p>
-            <CardTitle className="text-3xl font-bold text-[#FDFFF4] leading-tight">
+            <CardTitle className="text-3xl font-[family-name:var(--font-archivo-black)] text-[#FDFFF4] leading-tight">
               {value.toLocaleString()}
             </CardTitle>
           </div>
@@ -162,10 +162,10 @@ export default function PropertiesList({
   }, []);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-6 space-y-4 font-[family-name:var(--font-archivo)]">
       <div>
-        <h1 className="text-4xl font-bold text-[#44291B] mr-2">Properties Page</h1>
-        <p className="text-sm text-[#44291B]">Manage your Properties and view their details</p>
+        <h1 className="text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] mr-2">Properties Page</h1>
+        <p className="text-md text-[#44291B] pt-3">Manage your Properties and view their details</p>
 
       </div>
 
@@ -240,18 +240,27 @@ export default function PropertiesList({
               <Button
                 disabled={managerCount === 0}
                 title={managerCount === 0 ? "Please add a Property Manager first" : ""}
-                className="flex items-center gap-2 text-sm font-medium text-white bg-[#264384] hover:bg-[#5273BC] px-4 py-2 rounded-xl transition h-auto"
+                className="flex items-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Property</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#FDFFF4] text-[#44291B]">
-              <DropdownMenuItem onClick={() => onAddProperty("dormitory")}>
+            <DropdownMenuContent
+              align="end"
+              className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md"
+            >
+              <DropdownMenuItem
+                onClick={() => onAddProperty("dormitory")}
+                className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer"
+              >
                 <Building2 className="mr-2 h-4 w-4" />
                 <span>Add Dorm</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onAddProperty("renting_space")}>
+              <DropdownMenuItem
+                onClick={() => onAddProperty("renting_space")}
+                className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer"
+              >
                 <Home className="mr-2 h-4 w-4" />
                 <span>Add Rental Space</span>
               </DropdownMenuItem>
