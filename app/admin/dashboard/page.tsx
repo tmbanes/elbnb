@@ -1,250 +1,141 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { redirect } from "next/navigation";
-
-type RecentApplicationRow = {
-  application_id: string;
-  application_status: string;
-  date_submitted: string;
-  preferred_unit_type: string | null;
-  users: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] | null;
-  accommodation: { name: string } | { name: string }[] | null;
-};
-
-function startOfMonth(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-
-function startOfNextMonth(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth() + 1, 1);
-}
-
-function formatPercent(value: number) {
-  if (!Number.isFinite(value)) return "0%";
-  return `${value.toFixed(1)}%`;
-}
-
-function formatCurrencyPHP(amount: number) {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+import { DashboardClient } from "./dashboard-client";
 
 export default async function AdminDashboardPage() {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect("/auth/sign-in");
 
-  if (!user) redirect("/");
-
-  const { data: profile } = await supabase
-    .from("users")
-    .select("role")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!profile || profile.role !== "housing_admin") redirect("/");
-
-  // ── Total rooms + occupancy (across dormitories) ───────────────────────────
-  const { data: dorms, error: dormError } = await supabase
+  // 1. All accommodations
+  const { data: accommodations } = await supabase
     .from("accommodation")
-    .select(
-      `
-      accommodation_id,
-      name,
-      accommodation_type,
-      unit (unit_id, unit_type, max_occupancy, current_occupancy, unit_status)
-    `,
-    )
-    .eq("accommodation_type", "dormitory");
+    .select("accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity");
 
-  if (dormError) {
-    throw new Error(dormError.message);
-  }
+  // 2. All units with occupancy info
+  const { data: units } = await supabase
+    .from("unit")
+    .select("unit_id, accommodation_id, unit_number, unit_type, max_occupancy, current_occupancy, unit_status, rental_fee");
 
-  const activeUnits =
-    (dorms ?? [])
-      .flatMap((d: any) => (d.unit ?? []) as any[])
-      .filter((u) => u?.unit_status === "active") ?? [];
+  // 3. Active assignments (students currently housed)
+  const { data: activeAssignments } = await supabase
+    .from("accommodation_assignment")
+    .select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status")
+    .eq("assignment_status", "active");
 
-  const totalRooms = activeUnits.filter((u) => u?.unit_type === "room").length;
-  const totalCapacity = activeUnits.reduce(
-    (sum, u) => sum + (Number(u?.max_occupancy) || 0),
-    0,
-  );
-  const occupied = activeUnits.reduce(
-    (sum, u) => sum + (Number(u?.current_occupancy) || 0),
-    0,
-  );
-  const available = Math.max(0, totalCapacity - occupied);
-  const occupancyRate = totalCapacity > 0 ? (occupied / totalCapacity) * 100 : 0;
-
-  // ── Pending applications (admin queue) ─────────────────────────────────────
-  const { count: pendingApplications, error: pendingError } = await supabase
+  // 4. Pending applications (waiting list)
+  const { data: pendingApplications } = await supabase
     .from("accommodation_application")
-    .select("application_id", { count: "exact", head: true })
-    .eq("application_status", "pending_admin");
+    .select("application_id, user_id, application_status, date_submitted, preferred_accommodation_id, preferred_unit_type, users(first_name, last_name, email), accommodation(name)")
+    .in("application_status", ["pending_admin", "pending_dorm_manager"])
+    .order("date_submitted", { ascending: false });
 
-  if (pendingError) throw new Error(pendingError.message);
-
-  // ── Revenue this month (paid billings by billing_period_date) ──────────────
-  const now = new Date();
-  const monthStart = startOfMonth(now);
-  const nextMonthStart = startOfNextMonth(now);
-
-  const { data: paidBills, error: billsError } = await supabase
-    .from("billing")
-    .select("amount, status, billing_period_date")
-    .eq("status", "paid")
-    .gte("billing_period_date", monthStart.toISOString())
-    .lt("billing_period_date", nextMonthStart.toISOString());
-
-  if (billsError) throw new Error(billsError.message);
-
-  const revenueThisMonth = (paidBills ?? []).reduce(
-    (sum: number, b: any) => sum + (Number(b?.amount) || 0),
-    0,
-  );
-
-  // ── Recent applications list ───────────────────────────────────────────────
-  const { data: recentApplications, error: recentError } = await supabase
+  // 5. Recent applications (all statuses, latest 8)
+  const { data: recentApplications } = await supabase
     .from("accommodation_application")
-    .select(
-      `
-      application_id,
-      application_status,
-      date_submitted,
-      preferred_unit_type,
-      users:user_id (first_name, last_name),
-      accommodation:preferred_accommodation_id (name)
-    `,
-    )
+    .select("application_id, user_id, application_status, date_submitted, preferred_unit_type, users(first_name, last_name, email), accommodation(name)")
     .order("date_submitted", { ascending: false })
-    .limit(5);
+    .limit(8);
 
-  if (recentError) throw new Error(recentError.message);
+  // 6. Billing data
+  const { data: allBilling } = await supabase
+    .from("billing")
+    .select("billing_id, amount, status, due_date, created_at, assignment_id");
 
-  // ── Occupancy by dormitory ────────────────────────────────────────────────
-  const occupancyByDormitory = (dorms ?? []).map((d: any) => {
-    const units = ((d.unit ?? []) as any[]).filter((u) => u?.unit_status === "active");
-    const cap = units.reduce((s, u) => s + (Number(u?.max_occupancy) || 0), 0);
-    const occ = units.reduce((s, u) => s + (Number(u?.current_occupancy) || 0), 0);
-    const rate = cap > 0 ? (occ / cap) * 100 : 0;
-    return {
-      accommodation_id: d.accommodation_id as string,
-      name: d.name as string,
-      occupied: occ,
-      capacity: cap,
-      rate,
-    };
+  // 7. Students currently housed with details
+  const { data: housedStudents } = await supabase
+    .from("accommodation_assignment")
+    .select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status, users(first_name, last_name, email), unit(unit_number, accommodation(name))")
+    .eq("assignment_status", "active")
+    .limit(20);
+
+  // Compute derived data
+  const totalProperties = accommodations?.length ?? 0;
+  const activeUnits = units?.filter(u => u.unit_status === "active") ?? [];
+  const totalUnits = activeUnits.length;
+  const occupiedUnits = activeUnits.filter(u => u.current_occupancy > 0).length;
+  const availableUnits = totalUnits - occupiedUnits;
+  const studentsHoused = activeAssignments?.length ?? 0;
+  const waitingListCount = pendingApplications?.length ?? 0;
+
+  // Revenue this month
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const monthlyBilling = allBilling?.filter(b => b.created_at && b.created_at >= startOfMonth) ?? [];
+  const revenueThisMonth = monthlyBilling.reduce((sum, b) => sum + (b.amount || 0), 0);
+
+  // Overdue
+  const overdueBilling = allBilling?.filter(b => b.status === "overdue") ?? [];
+  const overdueCount = overdueBilling.length;
+  const overdueTotal = overdueBilling.reduce((sum, b) => sum + (b.amount || 0), 0);
+
+  // Payment status distribution
+  const statusCounts: Record<string, number> = {};
+  allBilling?.forEach(b => {
+    statusCounts[b.status] = (statusCounts[b.status] || 0) + 1;
   });
 
+  // Per-property occupancy
+  const propertyOccupancy = (accommodations ?? []).map(acc => {
+    const propUnits = activeUnits.filter(u => u.accommodation_id === acc.accommodation_id);
+    const totalCap = propUnits.reduce((s, u) => s + (u.max_occupancy || 0), 0);
+    const currentOcc = propUnits.reduce((s, u) => s + (u.current_occupancy || 0), 0);
+    const rate = totalCap > 0 ? (currentOcc / totalCap) * 100 : 0;
+    return {
+      id: acc.accommodation_id,
+      name: acc.name,
+      type: acc.accommodation_type,
+      status: acc.accommodation_status,
+      totalUnits: propUnits.length,
+      totalCapacity: totalCap,
+      currentOccupancy: currentOcc,
+      availableSlots: totalCap - currentOcc,
+      rate,
+    };
+  }).sort((a, b) => b.rate - a.rate);
+
+  // Total occupancy rate
+  const totalCapacity = activeUnits.reduce((s, u) => s + (u.max_occupancy || 0), 0);
+  const totalOccupancy = activeUnits.reduce((s, u) => s + (u.current_occupancy || 0), 0);
+  const occupancyRate = totalCapacity > 0 ? (totalOccupancy / totalCapacity) * 100 : 0;
+
+  // Billing paid total
+  const paidBilling = allBilling?.filter(b => b.status === "paid" || b.status === "paid_late") ?? [];
+  const totalCollected = paidBilling.reduce((sum, b) => sum + (b.amount || 0), 0);
+  const totalBilled = allBilling?.reduce((sum, b) => sum + (b.amount || 0), 0) ?? 0;
+  const collectionRate = totalBilled > 0 ? (totalCollected / totalBilled) * 100 : 0;
+
+  // Alerts
+  const alerts: { type: "warning" | "danger" | "info"; message: string }[] = [];
+  propertyOccupancy.forEach(p => {
+    if (p.rate >= 90) alerts.push({ type: "danger", message: `${p.name} is at ${p.rate.toFixed(0)}% capacity` });
+    else if (p.rate >= 75) alerts.push({ type: "warning", message: `${p.name} is nearing capacity (${p.rate.toFixed(0)}%)` });
+  });
+  if (waitingListCount > 5) alerts.push({ type: "info", message: `${waitingListCount} students on waiting list` });
+  if (overdueCount > 0) alerts.push({ type: "danger", message: `${overdueCount} overdue payment${overdueCount > 1 ? "s" : ""} totaling ₱${overdueTotal.toLocaleString()}` });
+
   return (
-    <main className="min-h-screen p-8 space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-600">Live admin overview.</p>
-      </header>
-
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-slate-900">Summary</h2>
-        <ul className="space-y-1 text-slate-800">
-          <li>
-            <span className="font-semibold">Total rooms:</span> {totalRooms}
-          </li>
-          <li>
-            <span className="font-semibold">Occupancy rate:</span>{" "}
-            {formatPercent(occupancyRate)} ({occupied} occupied, {available} available)
-          </li>
-          <li>
-            <span className="font-semibold">Pending applications:</span>{" "}
-            {pendingApplications ?? 0}
-          </li>
-          <li>
-            <span className="font-semibold">Revenue this month:</span>{" "}
-            {formatCurrencyPHP(revenueThisMonth)}
-          </li>
-        </ul>
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-slate-900">Recent applications</h2>
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-700">
-              <tr>
-                <th className="text-left p-3">Student name</th>
-                <th className="text-left p-3">Dormitory</th>
-                <th className="text-left p-3">Room type</th>
-                <th className="text-left p-3">Status</th>
-                <th className="text-left p-3">Date applied</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {(recentApplications as unknown as RecentApplicationRow[] | null)?.map((a) => {
-                const userObj = Array.isArray(a.users) ? a.users[0] : a.users;
-                const accObj = Array.isArray(a.accommodation) ? a.accommodation[0] : a.accommodation;
-
-                return (
-                  <tr key={a.application_id}>
-                  <td className="p-3">
-                    {(userObj?.first_name ?? "—") + " " + (userObj?.last_name ?? "")}
-                  </td>
-                  <td className="p-3">{accObj?.name ?? "—"}</td>
-                  <td className="p-3">{a.preferred_unit_type ?? "—"}</td>
-                  <td className="p-3">{a.application_status}</td>
-                  <td className="p-3">
-                    {a.date_submitted ? new Date(a.date_submitted).toLocaleDateString() : "—"}
-                  </td>
-                  </tr>
-                );
-              })}
-              {(!recentApplications || recentApplications.length === 0) && (
-                <tr>
-                  <td className="p-3 text-slate-500" colSpan={5}>
-                    No applications found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-slate-900">Occupancy by dormitory</h2>
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-700">
-              <tr>
-                <th className="text-left p-3">Dormitory</th>
-                <th className="text-left p-3">Occupancy</th>
-                <th className="text-left p-3">Rate</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {occupancyByDormitory.map((d) => (
-                <tr key={d.accommodation_id}>
-                  <td className="p-3">{d.name}</td>
-                  <td className="p-3">
-                    {d.occupied}/{d.capacity}
-                  </td>
-                  <td className="p-3">{formatPercent(d.rate)}</td>
-                </tr>
-              ))}
-              {occupancyByDormitory.length === 0 && (
-                <tr>
-                  <td className="p-3 text-slate-500" colSpan={3}>
-                    No dormitories found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+    <DashboardClient
+      stats={{
+        totalProperties,
+        totalUnits,
+        occupiedUnits,
+        availableUnits,
+        studentsHoused,
+        waitingListCount,
+        revenueThisMonth,
+        overdueCount,
+        occupancyRate,
+        collectionRate,
+        totalCollected,
+        totalBilled,
+      }}
+      propertyOccupancy={propertyOccupancy}
+      recentApplications={(recentApplications as any) ?? []}
+      pendingApplications={(pendingApplications as any) ?? []}
+      housedStudents={(housedStudents as any) ?? []}
+      billingStatusCounts={statusCounts}
+      alerts={alerts}
+    />
   );
 }

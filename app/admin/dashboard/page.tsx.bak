@@ -1,0 +1,370 @@
+import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { redirect } from "next/navigation";
+
+// UI Components
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+type RecentApplicationRow = {
+  application_id: string;
+  application_status: string;
+  date_submitted: string;
+  preferred_unit_type: string | null;
+  users: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] | null;
+  accommodation: { name: string } | { name: string }[] | null;
+};
+
+export default async function AdminDashboardPage() {
+  const supabase = await createSupabaseServerClient();
+  
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    redirect("/auth/sign-in");
+  }
+
+  // 1. Total Rooms
+  const { count: totalRooms } = await supabase
+    .from("rooms")
+    .select("*", { count: "exact", head: true });
+
+  // 2. Occupancy Rate
+  const { data: beds } = await supabase
+    .from("beds")
+    .select("status");
+  
+  const totalBeds = beds?.length || 0;
+  const occupiedBeds = beds?.filter((b) => b.status === "occupied").length || 0;
+  const occupancyRate = totalBeds > 0 ? (occupiedBeds / totalBeds) * 100 : 0;
+
+  // 3. Pending Applications
+  const { count: pendingApplications } = await supabase
+    .from("applications")
+    .select("*", { count: "exact", head: true })
+    .in("application_status", ["pending_admin", "pending"]);
+
+  // 4. Revenue this month
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const { data: billingRecords } = await supabase
+    .from("billing")
+    .select("amount")
+    .gte("created_at", startOfMonth);
+
+  const revenueThisMonth = billingRecords?.reduce((sum, record) => sum + (record.amount || 0), 0) || 0;
+
+  // 5. Recent applications (latest 5)
+  const { data: recentApplications } = await supabase
+    .from("applications")
+    .select(`
+      application_id,
+      application_status,
+      date_submitted,
+      preferred_unit_type,
+      users ( first_name, last_name ),
+      accommodation ( name )
+    `)
+    .order("date_submitted", { ascending: false })
+    .limit(5);
+
+  // 6. Occupancy per dormitory
+  const { data: accommodations } = await supabase
+    .from("accommodation")
+    .select("accommodation_id, name");
+
+  const occupancyByDormitory = [];
+  if (accommodations) {
+    for (const acc of accommodations) {
+      const { data: accRooms } = await supabase
+        .from("rooms")
+        .select("room_id")
+        .eq("accommodation_id", acc.accommodation_id);
+
+      if (accRooms && accRooms.length > 0) {
+        const roomIds = accRooms.map(r => r.room_id);
+        const { data: accBeds } = await supabase
+          .from("beds")
+          .select("status")
+          .in("room_id", roomIds);
+        
+        const accTotalBeds = accBeds?.length || 0;
+        const accOccupiedBeds = accBeds?.filter(b => b.status === "occupied").length || 0;
+        const accRate = accTotalBeds > 0 ? (accOccupiedBeds / accTotalBeds) * 100 : 0;
+
+        occupancyByDormitory.push({
+          accommodation_id: acc.accommodation_id,
+          name: acc.name,
+          capacity: accTotalBeds,
+          occupied: accOccupiedBeds,
+          rate: accRate
+        });
+      }
+    }
+  }
+
+  // Sort by highest occupancy
+  occupancyByDormitory.sort((a, b) => b.rate - a.rate);
+
+  const formatPercent = (num: number) => `${num.toFixed(1)}%`;
+  const formatCurrencyPHP = (num: number) => {
+    return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(num);
+  };
+
+  return (
+    <div className="p-8 space-y-8 bg-[#EDEEE5] min-h-[calc(100vh-2rem)] rounded-tl-3xl selection:bg-[#4A5628] selection:text-white">
+      {/* Dynamic Header */}
+      <header className="flex justify-between items-end mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+        <div>
+          <h1 className="text-3xl font-black font-archivo-black text-[#1F2937] tracking-tight">Admin Dashboard</h1>
+          <p className="text-[#6B7280] font-archivo mt-1.5 text-sm flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5C9E44] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#5C9E44]"></span>
+            </span>
+            System running smoothly. Here's your overview for today.
+          </p>
+        </div>
+        <div className="bg-white/80 backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-white/40 text-sm font-semibold text-[#374151] flex items-center gap-2 transition-all hover:shadow-md hover:bg-white cursor-default">
+          <span className="h-4 w-4 bg-gray-200 rounded-full inline-block"></span>
+          {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+        </div>
+      </header>
+
+      {/* KPI Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150 ease-out fill-mode-both">
+        {[
+          { label: "Total Rooms", value: totalRooms, trend: "12 New added", trendColor: "text-[#5C9E44]", hasTrendIcon: true },
+          { label: "Occupancy Rate", value: formatPercent(occupancyRate), trend: "2.4% vs last term", trendColor: "text-[#5C9E44]", hasTrendIcon: true },
+          { label: "Pending Applications", value: pendingApplications ?? 0, trend: "Requires review", trendColor: "text-[#BA7517]", hasTrendIcon: false },
+          { label: "Revenue (MTD)", value: formatCurrencyPHP(revenueThisMonth), trend: "₱142k increase", trendColor: "text-[#5C9E44]", hasTrendIcon: true }
+        ].map((stat, index) => (
+          <Card key={index} className="shadow-[0_2px_8px_rgba(0,0,0,0.04)] border-transparent bg-gradient-to-br from-white to-slate-50 hover:-translate-y-1 hover:shadow-[0_8px_16px_rgba(0,0,0,0.06)] hover:border-black/5 transition-all duration-300 ring-0 flex flex-col justify-between py-5 group cursor-default">
+            <CardContent className="p-0 px-5 flex flex-col justify-between h-full relative overflow-hidden">
+              <span className="text-[10px] font-archivo-black uppercase text-[#6B7280] tracking-wider mb-2 z-10">{stat.label}</span>
+              <span className="text-3xl font-archivo-black text-[#1F2937] z-10 group-hover:scale-105 origin-left transition-transform duration-300">{stat.value}</span>
+              <span className={`text-xs font-semibold ${stat.trendColor} mt-3 flex items-center gap-1.5 z-10`}>
+                {stat.hasTrendIcon ? <span className="h-3 w-3 bg-[#5C9E44] rounded-sm inline-block"></span> : <span className="h-2 w-2 rounded-full bg-[#BA7517]" />}
+                {stat.trend}
+              </span>
+              {/* Subtle background decoration */}
+              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-gradient-to-br from-transparent to-black/[0.02] rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 ease-out fill-mode-both">
+        <Card className="lg:col-span-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border-transparent hover:border-black/5 transition-colors bg-white ring-0 p-6 flex flex-col gap-6 relative overflow-hidden">
+          <div className="flex justify-between items-center relative z-10">
+            <h2 className="text-xl font-archivo-black text-[#1F2937]">Recent Applications</h2>
+            <Button variant="link" className="text-sm font-semibold text-[#4A5628] hover:text-[#6B7A3A] p-0 h-auto group flex items-center gap-1 transition-colors">
+              View All <span className="h-3.5 w-3.5 inline-block group-hover:translate-x-0.5 transition-transform text-xl">&rsaquo;</span>
+            </Button>
+          </div>
+          <div className="overflow-x-auto relative z-10">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b border-[#E5E7EB] hover:bg-transparent">
+                  <TableHead className="text-[10px] font-archivo-black uppercase text-[#6B7280] font-medium h-auto pb-3">Student Name</TableHead>
+                  <TableHead className="text-[10px] font-archivo-black uppercase text-[#6B7280] font-medium h-auto pb-3">Dormitory</TableHead>
+                  <TableHead className="text-[10px] font-archivo-black uppercase text-[#6B7280] font-medium h-auto pb-3">Applied Date</TableHead>
+                  <TableHead className="text-[10px] font-archivo-black uppercase text-[#6B7280] font-medium h-auto pb-3">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(recentApplications as unknown as RecentApplicationRow[] | null)?.map((a) => {
+                  const userObj = Array.isArray(a.users) ? a.users[0] : a.users;
+                  const accObj = Array.isArray(a.accommodation) ? a.accommodation[0] : a.accommodation;
+                  const fullName = (userObj?.first_name ?? "—") + " " + (userObj?.last_name ?? "");
+                  const initials = fullName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+                  
+                  let badgeVariant: "default" | "secondary" | "destructive" | "outline" = "outline";
+                  let customBadgeClass = "";
+
+                  switch(a.application_status) {
+                    case "pending_admin":
+                    case "pending":
+                      customBadgeClass = "bg-[#FFF3CD] text-[#BA7517] border-transparent";
+                      break;
+                    case "approved":
+                      customBadgeClass = "bg-[#DFF2E8] text-[#1A6B3A] border-transparent";
+                      break;
+                    case "rejected":
+                      customBadgeClass = "bg-[#FDEAEA] text-[#8B1A1A] border-transparent";
+                      break;
+                    default:
+                      customBadgeClass = "bg-gray-100 text-gray-800 border-transparent";
+                  }
+
+                  return (
+                    <TableRow key={a.application_id} className="border-b-[#E5E7EB] hover:bg-slate-50/60 border-none transition-colors cursor-pointer group/row">
+                      <TableCell className="py-4 flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#4A5628] to-[#6B7A3A] text-white flex items-center justify-center text-xs font-semibold shrink-0 shadow-sm group-hover/row:shadow-md transition-shadow">
+                          {initials}
+                        </div>
+                        <span className="font-semibold text-[#1F2937] group-hover/row:text-[#4A5628] transition-colors">{fullName}</span>
+                      </TableCell>
+                      <TableCell className="py-4 text-[#4B5563]">{accObj?.name ?? "—"}</TableCell>
+                      <TableCell className="py-4 text-[#4B5563]">
+                        {a.date_submitted ? new Date(a.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "—"}
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Badge variant={badgeVariant} className={`px-2.5 py-0.5 rounded-full text-[9px] font-archivo-black uppercase tracking-wider shadow-sm ${customBadgeClass}`}>
+                          {a.application_status.replace('_admin', '')}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+
+        <Card className="lg:col-span-2 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border-transparent hover:border-black/5 transition-colors bg-white ring-0 p-6 flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-archivo-black text-[#1F2937]">Dorm Occupancy</h2>
+            <Button variant="ghost" size="icon" className="text-[#6B7280] hover:text-[#1F2937] hover:bg-slate-100 h-8 w-8 rounded-full transition-colors flex items-center justify-center">
+              <span className="font-bold text-lg mb-2">...</span>
+            </Button>
+          </div>
+          <div className="space-y-6">
+            {occupancyByDormitory.slice(0, 4).map((d) => {
+              const rate = d.rate;
+              const barColor = rate > 80 ? "bg-gradient-to-r from-[#4A5628] to-[#6B7A3A]" : rate > 50 ? "bg-gradient-to-r from-[#A8C060] to-[#5C9E44]" : "bg-gradient-to-r from-[#E24B4A] to-[#C93C3B]";
+              return (
+                <div key={d.accommodation_id} className="group">
+                  <div className="flex justify-between items-end text-[10px] font-archivo-black uppercase text-[#6B7280] mb-2 group-hover:text-[#4A5628] transition-colors">
+                    <span>{d.name}</span>
+                    <span className="text-xs text-[#1F2937]">{formatPercent(rate)}</span>
+                  </div>
+                  <div className="w-full bg-[#EDEEE5] rounded-full h-2.5 shadow-inner overflow-hidden">
+                    <div className={`${barColor} h-full rounded-full transition-all duration-1000 ease-out`} style={{ width: `${rate}%` }}></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-500 ease-out fill-mode-both">
+        {/* Today's Activity */}
+        <Card className="shadow-[0_2px_8px_rgba(0,0,0,0.04)] border-transparent bg-white ring-0 p-6 flex flex-col gap-6">
+          <h2 className="text-xl font-archivo-black text-[#1F2937]">Today's Activity</h2>
+          <div className="relative border-l-2 border-dashed border-[#E5E7EB] ml-3 space-y-6 flex-1">
+            <div className="relative pl-6 group">
+              <span className="absolute -left-[7px] top-1.5 h-3.5 w-3.5 rounded-full bg-[#5C9E44] border-2 border-white ring-2 ring-transparent group-hover:ring-[#5C9E44]/30 transition-all"></span>
+              <p className="font-semibold text-[#1F2937] text-sm group-hover:text-[#5C9E44] transition-colors">New booking confirmed</p>
+              <p className="text-xs text-[#6B7280] mt-0.5">Emilio Aguinaldo • Room 402B</p>
+              <p className="text-[10px] text-[#9CA3AF] mt-1.5 font-medium bg-slate-50 inline-block px-1.5 py-0.5 rounded">09:42 AM</p>
+            </div>
+            <div className="relative pl-6 group">
+              <span className="absolute -left-[7px] top-1.5 h-3.5 w-3.5 rounded-full bg-[#5C9E44] border-2 border-white ring-2 ring-transparent group-hover:ring-[#5C9E44]/30 transition-all"></span>
+              <p className="font-semibold text-[#1F2937] text-sm group-hover:text-[#5C9E44] transition-colors">Payment Received (₱4,500)</p>
+              <p className="text-xs text-[#6B7280] mt-0.5">Juan Luna • Monthly Rent</p>
+              <p className="text-[10px] text-[#9CA3AF] mt-1.5 font-medium bg-slate-50 inline-block px-1.5 py-0.5 rounded">08:15 AM</p>
+            </div>
+            <div className="relative pl-6 group">
+              <span className="absolute -left-[7px] top-1.5 h-3.5 w-3.5 rounded-full bg-[#BA7517] border-2 border-white ring-2 ring-transparent group-hover:ring-[#BA7517]/30 transition-all"></span>
+              <p className="font-semibold text-[#1F2937] text-sm group-hover:text-[#BA7517] transition-colors">Maintenance Request</p>
+              <p className="text-xs text-[#6B7280] mt-0.5">Leaking faucet in Room 102</p>
+              <p className="text-[10px] text-[#9CA3AF] mt-1.5 font-medium bg-slate-50 inline-block px-1.5 py-0.5 rounded">07:30 AM</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Move-Out Alerts */}
+        <Card className="shadow-[0_2px_8px_rgba(0,0,0,0.04)] border-transparent bg-white ring-0 p-6 flex flex-col gap-6">
+          <h2 className="text-xl font-archivo-black text-[#1F2937]">Move-Out Alerts</h2>
+          <div className="space-y-3 flex-1">
+            {[
+              { initials: 'GM', name: 'Gabriela M.', room: 'Room 305', date: 'Oct 28' },
+              { initials: 'LM', name: 'Leonor M.', room: 'Room 211', date: 'Oct 29' },
+              { initials: 'MA', name: 'Melchora A.', room: 'Room 105', date: 'Oct 31' }
+            ].map((alert, i) => (
+              <div key={i} className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-transparent hover:border-[#A8C060]/50 hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer group">
+                <div className="flex items-center gap-3.5">
+                  <div className="h-10 w-10 rounded-[10px] bg-gradient-to-br from-[#4A5628] to-[#6B7A3A] text-white flex items-center justify-center text-sm font-semibold shrink-0 shadow-sm group-hover:shadow transition-shadow">
+                    {alert.initials}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#1F2937] text-sm group-hover:text-[#4A5628] transition-colors">{alert.name}</p>
+                    <p className="text-xs text-[#6B7280] mt-0.5 flex items-center gap-1.5">
+                      <span>{alert.room}</span>
+                      <span className="h-1 w-1 rounded-full bg-slate-300"></span>
+                      <span className="text-[#BA7517] font-medium">{alert.date}</span>
+                    </p>
+                  </div>
+                </div>
+                <div className="h-8 w-8 rounded-full flex items-center justify-center bg-white group-hover:bg-[#F0F2E9] transition-colors">
+                  <span className="text-lg font-bold text-[#9CA3AF] group-hover:text-[#4A5628]">&rsaquo;</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Financial Summary */}
+        <Card className="shadow-[0_2px_8px_rgba(0,0,0,0.04)] border-transparent bg-white ring-0 p-6 flex flex-col justify-between gap-6 group">
+          <h2 className="text-xl font-archivo-black text-[#1F2937] text-center">Financial Summary</h2>
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <div className="relative w-36 h-36 flex items-center justify-center">
+              {/* Donut Chart */}
+              <div className="absolute inset-0 rounded-full shadow-inner opacity-50"></div>
+              <svg className="w-full h-full -rotate-90 drop-shadow-md transition-transform duration-700 group-hover:scale-105" viewBox="0 0 36 36">
+                <path className="text-[#EDEEE5]" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path className="text-[#4A5628] transition-all duration-1000 ease-out" strokeWidth="3" strokeDasharray="85, 100" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              </svg>
+              <div className="absolute flex flex-col items-center">
+                <span className="text-3xl font-archivo-black text-[#1F2937]">85%</span>
+                <span className="text-[9px] font-archivo-black uppercase text-[#6B7280] tracking-wider mt-0.5">Collection</span>
+              </div>
+            </div>
+            
+            <div className="flex w-full justify-around mt-6 pt-6 border-t border-[#E5E7EB]">
+              <div className="text-center group/target cursor-default">
+                <p className="text-[10px] font-archivo-black uppercase text-[#6B7280] tracking-wider mb-1 group-hover/target:text-[#4A5628] transition-colors">Target</p>
+                <p className="font-archivo-black text-[#1F2937] text-lg">₱1.45M</p>
+              </div>
+              <div className="text-center group/collected cursor-default">
+                <p className="text-[10px] font-archivo-black uppercase text-[#6B7280] tracking-wider mb-1 group-hover/collected:text-[#5C9E44] transition-colors">Collected</p>
+                <p className="font-archivo-black text-[#1F2937] text-lg">₱1.24M</p>
+              </div>
+            </div>
+          </div>
+          
+          <Button className="w-full bg-gradient-to-r from-[#4A5628] to-[#5C6E31] text-white py-6 rounded-xl font-semibold text-sm hover:from-[#3d4722] hover:to-[#4A5628] shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all mt-auto border-none">
+            Download Full Report
+          </Button>
+        </Card>
+      </div>
+
+      {/* Reports Section */}
+      <Card className="shadow-[0_2px_8px_rgba(0,0,0,0.04)] border-transparent bg-white ring-0 p-6 flex flex-col gap-6 mt-6 animate-in fade-in slide-in-from-bottom-12 duration-700 delay-700 ease-out fill-mode-both">
+        <h2 className="text-xl font-archivo-black text-[#1F2937]">Reports to be Generated</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            "List of all dormitories with occupancy rates",
+            "Available vs occupied rooms per accommodation",
+            "Students currently housed per dormitory",
+            "Students on waiting list",
+            "Accommodation history of a given student",
+            "Revenue summary per dormitory",
+            "List of overdue or unpaid fees"
+          ].map((report, i) => (
+            <div key={i} className="flex items-start gap-4 p-4 rounded-xl border border-[#E5E7EB] hover:border-[#A8C060]/50 hover:bg-slate-50/80 hover:shadow-sm hover:-translate-y-0.5 transition-all group cursor-pointer">
+              <div className="h-9 w-9 rounded-full bg-[#F0F2E9] text-[#4A5628] flex items-center justify-center shrink-0 group-hover:bg-[#4A5628] group-hover:text-white group-hover:scale-110 transition-all shadow-sm">
+                <span className="font-bold">📄</span>
+              </div>
+              <span className="text-sm text-[#4B5563] group-hover:text-[#1F2937] font-medium leading-snug pt-0.5">{report}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+    </div>
+  );
+}

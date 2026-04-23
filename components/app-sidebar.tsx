@@ -92,15 +92,17 @@ export function AppSidebar({
     async function fetchUser() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: userProfile } = await supabase
+        const { data } = await supabase
           .from("users")
           .select("first_name, last_name, email, profile_picture_url")
           .eq("user_id", user.id)
           .single()
         
+        const userProfile = data as any;
+
         if (userProfile) {
           setUserData({
-            name: `${userProfile.first_name} ${userProfile.last_name}`.trim() || user.email?.split("@")[0] || "User",
+            name: `${userProfile.first_name || ""} ${userProfile.last_name || ""}`.trim() || user.email?.split("@")[0] || "User",
             email: userProfile.email || user.email || "",
             avatar: userProfile.profile_picture_url || "/avatars/shadcn.jpg",
           })
