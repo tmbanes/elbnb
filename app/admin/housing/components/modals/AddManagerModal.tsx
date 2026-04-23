@@ -294,7 +294,7 @@ export default function AddManagerModal({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-[#5591AB] hover:bg-[#467a8f] text-white"
+              className="bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
             >
               {loading ? "Saving..." : "Save Changes"}
             </Button>
