@@ -16,7 +16,7 @@ interface ManagersListProps {
   onAdd: () => void;
   onSelect: (id: string) => void;
   onEdit: (manager: Manager) => void;
-  onDelete: (id: string) => void;
+  onDelete: (manager: Manager) => void;
   selectedId?: string | null;
 }
 
@@ -30,8 +30,6 @@ export default function ManagersList({
   selectedId,
 }: ManagersListProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeManager, setActiveManager] = useState<Manager | null>(null);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const filteredManagers = managers.filter((m) => {
     const name = `${m.users.first_name} ${m.users.last_name}`.toLowerCase();
@@ -86,10 +84,7 @@ export default function ManagersList({
             onEdit,
             (id) => {
               const m = managers.find(x => x.employee_id === id);
-              if (m) {
-                setActiveManager(m);
-                setDeleteModalOpen(true);
-              }
+              if (m) onDelete(m);
             }
           )}
           data={tableData}
@@ -102,30 +97,6 @@ export default function ManagersList({
         </div>
       )}
 
-      <Modal
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        title="Delete Manager"
-        description={`Are you sure you want to remove ${activeManager?.users.first_name} ${activeManager?.users.last_name}? This action will unassign them from any properties they manage.`}
-      >
-        <div className="space-y-4">
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (activeManager) {
-                  onDelete(activeManager.employee_id);
-                  setDeleteModalOpen(false);
-                  setActiveManager(null);
-                }
-              }}
-            >
-              Delete Manager
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }
