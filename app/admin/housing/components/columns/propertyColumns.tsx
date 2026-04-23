@@ -47,7 +47,7 @@ export const getPropertyColumns = (
             <p className="font-bold text-[#44291B] truncate" title={name}>
               {name}
             </p>
-            <div className="flex items-center gap-1 text-[#44291B]/60">
+            <div className="flex items-center pt-1 gap-1 text-[#44291B]/60">
               <MapPin className="h-3 w-3 shrink-0" />
               <p className="text-xs truncate" title={location}>
                 {location || "N/A"}
@@ -75,10 +75,6 @@ export const getPropertyColumns = (
         );
       },
     },
-    // {
-    //   accessorKey: "location", //remove location from table for now
-    //   header: "LOCATION",
-    // },
     {
       //MANAGER
       accessorKey: "manager",
@@ -160,14 +156,14 @@ export const getPropertyColumns = (
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
+              <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-transparent">
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-[#FDFFF4] text-[#44291B]">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem asChild className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+              <DropdownMenuItem asChild className="focus:bg-[#F6F8D5] focus:text-[#44291B] focus:**:text-[#44291B] cursor-pointer">
                 <Link href={`/admin/housing?id=${p.accommodation_id}`}>
                   <div className="flex items-center">
                     <Eye className="mr-2 h-4 w-4" />
@@ -178,7 +174,7 @@ export const getPropertyColumns = (
 
 
               <DropdownMenuItem
-                className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer"
+                className="focus:bg-[#F6F8D5] focus:text-[#44291B] focus:**:text-[#44291B] cursor-pointer"
                 onClick={() => openEditModal(p)}
               >
                 <Pencil className="mr-2 h-4 w-4" />
@@ -187,7 +183,7 @@ export const getPropertyColumns = (
 
 
               <DropdownMenuItem
-                className="focus:bg-[#F6F8D5] focus:text-[#DF3538] cursor-pointer"
+                className="focus:bg-[#F6F8D5] focus:text-[#DF3538] focus:**:text-[#DF3538] cursor-pointer"
                 onClick={() =>
                   handleDeleteProperty(
                     p.accommodation_id,
