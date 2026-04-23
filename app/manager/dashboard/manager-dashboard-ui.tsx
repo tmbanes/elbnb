@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
     Search, Bell, LayoutDashboard, Building2, Bed, Users, FileText,
     Banknote, LogOut, UserPlus, ArrowLeftRight, AlertTriangle, Users2, Circle, Settings2, BarChart2, CheckCircle2, ChevronRight,
-    ChevronLeft, Filter, User
+    ChevronLeft, Filter, User, Plus, RotateCcw
 } from "lucide-react";
 import {
     Dialog,
@@ -71,6 +71,17 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
         college: "all"
     });
     const studentsPerPage = 5;
+
+    const handleResetFilters = () => {
+        setTableSearch("");
+        setTableFilters({
+            yearLevel: "all",
+            college: "all",
+            roomStatus: "all",
+            paymentStatus: "all"
+        });
+        setTablePage(1);
+    };
 
     useEffect(() => {
         async function fetchDashboardData() {
@@ -580,94 +591,118 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                         </div>
                     </div>
 
-                    {/* STUDENT SNAPSHOT TABLE WITH TABS */}
-                    <div className="bg-white rounded-[24px] p-8 shadow-sm border border-slate-100/50 mb-8">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                            <div className="flex items-center gap-8">
-                                <button
-                                    onClick={() => { setActiveTab('residents'); setTablePage(1); }}
-                                    className={`relative pb-4 text-[14px] font-black uppercase tracking-widest transition-colors ${activeTab === 'residents' ? 'text-[#0B3A64]' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    Residents
-                                    {activeTab === 'residents' && <div className="absolute bottom-0 left-0 w-full h-1 bg-[#0B3A64] rounded-full"></div>}
-                                </button>
-                                <button
-                                    onClick={() => { setActiveTab('waitlist'); setTablePage(1); }}
-                                    className={`relative pb-4 text-[14px] font-black uppercase tracking-widest transition-colors ${activeTab === 'waitlist' ? 'text-[#0B3A64]' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    Waitlist
-                                    {activeTab === 'waitlist' && <div className="absolute bottom-0 left-0 w-full h-1 bg-[#0B3A64] rounded-full"></div>}
-                                </button>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-3">
-                                <div className="relative">
-                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search by Name/Student #..."
-                                        value={tableSearch}
-                                        onChange={(e) => setTableSearch(e.target.value)}
-                                        className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[12px] outline-none focus:ring-2 focus:ring-[#0B3A64]/10 w-[240px] font-medium"
-                                    />
+                    {/* CONSOLIDATED TABLE CONTAINER */}
+                    <div className="bg-white rounded-[24px] shadow-sm border border-slate-100/50 mb-8 overflow-hidden">
+                        {/* TABS & SEARCH/FILTERS - UNIFIED HEADER */}
+                        <div className="px-8 pt-8 pb-6 border-b border-slate-50">
+                            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
+                                <div className="flex items-center gap-8">
+                                    <button
+                                        onClick={() => { setActiveTab('residents'); setTablePage(1); }}
+                                        className={`relative pb-4 text-[14px] font-black uppercase tracking-widest transition-colors ${activeTab === 'residents' ? 'text-[#0B3A64]' : 'text-slate-400 hover:text-slate-600'}`}
+                                    >
+                                        Residents
+                                        {activeTab === 'residents' && <div className="absolute bottom-0 left-0 w-full h-1 bg-[#5591AB] rounded-full"></div>}
+                                    </button>
+                                    <button
+                                        onClick={() => { setActiveTab('waitlist'); setTablePage(1); }}
+                                        className={`relative pb-4 text-[14px] font-black uppercase tracking-widest transition-colors ${activeTab === 'waitlist' ? 'text-[#0B3A64]' : 'text-slate-400 hover:text-slate-600'}`}
+                                    >
+                                        Waitlist
+                                        {activeTab === 'waitlist' && <div className="absolute bottom-0 left-0 w-full h-1 bg-[#5591AB] rounded-full"></div>}
+                                    </button>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                    <Select value={tableFilters.yearLevel} onValueChange={(v) => setTableFilters(prev => ({ ...prev, yearLevel: v }))}>
-                                        <SelectTrigger className="h-9 text-[11px] font-bold bg-white border-slate-200 w-[100px] rounded-lg">
-                                            <SelectValue placeholder="Year Level" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Years</SelectItem>
-                                            <SelectItem value="Freshman">Freshman</SelectItem>
-                                            <SelectItem value="Sophomore">Sophomore</SelectItem>
-                                            <SelectItem value="Junior">Junior</SelectItem>
-                                            <SelectItem value="Senior">Senior</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                                    <div className="relative flex-1 xl:flex-none xl:w-[240px]">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search Name/ID..."
+                                            value={tableSearch}
+                                            onChange={(e) => setTableSearch(e.target.value)}
+                                            className="w-full pl-11 pr-4 py-2.5 bg-[#F8F9FD] border border-slate-100 rounded-full text-[12px] outline-none focus:ring-2 focus:ring-[#5591AB]/10 font-medium placeholder:text-slate-400"
+                                        />
+                                    </div>
 
-                                    <Select value={tableFilters.college} onValueChange={(v) => setTableFilters(prev => ({ ...prev, college: v }))}>
-                                        <SelectTrigger className="h-9 text-[11px] font-bold bg-white border-slate-200 w-[90px] rounded-lg">
-                                            <SelectValue placeholder="College" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Colleges</SelectItem>
-                                            <SelectItem value="CAS">CAS</SelectItem>
-                                            <SelectItem value="CEAT">CEAT</SelectItem>
-                                            <SelectItem value="CEM">CEM</SelectItem>
-                                            <SelectItem value="CFNR">CFNR</SelectItem>
-                                            <SelectItem value="CHE">CHE</SelectItem>
-                                            <SelectItem value="CVM">CVM</SelectItem>
-                                            <SelectItem value="CAFS">CAFS</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-
-                                    {activeTab === 'residents' && (
-                                        <>
-                                            <Select value={tableFilters.roomStatus} onValueChange={(v) => setTableFilters(prev => ({ ...prev, roomStatus: v }))}>
-                                                <SelectTrigger className="h-9 text-[11px] font-bold bg-white border-slate-200 w-[100px] rounded-lg">
-                                                    <SelectValue placeholder="Room Status" />
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <div className="flex items-center gap-2 bg-[#F8F9FD] px-3 py-1 rounded-full border border-slate-100">
+                                            <Select value={tableFilters.yearLevel} onValueChange={(v) => setTableFilters(prev => ({ ...prev, yearLevel: v }))}>
+                                                <SelectTrigger className="h-7 border-none bg-transparent text-[11px] font-bold text-[#0B3A64] focus:ring-0 w-[80px] p-0 px-2">
+                                                    <SelectValue placeholder="Year" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="all">All Status</SelectItem>
-                                                    <SelectItem value="full">Full Capacity</SelectItem>
-                                                    <SelectItem value="partial">Has Space</SelectItem>
+                                                    <SelectItem value="all">Years</SelectItem>
+                                                    <SelectItem value="Freshman">Freshman</SelectItem>
+                                                    <SelectItem value="Sophomore">Sophomore</SelectItem>
+                                                    <SelectItem value="Junior">Junior</SelectItem>
+                                                    <SelectItem value="Senior">Senior</SelectItem>
                                                 </SelectContent>
                                             </Select>
+                                        </div>
 
-                                            <Select value={tableFilters.paymentStatus} onValueChange={(v) => setTableFilters(prev => ({ ...prev, paymentStatus: v }))}>
-                                                <SelectTrigger className="h-9 text-[11px] font-bold bg-white border-slate-200 w-[100px] rounded-lg">
-                                                    <SelectValue placeholder="Payment" />
+                                        <div className="flex items-center gap-2 bg-[#F8F9FD] px-3 py-1 rounded-full border border-slate-100">
+                                            <Select value={tableFilters.college} onValueChange={(v) => setTableFilters(prev => ({ ...prev, college: v }))}>
+                                                <SelectTrigger className="h-7 border-none bg-transparent text-[11px] font-bold text-[#0B3A64] focus:ring-0 w-[90px] p-0 px-2">
+                                                    <SelectValue placeholder="College" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="all">All Status</SelectItem>
-                                                    <SelectItem value="Cleared">Cleared</SelectItem>
-                                                    <SelectItem value="Pending">Pending</SelectItem>
-                                                    <SelectItem value="Overdue">Overdue</SelectItem>
+                                                    <SelectItem value="all">Colleges</SelectItem>
+                                                    <SelectItem value="CAS">CAS</SelectItem>
+                                                    <SelectItem value="CEAT">CEAT</SelectItem>
+                                                    <SelectItem value="CEM">CEM</SelectItem>
+                                                    <SelectItem value="CFNR">CFNR</SelectItem>
+                                                    <SelectItem value="CHE">CHE</SelectItem>
+                                                    <SelectItem value="CVM">CVM</SelectItem>
+                                                    <SelectItem value="CAFS">CAFS</SelectItem>
                                                 </SelectContent>
                                             </Select>
-                                        </>
-                                    )}
+                                        </div>
+
+                                        {activeTab === 'residents' && (
+                                            <>
+                                                <div className="flex items-center gap-2 bg-[#F8F9FD] px-3 py-1 rounded-full border border-slate-100">
+                                                    <Select value={tableFilters.roomStatus} onValueChange={(v) => setTableFilters(prev => ({ ...prev, roomStatus: v }))}>
+                                                        <SelectTrigger className="h-7 border-none bg-transparent text-[11px] font-bold text-[#0B3A64] focus:ring-0 w-[100px] p-0 px-2">
+                                                            <SelectValue placeholder="Room" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="all">Room Status</SelectItem>
+                                                            <SelectItem value="full">Full Capacity</SelectItem>
+                                                            <SelectItem value="partial">Has Space</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 bg-[#F8F9FD] px-3 py-1 rounded-full border border-slate-100">
+                                                    <Select value={tableFilters.paymentStatus} onValueChange={(v) => setTableFilters(prev => ({ ...prev, paymentStatus: v }))}>
+                                                        <SelectTrigger className="h-7 border-none bg-transparent text-[11px] font-bold text-[#0B3A64] focus:ring-0 w-[90px] p-0 px-2">
+                                                            <SelectValue placeholder="Pay" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="all">Payments</SelectItem>
+                                                            <SelectItem value="Cleared">Cleared</SelectItem>
+                                                            <SelectItem value="Pending">Pending</SelectItem>
+                                                            <SelectItem value="Overdue">Overdue</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        <button
+                                            onClick={handleResetFilters}
+                                            className="p-2 text-slate-400 hover:text-[#DE7A6A] transition-colors"
+                                            title="Reset Filters"
+                                        >
+                                            <RotateCcw className="w-4 h-4" />
+                                        </button>
+
+                                        <button className="flex items-center gap-2 px-5 py-2 bg-[#5591AB] text-white rounded-full text-[12px] font-bold hover:bg-[#467A91] transition-all shadow-sm">
+                                            <Search className="w-3.5 h-3.5" />
+                                            Search
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -675,80 +710,70 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="border-b border-slate-100">
-                                        <th className="pb-4 pt-0 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Student</th>
-                                        <th className="pb-4 pt-0 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Student Number</th>
+                                    <tr className="bg-[#F9F7EF] border-b border-slate-100">
+                                        <th className="py-4 px-8 text-[11px] font-extrabold text-[#443322] uppercase tracking-[0.1em]">Student / Property</th>
+                                        <th className="py-4 px-2 text-[11px] font-extrabold text-[#443322] uppercase tracking-[0.1em]">Student Number</th>
                                         {activeTab === 'residents' ? (
                                             <>
-                                                <th className="pb-4 pt-0 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Room</th>
-                                                <th className="pb-4 pt-0 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2 text-right">Status</th>
+                                                <th className="py-4 px-2 text-[11px] font-extrabold text-[#443322] uppercase tracking-[0.1em]">Room / Capacity</th>
+                                                <th className="py-4 px-2 text-[11px] font-extrabold text-[#443322] uppercase tracking-[0.1em] text-right">Status</th>
                                             </>
                                         ) : (
-                                            <>
-                                                <th className="pb-4 pt-0 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Date Approved</th>
-                                                <th className="pb-4 pt-0 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Home Region</th>
-                                                <th className="pb-4 pt-0 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2 text-right">Priority</th>
-                                            </>
+                                            <th className="py-4 px-2 text-[11px] font-extrabold text-[#443322] uppercase tracking-[0.1em] text-right">Date Applied</th>
                                         )}
+                                        <th className="py-4 px-8 text-[11px] font-extrabold text-[#443322] uppercase tracking-[0.1em] text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {paginatedStudents.length > 0 ? paginatedStudents.map((student, idx) => (
-                                        <tr key={idx} className="border-b border-slate-50 last:border-0 group hover:bg-slate-50/50 transition-colors">
-                                            <td className="py-4 px-2">
+                                        <tr key={idx} className="border-b border-slate-50 last:border-0 group hover:bg-[#F9FBFD] transition-colors">
+                                            <td className="py-5 px-8">
                                                 <div className="flex items-center gap-3">
-                                                    <Avatar className="h-9 w-9 border border-slate-100 shadow-sm">
-                                                        <AvatarImage src={student.avatar} />
-                                                        <AvatarFallback className="text-white text-[10px] font-bold bg-[#0B3A64]">
-                                                            {student.name.split(' ').map((n: any) => n[0]).join('')}
-                                                        </AvatarFallback>
-                                                    </Avatar>
                                                     <div>
-                                                        <p className="text-[13px] font-bold text-[#0B3A64] leading-none mb-1">{student.name}</p>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{student.college} • Year {student.year_level[0]}</p>
+                                                        <p className="text-[14px] font-black text-[#0B3A64] leading-none mb-1.5">{student.name}</p>
+                                                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Prop: {student.college || "MAKILING-RES-HALL"}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="py-4 px-2">
-                                                <span className="text-[12px] font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md">{student.student_number}</span>
+                                            <td className="py-5 px-2">
+                                                <span className="text-[13px] font-bold text-slate-600">{student.student_number}</span>
                                             </td>
                                             {activeTab === 'residents' ? (
                                                 <>
-                                                    <td className="py-4 px-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-2 h-2 rounded-full bg-[#7A9D54]"></div>
-                                                            <span className="text-[13px] font-black text-[#0B3A64]">Unit {student.room_number}</span>
+                                                    <td className="py-5 px-2">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[14px] font-black text-[#0B3A64]">Unit {student.room_number}</span>
+                                                            <span className="text-[10px] font-bold text-slate-400 uppercase">Year {student.year_level[0]} Resident</span>
                                                         </div>
                                                     </td>
-                                                    <td className="py-4 px-2 text-right">
-                                                        <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${student.payment_status === 'Cleared' ? 'bg-[#EBF2E1] text-[#7A9D54]' :
-                                                            student.payment_status === 'Pending' ? 'bg-[#FFF9E6] text-[#B08E2E]' :
+                                                    <td className="py-5 px-2 text-right">
+                                                        <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${student.payment_status === 'Cleared' ? 'bg-[#EBF2E1] text-[#7A9D54]' :
+                                                            student.payment_status === 'Pending' ? 'bg-[#F2F4F7] text-[#667085]' :
                                                                 'bg-[#FDECEB] text-[#DE7A6A]'
                                                             }`}>
-                                                            {student.payment_status}
+                                                            {student.payment_status === 'Cleared' ? 'PAID' : student.payment_status.toUpperCase()}
                                                         </span>
                                                     </td>
                                                 </>
                                             ) : (
-                                                <>
-                                                    <td className="py-4 px-2">
-                                                        <span className="text-[12px] font-medium text-slate-600">{new Date(student.date_approved).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                                    </td>
-                                                    <td className="py-4 px-2">
-                                                        <span className="text-[12px] font-semibold text-slate-600">{student.home_region}</span>
-                                                    </td>
-                                                    <td className="py-4 px-2 text-right">
-                                                        <div className="flex flex-col items-end">
-                                                            <span className="text-[12px] font-black text-[#5D6BDE]">{student.priority_score}</span>
-                                                            <span className="text-[8px] font-bold text-[#5D6BDE]/60 uppercase tracking-tighter">Points</span>
-                                                        </div>
-                                                    </td>
-                                                </>
+                                                <td className="py-5 px-2 text-right">
+                                                    <span className="text-[13px] font-medium text-slate-600">{new Date(student.date_approved).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                                </td>
                                             )}
+                                            <td className="py-5 px-8 text-right">
+                                                <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button className="p-1.5 text-slate-400 hover:text-[#5591AB] hover:bg-slate-50 rounded-lg">
+                                                        <FileText className="w-4 h-4" />
+                                                    </button>
+                                                    <button className="p-1.5 text-slate-400 hover:text-[#5591AB] hover:bg-slate-50 rounded-lg">
+                                                        <Circle className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     )) : (
                                         <tr>
-                                            <td colSpan={activeTab === 'residents' ? 4 : 5} className="py-10 text-center text-slate-400 text-[13px] font-medium">No students found matching your search.</td>
+                                            <td colSpan={activeTab === 'residents' ? 5 : 4} className="py-12 text-center text-slate-400 text-[13px] font-medium">No records found matching your selection.</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -756,24 +781,24 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                         </div>
 
                         {/* PAGINATION */}
-                        <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate-100">
+                        <div className="flex justify-between items-center px-10 py-8 bg-[#F9FBFD]/50 border-t border-slate-50">
                             <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
-                                Page <span className="text-[#0B3A64]">{tablePage}</span> of {totalPages || 1}
+                                Page <span className="text-[#5591AB]">{tablePage}</span> of {totalPages || 1}
                             </p>
-                            <div className="flex gap-2">
+                            <div className="flex gap-3">
                                 <button
                                     disabled={tablePage === 1}
                                     onClick={() => setTablePage(p => Math.max(1, p - 1))}
-                                    className="p-2 border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-slate-50 transition-colors"
+                                    className="px-4 py-2 bg-white border border-slate-200 rounded-full text-[11px] font-bold text-slate-600 disabled:opacity-30 hover:bg-slate-50 transition-all shadow-sm"
                                 >
-                                    <ChevronLeft className="w-4 h-4 text-slate-600" />
+                                    Previous
                                 </button>
                                 <button
                                     disabled={tablePage === totalPages || totalPages === 0}
                                     onClick={() => setTablePage(p => Math.min(totalPages, p + 1))}
-                                    className="p-2 border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-slate-50 transition-colors"
+                                    className="px-4 py-2 bg-white border border-slate-200 rounded-full text-[11px] font-bold text-slate-600 disabled:opacity-30 hover:bg-slate-50 transition-all shadow-sm"
                                 >
-                                    <ChevronRight className="w-4 h-4 text-slate-600" />
+                                    Next
                                 </button>
                             </div>
                         </div>
