@@ -13,12 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
 
 interface UnitFormData {
   unit_number: string;
@@ -47,7 +41,6 @@ interface Props {
   onClose: () => void;
   onSuccess: (unit: any) => void;
   accommodationId: string;
-  accentColor?: string;
 }
 
 export default function AddUnitModal({
@@ -55,7 +48,6 @@ export default function AddUnitModal({
   onClose,
   onSuccess,
   accommodationId,
-  accentColor = "#EB8A0B",
 }: Props) {
   const [form, setForm] = useState<UnitFormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
@@ -73,7 +65,6 @@ export default function AddUnitModal({
   }
 
   async function handleSubmit() {
-    // Validate required fields
     if (!form.unit_number.trim()) {
       setError("Unit number is required");
       return;
@@ -82,7 +73,7 @@ export default function AddUnitModal({
       setError("Max occupancy must be at least 1");
       return;
     }
-    if (!form.rental_fee || parseInt(form.rental_fee) < 0) {
+    if (!form.rental_fee || parseFloat(form.rental_fee) < 0) {
       setError("Rental fee is required");
       return;
     }
@@ -133,170 +124,161 @@ export default function AddUnitModal({
       title="Add New Unit"
       description="Fill in the unit details below"
     >
-      <Card
-        className="shadow-sm bg-[#FDFFF4] transition-all duration-300 ease-in-out"
-        style={{ borderTop: `6px solid ${accentColor}` }}
-      >
-        <CardContent className="pt-6 space-y-4">
-          {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-              {error}
-            </div>
-          )}
+      <div className="space-y-4">
+        {/* Error */}
+        {error && (
+          <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+            {error}
+          </p>
+        )}
 
-          {/* Unit No. | Unit Type */}
-          <div className="grid grid-cols-2 gap-4">
-            <Field>
-              <Label className="text-sm font-semibold">
-                Unit No. <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                value={form.unit_number}
-                onChange={(e) => handleChange("unit_number", e.target.value)}
-                placeholder="e.g. 101"
-                disabled={loading}
-              />
-            </Field>
-            <Field>
-              <Label className="text-sm font-semibold text-muted-foreground">
-                Unit Type
-              </Label>
-              <Input
-                value={form.unit_type}
-                onChange={(e) => handleChange("unit_type", e.target.value)}
-                placeholder="e.g. 1BR, Studio"
-                disabled={loading}
-              />
-            </Field>
-          </div>
-
-          {/* Max Occupancy | Rental Fee */}
-          <div className="grid grid-cols-2 gap-4">
-            <Field>
-              <Label className="text-sm font-semibold">
-                Max Occupancy <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                type="number"
-                min="1"
-                value={form.max_occupancy}
-                onChange={(e) => handleChange("max_occupancy", e.target.value)}
-                placeholder="1"
-                disabled={loading}
-              />
-            </Field>
-            <Field>
-              <Label className="text-sm font-semibold">
-                Rental Fee (₱) <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                type="number"
-                min="0"
-                value={form.rental_fee}
-                onChange={(e) => handleChange("rental_fee", e.target.value)}
-                placeholder="0"
-                disabled={loading}
-              />
-            </Field>
-          </div>
-
-          {/* Billing Period | Furnishing Status */}
-          <div className="grid grid-cols-2 gap-4">
-            <Field>
-              <Label className="text-sm font-semibold">
-                Billing Period <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={form.billing_period}
-                onValueChange={(val) => handleChange("billing_period", val)}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="one-time">One-time</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <Label className="text-sm font-semibold">
-                Furnishing <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={form.furnishing_status}
-                onValueChange={(val) => handleChange("furnishing_status", val)}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="furnished">Furnished</SelectItem>
-                  <SelectItem value="semi-furnished">Semi-furnished</SelectItem>
-                  <SelectItem value="unfurnished">Unfurnished</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
-
-          {/* Min Stay | Max Stay (optional) */}
-          <div className="grid grid-cols-2 gap-4">
-            <Field>
-              <Label className="text-sm font-semibold text-muted-foreground">
-                Min Stay (days)
-              </Label>
-              <Input
-                type="number"
-                min="1"
-                value={form.min_stay_duration}
-                onChange={(e) =>
-                  handleChange("min_stay_duration", e.target.value)
-                }
-                placeholder="Optional"
-                disabled={loading}
-              />
-            </Field>
-            <Field>
-              <Label className="text-sm font-semibold text-muted-foreground">
-                Max Stay (days)
-              </Label>
-              <Input
-                type="number"
-                min="1"
-                value={form.max_stay_duration}
-                onChange={(e) =>
-                  handleChange("max_stay_duration", e.target.value)
-                }
-                placeholder="Optional"
-                disabled={loading}
-              />
-            </Field>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 justify-end pt-4 border-t border-[#e2e4c0]">
-            <Button
-              variant="outline"
-              onClick={onClose}
+        {/* Row 1: Unit No. | Unit Type */}
+        <div className="grid grid-cols-2 gap-3">
+          <Field>
+            <Label className="text-sm font-medium">
+              Unit No. <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              value={form.unit_number}
+              onChange={(e) => handleChange("unit_number", e.target.value)}
+              placeholder="e.g. 101"
               disabled={loading}
-              className="border-[#e2e4c0]"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
+            />
+          </Field>
+          <Field>
+            <Label className="text-sm font-medium text-muted-foreground">
+              Unit Type
+            </Label>
+            <Input
+              value={form.unit_type}
+              onChange={(e) => handleChange("unit_type", e.target.value)}
+              placeholder="e.g. 1BR, Studio"
               disabled={loading}
-              className="bg-[#264384] hover:bg-[#5273BC] text-white"
+            />
+          </Field>
+        </div>
+
+        {/* Row 2: Max Occupancy | Rental Fee */}
+        <div className="grid grid-cols-2 gap-3">
+          <Field>
+            <Label className="text-sm font-medium">
+              Max Occupancy <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              type="number"
+              min="1"
+              value={form.max_occupancy}
+              onChange={(e) => handleChange("max_occupancy", e.target.value)}
+              placeholder="1"
+              disabled={loading}
+            />
+          </Field>
+          <Field>
+            <Label className="text-sm font-medium">
+              Rental Fee (₱) <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              value={form.rental_fee}
+              onChange={(e) => handleChange("rental_fee", e.target.value)}
+              placeholder="0"
+              disabled={loading}
+            />
+          </Field>
+        </div>
+
+        {/* Row 3: Billing Period | Furnishing Status */}
+        <div className="grid grid-cols-2 gap-3">
+          <Field>
+            <Label className="text-sm font-medium">
+              Billing Period <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={form.billing_period}
+              onValueChange={(val) => handleChange("billing_period", val)}
+              disabled={loading}
             >
-              {loading ? "Creating..." : "Create Unit"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="one-time">One-time</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field>
+            <Label className="text-sm font-medium">
+              Furnishing <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={form.furnishing_status}
+              onValueChange={(val) => handleChange("furnishing_status", val)}
+              disabled={loading}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="furnished">Furnished</SelectItem>
+                <SelectItem value="semi-furnished">Semi-furnished</SelectItem>
+                <SelectItem value="unfurnished">Unfurnished</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+        </div>
+
+        {/* Row 4: Min Stay | Max Stay */}
+        <div className="grid grid-cols-2 gap-3">
+          <Field>
+            <Label className="text-sm font-medium text-muted-foreground">
+              Min Stay (days)
+            </Label>
+            <Input
+              type="number"
+              min="1"
+              value={form.min_stay_duration}
+              onChange={(e) =>
+                handleChange("min_stay_duration", e.target.value)
+              }
+              placeholder="Optional"
+              disabled={loading}
+            />
+          </Field>
+          <Field>
+            <Label className="text-sm font-medium text-muted-foreground">
+              Max Stay (days)
+            </Label>
+            <Input
+              type="number"
+              min="1"
+              value={form.max_stay_duration}
+              onChange={(e) =>
+                handleChange("max_stay_duration", e.target.value)
+              }
+              placeholder="Optional"
+              disabled={loading}
+            />
+          </Field>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-between gap-2 pt-3 border-t">
+          <Button variant="outline" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="bg-[#78A24C] hover:!bg-[#E7FAD3] text-white hover:!text-[#78A24C]"
+          >
+            {loading ? "Adding..." : "Add Unit"}
+          </Button>
+        </div>
+      </div>
     </Modal>
   );
 }
