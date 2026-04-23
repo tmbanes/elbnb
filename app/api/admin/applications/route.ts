@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
+type ManualInvoiceItem = {
+  kind: "first_rental" | "security_deposit" | "reservation_fee" | "other" | "room_rent";
+  amount: number;
+  required_to_secure_slot?: boolean;
+  note?: string;
+};
+
+function mapInvoiceKindToBillingType(kind: ManualInvoiceItem["kind"]) {
+  if (kind === "security_deposit") return "security_deposit";
+  if (kind === "reservation_fee") return "reservation_fee";
+  return "room_rent";
+}
+
 export async function GET(_req: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
@@ -32,7 +45,44 @@ export async function GET(_req: NextRequest) {
         .select("unit_id, unit_number, unit_type")
         .eq("accommodation_id", data.preferred_accommodation_id);
 
-      return NextResponse.json({ ...data, availableUnits: unitList || [] });
+      const { data: assignment } = await supabase
+        .from("accommodation_assignment")
+        .select("assignment_id, assignment_status")
+        .eq("application_id", data.application_id)
+        .maybeSingle();
+
+      let invoiceDraft: any = null;
+      if (assignment?.assignment_id) {
+        const { data: latestBilling } = await supabase
+          .from("billing")
+          .select(
+            `
+              billing_id,
+              amount,
+              due_date,
+              billing_period_date,
+              status,
+              internal_notes,
+              billing_item (
+                type,
+                amount
+              )
+            `,
+          )
+          .eq("assignment_id", assignment.assignment_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        invoiceDraft = latestBilling ?? null;
+      }
+
+      return NextResponse.json({
+        ...data,
+        availableUnits: unitList || [],
+        assignment: assignment ?? null,
+        invoiceDraft,
+      });
     }
 
     // Verify session
@@ -133,7 +183,7 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const { application_id, action, unit_id } = body as {
       application_id: string;
-      action: "approve" | "reject";
+      action: "approve" | "reject" | "pending_payment";
       unit_id?: string;
     };
 
@@ -161,6 +211,80 @@ export async function PATCH(req: NextRequest) {
 
       if (error) throw new Error(error.message);
       return NextResponse.json({ success: true, new_status: "rejected" });
+    }
+
+    if (action === "pending_payment") {
+      const { data: application, error: appError } = await supabase
+        .from("accommodation_application")
+        .select("application_id, application_status")
+        .eq("application_id", application_id)
+        .single();
+
+      if (appError || !application) {
+        return NextResponse.json({ error: "Application not found." }, { status: 404 });
+      }
+
+      if (application.application_status !== "pending_payment") {
+        return NextResponse.json(
+          { error: "Only pending payment applications can be approved from this action." },
+          { status: 409 },
+        );
+      }
+
+      const { data: assignment, error: assignmentError } = await supabase
+        .from("accommodation_assignment")
+        .select("assignment_id")
+        .eq("application_id", application_id)
+        .maybeSingle();
+
+      if (assignmentError || !assignment?.assignment_id) {
+        return NextResponse.json(
+          { error: "No assignment found for this application." },
+          { status: 404 },
+        );
+      }
+
+      const { data: latestBilling, error: billingError } = await supabase
+        .from("billing")
+        .select("billing_id, status")
+        .eq("assignment_id", assignment.assignment_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (billingError || !latestBilling?.billing_id) {
+        return NextResponse.json(
+          { error: "No invoice found for this application." },
+          { status: 404 },
+        );
+      }
+
+      if (latestBilling.status !== "paid") {
+        return NextResponse.json(
+          { error: "Invoice must be marked as paid before final approval." },
+          { status: 409 },
+        );
+      }
+
+      const { error: assignmentUpdateError } = await supabaseAdmin
+        .from("accommodation_assignment")
+        .update({ assignment_status: "active" })
+        .eq("assignment_id", assignment.assignment_id);
+
+      if (assignmentUpdateError) throw new Error(assignmentUpdateError.message);
+
+      const { error: appUpdateError } = await supabaseAdmin
+        .from("accommodation_application")
+        .update({ application_status: "approved" })
+        .eq("application_id", application_id);
+
+      if (appUpdateError) throw new Error(appUpdateError.message);
+
+      return NextResponse.json({
+        success: true,
+        new_status: "approved",
+        assignment_status: "active",
+      });
     }
 
     // ── Approve flow ───────────────────────────────────────────────────────────
@@ -205,14 +329,6 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const monthlyRent = Number(unit.rental_fee ?? 0);
-    if (!Number.isFinite(monthlyRent) || monthlyRent <= 0) {
-      return NextResponse.json(
-        { error: "Selected unit has no valid rental fee for invoice creation." },
-        { status: 400 },
-      );
-    }
-
     // 3. Update application status to pending payment and persist selected unit
     const { error: approveError } = await supabaseAdmin
       .from("accommodation_application")
@@ -244,74 +360,260 @@ export async function PATCH(req: NextRequest) {
       throw new Error(`Failed to create assignment: ${assignError.message}`);
     }
 
-    // 5. Auto-generate initial invoice (1 month room rent)
-    const dueDate = application.check_in ? new Date(application.check_in) : new Date();
-    const billingPeriodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
-
-    const { data: billing, error: billingError } = await supabaseAdmin
-      .from("billing")
-      .insert({
-        assignment_id: assignment.assignment_id,
-        amount: monthlyRent,
-        billing_period_date: billingPeriodDate.toISOString(),
-        due_date: dueDate.toISOString(),
-        status: "unpaid",
-        payment_method: "cash",
-        internal_notes: "Auto-generated initial invoice upon admin approval (1 month room rent).",
-      })
-      .select("billing_id")
-      .single();
-
-    if (billingError) {
-      await supabaseAdmin
-        .from("accommodation_assignment")
-        .delete()
-        .eq("assignment_id", assignment.assignment_id);
-
-      await supabaseAdmin
-        .from("accommodation_application")
-        .update({ application_status: "pending_admin", unit_id: null })
-        .eq("application_id", application.application_id);
-
-      throw new Error(`Failed to auto-create invoice: ${billingError.message}`);
-    }
-
-    const { error: itemError } = await supabaseAdmin
-      .from("billing_item")
-      .insert({
-        billing_id: billing.billing_id,
-        type: "room_rent",
-        amount: monthlyRent,
-      });
-
-    if (itemError) {
-      await supabaseAdmin
-        .from("billing")
-        .delete()
-        .eq("billing_id", billing.billing_id);
-
-      await supabaseAdmin
-        .from("accommodation_assignment")
-        .delete()
-        .eq("assignment_id", assignment.assignment_id);
-
-      await supabaseAdmin
-        .from("accommodation_application")
-        .update({ application_status: "pending_admin", unit_id: null })
-        .eq("application_id", application.application_id);
-
-      throw new Error(`Failed to create billing item: ${itemError.message}`);
-    }
-
     return NextResponse.json({
       success: true,
       new_status: "pending_payment",
       assignment_status: "waiting_payment",
-      auto_invoice_amount: monthlyRent,
+      message: "Application approved. Create and send invoice manually from Applications.",
     });
   } catch (e) {
     const message =
       e instanceof Error ? e.message : "Failed to process application.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const supabase = await createSupabaseServerClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!profile || profile.role !== "housing_admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const {
+      application_id,
+      due_date,
+      items,
+      note,
+      unit_id,
+    } = body as {
+      application_id: string;
+      due_date: string;
+      items: ManualInvoiceItem[];
+      note?: string;
+      unit_id?: string;
+    };
+
+    if (!application_id || !due_date || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json(
+        { error: "application_id, due_date and at least one invoice item are required." },
+        { status: 400 },
+      );
+    }
+
+    const normalizedItems = items
+      .map((item) => ({
+        kind: item.kind,
+        amount: Number(item.amount ?? 0),
+        required_to_secure_slot: Boolean(item.required_to_secure_slot),
+        note: item.note ?? "",
+      }))
+      .filter((item) => Number.isFinite(item.amount) && item.amount > 0);
+
+    if (normalizedItems.length === 0) {
+      return NextResponse.json(
+        { error: "All invoice item amounts must be greater than 0." },
+        { status: 400 },
+      );
+    }
+
+    const requiredItems = normalizedItems.filter((item) => item.required_to_secure_slot);
+    if (requiredItems.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "At least one item must be marked as required to secure the slot.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const dueDate = new Date(due_date);
+    if (Number.isNaN(dueDate.getTime())) {
+      return NextResponse.json({ error: "Invalid due_date." }, { status: 400 });
+    }
+
+    const { data: application, error: appError } = await supabase
+      .from("accommodation_application")
+      .select("application_id, user_id, unit_id, check_in, check_out, application_status")
+      .eq("application_id", application_id)
+      .single();
+
+    if (appError || !application) {
+      return NextResponse.json({ error: "Application not found." }, { status: 404 });
+    }
+
+    if (!["pending_payment", "approved"].includes(application.application_status)) {
+      return NextResponse.json(
+        { error: "Invoice can only be sent for pending payment/approved applications." },
+        { status: 409 },
+      );
+    }
+
+    let assignmentId: string | null = null;
+    let resolvedUnitId = unit_id ?? application.unit_id ?? null;
+    const { data: existingAssignment } = await supabase
+      .from("accommodation_assignment")
+      .select("assignment_id")
+      .eq("application_id", application_id)
+      .maybeSingle();
+
+    if (existingAssignment?.assignment_id) {
+      assignmentId = existingAssignment.assignment_id;
+    } else {
+      if (!resolvedUnitId) {
+        return NextResponse.json(
+          { error: "No assigned unit found for this application." },
+          { status: 400 },
+        );
+      }
+
+      const { data: createdAssignment, error: createAssignmentError } = await supabaseAdmin
+        .from("accommodation_assignment")
+        .insert({
+          application_id: application.application_id,
+          unit_id: resolvedUnitId,
+          user_id: application.user_id,
+          move_in_date: application.check_in,
+          expected_move_out_date: application.check_out,
+          actual_move_out_date: null,
+          assignment_status: "waiting_payment",
+        })
+        .select("assignment_id")
+        .single();
+
+      if (createAssignmentError || !createdAssignment?.assignment_id) {
+        return NextResponse.json(
+          {
+            error: createAssignmentError?.message ?? "Failed to create assignment for invoice.",
+          },
+          { status: 500 },
+        );
+      }
+
+      assignmentId = createdAssignment.assignment_id;
+    }
+
+    const periodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
+    const totalAmount = normalizedItems.reduce((sum, item) => sum + item.amount, 0);
+    const requiredAmount = requiredItems.reduce((sum, item) => sum + item.amount, 0);
+
+    const internalNotes = "";
+
+    const { data: latestBilling } = await supabase
+      .from("billing")
+      .select("billing_id, status")
+      .eq("assignment_id", assignmentId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let billingId: string;
+    let mode: "created" | "updated" = "created";
+
+    if (latestBilling?.billing_id) {
+      if (latestBilling.status === "paid") {
+        return NextResponse.json(
+          { error: "Latest invoice is already paid. Create a new invoice from Billing instead." },
+          { status: 409 },
+        );
+      }
+
+      const { error: updateBillingError } = await supabaseAdmin
+        .from("billing")
+        .update({
+          amount: totalAmount,
+          due_date: dueDate.toISOString(),
+          billing_period_date: periodDate.toISOString(),
+          payment_method: "cash",
+          internal_notes: internalNotes,
+        })
+        .eq("billing_id", latestBilling.billing_id);
+
+      if (updateBillingError) {
+        return NextResponse.json({ error: updateBillingError.message }, { status: 500 });
+      }
+
+      await supabaseAdmin.from("billing_item").delete().eq("billing_id", latestBilling.billing_id);
+
+      const { error: insertItemsError } = await supabaseAdmin.from("billing_item").insert(
+        normalizedItems.map((item) => ({
+          billing_id: latestBilling.billing_id,
+          type: mapInvoiceKindToBillingType(item.kind),
+          amount: item.amount,
+        })),
+      );
+
+      if (insertItemsError) {
+        return NextResponse.json({ error: insertItemsError.message }, { status: 500 });
+      }
+
+      billingId = latestBilling.billing_id;
+      mode = "updated";
+    } else {
+      const { data: createdBilling, error: createBillingError } = await supabaseAdmin
+        .from("billing")
+        .insert({
+          assignment_id: assignmentId,
+          amount: totalAmount,
+          billing_period_date: periodDate.toISOString(),
+          due_date: dueDate.toISOString(),
+          status: "unpaid",
+          payment_method: "cash",
+          internal_notes: internalNotes,
+        })
+        .select("billing_id")
+        .single();
+
+      if (createBillingError || !createdBilling?.billing_id) {
+        return NextResponse.json(
+          { error: createBillingError?.message ?? "Failed to create invoice." },
+          { status: 500 },
+        );
+      }
+
+      const { error: insertItemsError } = await supabaseAdmin.from("billing_item").insert(
+        normalizedItems.map((item) => ({
+          billing_id: createdBilling.billing_id,
+          type: mapInvoiceKindToBillingType(item.kind),
+          amount: item.amount,
+        })),
+      );
+
+      if (insertItemsError) {
+        await supabaseAdmin.from("billing").delete().eq("billing_id", createdBilling.billing_id);
+        return NextResponse.json({ error: insertItemsError.message }, { status: 500 });
+      }
+
+      billingId = createdBilling.billing_id;
+    }
+
+    return NextResponse.json({
+      success: true,
+      billing_id: billingId,
+      mode,
+      required_to_secure_slot_total: requiredAmount,
+    });
+  } catch (e) {
+    const message =
+      e instanceof Error ? e.message : "Failed to send manual invoice.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
