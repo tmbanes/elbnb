@@ -191,18 +191,22 @@ export function AccommodationListView({
 
                 {/* APPLY BUTTON */}
                 {userRole === 'student' ? (
-                  <button
-                    disabled={vacantSlots === 0}
-                    className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm ${vacantSlots > 0
-                      ? 'text-white hover:opacity-90 active:scale-[0.98]'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                    style={{
-                      backgroundColor: vacantSlots > 0 ? '#264384' : undefined,
-                    }}
-                  >
-                    Apply
-                  </button>
+                  vacantSlots > 0 ? (
+                    <Link
+                      href={`${basePath}/application?accommodationId=${acc.accommodation_id}`}
+                      className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] inline-block"
+                      style={{ backgroundColor: '#264384' }}
+                    >
+                      Apply
+                    </Link>
+                  ) : (
+                    <button
+                      disabled
+                      className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
+                    >
+                      Apply
+                    </button>
+                  )
                 ) : (
                   <button
                     onClick={() => onSeeUnitsClick?.(acc)}

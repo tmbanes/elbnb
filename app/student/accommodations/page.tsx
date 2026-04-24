@@ -402,19 +402,7 @@ export default function SearchAccommodationsPage() {
             >
               Accommodations
             </button>
-            <button
-              onClick={() => { setActiveTab('units'); setCurrentPage(1); }}
-              className={`px-6 py-3 rounded-lg font-semibold transition ${activeTab === 'units'
-                ? 'text-white shadow-md'
-                : 'border border-gray-200 hover:border-gray-300'
-                }`}
-              style={{
-                backgroundColor: activeTab === 'units' ? '#264384' : '#FDFFF4',
-                color: activeTab === 'units' ? 'white' : '#44291B',
-              }}
-            >
-              All Units
-            </button>
+
             <button
               onClick={() => setViewMode(viewMode === 'list' ? 'carousel' : 'list')}
               className="px-6 py-3 rounded-lg font-semibold border border-gray-200 hover:border-gray-300 transition shadow-sm"
@@ -506,12 +494,14 @@ export default function SearchAccommodationsPage() {
                 <div className="mb-12">
                   <Carousel>
                     {filteredAccommodations.map((accommodation) => (
-                      <AccommodationCard
-                        key={accommodation.accommodation_id}
-                        accommodation={accommodation}
-                        units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
-                        onDetailsClick={handleAccommodationDetailsClick}
-                      />
+                        <AccommodationCard
+                          key={accommodation.accommodation_id}
+                          accommodation={accommodation}
+                          units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
+                          onDetailsClick={handleAccommodationDetailsClick}
+                          basePath="/student/accommodations"
+                          userRole="student"
+                        />
                     ))}
                   </Carousel>
                 </div>
