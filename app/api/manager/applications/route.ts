@@ -35,6 +35,7 @@ export async function GET(_req: NextRequest) {
       .eq("manager_id", user.id)
       .single();
 
+     
     if (managerError) {
       console.error("REAL SUPABASE ERROR:", managerError);
     }
@@ -47,6 +48,7 @@ export async function GET(_req: NextRequest) {
     }
 
     const accommodation = accommodationData?.accommodation_id;
+    console.log(`accom id : ${accommodation}`);
 
     // Fetch all applications for this accommodation that are pending dorm manager review
     const { data: applications, error: appError } = await supabase
@@ -54,7 +56,6 @@ export async function GET(_req: NextRequest) {
       .select(
         `
         application_id,
-        preferred_accommodation_id,
         preferred_accommodation_id,
         preferred_unit_type,
         date_submitted,
@@ -83,7 +84,7 @@ export async function GET(_req: NextRequest) {
       .eq("accommodation_id", accommodation);
 
     if (unitsError) throw new Error(unitsError.message);
-
+      console.log(applications)
     return NextResponse.json({
       accommodation: accommodationData,
       applications: applications ?? [],
