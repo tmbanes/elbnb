@@ -17,7 +17,7 @@ import {
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
+import { useSidebar } from "@/components/ui/sidebar"
 import Link from "next/link"
 import {
   Sidebar,
@@ -50,6 +50,7 @@ const sidebarConfig = {
       { title: "Housing", url: "/admin/housing", icon: Building2 },
       { title: "Managers", url: "/admin/housing/managers", icon: Users },
       { title: "Billing", url: "/admin/billing", icon: Banknote },
+      { title: "Residents", url: "/admin/residents", icon: Users },
       { title: "Applications", url: "/admin/applications", icon: Newspaper },
     ],
   },
@@ -59,7 +60,7 @@ const sidebarConfig = {
     nav: [
       { title: "Dashboard", url: "/manager/dashboard", icon: PieChart },
       { title: "Applications", url: "/manager/applications", icon: Newspaper },
-      { title: "Sample", url: "#", icon: Users },
+      { title: "Residents", url: "/manager/residents", icon: Users },
     ],
   },
 
@@ -86,6 +87,11 @@ export function AppSidebar({
     email: "",
     avatar: "/avatars/shadcn.jpg",
   })
+  const [hasMounted, setHasMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setHasMounted(true)
+  }, [])
 
   React.useEffect(() => {
     async function fetchUser() {
@@ -124,6 +130,10 @@ export function AppSidebar({
   }, [supabase])
 
   const { toggleSidebar, state, setOpen } = useSidebar()
+
+  if (!hasMounted) {
+    return <div className="w-[var(--sidebar-width)] bg-[#8ba665] h-screen" />;
+  }
 
   return (
     <>

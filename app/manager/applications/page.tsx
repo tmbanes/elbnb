@@ -223,10 +223,11 @@ export default function ManagerApplicationsPage() {
     try {
       const { accommodation, applications: apps, units: fetchedUnits } =
         await fetchManagerApplications();
-
+        
         
       setAccommodationName(accommodation.name);
       setApplications(apps);
+      console.log(`applcations: ${applications}`); // DEBUG
       setUnits(fetchedUnits);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load applications.");

@@ -242,70 +242,74 @@ export default function SearchAccommodationsPage() {
           <p style={{ color: '#44291B' }}>Find your perfect housing option</p>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by location or name..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                applyAccommodationFilters(accommodations, units, accommodationFilters, e.target.value)
-                applyUnitFilters(units, unitFilters, accommodations, e.target.value)
-              }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-gray-900 placeholder-gray-500"
-              style={{
-                color: '#44291B',
-                '--tw-ring-color': '#264384',
-              } as any}
-            />
-            <svg
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        {/* Search Bar (Left) + Tab Navigation (Right) */}
+        <div className="flex gap-4 mb-8 items-center">
+          {/* Search Bar - Left Side */}
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by location or name..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  applyAccommodationFilters(accommodations, units, accommodationFilters, e.target.value)
+                  applyUnitFilters(units, unitFilters, accommodations, e.target.value)
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-gray-900 placeholder-gray-500"
+                style={{
+                  color: '#44291B',
+                  backgroundColor: '#FDFFF4',
+                  '--tw-ring-color': '#264384',
+                } as any}
               />
-            </svg>
+              <svg
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
           </div>
-        </div>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-3 mb-8">
-          <button
-            onClick={() => setActiveTab('accommodations')}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'accommodations'
-                ? 'text-white shadow-md'
-                : 'border border-gray-200 hover:border-gray-300'
-            }`}
-            style={{
-              backgroundColor: activeTab === 'accommodations' ? '#264384' : '#FDFFF4',
-              color: activeTab === 'accommodations' ? 'white' : '#44291B',
-            }}
-          >
-            Accommodations
-          </button>
-          <button
-            onClick={() => setActiveTab('units')}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'units'
-                ? 'text-white shadow-md'
-                : 'border border-gray-200 hover:border-gray-300'
-            }`}
-            style={{
-              backgroundColor: activeTab === 'units' ? '#264384' : '#FDFFF4',
-              color: activeTab === 'units' ? 'white' : '#44291B',
-            }}
-          >
-            All Units
-          </button>
+          {/* Tab Navigation - Right Side */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => setActiveTab('accommodations')}
+              className={`px-6 py-3 rounded-lg font-semibold transition whitespace-nowrap ${
+                activeTab === 'accommodations'
+                  ? 'text-white shadow-md'
+                  : 'border border-gray-200 hover:border-gray-300'
+              }`}
+              style={{
+                backgroundColor: activeTab === 'accommodations' ? '#264384' : '#FDFFF4',
+                color: activeTab === 'accommodations' ? 'white' : '#44291B',
+              }}
+            >
+              Accommodations
+            </button>
+            <button
+              onClick={() => setActiveTab('units')}
+              className={`px-6 py-3 rounded-lg font-semibold transition whitespace-nowrap ${
+                activeTab === 'units'
+                  ? 'text-white shadow-md'
+                  : 'border border-gray-200 hover:border-gray-300'
+              }`}
+              style={{
+                backgroundColor: activeTab === 'units' ? '#264384' : '#FDFFF4',
+                color: activeTab === 'units' ? 'white' : '#44291B',
+              }}
+            >
+              All Units
+            </button>
+          </div>
         </div>
 
         {/* Error Message */}
@@ -372,20 +376,6 @@ export default function SearchAccommodationsPage() {
                 </button>
               </div>
             )}
-
-            {/* Carousel */}
-            {!loading && filteredAccommodations.length > 0 && (
-              <Carousel>
-                {filteredAccommodations.map((accommodation) => (
-                  <AccommodationCard
-                    key={accommodation.accommodation_id}
-                    accommodation={accommodation}
-                    units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
-                    onDetailsClick={handleAccommodationDetailsClick}
-                  />
-                ))}
-              </Carousel>
-            )}
           </div>
         )}
 
@@ -447,28 +437,47 @@ export default function SearchAccommodationsPage() {
                 </button>
               </div>
             )}
-
-            {/* Carousel */}
-            {!loading && filteredUnits.length > 0 && (
-              <Carousel>
-                {filteredUnits.map((unit) => {
-                  const accommodation = accommodations.find(
-                    (a) => a.accommodation_id === unit.accommodation_id
-                  )
-                  return (
-                    <UnitCard
-                      key={unit.unit_id}
-                      unit={unit}
-                      accommodation={accommodation}
-                      onDetailsClick={handleUnitDetailsClick}
-                    />
-                  )
-                })}
-              </Carousel>
-            )}
           </div>
         )}
       </div>
+
+      {/* Full-Width Carousel Section */}
+      {/* Accommodations Carousel */}
+      {activeTab === 'accommodations' && !loading && filteredAccommodations.length > 0 && (
+        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+          <Carousel>
+            {filteredAccommodations.map((accommodation) => (
+              <AccommodationCard
+                key={accommodation.accommodation_id}
+                accommodation={accommodation}
+                units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
+                onDetailsClick={handleAccommodationDetailsClick}
+              />
+            ))}
+          </Carousel>
+        </div>
+      )}
+
+      {/* Units Carousel */}
+      {activeTab === 'units' && !loading && filteredUnits.length > 0 && (
+        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+          <Carousel>
+            {filteredUnits.map((unit) => {
+              const accommodation = accommodations.find(
+                (a) => a.accommodation_id === unit.accommodation_id
+              )
+              return (
+                <UnitCard
+                  key={unit.unit_id}
+                  unit={unit}
+                  accommodation={accommodation}
+                  onDetailsClick={handleUnitDetailsClick}
+                />
+              )
+            })}
+          </Carousel>
+        </div>
+      )}
     </div>
   )
 }

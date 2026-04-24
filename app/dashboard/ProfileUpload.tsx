@@ -2,7 +2,11 @@
 
 import React, { useState, useRef } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+<<<<<<< user-profiles-latest
 import { useRouter } from "next/navigation";
+=======
+import { createActivityLog, getCurrentUserFromApi, isUserRole } from "@/services/activity_log/browser";
+>>>>>>> develop
 
 export function ProfileUpload({
   initialProfileUrl,
@@ -68,8 +72,27 @@ export function ProfileUpload({
       if (dbError) throw dbError;
 
       setProfileUrl(publicData.publicUrl);
+<<<<<<< user-profiles-latest
       router.refresh();
       if (onUploadSuccess) onUploadSuccess(publicData.publicUrl);
+=======
+
+      // Log changes
+      const profile = await getCurrentUserFromApi();
+      const userRole = isUserRole(profile?.role) ? profile.role : "guest";
+
+      if (profile?.user_id){
+        await createActivityLog({
+          p_user_id: profile.user_id,
+          p_action_type: "update_user",
+          p_log_desc: `${profile.first_name} updated profile picture`,
+          p_entity_type: "auth",
+          p_entity_id: profile.user_id,
+          p_user_role: userRole,
+        });
+      }
+      
+>>>>>>> develop
     } catch (err: any) {
       console.error("Upload error:", err);
       setError(err?.message || "An error occurred during upload.");
