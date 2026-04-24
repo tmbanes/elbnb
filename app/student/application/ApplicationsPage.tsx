@@ -248,28 +248,34 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
         {/* SECTION 2: HISTORY */}
         <section className="space-y-4">
           
-          <div className="flex justify-between items-center mb-2">
+          <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-3">
               <div className="w-1.5 h-8 bg-[#44291B]/20 rounded-full" />
               <h2 className="text-2xl font-bold text-[#44291B]">Application History</h2>
             </div>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="text-sm border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#264384] font-medium shadow-sm cursor-pointer"
-            >
-              <option value="all">All Statuses</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+            {/* Filter styled to match the Admin Client */}
+            <div className="flex items-center gap-2 text-sm bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-transparent outline-none text-slate-700 font-medium cursor-pointer"
+              >
+                <option value="all">All Statuses</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
           </div>
 
-          <div className="border border-[#e8e2d6] rounded-xl overflow-hidden shadow-sm bg-[#FDFFF4]">
+          {/* TABLE CONTAINER - Styled from AdminBillingClient */}
+          <div className="bg-white border text-sm border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            
+            {/* Note: Kept your custom blue header as it houses your specific submission log assets */}
             <div className="relative bg-[#264384] py-4 px-6 overflow-hidden">
               <div className="flex justify-between items-center relative z-10">
                 <span className="text-white text-sm font-bold uppercase tracking-widest">Submission Log</span>
@@ -279,56 +285,62 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
               <img src="/assets/right_roof.png" className="absolute right-0 top-0 h-full object-contain pointer-events-none opacity-20" alt="" />
             </div>
 
-            <Table>
-              <TableHeader className="bg-[#FDFFF4]">
-                <TableRow className="border-b border-[#e8e2d6] hover:bg-transparent">
-                  <TableHead className="text-[#44291B] font-bold h-12">Date</TableHead>
-                  <TableHead className="text-[#44291B] font-bold">Dormitory</TableHead>
-                  <TableHead className="text-[#44291B] font-bold">Room Type</TableHead>
-                  <TableHead className="text-[#44291B] font-bold">Status</TableHead>
-                  <TableHead className="text-[#44291B] font-bold text-right pr-6">Actual Move-out</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedRecords.length > 0 ? (
-                  paginatedRecords.map((record) => (
-                    <TableRow key={record.application_id} className="border-b border-[#e8e2d6] hover:bg-[#F6F8D5]/50 transition-colors">
-                      <TableCell className="py-4 text-[#44291B]">
-                        {formatDate(record.date_submitted)}
-                      </TableCell>
-                      <TableCell className="text-[#44291B] font-semibold">
-                        {record.accommodation?.name || record.preferred_accommodation_id}
-                      </TableCell>
-                      <TableCell className="text-[#44291B]/80">{formatUnitType(record.preferred_unit_type)}</TableCell>
-                      <TableCell>
-                        <span className={cn(
-                          "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter",
-                          statusConfig[record.application_status]?.class || "bg-gray-100"
-                        )}>
-                          {formatStatusLabel(record.application_status)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right pr-6 text-[#44291B]/60 italic text-sm">
-                        {formatDate(
-                          Array.isArray(record.accommodation_assignment) 
-                            ? record.accommodation_assignment[0]?.actual_move_out_date 
-                            : record.accommodation_assignment?.actual_move_out_date
-                        )}
+            <div className="overflow-x-auto text-slate-700">
+              <Table className="w-full text-left border-collapse">
+                <TableHeader>
+                  <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                    <TableHead className="px-6 py-4 font-semibold text-slate-700 h-auto">Date</TableHead>
+                    <TableHead className="px-6 py-4 font-semibold text-slate-700 h-auto">Dormitory</TableHead>
+                    <TableHead className="px-6 py-4 font-semibold text-slate-700 h-auto">Room Type</TableHead>
+                    <TableHead className="px-6 py-4 font-semibold text-slate-700 h-auto">Status</TableHead>
+                    <TableHead className="px-6 py-4 font-semibold text-slate-700 h-auto text-right pr-6">Actual Move-out</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedRecords.length > 0 ? (
+                    paginatedRecords.map((record) => (
+                      <TableRow key={record.application_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                        <TableCell className="px-6 py-4 font-medium text-slate-900">
+                          {formatDate(record.date_submitted)}
+                        </TableCell>
+                        <TableCell className="px-6 py-4 font-bold text-slate-900">
+                          {record.accommodation?.name || record.preferred_accommodation_id}
+                        </TableCell>
+                        <TableCell className="px-6 py-4 text-slate-600">
+                          {formatUnitType(record.preferred_unit_type)}
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <span className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter",
+                            statusConfig[record.application_status]?.class || "bg-gray-100"
+                          )}>
+                            {formatStatusLabel(record.application_status)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-6 py-4 text-right text-xs text-slate-500 font-medium">
+                          {formatDate(
+                            Array.isArray(record.accommodation_assignment) 
+                              ? record.accommodation_assignment[0]?.actual_move_out_date 
+                              : record.accommodation_assignment?.actual_move_out_date
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-12 text-slate-500">
+                        No historical records available for this filter.
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12 text-[#44291B]/40 italic">
-                      No historical records available for this filter.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {/* PAGINATION - Styled from AdminBillingClient */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-[#e8e2d6] bg-white/50">
-                <span className="text-xs text-[#44291B]/60 font-medium">
+              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-white">
+                <span className="text-xs text-slate-500 font-medium">
                   Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredHistoricalRecords.length)} of {filteredHistoricalRecords.length}
                 </span>
                 
@@ -336,17 +348,17 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                   <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="p-1.5 rounded-md border border-[#e8e2d6] text-[#264384] bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-xs font-bold text-[#44291B] px-2">
+                  <span className="text-xs font-bold text-slate-700 px-2">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="p-1.5 rounded-md border border-[#e8e2d6] text-[#264384] bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
