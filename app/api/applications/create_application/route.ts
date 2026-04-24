@@ -24,50 +24,22 @@ export async function POST(request: NextRequest) {
 
     const user = auth.user
 
-    // Parse multipart form — file + application fields together
+    // ── 1. Parse application fields first ────────────────────────────────────────
     const formData = await request.formData()
-
-    // Get and validate the file
     const file = formData.get('file') as File | null
+    const body = JSON.parse(formData.get('data') as string)
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Invalid file type. Allowed: PDF, JPG, PNG, GIF, WEBP' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid file type. Allowed: PDF, JPG, PNG, GIF, WEBP' }, { status: 400 })
     }
     if (file.size > MAX_SIZE_BYTES) {
-      return NextResponse.json(
-        { error: 'File exceeds 5MB limit' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'File exceeds 5MB limit' }, { status: 400 })
     }
 
-    // Upload the file to Supabase Storage
-    const supabase = await createSupabaseServerClient()
-    const fileUuid = uuidv4()
-    const ext = file.name.split('.').pop()
-    const storagePath = `applications/${user.user_id}/${fileUuid}.${ext}`
-
-    const bytes = await file.arrayBuffer()
-
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
-      .upload(storagePath, bytes, {
-        contentType: file.type,
-        upsert: false,
-      })
-
-    if (uploadError) {
-      throw new Error(`Storage upload failed: ${uploadError.message}`)
-    }
-
-    // Parse application fields from the same formData
-    const body = JSON.parse(formData.get('data') as string)
-
+    // ── 2. Create the application record first (file: null for now) ───────────────
     const applicationData: Omit<AccommodationApplication, 'application_id' | 'accommodation_assignment'> = {
       preferred_accommodation_id: body.preferred_accommodation_id,
       preferred_unit_type: body.preferred_unit_type,
@@ -79,7 +51,7 @@ export async function POST(request: NextRequest) {
       user_id: user.user_id,
       date_submitted: '',
       application_status: 'pending_dorm_manager' as ApplicationStatus,
-      file: fileUuid,   // ← uuid from the upload above, not from body
+      file: '',   // temporarily null, updated after upload
     }
 
     const validationErrors = CreateApplicationService.validateApplication(applicationData)
@@ -87,9 +59,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validationErrors.join(', ') }, { status: 400 })
     }
 
-    // Create the application record
     const application = await CreateApplicationService.createApplication(applicationData)
-    return NextResponse.json({ success: true, data: application })
+    const applicationId = application.application_id
+
+    // ── 3. Upload file using application_id as the folder ─────────────────────────
+    const supabase = await createSupabaseServerClient()
+    const fileUuid = uuidv4()
+    const ext = file.name.split('.').pop()
+    const storagePath = `${applicationId}/${fileUuid}.${ext}`  // ← no extra "applications/" folder
+
+    const bytes = await file.arrayBuffer()
+
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(storagePath, bytes, {
+        contentType: file.type,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      // Clean up the application record if upload fails
+      await supabase
+        .from('accommodation_application')
+        .delete()
+        .eq('application_id', applicationId)
+
+      throw new Error(`Storage upload failed: ${uploadError.message}`)
+    }
+
+    // ── 4. Update the application record with the file uuid ───────────────────────
+    const { error: updateError } = await supabase
+      .from('accommodation_application')
+      .update({ file: fileUuid })
+      .eq('application_id', applicationId)
+
+    if (updateError) {
+      throw new Error(`Failed to save file reference: ${updateError.message}`)
+    }
+
+    return NextResponse.json({ success: true, data: { ...application, file: fileUuid } })
 
   } catch (err) {
     console.error('Application creation error:', err)
