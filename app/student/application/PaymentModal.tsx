@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Info, MapPin, DoorOpen } from "lucide-react"; // Added icons for the summary
+import { Info, MapPin, DoorOpen, UploadCloud } from "lucide-react"; 
 
 export function PaymentModal({ 
   applicationId, 
@@ -24,18 +24,57 @@ export function PaymentModal({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // --- STATE FOR UPLOAD ---
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState("");
 
   const handlePayment = async () => {
+    if (!uploadFile) {
+      setUploadError("Please upload a receipt before confirming.");
+      return;
+    }
+
     setIsProcessing(true);
-    // Add your payment integration logic here
-    setTimeout(() => {
-      setIsProcessing(false);
+    setUploadError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("applicationId", applicationId);
+      formData.append("receiptFile", uploadFile);
+
+      // Note: Make sure this endpoint matches your actual backend route for application payments
+      const response = await fetch("/api/student/applications/upload-receipt", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to upload receipt.");
+      }
+
       setIsOpen(false);
-    }, 2000);
+      window.location.reload(); // Reload to update the grid status
+
+    } catch (err: any) {
+      setUploadError(err.message || "An error occurred while uploading.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Reset file state when modal closes/opens
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setUploadFile(null);
+      setUploadError("");
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button 
           className="w-full bg-[#78A24C] hover:bg-[#63853e] text-white font-bold text-xs py-2 rounded-lg shadow-sm transition-all"
@@ -55,7 +94,7 @@ export function PaymentModal({
         </DialogHeader>
 
         <div className="py-2 space-y-4">
-          {/* --- NEW ACCOMMODATION SUMMARY SECTION --- */}
+          {/* Accommodation Summary */}
           <div className="space-y-2">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Accommodation Summary</h4>
             <div className="grid grid-cols-2 gap-2">
@@ -76,7 +115,7 @@ export function PaymentModal({
             </div>
           </div>
 
-          {/* Payment Summary Box */}
+          {/* Fees Breakdown Box */}
           <div className="space-y-2">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Fees Breakdown</h4>
             <div className="bg-[#F6F8D5] p-4 rounded-lg border border-[#e8e2d6] space-y-2">
@@ -91,6 +130,29 @@ export function PaymentModal({
               <div className="border-t border-[#e8e2d6] pt-2 flex justify-between font-bold text-[#264384] text-lg">
                 <span>Total Due:</span>
                 <span>₱3,000.00</span>
+              </div>
+            </div>
+          </div>
+
+          {/* --- UPLOAD RECEIPT SECTION --- */}
+          <div className="space-y-2">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Proof of Payment</h4>
+            <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
+              <div className="flex flex-col gap-3">
+                <div className="text-xs text-slate-600">
+                  Please upload a clear photo of your transaction receipt. Supports JPG, JPEG, PDF.
+                </div>
+                <input
+                  type="file"
+                  accept=".jpg, .jpeg, .pdf" // OR ".jpg, .jpeg, .pdf, image/jpeg, application/pdf" for maximum compatibility
+                  disabled={isProcessing}
+                  onChange={(e) => {
+                    setUploadFile(e.target.files?.[0] || null);
+                    setUploadError(""); // Clear any previous errors on change
+                  }}
+                  className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white file:text-slate-700 hover:file:bg-slate-50 transition disabled:opacity-50"
+                />
+                {uploadError && <div className="text-xs text-red-600 font-medium">{uploadError}</div>}
               </div>
             </div>
           </div>
@@ -116,9 +178,13 @@ export function PaymentModal({
           <Button 
             onClick={handlePayment}
             className="bg-[#264384] hover:bg-[#1e3569] text-white px-8 font-bold"
-            disabled={isProcessing}
+            disabled={isProcessing || !uploadFile}
           >
-            {isProcessing ? "Connecting..." : "Confirm & Pay"}
+            {isProcessing ? (
+               <span className="inline-flex items-center gap-2">
+                 <UploadCloud className="size-4 animate-bounce" /> Uploading...
+               </span>
+            ) : "Confirm & Pay"}
           </Button>
         </DialogFooter>
       </DialogContent>
