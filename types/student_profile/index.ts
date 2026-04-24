@@ -18,6 +18,7 @@ export interface UserProfile {
   role: UserRole;
   user_status: string;
   created_at?: string;
+  profile_picture_url?: string | null;
 }
 
 export interface AccommodationAssignment {

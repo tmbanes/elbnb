@@ -11,7 +11,7 @@ export const studentProfileService = {
   async getProfile(user_id: string) {
     const client = await supabase();
     const { data, error } = await client
-      .from("USER")
+      .from("users")
       .select("*")
       .eq("user_id", user_id)
       .single();
@@ -22,9 +22,9 @@ export const studentProfileService = {
   async updateProfile(user_id: string, updates: Partial<UserProfile>) {
     const client = await supabase();
     const { data, error } = await client
-      .from('USER')
-        .update({
-          // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
+      .from('users')
+      .update({
+        // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
         first_name: updates.first_name,
         last_name: updates.last_name,
         middle_name: updates.middle_name,
@@ -218,6 +218,102 @@ not yet tested
 
     return { data, error: null };
   },
+
+  async getCurrentAccommodation(user_id: string) {
+    const client = await supabase();
+    const { data, error } = await client
+      .from("accommodation_assignment")
+      .select(`
+        assignment_id,
+        move_in_date,
+        expected_move_out_date,
+        assignment_status,
+        unit:unit_id (
+          unit_number,
+          unit_type,
+          accommodation:accommodation_id (
+            name,
+            location,
+            renewal_start_date,
+            renewal_end_date
+          )
+        )
+      `)
+      .eq("user_id", user_id)
+      .in("assignment_status", ["active", "waiting_payment", "pending"])
+      .maybeSingle();
+
+    return { data, error };
+  },
+
+  async getDashboardStats(user_id: string) {
+    const client = await supabase();
+    
+    // Get summary of bills
+    const { data: billingData } = await client
+      .from("billing")
+      .select("amount, status, accommodation_assignment!inner(user_id)")
+      .eq("accommodation_assignment.user_id", user_id);
+
+    let totalBalance = 0;
+    billingData?.forEach(bill => {
+      if (bill.status !== 'paid') totalBalance += bill.amount;
+    });
+
+    // Get latest application
+    const { data: latestApp } = await client
+      .from("accommodation_application")
+      .select("application_status, date_submitted")
+      .eq("user_id", user_id)
+      .order("date_submitted", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return {
+      totalBalance,
+      latestApplicationStatus: latestApp?.application_status || null,
+    };
+  },
+
+  async getDocuments(user_id: string) {
+    const client = await supabase();
+    const { data, error } = await client
+      .from("Document")
+      .select("*")
+      .eq("user_id", user_id);
+
+    return { data, error };
+  },
+
+  async createExtensionApplication(user_id: string, currentResidency: any) {
+    const client = await supabase();
+    
+    const { data, error } = await client
+      .from("accommodation_application")
+      .insert({
+        user_id: user_id,
+        preferred_accommodation_id: currentResidency.unit.accommodation.accommodation_id,
+        unit_id: currentResidency.unit.unit_id,
+        preferred_unit_type: currentResidency.unit.unit_type,
+        application_status: "pending_dorm_manager",
+        date_submitted: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    return { data, error };
+  },
+
+  async getNotifications(user_id: string) {
+    const client = await supabase();
+    const { data, error } = await client
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user_id)
+      .order("created_at", { ascending: false });
+
+    return { data, error };
+  }
 };
 
 /*

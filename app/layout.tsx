@@ -1,7 +1,6 @@
-
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
-import { Archivo_Black, Archivo } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Archivo } from "next/font/google";
+import { Archivo_Black } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +29,7 @@ const archivoBlack = Archivo_Black({
 });
 
 const archivo = Archivo({
+  weight: ["400", "600"],
   subsets: ["latin"],
   variable: "--font-archivo",
 });

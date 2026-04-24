@@ -1,8 +1,14 @@
 "use client";
 
+import ApplicationPreview from "./ApplicationPreview";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+} from "@/components/ui/card";
+import { ChevronLeft, Mail, MapPin, Pencil, Trash2, Calendar } from "lucide-react"
+
 import {
   Dialog,
   DialogContent,
@@ -13,13 +19,13 @@ import {
 } from "@/components/ui/dialog";
 
 import {
+    processApplication,
+    type Unit,
   type AdminApplication,
   type AdminAction,
   type ApplicationInvoiceItemInput,
   getApplicationById,
-  processApplication,
   sendApplicationInvoice,
-  type Unit,
 } from "@/lib/actions/admin-application-actions";
 
 type InvoiceKind = "first_rental" | "security_deposit" | "reservation_fee" | "other";
@@ -46,13 +52,13 @@ function mapBillingTypeToKind(type?: string): InvoiceKind {
 }
 
 export default function ReviewApplication({
-  applicationId,
-  onAction,
-  onClose,
+    applicationId,
+    onAction,
+    onClose,
 }: {
-  applicationId: string;
-  onAction: (id: string, action: AdminAction, unitId?: string) => Promise<void>;
-  onClose: () => void;
+    applicationId: string;
+    onAction: (id: string, action: AdminAction, unitId?: string) => Promise<void>;
+    onClose: () => void;
 }) {
   const [confirmAction, setConfirmAction] = useState<AdminAction | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string>("");
@@ -100,6 +106,7 @@ export default function ReviewApplication({
     setInvoiceItems(draftItems.length ? draftItems : [createDefaultInvoiceItem()]);
     setInvoiceNote("");
   };
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -283,143 +290,175 @@ export default function ReviewApplication({
 
   return (
     <div className="p-6 space-y-6 bg-[#F6F8D5] h-full overflow-y-auto">
+      
       {/* HEADER */}
-      <div>
-        <h2 className="text-2xl font-bold">
-          Application #{data.id.slice(0, 8)} (Status: {data.status})
-        </h2>
-        <p className="text-sm text-gray-600">Submitted {data.submitted}</p>
-        <Button variant="outline" className="mt-2" onClick={onClose}>
+      <div className="flex items-start justify-between">
+
+        {/* CLOSE BUTTON */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          className="text-[#44291B] hover:bg-[#e8e2d6] shrink-0"
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" />
           Close
         </Button>
+
       </div>
 
       {/* STUDENT INFO */}
-      <Card className="p-4 space-y-4">
-        <h3 className="font-semibold text-lg">Student Information</h3>
-        <div className="flex gap-4 items-center">
-          <img
-            src="/default-avatar.png"
-            alt="Avatar"
-            className="w-16 h-16 rounded-full object-cover bg-gray-200"
-          />
-          <div>
-            <p className="font-semibold">
-              {data.firstName} {data.lastName}
-            </p>
-            {/* <p className="text-sm text-gray-600">{data.studentNum}</p> */}
+      <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm">
+        <CardContent className="px-5 py-4 space-y-4">
+
+          {/* TOP INFO */}
+          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+            Student Information
+          </h3>
+
+          <div className="flex items-start gap-4">
+            {/* Avatar */}
+            <div className="w-14 h-14 rounded-full bg-[#e8edf7] flex items-center justify-center font-bold text-[#264384]">
+              {data.firstName[0]}{data.lastName[0]}
+            </div>
+
+            {/* NAME + DETAILS */}
+            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+              <div className="truncate">
+                <h1 className="text-xl font-bold text-[#44291B] leading-tight truncate">
+                  {data.firstName} {data.lastName}
+                </h1>
+                <p className="text-xs text-[#44291B]/70">
+                  Application #{data.id.slice(0, 8)} • {data.status}
+                </p>
+              </div>
+
+              {/* EMAIL + DATE SUBMITTED */}
+              <div className="flex flex-wrap gap-2 min-w-0">
+                  
+                  <span className="inline-flex items-center gap-1.5 bg-[#ebf2f4] border border-[#d1e3e8] rounded-full px-2.5 py-1 text-xs text-[#264384] max-w-full">
+                    <Mail className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{data.email}</span>
+                  </span>
+                  
+                  <span className="inline-flex items-center gap-1.5 bg-[#ebf2f4] border border-[#d1e3e8] rounded-full px-2.5 py-1 text-xs text-[#264384] max-w-full">
+                    <Calendar className="w-3 h-3 shrink-0" />
+                    <span className="truncate">Submitted: {data.submitted}</span>
+                  </span>
+                  
+                </div>
+
+            </div>
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-gray-500">Email</p>
-            <p>{data.email}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Year Level</p>
-            {/* <p>{data.year}</p> */}
-          </div>
-        </div>
-        <div>
-          <p className="text-sm text-gray-500">Course</p>
-          {/* <p>{data.program}</p> */}
-        </div>
+        </CardContent>
       </Card>
 
-      {/* STAY DETAILS */}
-      <Card className="p-4 space-y-4">
-        <h3 className="font-semibold text-lg">Stay Details</h3>
-        <p>
-          <b>Duration:</b> {data.stay.duration}
-        </p>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-gray-500">Check-in</p>
-            <p>{data.stay.checkIn}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Check-out</p>
-            <p>{data.stay.checkOut}</p>
-          </div>
-        </div>
-        <p>
-          <b>Companions:</b> {data.stay.companions}
-        </p>
-      </Card>
+      <Card className="p-5 space-y-6">
 
-      {/* ACCOMMODATION */}
-      <Card className="p-4 space-y-4 border-[#e8e2d6] bg-white">
-        <h3 className="font-semibold text-gray-800 border-b pb-2">
-          Accommodation Assignment
-        </h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-500 text-xs uppercase font-bold">
-              Preferred Dorm
-            </p>
-            <p className="font-medium">{data.stay.dorm}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-xs uppercase font-bold">
-              Room Type
-            </p>
-            <p className="font-medium">{data.stay.roomType}</p>
+        {/* STAY DETAILS */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+            Stay Details
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="label font-semibold">Duration:</p>
+              <p>{data.stay.duration}</p>
+            </div>
+
+            <div>
+              <p className="label font-semibold">Companions:</p>
+              <p>{data.stay.companions}</p>
+            </div>
+
+            <div>
+              <p className="label font-semibold">Check-in:</p>
+              <p>{data.stay.checkIn}</p>
+            </div>
+
+            <div>
+              <p className="label font-semibold">Check-out:</p>
+              <p>{data.stay.checkOut}</p>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-2 pt-2">
-          <label className="text-xs font-bold uppercase text-gray-500">
-            Assign Unit
-          </label>
+        {/* ACCOMMODATION */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+            Accommodation Details
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="label font-semibold">Accommodation:</p>
+              <p>{data.stay.dorm}</p>
+            </div>
+
+            <div>
+              <p className="label font-semibold">Room Type:</p>
+              <p>{data.stay.roomType}</p>
+            </div>
+          </div>
+
           <select
-            className="w-full border rounded-md p-2 text-sm bg-gray-50 focus:ring-2 focus:ring-green-500 transition-all"
+            className="w-full border rounded-md p-2 text-sm mt-2"
             value={selectedUnitId}
-            onChange={(e) => {
-              setSelectedUnitId(e.target.value);
-              setError(null);
-            }}
-            disabled={loading}
+            onChange={(e) => setSelectedUnitId(e.target.value)}
           >
-            <option value="">-- Choose a unit --</option>
+            <option value="">Assign unit</option>
             {appData?.availableUnits?.map((unit: any) => (
               <option key={unit.unit_id} value={unit.unit_id}>
-                {unit.unit_number} ({unit.unit_type})
+                {unit.unit_number}
               </option>
             ))}
           </select>
-          {appData?.availableUnits?.length === 0 && (
-            <p className="text-[10px] text-red-500">
-              No available units found for this building.
-            </p>
-          )}
         </div>
-      </Card>
 
-      {/* DOCUMENTS */}
-      <Card className="p-4 space-y-2">
-        <h3 className="font-semibold text-lg">Uploaded Documents</h3>
-        {data.documents.map((doc, i) => (
-          <div
-            key={i}
-            className="flex justify-between border p-2 rounded items-center"
-          >
-            <span>{doc}</span>
-            <Button size="sm" variant="outline">
-              Preview
-            </Button>
+        {/* DOCUMENTS */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+            Uploaded Documents
+          </h3>
+
+          <div className="space-y-2">
+            {data.documents.map((doc, i) => (
+              <div
+                key={i}
+                className="flex justify-between items-center border rounded-md px-3 py-2"
+              >
+                <span>{doc}</span>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowPreview(true)}
+                >
+                  Preview
+                </Button>
+              </div>
+            ))}
           </div>
-        ))}
-      </Card>
+        </div>
 
-      {/* HISTORY */}
-      <Card className="p-4 space-y-2">
-        <h3 className="font-semibold text-lg">Application History</h3>
-        <ul className="list-disc pl-5 text-sm text-gray-700">
-          {data.history.map((item, i) => (
-            <li key={i}>{item}</li>
-          ))}
-        </ul>
-      </Card>
+        {/* MODAL (ONLY ONCE) */}
+        {showPreview && (
+          <ApplicationPreview onClose={() => setShowPreview(false)} />
+        )}
+
+        {/* HISTORY */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+            Application History
+          </h3>
+
+          <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+            {data.history.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        </div>
 
       {/* ACTIONS & CONFIRMATION SECTION */}
       <div className="pt-4 border-t border-gray-300">

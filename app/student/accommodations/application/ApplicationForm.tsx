@@ -45,6 +45,8 @@ import type {
   UnitType,
 } from "@/types/accommodation_units";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createActivityLog, getCurrentUserFromApi, isUserRole } from "@/services/activity_log/browser";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -312,6 +314,22 @@ export default function ApplyAccommodationForm() {
       }
 
       setSubmittedData(data);
+      // Log submit application here
+      const profile = await getCurrentUserFromApi();
+      const userRole = isUserRole(profile?.role) ? profile.role : "guest";
+      // accommodationIdFromQuery
+
+      if(profile?.user_id){
+        await createActivityLog( {
+          p_user_id: profile.user_id,
+          p_action_type: "submit_application",
+          p_log_desc: `${profile.first_name} ${profile.last_name}  submitted application`,
+          p_entity_type: "accommodation",
+          p_entity_id: accommodationIdFromQuery,
+          p_user_role: userRole,
+        })
+    }
+
       setShowSuccess(true);
     } catch (error) {
       console.error("Submission error:", error);
