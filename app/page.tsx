@@ -8,10 +8,10 @@ export default async function LandingPage() {
   
   // Explicitly handle redirects ONLY if user is clearly logged in
   if (user && user.role) {
-    if (user.role === "student") redirect("/dashboard");
-    if (user.role === "housing_admin") redirect("/dashboard/admin/housing");
-    if (user.role === "dormitory_manager") redirect("/dashboard/manager");
-    if (user.role === "guest") redirect("/dashboard/guest");
+    if (user.role === "student") redirect("/student/dashboard");
+    if (user.role === "housing_admin") redirect("/admin/dashboard");
+    if (user.role === "dormitory_manager") redirect("/manager/dashboard");
+    if (user.role === "guest") redirect("/guest/dashboard");
     
     // Fallback for unexpected roles if logged in
     redirect("/dashboard");

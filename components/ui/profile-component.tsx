@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { ProfileUpload } from '@/app/dashboard/ProfileUpload';
 import { EditProfileDialog } from '@/app/dashboard/EditProfileDialog';
 import { PastAccommodationCard } from './past-accommodation-card';
 import { User } from '@/types/user.types';
-import { Home, Edit3, Folder, CircleUser, User as UserIcon, Upload, ShieldCheck, MapPinHouse, Building2 } from 'lucide-react';
+import { Home, Edit3, CircleUser, User as UserIcon, MapPinHouse, ShieldCheck, Building2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -19,13 +18,9 @@ import { Nunito } from 'next/font/google';
 import {
   HeaderLg,
   HeaderMd,
-  HeaderSm,
   SubheaderLg,
   SubheaderMd,
-  SubheaderSm,
-  BodyLg,
   BodyMd,
-  BodySm
 } from '@/app/typography';
 
 const nunito = Nunito({
@@ -54,12 +49,10 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
   const isManager = role === 'dormitory_manager';
   const isGuest = role === 'guest';
 
-  // Helper to grey out N/A values
   const getValueClassName = (value: string, baseClass: string) => {
-    return `${baseClass} ${value === 'N/A' ? 'opacity-20 grayscale' : 'opacity-100'}`;
+    return `${baseClass} ${value === 'N/A' || !value ? 'opacity-20 grayscale' : 'opacity-100'}`;
   };
 
-  // Role-specific labels and icons
   const secondFolderLabel = isStudent ? "Accommodations" : 
                             isGuest ? "Visit Details" :
                             isAdmin ? "Administrative Info" :
@@ -74,7 +67,6 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
                                isGuest ? "Guest Info" :
                                "Employee Info";
 
-  // Filter to show only non-active assignments or provide mock data for demo
   const historicalAssignments = pastAssignments.length > 0 ? 
     pastAssignments.filter(a => a.assignment_status !== 'active') : 
     (isStudent ? [
@@ -90,70 +82,26 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
             location: 'Ateneo de Manila University, Quezon City'
           }
         }
-      },
-      {
-        assignment_id: 'mock-2',
-        assignment_status: 'terminated',
-        move_in_date: '2022-08-15T00:00:00Z',
-        actual_move_out_date: '2022-12-15T00:00:00Z',
-        unit: {
-          unit_number: '304',
-          accommodation: {
-            name: 'Cervini Hall',
-            location: 'Loyola Heights, Quezon City'
-          }
-        }
-      },
-      {
-        assignment_id: 'mock-3',
-        assignment_status: 'completed',
-        move_in_date: '2021-08-15T00:00:00Z',
-        actual_move_out_date: '2022-05-30T00:00:00Z',
-        unit: {
-          unit_number: '212',
-          accommodation: {
-            name: 'University Hotel',
-            location: 'UP Campus, Diliman'
-          }
-        }
-      },
-      {
-        assignment_id: 'mock-4',
-        assignment_status: 'cancelled',
-        move_in_date: '2021-06-01T00:00:00Z',
-        actual_move_out_date: '2021-06-05T00:00:00Z',
-        unit: {
-          unit_number: 'G-05',
-          accommodation: {
-            name: 'International House',
-            location: 'Guerrero St., Quezon City'
-          }
-        }
       }
     ] : []);
 
-  // Role-specific metadata - using exact database column names
-  const studentNum = metadata?.student_num || 'N/A';
+  const studentNum = metadata?.student_number || 'N/A';
   const degreeProg = metadata?.degree_program || 'N/A';
   const college = metadata?.college || 'CAS';
-  
   const officeLocation = metadata?.office_location || 'N/A';
-  
   const validId = metadata?.valid_id || 'N/A';
   const purposeVisit = metadata?.purpose_visit || 'N/A';
   const occupancyStatus = metadata?.occupancy_status || 'N/A';
-
   const contactNum = metadata?.contact_number || 'N/A';
   const homeAddress = metadata?.home_address || 'N/A';
   const emergencyContact = metadata?.emergency_contact || 'N/A';
-
-  const formattedBirthdate = user.birthdate || 'N/A';
+  const formattedBirthdate = metadata?.birthdate || user.birthdate || 'N/A';
 
   const renderContent = () => {
     if (role === "student" || role === "guest" || role === "dormitory_manager" || role === "housing_admin") {
       return (
         <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full min-h-[280px] sm:min-h-[350px] md:min-h-[400px]">
-          {/* Accommodations Container */}
+          {/* Second Folder (Accommodations/Admin/etc) */}
           {role !== "dormitory_manager" && role !== "housing_admin" && (
             <div
               onClick={() => setActiveTab('accommodations')}
@@ -163,10 +111,9 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
                 }`}
               style={{ filter: 'url(#grain)', backgroundBlendMode: 'multiply' }}
             >
-              {/* Accommodations title */}
               <div className="flex items-center justify-end gap-3 text-[#3E2723] pt-6 mb-4">
-                <Home className="w-6 h-6 stroke-[2.5]" />
-                <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Accommodations</h3>
+                <SecondFolderIcon className="w-6 h-6 stroke-[2.5]" />
+                <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>{secondFolderLabel}</h3>
               </div>
             </div>
           )}
@@ -194,7 +141,7 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
                           </DialogHeader>
                           <div className="mt-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                             {historicalAssignments.length > 0 ? (
-                              historicalAssignments.map((assignment: any) => (
+                                historicalAssignments.map((assignment: any) => (
                                 <PastAccommodationCard
                                   key={assignment.assignment_id}
                                   name={assignment.unit?.accommodation?.name || 'Unknown Accommodation'}
@@ -242,78 +189,75 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
               </div>
             </div>
           </div>
-        </div>
 
-        {/* First Folder (Personal Information) */}
-        <div
-          onClick={() => setActiveTab('personal')}
-          className={`col-start-1 row-start-1 w-full self-end cursor-pointer relative z-40 bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12
-          mt-[60px] sm:mt-[80px]
-          transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
-          ${activeTab === 'personal'
+          {/* First Folder (Personal Information) */}
+          <div
+            onClick={() => setActiveTab('personal')}
+            className={`col-start-1 row-start-1 w-full self-end cursor-pointer relative z-40 bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12
+            mt-[60px] sm:mt-[80px]
+            transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
+            ${activeTab === 'personal'
               ? 'rounded-tl-[40px] rounded-tr-[150px] sm:rounded-tr-[300px] rounded-b-[40px]'
               : 'rounded-[40px] hover:bg-[#8bc453] hover:shadow-lg'
             }`}
-          style={activeTab === 'personal' ? { filter: 'url(#grain)', backgroundBlendMode: 'multiply' } : {}}
-        >
-          <div className={`flex items-center gap-3 text-[#3E2723] transition-all duration-500 ${activeTab === 'personal' ? 'pt-8 mb-4' : 'py-5 sm:py-6'}`}>
-            <CircleUser className="w-6 h-6 stroke-[2.5]" />
-            <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Personal Information</h3>
-          </div>
-          <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'personal' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-            <div className="min-h-0 overflow-hidden">
-              <div className={`pb-24 transition-opacity duration-300 delay-100 ${activeTab === 'personal' ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-y-8 gap-x-6">
-                  <div className="md:col-span-12">
-                    <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>{firstFolderSubheader}</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                      <div><p className={getValueClassName(formattedBirthdate, `${SubheaderLg} leading-snug`)}>{formattedBirthdate}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p></div>
-                      
-                      {isStudent && (
-                        <>
-                          <div><p className={getValueClassName(studentNum, `${SubheaderLg} leading-snug`)}>{studentNum}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Student Number</p></div>
-                          <div><p className={getValueClassName(degreeProg, `${SubheaderLg} leading-snug`)}>{degreeProg}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Degree Program</p></div>
-                          <div><p className={getValueClassName(college, `${SubheaderLg} leading-snug`)}>{college}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>College</p></div>
-                        </>
-                      )}
-                      
-                      {isGuest && (
-                        <div><p className={getValueClassName(validId, `${SubheaderLg} leading-snug`)}>{validId}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Valid ID Reference</p></div>
-                      )}
+            style={activeTab === 'personal' ? { filter: 'url(#grain)', backgroundBlendMode: 'multiply' } : {}}
+          >
+            <div className={`flex items-center gap-3 text-[#3E2723] transition-all duration-500 ${activeTab === 'personal' ? 'pt-8 mb-4' : 'py-5 sm:py-6'}`}>
+              <CircleUser className="w-6 h-6 stroke-[2.5]" />
+              <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Personal Information</h3>
+            </div>
+            <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'personal' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+              <div className="min-h-0 overflow-hidden">
+                <div className={`pb-24 transition-opacity duration-300 delay-100 ${activeTab === 'personal' ? 'opacity-100' : 'opacity-0'}`}>
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-y-8 gap-x-6">
+                    <div className="md:col-span-12">
+                      <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>{firstFolderSubheader}</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                        <div><p className={getValueClassName(formattedBirthdate, `${SubheaderLg} leading-snug`)}>{formattedBirthdate}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p></div>
 
-                      {role === 'housing_admin' && (
-                        <>
-                          <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Admin Info</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                        {isStudent && (
+                          <>
+                            <div><p className={getValueClassName(studentNum, `${SubheaderLg} leading-snug`)}>{studentNum}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Student Number</p></div>
+                            <div><p className={getValueClassName(degreeProg, `${SubheaderLg} leading-snug`)}>{degreeProg}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Degree Program</p></div>
+                            <div><p className={getValueClassName(college, `${SubheaderLg} leading-snug`)}>{college}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>College</p></div>
+                          </>
+                        )}
+
+                        {isGuest && (
+                          <div><p className={getValueClassName(validId, `${SubheaderLg} leading-snug`)}>{validId}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Valid ID Reference</p></div>
+                        )}
+
+                        {role === 'housing_admin' && (
+                          <>
                             <div>
-                              <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
-                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
+                               <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
+                               <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
                             </div>
                             <div>
-                              <p className={`${SubheaderLg} leading-snug`}>{metadata?.admin_id || 'N/A'}</p>
-                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Admin ID</p>
+                               <p className={`${SubheaderLg} leading-snug`}>{metadata?.admin_id || 'N/A'}</p>
+                               <p className={`${SubheaderMd} opacity-80 leading-snug`}>Admin ID</p>
                             </div>
                             <div>
-                              <p className={`${SubheaderLg} leading-snug`}>{metadata?.office_location || 'N/A'}</p>
-                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Office Location</p>
+                               <p className={`${SubheaderLg} leading-snug`}>{metadata?.office_location || 'N/A'}</p>
+                               <p className={`${SubheaderMd} opacity-80 leading-snug`}>Office Location</p>
                             </div>
-                          </div>
-                        </>
-                      )}
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="md:col-span-9">
-                    <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Contact Details</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                      <div><p className={getValueClassName(user.email || 'N/A', `${SubheaderLg} leading-snug break-all`)}>{user.email}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Email Address</p></div>
-                      <div><p className={getValueClassName(contactNum, `${SubheaderLg} leading-snug`)}>{contactNum}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Contact Number</p></div>
-                      <div><p className={getValueClassName(homeAddress, `${SubheaderLg} leading-snug`)}>{homeAddress}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Home Address</p></div>
+                    <div className="md:col-span-9">
+                      <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Contact Details</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div><p className={getValueClassName(user.email || 'N/A', `${SubheaderLg} leading-snug break-all`)}>{user.email}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Email Address</p></div>
+                        <div><p className={getValueClassName(contactNum, `${SubheaderLg} leading-snug`)}>{contactNum}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Contact Number</p></div>
+                        <div><p className={getValueClassName(homeAddress, `${SubheaderLg} leading-snug`)}>{homeAddress}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Home Address</p></div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="md:col-span-3">
-                    <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Emergency Contacts</h4>
-                    <div className="grid grid-cols-1 gap-6">
-                      <div><p className={getValueClassName(emergencyContact, `${SubheaderLg} leading-snug`)}>{emergencyContact}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Emergency Contact</p></div>
+                    <div className="md:col-span-3">
+                      <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Emergency Contacts</h4>
+                      <div className="grid grid-cols-1 gap-6">
+                        <div><p className={getValueClassName(emergencyContact, `${SubheaderLg} leading-snug`)}>{emergencyContact}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Emergency Contact</p></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -323,8 +267,8 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
         </div>
       );
     }
+    return null;
   };
-
 
   return (
     <div className={`min-h-screen bg-[#F4F5E1] p-3 sm:p-4 md:p-12 flex justify-center items-start ${nunito.className} text-[#3E2723]`}>
