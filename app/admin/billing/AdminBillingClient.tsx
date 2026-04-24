@@ -496,9 +496,18 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       </div>
 
       {/* RECEIPT VIEWER MODAL */}
-      {viewedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
-          <div className="bg-white rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <Dialog open={Boolean(viewedReceipt)} onOpenChange={(open) => { if (!open) setViewedReceipt(null); }}>
+        <DialogPortal>
+          <DialogOverlay className="bg-slate-900/40 backdrop-blur-[8px] print:hidden" />
+          {viewedReceipt && (
+            <DialogContent
+              showCloseButton={false}
+              className="z-[60] bg-white rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] p-0 gap-0 text-sm"
+            >
+              <DialogTitle className="sr-only">Receipt Viewer</DialogTitle>
+              <DialogDescription className="sr-only">
+                Preview uploaded receipt for invoice verification and perform approval actions.
+              </DialogDescription>
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <div>
                 <h3 className="font-bold text-lg text-slate-900">Receipt Viewer</h3>
@@ -534,9 +543,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
+            </DialogContent>
+          )}
+        </DialogPortal>
+      </Dialog>
 
       {/* EDITOR MODAL */}
       <Dialog open={Boolean(editingBill)} onOpenChange={(open) => { if (!open) setEditingBill(null); }}>
