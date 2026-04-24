@@ -9,10 +9,9 @@ import {
 import {
     Dialog,
     DialogContent,
-    DialogHeader,
     DialogTitle,
-    DialogDescription
 } from "@/components/ui/dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     Select,
@@ -73,7 +72,6 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
     const [allStudents, setAllStudents] = useState<any[]>([]);
     const [waitlistStudents, setWaitlistStudents] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'residents' | 'waitlist'>('residents');
-    const [recentApps, setRecentApps] = useState<any[]>([]);
     const [tableSearch, setTableSearch] = useState("");
     const [tablePage, setTablePage] = useState(1);
     const [tableFilters, setTableFilters] = useState({
@@ -99,6 +97,12 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
 
     // --- Activity Log ---
     const [activityLog, setActivityLog] = useState<any[]>([]);
+
+    // --- Recent Applications ---
+    const [recentApplications, setRecentApplications] = useState<any[]>([]);
+
+    // --- Move-out Alerts ---
+    const [moveOutAlerts, setMoveOutAlerts] = useState<any[]>([]);
 
     const handleResetFilters = () => {
         setTableSearch("");
@@ -247,30 +251,6 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                     };
                 });
                 setAllStudents(residentRows);
-                
-                // Recent Applications
-                const { data: rapps } = await supabase
-                    .from('accommodation_application')
-                    .select(`
-                        application_id, user_id, date_submitted, preferred_unit_type, application_status,
-                        users:user_id ( first_name, last_name, profile_picture_url ),
-                        student:user_id ( student_num ),
-                        accommodation:preferred_accommodation_id ( name )
-                    `)
-                    .eq('preferred_accommodation_id', accom.accommodation_id)
-                    .order('date_submitted', { ascending: false })
-                    .limit(5) as any;
-                
-                setRecentApps(rapps?.map((a: any) => ({
-                    id: a.application_id,
-                    name: `${a.users?.first_name ?? ''} ${a.users?.last_name ?? ''}`.trim() || 'Unknown',
-                    student_number: a.student?.student_num ?? 'N/A',
-                    dormitory: a.accommodation?.name ?? 'N/A',
-                    roomType: a.preferred_unit_type ?? 'N/A',
-                    status: a.application_status ?? 'Pending',
-                    date: a.date_submitted,
-                    avatar: a.users?.profile_picture_url
-                })) ?? []);
 
                 // Waitlist
                 const { data: waitlistApps } = await supabase
@@ -318,6 +298,55 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                     .limit(10) as any;
                 setActivityLog(logs ?? []);
 
+                // Recent Applications (latest 5 across all statuses for this accommodation)
+                const { data: recentApps } = await supabase
+                    .from('accommodation_application')
+                    .select(`
+                        application_id, date_submitted, application_status, preferred_unit_type,
+                        users:user_id ( first_name, last_name, profile_picture_url )
+                    `)
+                    .eq('preferred_accommodation_id', accom.accommodation_id)
+                    .order('date_submitted', { ascending: false })
+                    .limit(5) as any;
+                setRecentApplications(recentApps ?? []);
+
+                // Move-out Alerts: active assignments whose expected_move_out_date is within 30 days
+                const today = new Date();
+                const in30Days = new Date(today);
+                in30Days.setDate(today.getDate() + 30);
+                const todayStr = today.toISOString().split('T')[0];
+                const in30DaysStr = in30Days.toISOString().split('T')[0];
+
+                const { data: upcomingMoveOuts } = await supabase
+                    .from('accommodation_assignment')
+                    .select(`
+                        assignment_id, unit_id, expected_move_out_date,
+                        users:user_id ( first_name, last_name, profile_picture_url )
+                    `)
+                    .eq('assignment_status', 'active')
+                    .in('unit_id', units.map((u: any) => u.unit_id))
+                    .gte('expected_move_out_date', todayStr)
+                    .lte('expected_move_out_date', in30DaysStr)
+                    .order('expected_move_out_date', { ascending: true })
+                    .limit(5) as any;
+
+                const moveOuts = (upcomingMoveOuts ?? []).map((a: any) => {
+                    const u = a.users ?? {};
+                    const unit = units.find((un: any) => un.unit_id === a.unit_id);
+                    const moveOutDate = new Date(a.expected_move_out_date);
+                    const daysLeft = Math.ceil((moveOutDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                    return {
+                        assignment_id: a.assignment_id,
+                        name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || 'Unknown',
+                        initials: `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase(),
+                        avatar: u.profile_picture_url ?? null,
+                        unit_number: unit?.unit_number ?? 'N/A',
+                        expected_move_out_date: a.expected_move_out_date,
+                        days_left: daysLeft,
+                    };
+                });
+                setMoveOutAlerts(moveOuts);
+
             } catch (err) {
                 console.error("Failed to load dashboard operations data:", err);
             }
@@ -332,7 +361,10 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
             setFinancialsLoading(true);
             try {
                 const res = await fetch('/api/manager/dashboard/financials');
-                if (!res.ok) throw new Error('Failed to fetch financials');
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(`Financials route error ${res.status}: ${text.slice(0, 200)}`);
+                }
                 const data = await res.json();
                 setExpectedRevenue(data.expectedRevenue ?? 0);
                 setActualCollected(data.actualCollected ?? 0);
@@ -387,10 +419,9 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
 
     return (
         <div className={`flex h-screen bg-[#F6F5ED] overflow-hidden ${archivo.className}`}>
-            <div className="flex-1 flex flex-col h-full overflow-hidden">
-                <div className="flex-1 overflow-auto pb-10" suppressHydrationWarning>
-                    {/* TOP HEADER */}
-                    <header className="flex justify-between items-center px-8 lg:px-16 xl:px-24 mt-6 mb-4">
+            <main className="flex-1 flex flex-col h-full overflow-hidden">
+                {/* TOP HEADER */}
+                <header className="flex justify-between items-center px-8 lg:px-16 xl:px-24 mt-6 mb-4">
                     <div className="relative w-full max-w-[400px]">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
@@ -430,7 +461,7 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                     </div>
                 </header>
 
-                <div className="px-8 lg:px-16 xl:px-24">
+                <div className="px-8 lg:px-16 xl:px-24 flex-1 overflow-auto pb-10" suppressHydrationWarning>
                     {/* TITLE */}
                     <div className="mb-6">
                         <h1 className="text-[32px] md:text-[38px] font-black text-[#0B3A64] tracking-tight leading-none mb-1">Manager Dashboard</h1>
@@ -527,7 +558,7 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                     ) : roomView === 'grid' ? (
                                         <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-6">
                                             {rooms.map(room => (
-                                                <div key={room.id}
+                                                <div key={room.unit_id}
                                                     onClick={() => { setSelectedRoom(room); setIsRoomModalOpen(true); }}
                                                     className={`relative flex flex-col items-center justify-center rounded-2xl p-3 cursor-pointer border-2 transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] ${room.status === 'full' ? 'bg-[#EEF4E7] border-[#C3D9A8]' : room.status === 'partial' ? 'bg-[#FEFBE7] border-[#E8DC9A]' : room.status === 'maintenance' ? 'bg-[#FEF2F1] border-[#EBCAC7]' : 'bg-slate-50 border-slate-100'}`}
                                                 >
@@ -542,7 +573,7 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                     ) : (
                                         <div className="flex-1 overflow-y-auto space-y-2 mb-4">
                                             {rooms.map(room => (
-                                                <div key={room.id}
+                                                <div key={room.unit_id}
                                                     onClick={() => { setSelectedRoom(room); setIsRoomModalOpen(true); }}
                                                     className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
                                                 >
@@ -557,7 +588,7 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                     )}
 
                                     <div className="flex items-center gap-4 mt-auto pt-4 border-t border-slate-50">
-                                        {[{ label: 'Full Capacity', color: 'bg-[#7A9D54]' }, { label: 'Partially Occupied', color: 'bg-[#E8DC9A]' }, { label: 'Unoccupied', color: 'bg-slate-200' }].map(leg => (
+                                        {[{ label: 'Full Capacity', color: 'bg-[#7A9D54]' }, { label: 'Partially Occupied', color: 'bg-[#E8DC9A]' }, { label: 'Unoccupied', color: 'bg-slate-200' }, { label: 'Maintenance', color: 'bg-[#DE7A6A]' }].map(leg => (
                                             <div key={leg.label} className="flex items-center gap-1.5">
                                                 <div className={`w-2.5 h-2.5 rounded-full ${leg.color}`}></div>
                                                 <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{leg.label}</span>
@@ -566,33 +597,36 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                     </div>
                                 </div>
 
-                                {/* Recent Activity - Relocated from bottom */}
+                                {/* Recent Activity — moved here from below */}
                                 <div className="bg-white rounded-[20px] p-6 shadow-sm border border-slate-100/50 flex flex-col">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-[14px] font-extrabold text-[#0B3A64] uppercase tracking-wide">Recent Activity</h3>
+                                    <div className="flex justify-between items-center mb-5">
+                                        <h3 className="text-[13px] font-extrabold text-[#0B3A64] uppercase tracking-wide">Recent Activity</h3>
                                         <button className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest flex items-center gap-1 transition-colors">Archive <ChevronRight className="w-3.5 h-3.5" /></button>
                                     </div>
                                     {activityLog.length > 0 ? (
-                                        <div className="space-y-4 flex-1">
-                                            {activityLog.slice(0, 6).map((log: any) => (
-                                                <div key={log.log_id} className="flex items-center justify-between">
-                                                    <div className="flex items-start gap-4">
-                                                        <div className="mt-1 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: activityColor(log.action_type) }}></div>
+                                        <div className="space-y-4 flex-1 overflow-y-auto">
+                                            {activityLog.map((log: any) => (
+                                                <div key={log.log_id} className="flex items-start justify-between gap-3">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: activityColor(log.action_type) }}></div>
                                                         <div>
-                                                            <p className="text-[13px] text-slate-800 font-medium leading-tight">
-                                                                <span className="font-bold text-[#0B3A64]">{log.action_type?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
+                                                            <p className="text-[12px] font-bold text-[#0B3A64] leading-snug">
+                                                                {log.action_type?.replace(/_/g, ' ').replace(/\w/g, (c: string) => c.toUpperCase())}
+                                                                {log.user_role && <span className="text-slate-400 font-medium"> by {log.user_role}</span>}
                                                             </p>
-                                                            {log.log_desc && <p className="text-[9px] text-slate-400 font-medium mt-0.5 line-clamp-1">{log.log_desc}</p>}
+                                                            {log.log_desc && <p className="text-[10px] text-slate-400 mt-0.5">{log.log_desc}</p>}
                                                         </div>
                                                     </div>
-                                                    <span className="text-[8px] text-slate-300 font-bold flex-shrink-0 ml-4">
+                                                    <span className="text-[10px] text-slate-300 font-bold flex-shrink-0">
                                                         {new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="text-center text-slate-300 text-[11px] font-bold uppercase tracking-widest py-8">No recent activity</p>
+                                        <div className="flex-1 flex items-center justify-center">
+                                            <p className="text-center text-slate-300 text-[11px] font-bold uppercase tracking-widest">No recent activity</p>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -672,7 +706,7 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                         </thead>
                                         <tbody>
                                             {paginatedStudents.length > 0 ? paginatedStudents.map((student, idx) => (
-                                                <tr key={student.id ?? idx} className="border-b border-slate-50 last:border-0 group hover:bg-[#F9FBFD] transition-colors">
+                                                <tr key={student.assignment_id ?? `student-${idx}`} className="border-b border-slate-50 last:border-0 group hover:bg-[#F9FBFD] transition-colors">
                                                     <td className="py-5 px-8">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-9 h-9 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
@@ -730,65 +764,66 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                 </div>
                             </div>
 
-                            {/* BOTTOM GRID: APPLICATIONS + ALERTS */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* RECENT APPLICATIONS + MOVE-OUT ALERTS */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                                 {/* Recent Applications */}
-                                <div className="lg:col-span-2 bg-white rounded-[20px] p-6 shadow-sm border border-slate-100/50 flex flex-col overflow-hidden">
-                                    <div className="flex justify-between items-center mb-6">
+                                <div className="lg:col-span-2 bg-white rounded-[20px] shadow-sm border border-slate-100/50 overflow-hidden">
+                                    <div className="px-6 py-5 border-b border-slate-50 flex justify-between items-center">
                                         <div>
-                                            <h3 className="text-[14px] font-extrabold text-[#0B3A64] uppercase tracking-wide mb-1">Recent Applications</h3>
-                                            <p className="text-[11px] text-slate-400 font-medium tracking-wide">Latest residency requests</p>
+                                            <h3 className="text-[14px] font-extrabold text-[#0B3A64] uppercase tracking-wide">Recent Applications</h3>
+                                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Latest residency requests</p>
                                         </div>
-                                        <button className="text-[10px] font-black bg-[#5591AB] text-white px-5 py-2 rounded-full uppercase tracking-widest flex items-center gap-1.5 transition-all shadow-md hover:bg-[#467A91] active:scale-95 shadow-[#5591AB]/20">
+                                        <button className="flex items-center gap-2 px-4 py-2 bg-[#5591AB] text-white rounded-full text-[11px] font-bold hover:bg-[#467A91] transition-all shadow-sm uppercase tracking-wider">
                                             View All <ChevronRight className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
-                                    <div className="overflow-x-auto -mx-6 flex-1">
+                                    <div className="overflow-x-auto">
                                         <table className="w-full text-left border-collapse">
                                             <thead>
                                                 <tr className="bg-[#F9F7EF] border-b border-slate-100">
-                                                    <th className="py-5 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Student / Property</th>
-                                                    <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Student Number</th>
-                                                    <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Date Applied</th>
-                                                    <th className="py-5 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em] text-right">Status</th>
+                                                    <th className="py-3 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.1em]">Student / Property</th>
+                                                    <th className="py-3 px-2 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.1em]">Date Applied</th>
+                                                    <th className="py-3 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.1em] text-right">Status</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-50 bg-[#FDFCF6]/50">
-                                                {recentApps.length > 0 ? recentApps.map((app) => (
-                                                    <tr key={app.id} className="group hover:bg-[#F9FBFD] transition-colors border-b border-slate-50 last:border-0">
-                                                        <td className="py-4 px-6">
-                                                            <div className="flex items-center gap-3">
-                                                                <Avatar className="h-8 w-8 border-2 border-white shadow-sm flex-shrink-0">
-                                                                    <AvatarImage src={app.avatar} />
-                                                                    <AvatarFallback className="bg-[#5D6BDE] text-white text-[10px] font-black">{app.name[0]}</AvatarFallback>
-                                                                </Avatar>
-                                                                <div className="min-w-0">
-                                                                    <p className="text-[13px] font-bold text-[#0B3A64] leading-none mb-1 truncate">{app.name}</p>
-                                                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate">{app.dormitory}</p>
+                                            <tbody>
+                                                {recentApplications.length > 0 ? recentApplications.map((app: any) => {
+                                                    const u = app.users ?? {};
+                                                    const name = `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || 'Unknown';
+                                                    const initials = `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase();
+                                                    const status = app.application_status ?? '';
+                                                    const statusLabel = status === 'pending_dorm_manager' ? 'Pending Review'
+                                                        : status === 'pending_admin' ? 'Forwarded'
+                                                        : status === 'approved' ? 'Approved'
+                                                        : status === 'rejected' ? 'Rejected'
+                                                        : status.replace(/_/g, ' ').replace(/\w/g, (c: string) => c.toUpperCase());
+                                                    const statusColor = status === 'approved' ? 'bg-[#EEF4E7] text-[#4A7A2A]'
+                                                        : status === 'rejected' ? 'bg-[#FDECEB] text-[#DE7A6A]'
+                                                        : 'bg-[#FFF9E6] text-[#B08E2E]';
+                                                    return (
+                                                        <tr key={app.application_id} className="border-b border-slate-50 last:border-0 hover:bg-[#F9FBFD] transition-colors">
+                                                            <td className="py-4 px-6">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">{initials}</div>
+                                                                    <div>
+                                                                        <p className="text-[13px] font-black text-[#0B3A64] leading-none">{name}</p>
+                                                                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">{app.preferred_unit_type || dormName}</p>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-4 px-4">
-                                                            <span className="text-[12px] font-bold text-slate-600">{app.student_number}</span>
-                                                        </td>
-                                                        <td className="py-4 px-4">
-                                                            <span className="text-[11px] text-slate-400 font-bold">
-                                                                {new Date(app.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-4 px-6 text-right">
-                                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
-                                                                app.status?.toLowerCase() === 'approved' ? 'bg-[#EEF4E7] text-[#4A7A2A]' : 
-                                                                app.status?.toLowerCase() === 'rejected' ? 'bg-[#FDECEB] text-[#DE7A6A]' : 
-                                                                'bg-[#FFF9E6] text-[#B08E2E]'
-                                                            }`}>
-                                                                {app.status}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                )) : (
+                                                            </td>
+                                                            <td className="py-4 px-2">
+                                                                <span className="text-[12px] font-bold text-slate-600">
+                                                                    {app.date_submitted ? new Date(app.date_submitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-right">
+                                                                <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${statusColor}`}>{statusLabel}</span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                }) : (
                                                     <tr>
-                                                        <td colSpan={4} className="py-16 text-center text-slate-300 text-[11px] font-bold uppercase tracking-widest">No recent applications</td>
+                                                        <td colSpan={3} className="py-10 text-center text-slate-300 text-[11px] font-bold uppercase tracking-widest">No recent applications</td>
                                                     </tr>
                                                 )}
                                             </tbody>
@@ -796,41 +831,37 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                     </div>
                                 </div>
 
-                                {/* MOVE-OUT ALERTS */}
+                                {/* Move-out Alerts */}
                                 <div className="bg-white rounded-[20px] p-6 shadow-sm border border-slate-100/50 flex flex-col">
-                                    <div className="flex justify-between items-start mb-6">
+                                    <div className="flex justify-between items-center mb-5">
                                         <div>
-                                            <h3 className="text-[14px] font-extrabold text-[#0B3A64] uppercase tracking-wide mb-1">Move-Out Alerts</h3>
-                                            <p className="text-[11px] text-slate-400 font-medium tracking-wide">Upcoming Departures</p>
+                                            <h3 className="text-[13px] font-extrabold text-[#0B3A64] uppercase tracking-wide">Move-out Alerts</h3>
+                                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Upcoming Departures</p>
                                         </div>
-                                        <div className="w-8 h-8 rounded-full bg-[#FDECEB] flex items-center justify-center">
-                                            <AlertTriangle className="w-4 h-4 text-[#DE7A6A]" />
+                                        <div className="w-7 h-7 rounded-full bg-[#FDECEB] flex items-center justify-center">
+                                            <AlertTriangle className="w-3.5 h-3.5 text-[#DE7A6A]" />
                                         </div>
                                     </div>
-                                    <div className="space-y-3 flex-1 overflow-y-auto max-h-[280px] pr-1">
-                                        {[
-                                            { id: 1, name: "Juana Dela Cruz", room: "101", status: "Upcoming", days: "2 Days" },
-                                            { id: 2, name: "Jose Rizal", room: "205", status: "Upcoming", days: "4 Days" },
-                                            { id: 3, name: "Maria Clara", room: "302", status: "Upcoming", days: "7 Days" },
-                                        ].map((alert) => (
-                                            <div key={alert.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <div className="flex-1 space-y-3 overflow-y-auto">
+                                        {moveOutAlerts.length > 0 ? moveOutAlerts.map((alert: any) => (
+                                            <div key={alert.assignment_id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-[#DE7A6A] text-white flex items-center justify-center text-[10px] font-black shadow-sm">
-                                                        {alert.name.split(' ').map(n => n[0]).join('')}
-                                                    </div>
+                                                    <div className="w-9 h-9 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">{alert.initials}</div>
                                                     <div>
-                                                        <p className="text-[12px] font-bold text-[#0B3A64] leading-tight">{alert.name}</p>
-                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Room {alert.room} · {alert.days}</p>
+                                                        <p className="text-[12px] font-black text-[#0B3A64] leading-none mb-0.5">{alert.name}</p>
+                                                        <p className="text-[10px] text-slate-400 font-medium">Room {alert.unit_number} · {alert.days_left}d left</p>
                                                     </div>
                                                 </div>
-                                                <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-[#FFF9E6] text-[#B08E2E]">
-                                                    {alert.status}
-                                                </span>
+                                                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-[#FFF9E6] text-[#B08E2E]">Upcoming</span>
                                             </div>
-                                        ))}
+                                        )) : (
+                                            <div className="flex-1 flex items-center justify-center py-6">
+                                                <p className="text-center text-slate-300 text-[11px] font-bold uppercase tracking-widest">No upcoming move-outs</p>
+                                            </div>
+                                        )}
                                     </div>
-                                    <button className="mt-4 w-full py-2.5 bg-[#FDFCF6] border border-[#E8DC9A] text-[#9A7A10] text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-[#FEFBE7] transition-all flex items-center justify-center gap-2">
-                                        Manage Turnover <ChevronRight className="w-3 h-3" />
+                                    <button className="mt-5 w-full py-3 border border-slate-200 text-[#0B3A64] text-[11px] font-bold rounded-xl hover:bg-slate-50 transition-colors uppercase tracking-widest flex items-center justify-center gap-2">
+                                        Manage Turnover <ChevronRight className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>
@@ -973,10 +1004,14 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                         </div>
                     )}
                 </div>
+            </main>
 
             {/* ROOM DETAIL MODAL */}
             <Dialog open={isRoomModalOpen} onOpenChange={setIsRoomModalOpen}>
                 <DialogContent className="sm:max-w-[450px] p-0 border-none rounded-[28px] overflow-hidden bg-white shadow-2xl">
+                    <VisuallyHidden.Root>
+                        <DialogTitle>Room {selectedRoom?.id} Details</DialogTitle>
+                    </VisuallyHidden.Root>
                     <div className="bg-[#0B3A64] p-8 text-white relative overflow-hidden">
                         <div className="absolute -right-10 -top-10 opacity-10"><Building2 className="w-48 h-48" /></div>
                         <div className="relative z-10">
@@ -995,8 +1030,8 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                             <span className="text-[10px] font-bold text-slate-300 uppercase">{selectedRoom?.occupants.length} Found</span>
                         </div>
                         <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                            {selectedRoom?.occupants.length > 0 ? selectedRoom.occupants.map((occ: any, i: number) => (
-                                <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-[#0B3A64]/20 hover:shadow-sm transition-all">
+                            {selectedRoom?.occupants.length > 0 ? selectedRoom.occupants.map((occ: any) => (
+                                <div key={occ.assignment_id ?? occ.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-[#0B3A64]/20 hover:shadow-sm transition-all">
                                     <div className="flex items-center gap-4">
                                         <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
                                             <AvatarImage src={occ.avatar} />
@@ -1032,8 +1067,6 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                     </div>
                 </DialogContent>
             </Dialog>
-                </div>
-            </div>
         </div>
     );
 }
@@ -1045,11 +1078,14 @@ function PendingApprovalsCard() {
 
     useEffect(() => {
         fetch('/api/manager/dashboard')
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error(`Dashboard route error: ${r.status} ${r.statusText}`);
+                return r.json();
+            })
             .then(data => {
                 setPendingApps(data.applications ?? []);
             })
-            .catch(console.error)
+            .catch(err => console.error('PendingApprovalsCard fetch failed:', err))
             .finally(() => setLoading(false));
     }, []);
 
