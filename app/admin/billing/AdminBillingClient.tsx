@@ -390,14 +390,6 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      {bill.status !== BillingStatus.PAID && (
-                        <button
-                          onClick={() => markAsPaid(bill.billing_id)}
-                          className="px-3 py-2 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition"
-                        >
-                          Paid
-                        </button>
-                      )}
                       <button
                         onClick={() => openEditor(bill)}
                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition tooltip-trigger"

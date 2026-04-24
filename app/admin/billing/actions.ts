@@ -6,10 +6,25 @@ import { BillingCreation } from "@/types/billing";
 import { BillingItemType, BillingStatus } from "@/types/billing/enums";
 
 function toErrorMessage(error: unknown): string {
+  const message = error && typeof error === "object" && "message" in error
+    ? String((error as { message?: unknown }).message ?? "")
+    : "";
+  const details = error && typeof error === "object" && "details" in error
+    ? String((error as { details?: unknown }).details ?? "")
+    : "";
+
+  if (message.includes("billing_status_check")) {
+    return "Database constraint billing_status_check is blocking this status update (paid_late/partially_paid). Run supabase/fixes/2026-04-24_fix_billing_status_check.sql in Supabase SQL Editor.";
+  }
+
+  if (details.includes("billing_status_check")) {
+    return "Database constraint billing_status_check is blocking this status update (paid_late/partially_paid). Run supabase/fixes/2026-04-24_fix_billing_status_check.sql in Supabase SQL Editor.";
+  }
+
   if (typeof error === "string") return error;
   if (error && typeof error === "object" && "message" in error) {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === "string" && message.trim().length > 0) return message;
+    const rawMessage = (error as { message?: unknown }).message;
+    if (typeof rawMessage === "string" && rawMessage.trim().length > 0) return rawMessage;
   }
   return "Operation failed.";
 }
