@@ -35,8 +35,8 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
   const degreeProg = metadata?.degree_program || 'N/A';
   const college = metadata?.college || 'N/A'; // Providing CAS as requested placeholder if empty
   const contactNum = metadata?.contact_number || 'N/A'; // Example generic placeholder
-  const homeAddress = metadata?.home_address || 'Tondo, N/A';
-  const emergencyContact = metadata?.emergency_contact || studentNum; // Use studentNum as placeholder as per image
+  const homeAddress = metadata?.home_address || 'N/A';
+  const emergencyContact = metadata?.emergency_contact || "N/A"; // Use studentNum as placeholder as per image
 
   // Safely format birthdate to avoid SSR-Client hydration mismatches
   let formattedBirthdate = '06/09/2005';
