@@ -35,14 +35,11 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
   const [contactNum, setContactNum] = useState(metadata?.contact_number || '');
   const [homeAddress, setHomeAddress] = useState(metadata?.home_address || '');
   const [emergencyContact, setEmergencyContact] = useState(metadata?.emergency_contact || '');
-
-  // Read-only specific formatting fallback
-  let formattedBirthdate = '06/09/2005';
-  if (user.birthdate) {
-    const parts = user.birthdate.split('-');
-    if (parts.length === 3) formattedBirthdate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-    else formattedBirthdate = user.birthdate;
-  }
+  
+  const [studentNum, setStudentNum] = useState(metadata?.student_number || '');
+  const [degreeProgram, setDegreeProgram] = useState(metadata?.degree_program || '');
+  const [college, setCollege] = useState(metadata?.college || '');
+  const [birthdate, setBirthdate] = useState(user.birthdate || '');
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +53,10 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
           contact_number: contactNum,
           home_address: homeAddress,
           emergency_contact: emergencyContact,
+          student_number: studentNum,
+          degree_program: degreeProgram,
+          college: college,
+          birthdate: birthdate,
         }
       });
 
@@ -85,7 +86,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
         <DialogHeader>
           <DialogTitle className="text-2xl font-black tracking-tight text-[#3E2723]">Edit Profile</DialogTitle>
           <DialogDescription className="text-[#3E2723]/70 font-medium">
-            Update your contact and emergency information. Identity and academic records are strictly read-only.
+            Update your profile information. Name and Email are strictly read-only.
           </DialogDescription>
         </DialogHeader>
 
@@ -122,14 +123,59 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
               </div>
             </div>
             
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Home Address</label>
-              <textarea 
-                value={homeAddress}
-                onChange={(e) => setHomeAddress(e.target.value)}
-                className="w-full min-h-[80px] bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors resize-y"
-                placeholder="Full address"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Student Number</label>
+                <input 
+                  type="text" 
+                  value={studentNum}
+                  onChange={(e) => setStudentNum(e.target.value)}
+                  className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                  placeholder="e.g. 202X-XXXXX"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Degree Program</label>
+                <input 
+                  type="text" 
+                  value={degreeProgram}
+                  onChange={(e) => setDegreeProgram(e.target.value)}
+                  className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                  placeholder="e.g. BS Computer Science"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">College</label>
+                <input 
+                  type="text" 
+                  value={college}
+                  onChange={(e) => setCollege(e.target.value)}
+                  className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                  placeholder="e.g. CAS"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Home Address</label>
+                <textarea 
+                  value={homeAddress}
+                  onChange={(e) => setHomeAddress(e.target.value)}
+                  className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors resize-y"
+                  placeholder="Full address"
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Birthdate</label>
+                <input 
+                  type="date" 
+                  value={birthdate}
+                  onChange={(e) => setBirthdate(e.target.value)}
+                  className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                />
+              </div>
             </div>
           </div>
 
@@ -151,34 +197,6 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                 <label className="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Email</label>
                 <div className="w-full bg-[#3e2723]/5 border-[3px] border-transparent text-[#3E2723]/60 rounded-xl px-4 py-2 font-semibold select-none cursor-not-allowed truncate">
                   {user.email}
-                </div>
-              </div>
-
-              <div className="space-y-1 opacity-70">
-                <label className="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Student Number</label>
-                <div className="w-full bg-[#3e2723]/5 border-[3px] border-transparent text-[#3E2723]/60 rounded-xl px-4 py-2 font-semibold select-none cursor-not-allowed">
-                  {metadata?.student_number || 'N/A'}
-                </div>
-              </div>
-
-              <div className="space-y-1 opacity-70">
-                <label className="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Degree Program</label>
-                <div className="w-full bg-[#3e2723]/5 border-[3px] border-transparent text-[#3E2723]/60 rounded-xl px-4 py-2 font-semibold select-none cursor-not-allowed">
-                  {metadata?.degree_program || 'N/A'}
-                </div>
-              </div>
-              
-              <div className="space-y-1 opacity-70">
-                <label className="text-xs font-bold text-[#3E2723] uppercase tracking-wide">College</label>
-                <div className="w-full bg-[#3e2723]/5 border-[3px] border-transparent text-[#3E2723]/60 rounded-xl px-4 py-2 font-semibold select-none cursor-not-allowed">
-                  {metadata?.college || 'CAS'}
-                </div>
-              </div>
-
-              <div className="space-y-1 opacity-70">
-                <label className="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Birthdate</label>
-                <div className="w-full bg-[#3e2723]/5 border-[3px] border-transparent text-[#3E2723]/60 rounded-xl px-4 py-2 font-semibold select-none cursor-not-allowed">
-                  {formattedBirthdate}
                 </div>
               </div>
             </div>
