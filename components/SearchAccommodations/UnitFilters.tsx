@@ -18,6 +18,7 @@ interface UnitFiltersProps {
   onResetFilters: () => void
   resultCount: number
   loading?: boolean
+  propertyTypeOptions?: { value: string; label: string }[]
 }
 
 export function UnitFilters({
@@ -34,6 +35,12 @@ export function UnitFilters({
   onResetFilters,
   resultCount,
   loading = false,
+  propertyTypeOptions = [
+    { value: 'apartment', label: 'Apartment' },
+    { value: 'boarding', label: 'Boarding House' },
+    { value: 'transient', label: 'Transient' },
+    { value: 'house', label: 'House' },
+  ],
 }: UnitFiltersProps) {
   return (
     <div className="rounded-xl shadow-sm border border-gray-200 p-5 mb-8" style={{ backgroundColor: '#FDFFF4' }}>
@@ -104,12 +111,7 @@ export function UnitFilters({
           value={propertyType}
           onChange={(v) => onPropertyTypeChange(v as PropertyType | '')}
           disabled={loading}
-          options={[
-            { value: 'apartment', label: 'Apartment' },
-            { value: 'boarding', label: 'Boarding House' },
-            { value: 'transient', label: 'Transient' },
-            { value: 'house', label: 'House' },
-          ]}
+          options={propertyTypeOptions}
         />
 
         <div className="flex items-end lg:justify-end">

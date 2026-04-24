@@ -40,6 +40,56 @@ export default function ApplicationList({
     const supabase = getSupabaseBrowserClient();
 
     const [applications, setApplications] = useState<Application[]>([]);
+      if (!error && data) setAccommodations(data);
+    }
+    fetchAccommodations();
+  }, []);
+
+  // Status
+  const statusOptions = [
+    { value: "pending_admin", label: "Pending Admin" },
+    { value: "pending_dorm_manager", label: "Pending Review" },
+    { value: "pending_payment", label: "Pending Payment" },
+    { value: "approved", label: "Approved" },
+    { value: "rejected", label: "Rejected" },
+    { value: "cancelled", label: "Cancelled" },
+  ];
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchApplications();
+  }, [status, dormitory, period, search]);
+
+  async function fetchApplications() {
+    let query = supabase.from("accommodation_application").select(`
+            application_id,
+            application_status,
+            date_submitted,
+            user_id,
+            unit_id,
+            preferred_unit_type,
+            preferred_accommodation_id,
+            check_in,
+            check_out,
+            number_of_companions,
+            duration_of_stay,
+            users (
+              first_name,
+              last_name
+            ),
+            accommodation:preferred_accommodation_id (
+              name
+            ),
+            unit:unit_id (
+                unit_id
+            )
+            `);
+
+    // DORMITORY FILTER
+    if (dormitory !== "all") {
+      query = query.eq("preferred_accommodation_id", dormitory);
+    }
 
     const [selectedApplication, setSelectedApplication] = useState<string[]>([]);
     
@@ -225,6 +275,49 @@ export default function ApplicationList({
         {/* HEADER */}
         <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold text-[#44291B]">Filters</h2>
+    console.log("DATA:", data);
+
+    const mappedData = (data as any[])?.map((app) => ({
+      ...app,
+      users: Array.isArray(app.users) ? app.users[0] : app.users,
+      accommodation: Array.isArray(app.accommodation)
+        ? app.accommodation[0]
+        : app.accommodation,
+      unit: Array.isArray(app.unit) ? app.unit[0] : app.unit,
+    }));
+
+    setApplications(mappedData ?? []);
+
+    setLoading(false);
+  }
+
+  return (
+    <div className="p-4 bg-[#F6F8D5] text-[#44291B] space-y-4">
+      {/* Header */}
+      <div>
+        <h1 className="text-[32px] font-bold text-[#44291B]">Applications</h1>
+      </div>
+
+      {/* FILTER BAR */}
+      <Card className="bg-[#FDFFF4] shadow-md border border-[#e8e2d6] p-4 rounded-xl">
+        <div className="flex justify-between items-center mb-0.5">
+          <h2 className="text-lg font-semibold leading-none text-[#44291B]">
+            Filters
+          </h2>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpenFilters(!openFilters)}
+            className="h-7 w-7 text-[#264384]]"
+          >
+            <ChevronDown
+              className={cn(
+                "w-4 h-4 transition-transform",
+                openFilters && "rotate-180",
+              )}
+            />
+          </Button>
         </div>
 
         {/* FILTER ROW */}

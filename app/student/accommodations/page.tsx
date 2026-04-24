@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Accommodation, Unit, AccommodationType, FurnishingStatus, UnitType, PropertyType } from '@/types/accommodation_units'
 import { Carousel } from '@/components/SearchAccommodations/Carousel'
 import { AccommodationCard } from '@/components/SearchAccommodations/AccommodationCard'
 import { UnitCard } from '@/components/SearchAccommodations/UnitCard'
 import { AccommodationFilters } from '@/components/SearchAccommodations/AccommodationFilters'
 import { UnitFilters } from '@/components/SearchAccommodations/UnitFilters'
+import { AccommodationListView } from '@/components/SearchAccommodations/Accommodation-list-view'
+import { UnitsListView } from '@/components/SearchAccommodations/Units-list-view'
 import next from 'next'
 import Link from 'next/link'
 
@@ -16,6 +18,9 @@ interface AccommodationFiltersType {
   accommodationType: AccommodationType | ''
   propertyType: PropertyType | ''
   availability: 'vacant' | 'all'
+  sexFilter?: 'female' | 'male' | 'coed' | string
+  minPrice: number | ''
+  maxPrice: number | ''
 }
 
 interface UnitFiltersType {
@@ -24,6 +29,7 @@ interface UnitFiltersType {
   availability: 'vacant' | 'all'
   propertyType: PropertyType | ''
   accommodationType: AccommodationType | ''
+  accommodationId: string | ''
 }
 
 export default function SearchAccommodationsPage() {
@@ -40,6 +46,9 @@ export default function SearchAccommodationsPage() {
     accommodationType: '',
     propertyType: '',
     availability: 'all',
+    sexFilter: '',
+    minPrice: '',
+    maxPrice: '',
   })
 
   const [unitFilters, setUnitFilters] = useState<UnitFiltersType>({
@@ -48,14 +57,66 @@ export default function SearchAccommodationsPage() {
     availability: 'vacant',
     propertyType: '',
     accommodationType: '',
+    accommodationId: '',
   })
 
   // Loading & Error states
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
+
+  // View mode state
+  const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel')
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 3
+
+  // Dynamic filter options based on fetched data
+  const dynamicPropertyTypes = useMemo(() => {
+    const types = new Set(accommodations.map(a => a.property_type).filter(Boolean));
+    if (types.size === 0) return [
+      { value: 'apartment', label: 'Apartment' },
+      { value: 'boarding', label: 'Boarding House' },
+      { value: 'transient', label: 'Transient' },
+      { value: 'house', label: 'House' },
+    ];
+    return Array.from(types).map(type => ({
+      value: type as string,
+      label: (type as string).split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    }));
+  }, [accommodations]);
+
+  const dynamicSexOptions = useMemo(() => {
+    const sexes = new Set(accommodations.map(a => a.accomm_sex).filter(Boolean));
+    if (sexes.size === 0) return [
+      { value: 'F', label: 'Female' },
+      { value: 'M', label: 'Male' },
+      { value: 'COED', label: 'Coed' },
+    ];
+    
+    const sexLabels: Record<string, string> = {
+      'F': 'Female',
+      'M': 'Male',
+      'COED': 'Coed',
+      'female': 'Female',
+      'male': 'Male',
+      'coed': 'Coed'
+    };
+
+    return Array.from(sexes).map(sex => {
+      const sexStr = sex as string;
+      const upperSex = sexStr.toUpperCase();
+      let label = sexLabels[upperSex] || sexLabels[sexStr] || (sexStr.charAt(0).toUpperCase() + sexStr.slice(1).toLowerCase());
+      
+      return {
+        value: sexStr,
+        label
+      };
+    });
+  }, [accommodations]);
 
   // Apply accommodation filters
   const applyAccommodationFilters = useCallback(
@@ -68,8 +129,20 @@ export default function SearchAccommodationsPage() {
 
       if (filters.propertyType) {
         filtered = filtered.filter(
-          (a) => a.accommodation_type === 'renting_space' && a.property_type === filters.propertyType
+          (a) => a.property_type?.toLowerCase() === filters.propertyType.toLowerCase()
         )
+      }
+
+      if (filters.sexFilter) {
+        filtered = filtered.filter((a) => a.accomm_sex?.toLowerCase() === filters.sexFilter?.toLowerCase())
+      }
+
+      if (filters.minPrice !== '') {
+        filtered = filtered.filter((a) => a.min_price !== undefined && a.min_price !== null && a.min_price >= filters.minPrice)
+      }
+
+      if (filters.maxPrice !== '') {
+        filtered = filtered.filter((a) => a.min_price !== undefined && a.min_price !== null && a.min_price <= filters.maxPrice)
       }
 
       if (filters.availability === 'vacant') {
@@ -90,6 +163,7 @@ export default function SearchAccommodationsPage() {
       }
 
       setFilteredAccommodations(filtered)
+      setCurrentPage(1)
     },
     []
   )
@@ -112,12 +186,12 @@ export default function SearchAccommodationsPage() {
       }
 
       if (filters.propertyType) {
-        const rentingSpaceIds = new Set(
+        const matchingIds = new Set(
           accomList
-            .filter((a) => a.accommodation_type === 'renting_space' && a.property_type === filters.propertyType)
+            .filter((a) => a.property_type?.toLowerCase() === filters.propertyType.toLowerCase())
             .map((a) => a.accommodation_id)
         )
-        filtered = filtered.filter((u) => rentingSpaceIds.has(u.accommodation_id))
+        filtered = filtered.filter((u) => matchingIds.has(u.accommodation_id))
       }
 
       if (filters.accommodationType) {
@@ -127,6 +201,10 @@ export default function SearchAccommodationsPage() {
             .map((a) => a.accommodation_id)
         )
         filtered = filtered.filter((u) => matchingAccomIds.has(u.accommodation_id))
+      }
+
+      if (filters.accommodationId) {
+        filtered = filtered.filter((u) => u.accommodation_id === filters.accommodationId)
       }
 
       // Apply search filter
@@ -141,6 +219,7 @@ export default function SearchAccommodationsPage() {
       }
 
       setFilteredUnits(filtered)
+      setCurrentPage(1)
     },
     []
   )
@@ -175,7 +254,7 @@ export default function SearchAccommodationsPage() {
     }
 
     fetchData()
-  }, []) 
+  }, [])
 
   // Handle accommodation filter changes
   const handleAccommodationFilterChange = useCallback(
@@ -203,6 +282,9 @@ export default function SearchAccommodationsPage() {
       accommodationType: '',
       propertyType: '',
       availability: 'all',
+      sexFilter: '',
+      minPrice: '',
+      maxPrice: '',
     }
     setAccommodationFilters(defaults)
     applyAccommodationFilters(accommodations, units, defaults, searchQuery)
@@ -216,24 +298,48 @@ export default function SearchAccommodationsPage() {
       availability: 'vacant',
       propertyType: '',
       accommodationType: '',
+      accommodationId: '',
     }
     setUnitFilters(defaults)
     applyUnitFilters(units, defaults, accommodations, searchQuery)
   }, [units, accommodations, applyUnitFilters, searchQuery])
-
-  const showPropertyTypeInAccommodations =
-    accommodationFilters.accommodationType === 'renting_space' ||
-    accommodationFilters.accommodationType === ''
 
   const handleAccommodationDetailsClick = (accommodation: Accommodation) => {
     // Navigate to detail page or open modal
     console.log('View details for:', accommodation)
   }
 
+  const handleSeeUnitsClick = useCallback((accommodation: Accommodation) => {
+    setActiveTab('units')
+    setCurrentPage(1)
+
+    const newFilters = { ...unitFilters, accommodationId: accommodation.accommodation_id }
+    setUnitFilters(newFilters)
+    applyUnitFilters(units, newFilters, accommodations, searchQuery)
+
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [units, accommodations, unitFilters, applyUnitFilters, searchQuery])
+
   const handleUnitDetailsClick = (unit: Unit) => {
     // Navigate to detail page or open modal
     console.log('View details for:', unit)
   }
+
+  const totalAccommodationsPages = Math.ceil(filteredAccommodations.length / pageSize) || 1;
+  const validCurrentPage = Math.min(currentPage, totalAccommodationsPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const paginatedAccommodations = filteredAccommodations.slice(
+    startIndex,
+    startIndex + pageSize
+  );
+
+  const totalUnitsPages = Math.ceil(filteredUnits.length / pageSize) || 1;
+  const validCurrentUnitsPage = Math.min(currentPage, totalUnitsPages);
+  const startUnitsIndex = (validCurrentUnitsPage - 1) * pageSize;
+  const paginatedUnits = filteredUnits.slice(
+    startUnitsIndex,
+    startUnitsIndex + pageSize
+  );
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F6F8D5' }}>
@@ -244,80 +350,82 @@ export default function SearchAccommodationsPage() {
           <p style={{ color: '#44291B' }}>Find your perfect housing option</p>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by location or name..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                applyAccommodationFilters(accommodations, units, accommodationFilters, e.target.value)
-                applyUnitFilters(units, unitFilters, accommodations, e.target.value)
-              }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-gray-900 placeholder-gray-500"
-              style={{
-                color: '#44291B',
-                '--tw-ring-color': '#264384',
-              } as any}
-            />
-            <svg
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        {/* Top Controls: Search Bar (Left) + View/Tab Options (Right) */}
+        <div className="flex flex-col md:flex-row gap-4 mb-8 items-center justify-between">
+          {/* Search Bar - Left Side */}
+          <div className="w-full md:max-w-md">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by location or name..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  applyAccommodationFilters(accommodations, units, accommodationFilters, e.target.value)
+                  applyUnitFilters(units, unitFilters, accommodations, e.target.value)
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-gray-900 placeholder-gray-500"
+                style={{
+                  color: '#44291B',
+                  backgroundColor: '#FDFFF4',
+                  '--tw-ring-color': '#264384',
+                } as any}
               />
-            </svg>
+              <svg
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
           </div>
-        </div>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-3 mb-8">
-          <button
-            onClick={() => setActiveTab('accommodations')}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'accommodations'
+          {/* Tab Navigation - Right Side */}
+          <div className="flex flex-wrap gap-3 justify-start md:justify-end w-full md:w-auto">
+            <button
+              onClick={() => { setActiveTab('accommodations'); setCurrentPage(1); }}
+              className={`px-6 py-3 rounded-lg font-semibold transition ${activeTab === 'accommodations'
                 ? 'text-white shadow-md'
                 : 'border border-gray-200 hover:border-gray-300'
-            }`}
-            style={{
-              backgroundColor: activeTab === 'accommodations' ? '#264384' : '#FDFFF4',
-              color: activeTab === 'accommodations' ? 'white' : '#44291B',
-            }}
-          >
-            Accommodations
-          </button>
-          <button
-            onClick={() => setActiveTab('units')}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'units'
+                }`}
+              style={{
+                backgroundColor: activeTab === 'accommodations' ? '#264384' : '#FDFFF4',
+                color: activeTab === 'accommodations' ? 'white' : '#44291B',
+              }}
+            >
+              Accommodations
+            </button>
+            <button
+              onClick={() => { setActiveTab('units'); setCurrentPage(1); }}
+              className={`px-6 py-3 rounded-lg font-semibold transition ${activeTab === 'units'
                 ? 'text-white shadow-md'
                 : 'border border-gray-200 hover:border-gray-300'
-            }`}
-            style={{
-              backgroundColor: activeTab === 'units' ? '#264384' : '#FDFFF4',
-              color: activeTab === 'units' ? 'white' : '#44291B',
-            }}
-          >
-            All Units
-          </button>
-          <Link 
-            href="/student/accommodations/list"
-            className="px-6 py-3 rounded-lg font-semibold border border-gray-200 hover:border-gray-300 transition shadow-sm"
-            style={{
-              backgroundColor: '#FDFFF4',
-              color: '#44291B',
-            }}
-          >
-            List View
-          </Link>
+                }`}
+              style={{
+                backgroundColor: activeTab === 'units' ? '#264384' : '#FDFFF4',
+                color: activeTab === 'units' ? 'white' : '#44291B',
+              }}
+            >
+              All Units
+            </button>
+            <button
+              onClick={() => setViewMode(viewMode === 'list' ? 'carousel' : 'list')}
+              className="px-6 py-3 rounded-lg font-semibold border border-gray-200 hover:border-gray-300 transition shadow-sm"
+              style={{
+                backgroundColor: viewMode === 'list' ? '#264384' : '#FDFFF4',
+                color: viewMode === 'list' ? 'white' : '#44291B',
+              }}
+            >
+              {viewMode === 'list' ? 'Carousel View' : 'List View'}
+            </button>
+          </div>
         </div>
 
         {/* Error Message */}
@@ -335,15 +443,22 @@ export default function SearchAccommodationsPage() {
               accommodationType={accommodationFilters.accommodationType}
               propertyType={accommodationFilters.propertyType}
               availability={accommodationFilters.availability}
-              onAccommodationTypeChange={(v) => 
+              sexFilter={accommodationFilters.sexFilter}
+              minPrice={accommodationFilters.minPrice}
+              maxPrice={accommodationFilters.maxPrice}
+              onAccommodationTypeChange={(v) =>
                 handleAccommodationFilterChange({ accommodationType: v, propertyType: '' })
               }
               onPropertyTypeChange={(v) => handleAccommodationFilterChange({ propertyType: v })}
               onAvailabilityChange={(v) => handleAccommodationFilterChange({ availability: v })}
+              onSexFilterChange={(v) => handleAccommodationFilterChange({ sexFilter: v })}
+              onMinPriceChange={(v) => handleAccommodationFilterChange({ minPrice: v })}
+              onMaxPriceChange={(v) => handleAccommodationFilterChange({ maxPrice: v })}
               onResetFilters={resetAccommodationFilters}
               resultCount={filteredAccommodations.length}
               loading={loading}
-              showPropertyType={showPropertyTypeInAccommodations}
+              propertyTypeOptions={dynamicPropertyTypes}
+              sexOptions={dynamicSexOptions}
             />
 
             {/* Results Section */}
@@ -385,18 +500,32 @@ export default function SearchAccommodationsPage() {
               </div>
             )}
 
-            {/* Carousel */}
+            {/* Carousel or List View */}
             {!loading && filteredAccommodations.length > 0 && (
-              <Carousel>
-                {filteredAccommodations.map((accommodation) => (
-                  <AccommodationCard
-                    key={accommodation.accommodation_id}
-                    accommodation={accommodation}
-                    units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
-                    onDetailsClick={handleAccommodationDetailsClick}
-                  />
-                ))}
-              </Carousel>
+              viewMode === 'carousel' ? (
+                <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-12">
+                  <Carousel>
+                    {filteredAccommodations.map((accommodation) => (
+                      <AccommodationCard
+                        key={accommodation.accommodation_id}
+                        accommodation={accommodation}
+                        units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
+                        onDetailsClick={handleAccommodationDetailsClick}
+                      />
+                    ))}
+                  </Carousel>
+                </div>
+              ) : (
+                <AccommodationListView
+                  paginatedAccommodations={paginatedAccommodations}
+                  totalPages={totalAccommodationsPages}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  validCurrentPage={validCurrentPage}
+                  basePath="/student/accommodations"
+                  onSeeUnitsClick={handleSeeUnitsClick}
+                />
+              )
             )}
           </div>
         )}
@@ -419,6 +548,7 @@ export default function SearchAccommodationsPage() {
               onResetFilters={resetUnitFilters}
               resultCount={filteredUnits.length}
               loading={loading}
+              propertyTypeOptions={dynamicPropertyTypes}
             />
 
             {/* Results Section */}
@@ -460,23 +590,37 @@ export default function SearchAccommodationsPage() {
               </div>
             )}
 
-            {/* Carousel */}
+            {/* Carousel or List View */}
             {!loading && filteredUnits.length > 0 && (
-              <Carousel>
-                {filteredUnits.map((unit) => {
-                  const accommodation = accommodations.find(
-                    (a) => a.accommodation_id === unit.accommodation_id
-                  )
-                  return (
-                    <UnitCard
-                      key={unit.unit_id}
-                      unit={unit}
-                      accommodation={accommodation}
-                      onDetailsClick={handleUnitDetailsClick}
-                    />
-                  )
-                })}
-              </Carousel>
+              viewMode === 'carousel' ? (
+                <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-12">
+                  <Carousel>
+                    {filteredUnits.map((unit) => {
+                      const accommodation = accommodations.find(
+                        (a) => a.accommodation_id === unit.accommodation_id
+                      )
+                      return (
+                        <UnitCard
+                          key={unit.unit_id}
+                          unit={unit}
+                          accommodation={accommodation}
+                          onDetailsClick={handleUnitDetailsClick}
+                        />
+                      )
+                    })}
+                  </Carousel>
+                </div>
+              ) : (
+                <UnitsListView
+                  paginatedUnits={paginatedUnits}
+                  accommodations={accommodations}
+                  totalPages={totalUnitsPages}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  validCurrentPage={validCurrentUnitsPage}
+                  basePath="/student/accommodations"
+                />
+              )
             )}
           </div>
         )}

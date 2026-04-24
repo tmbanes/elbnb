@@ -67,4 +67,5 @@ export type {
   GuestCreationRequest,
   DormitoryManagerCreationRequest,
   HousingAdminCreationRequest,
+
 };
