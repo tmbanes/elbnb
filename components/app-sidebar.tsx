@@ -36,7 +36,7 @@ const sidebarConfig = {
   student: {
     label: "Student",
     nav: [
-      { title: "Dashboard", url: "/dashboard", icon: PieChart },
+      { title: "Dashboard", url: "/student/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/student/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/student/application", icon: Newspaper },
       { title: "Billing", url: "/student/billing", icon: Banknote },
