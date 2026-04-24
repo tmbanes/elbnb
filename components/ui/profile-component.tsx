@@ -46,9 +46,9 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
   // Student specific logic
   const studentNum = metadata?.student_number || 'N/A';
   const degreeProg = metadata?.degree_program || 'N/A';
-  const college = metadata?.college || 'CAS';
-  const contactNum = metadata?.contact_number || '09662981806';
-  const homeAddress = metadata?.home_address || 'Tondo, Manila';
+  const college = metadata?.college || 'N/A';
+  const contactNum = metadata?.contact_number || 'N/A';
+  const homeAddress = metadata?.home_address || 'N/A';
   const emergencyContact = metadata?.emergency_contact || studentNum;
 
   let formattedBirthdate = '06/09/2005';
@@ -63,69 +63,71 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
 
   // Common UI Wrapper
   const renderContent = () => {
-    if (role === "student" || role === "guest") {
+    if (role === "student" || role === "guest" || role === "dormitory_manager") {
       return (
         <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full min-h-[280px] sm:min-h-[350px] md:min-h-[400px]">
           {/* Accommodations Container */}
-          <div
-            onClick={() => setActiveTab('accommodations')}
-            className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 rounded-tl-[200px] sm:rounded-tl-[400px] md:rounded-tl-[700px] rounded-tr-[40px] sm:rounded-tr-[60px] md:rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations'
-              ? 'h-full'
-              : 'hover:bg-[#8bc453] hover:shadow-lg'
-              }`}
-            style={{ filter: 'url(#grain)', backgroundBlendMode: 'multiply' }}
-          >
-            {/* Accommodations title */}
-            <div className="flex items-center justify-end gap-3 text-[#3E2723] pt-6 mb-4">
-              <Home className="w-6 h-6 stroke-[2.5]" />
-              <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Accommodations</h3>
-            </div>
+          {role !== "dormitory_manager" && (
+            <div
+              onClick={() => setActiveTab('accommodations')}
+              className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 rounded-tl-[200px] sm:rounded-tl-[400px] md:rounded-tl-[700px] rounded-tr-[40px] sm:rounded-tr-[60px] md:rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations'
+                ? 'h-full'
+                : 'hover:bg-[#8bc453] hover:shadow-lg'
+                }`}
+              style={{ filter: 'url(#grain)', backgroundBlendMode: 'multiply' }}
+            >
+              {/* Accommodations title */}
+              <div className="flex items-center justify-end gap-3 text-[#3E2723] pt-6 mb-4">
+                <Home className="w-6 h-6 stroke-[2.5]" />
+                <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Accommodations</h3>
+              </div>
 
-            <div className="pb-6 pt-3 pl-4 sm:pl-10 md:pl-[180px] pr-4 sm:pr-6 md:pr-12">
-              <div className="grid grid-cols-2 gap-y-8 gap-x-6 md:gap-x-8 w-full">
-                <div className="md:col-span-12">
-                  <div className="flex items-center justify-start gap-4 mb-3">
-                    <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase`}>Current Residence</h4>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-[#3E2723] opacity-70 hover:opacity-100 transition-opacity text-[10px] font-bold tracking-widest uppercase underline underline-offset-4 whitespace-nowrap"
-                        >
-                          View Previous Residences
-                        </button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-md bg-[#F4F5E1] border-[#7EB647]">
-                        <DialogHeader>
-                          <DialogTitle className="text-[#3E2723] font-bold">Previous Accommodations</DialogTitle>
-                          <DialogDescription className="text-[#3E2723]/70">A history of your past dormitory assignments.</DialogDescription>
-                        </DialogHeader>
-                        <div className="mt-4"></div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                  <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
-                    <div>
-                      <p className={`${SubheaderLg} leading-snug`}>Eliazo Hall</p>
-                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Dormitory Name</p>
+              <div className="pb-6 pt-3 pl-4 sm:pl-10 md:pl-[180px] pr-4 sm:pr-6 md:pr-12">
+                <div className="grid grid-cols-2 gap-y-8 gap-x-6 md:gap-x-8 w-full">
+                  <div className="md:col-span-12">
+                    <div className="flex items-center justify-start gap-4 mb-3">
+                      <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase`}>Current Residence</h4>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[#3E2723] opacity-70 hover:opacity-100 transition-opacity text-[10px] font-bold tracking-widest uppercase underline underline-offset-4 whitespace-nowrap"
+                          >
+                            View Previous Residences
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md bg-[#F4F5E1] border-[#7EB647]">
+                          <DialogHeader>
+                            <DialogTitle className="text-[#3E2723] font-bold">Previous Accommodations</DialogTitle>
+                            <DialogDescription className="text-[#3E2723]/70">A history of your past dormitory assignments.</DialogDescription>
+                          </DialogHeader>
+                          <div className="mt-4"></div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
-                    <div>
-                      <p className={`${SubheaderLg} leading-snug`}>Room 101</p>
-                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Unit Number</p>
-                    </div>
-                    <div>
-                      <p className={`${SubheaderLg} leading-snug`}>08/15/2023</p>
-                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Contract Start Date</p>
-                    </div>
-                    <div>
-                      <p className={`${SubheaderLg} leading-snug`}>05/30/2024</p>
-                      <p className={`${SubheaderMd} opacity-80 leading-snug`}>Contract End Date</p>
+                    <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
+                      <div>
+                        <p className={`${SubheaderLg} leading-snug`}>Eliazo Hall</p>
+                        <p className={`${SubheaderMd} opacity-80 leading-snug`}>Dormitory Name</p>
+                      </div>
+                      <div>
+                        <p className={`${SubheaderLg} leading-snug`}>Room 101</p>
+                        <p className={`${SubheaderMd} opacity-80 leading-snug`}>Unit Number</p>
+                      </div>
+                      <div>
+                        <p className={`${SubheaderLg} leading-snug`}>08/15/2023</p>
+                        <p className={`${SubheaderMd} opacity-80 leading-snug`}>Contract Start Date</p>
+                      </div>
+                      <div>
+                        <p className={`${SubheaderLg} leading-snug`}>05/30/2024</p>
+                        <p className={`${SubheaderMd} opacity-80 leading-snug`}>Contract End Date</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Personal Information Container */}
           <div
@@ -148,25 +150,69 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                 <div className={`pb-24 transition-opacity duration-300 delay-100 ${activeTab === 'personal' ? 'opacity-100' : 'opacity-0'}`}>
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-y-8 gap-x-6">
                     <div className="md:col-span-12">
-                      <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Academic Info</h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                        <div>
-                          <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
-                          <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
-                        </div>
-                        <div>
-                          <p className={`${SubheaderLg} leading-snug`}>{studentNum}</p>
-                          <p className={`${SubheaderMd} opacity-80 leading-snug`}>Student Number</p>
-                        </div>
-                        <div>
-                          <p className={`${SubheaderLg} leading-snug`}>{degreeProg}</p>
-                          <p className={`${SubheaderMd} opacity-80 leading-snug`}>Degree Program</p>
-                        </div>
-                        <div>
-                          <p className={`${SubheaderLg} leading-snug`}>{college}</p>
-                          <p className={`${SubheaderMd} opacity-80 leading-snug`}>College</p>
-                        </div>
-                      </div>
+                      {role === 'student' && (
+                        <>
+                          <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Academic Info</h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
+                            </div>
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{studentNum}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Student Number</p>
+                            </div>
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{degreeProg}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Degree Program</p>
+                            </div>
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{college}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>College</p>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {role === 'guest' && (
+                        <>
+                          <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Guest Info</h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
+                            </div>
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{metadata?.valid_id || 'N/A'}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Valid ID</p>
+                            </div>
+                            <div className="col-span-full md:col-span-1 lg:col-span-1">
+                              <p className={`${SubheaderLg} leading-snug break-all`}>{metadata?.purpose_visit || 'N/A'}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Purpose of Visit</p>
+                            </div>
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{metadata?.occupancy_status || 'N/A'}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Occupancy Status</p>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {role === 'dormitory_manager' && (
+                        <>
+                          <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Staff Info</h4>
+                          <div className="grid grid-cols-2 gap-4 sm:gap-6">
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
+                            </div>
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{metadata?.employee_id || 'N/A'}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Employee ID</p>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                     <div className="md:col-span-9">
                       <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Contact Details</h4>

@@ -1,6 +1,20 @@
 "use client";
 
 import React, { useState } from 'react';
+
+const collegeDegreeMap: Record<string, string[]> = {
+  CAS: ["BA Communication Arts", "BA Philosophy", "BA Sociology", "BS Applied Mathematics", "BS Applied Physics", "BS Biology", "BS Chemistry", "BS Computer Science", "BS Mathematics", "BS Mathematics and Science Teaching", "BS Statistics", "BS Agricultural Chemistry (Jointly administered with CAFS)", "MA Communication Arts", "MA Sociology", "MS Applied Mathematics", "MS Botany", "MS Chemistry", "MS Computer Science", "MS Genetics", "MS Mathematics", "MS Microbiology", "MS Physics", "MS Statistics", "MS Zoology"],
+  CEAT: ["BS Agricultural and Biosystems Engineering", "BS Chemical Engineering", "BS Civil Engineering", "BS Electrical Engineering", "BS Industrial Engineering", "BS Mechanical Engineering", "MS Agricultural Engineering", "MS Agrometeorology", "MS Chemical Engineering"],
+  CAFS: ["BS Agriculture", "BS Agricultural Biotechnology", "BS Food Science and Technology", "BS Agricultural Chemistry (Jointly administered with CAS)", "MS Agronomy", "MS Animal Science", "MS Entomology", "MS Food Science", "MS Horticulture", "MS Plant Breeding", "MS Plant Pathology", "MS Soil Science", "MS Weed Science"],
+  CVM: ["Doctor of Veterinary Medicine (DVM)", "MS Veterinary Medicine"],
+  CDC: ["BS Development Communication", "Master of Development Communication", "MS Development Communication"],
+  CEM: ["BS Accountancy", "BS Agribusiness Management and Entrepreneurship", "BS Agricultural and Applied Economics", "BS Economics", "Master of Management (MM)", "MS Agricultural Economics", "MS Economics"],
+  CHE: ["BS Human Ecology", "BS Nutrition", "MS Applied Nutrition", "MS Clinical Nutrition", "MS Family Resource Management"],
+  CFNR: ["BS Forestry", "MS Forestry", "MS Natural Resources Conservation"],
+  SESAM: ["Master in Environmental Management (MEM)", "Professional Master in Tropical Marine Ecosystems Management (PMTMEM)", "MS Environmental Science"],
+  CPAf: ["Master in Public Affairs (MPAf)", "MS Community Development", "MS Development Management and Governance", "MS Extension Education"]
+};
+
 import { 
   Dialog, 
   DialogContent, 
@@ -37,12 +51,33 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
   const [emergencyContact, setEmergencyContact] = useState(metadata?.emergency_contact || '');
   
   const [studentNum, setStudentNum] = useState(metadata?.student_number || '');
-  const [degreeProgram, setDegreeProgram] = useState(metadata?.degree_program || '');
-  const [college, setCollege] = useState(metadata?.college || '');
+  
+  const initialDegree = metadata?.degree_program || '';
+  const isCustomDegreeInit = initialDegree && !Object.values(collegeDegreeMap).flat().includes(initialDegree);
+  const [degreeProgram, setDegreeProgram] = useState(isCustomDegreeInit ? "Others" : initialDegree);
+  const [customDegree, setCustomDegree] = useState(isCustomDegreeInit ? initialDegree : '');
+  
+  const predefinedColleges = ['CAS', 'CEAT', 'CAFS', 'CVM', 'CDC', 'CEM', 'CHE', 'CFNR', 'SESAM', 'CPAf'];
+  const initialCollege = metadata?.college || '';
+  const isCustomCollegeInit = initialCollege && !predefinedColleges.includes(initialCollege);
+  const [college, setCollege] = useState(isCustomCollegeInit ? "Others" : initialCollege);
+  const [customCollege, setCustomCollege] = useState(isCustomCollegeInit ? initialCollege : '');
+  
+  const [validId, setValidId] = useState(metadata?.valid_id || '');
+  const [purposeVisit, setPurposeVisit] = useState(metadata?.purpose_visit || '');
+  const [occupancyStatus, setOccupancyStatus] = useState(metadata?.occupancy_status || '');
+  
+  const [employeeId, setEmployeeId] = useState(metadata?.employee_id || '');
   const [birthdate, setBirthdate] = useState(user.birthdate || '');
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (contactNum && !/^\d+$/.test(contactNum)) {
+      setError("Contact number must contain only valid numbers.");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     const supabase = getSupabaseBrowserClient();
@@ -54,8 +89,12 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
           home_address: homeAddress,
           emergency_contact: emergencyContact,
           student_number: studentNum,
-          degree_program: degreeProgram,
-          college: college,
+          degree_program: degreeProgram === "Others" ? customDegree : degreeProgram,
+          college: college === "Others" ? customCollege : college,
+          valid_id: validId,
+          purpose_visit: purposeVisit,
+          occupancy_status: occupancyStatus,
+          employee_id: employeeId,
           birthdate: birthdate,
         }
       });
@@ -104,9 +143,11 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
               <div className="space-y-1">
                 <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Contact Number</label>
                 <input 
-                  type="text" 
+                  type="tel" 
+                  required
+                  maxLength={11}
                   value={contactNum}
-                  onChange={(e) => setContactNum(e.target.value)}
+                  onChange={(e) => setContactNum(e.target.value.replace(/[^0-9]/g, ''))}
                   className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
                   placeholder="e.g. 09123456789"
                 />
@@ -115,6 +156,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                 <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Emergency Contact</label>
                 <input 
                   type="text" 
+                  required
                   value={emergencyContact}
                   onChange={(e) => setEmergencyContact(e.target.value)}
                   className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
@@ -123,43 +165,158 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Student Number</label>
-                <input 
-                  type="text" 
-                  value={studentNum}
-                  onChange={(e) => setStudentNum(e.target.value)}
-                  className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
-                  placeholder="e.g. 202X-XXXXX"
-                />
+            {user.role === 'student' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Student Number</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={studentNum}
+                    onChange={(e) => setStudentNum(e.target.value)}
+                    className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                    placeholder="e.g. 202X-XXXXX"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Degree Program</label>
+                  {(college === 'Others' || !college) ? (
+                    <input 
+                      type="text" 
+                      required
+                      value={customDegree}
+                      onChange={(e) => {
+                         setDegreeProgram('Others');
+                         setCustomDegree(e.target.value);
+                      }}
+                      className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                      placeholder="Enter specific degree program"
+                    />
+                  ) : (
+                    <>
+                      <select 
+                        required
+                        value={degreeProgram}
+                        onChange={(e) => setDegreeProgram(e.target.value)}
+                        className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                      >
+                        <option value="" disabled>Select Degree</option>
+                        {collegeDegreeMap[college]?.map(deg => (
+                          <option key={deg} value={deg}>{deg}</option>
+                        ))}
+                        <option value="Others">Others</option>
+                      </select>
+                      {degreeProgram === "Others" && (
+                        <input 
+                          type="text" 
+                          required
+                          value={customDegree}
+                          onChange={(e) => setCustomDegree(e.target.value)}
+                          className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors mt-2"
+                          placeholder="Please specify your degree"
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">College</label>
+                  <select 
+                    required
+                    value={college}
+                    onChange={(e) => {
+                      setCollege(e.target.value);
+                      setDegreeProgram('');
+                      setCustomDegree('');
+                    }}
+                    className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                  >
+                    <option value="" disabled>Select College</option>
+                    <option value="CAS">CAS</option>
+                    <option value="CEAT">CEAT</option>
+                    <option value="CAFS">CAFS</option>
+                    <option value="CVM">CVM</option>
+                    <option value="CDC">CDC</option>
+                    <option value="CEM">CEM</option>
+                    <option value="CHE">CHE</option>
+                    <option value="CFNR">CFNR</option>
+                    <option value="SESAM">SESAM</option>
+                    <option value="CPAf">CPAf</option>
+                    <option value="Others">Others</option>
+                  </select>
+                  {college === "Others" && (
+                    <input 
+                      type="text" 
+                      required
+                      value={customCollege}
+                      onChange={(e) => setCustomCollege(e.target.value)}
+                      className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors mt-2"
+                      placeholder="Please specify your college"
+                    />
+                  )}
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Degree Program</label>
-                <input 
-                  type="text" 
-                  value={degreeProgram}
-                  onChange={(e) => setDegreeProgram(e.target.value)}
-                  className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
-                  placeholder="e.g. BS Computer Science"
-                />
+            )}
+
+            {user.role === 'guest' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Valid ID</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={validId}
+                    onChange={(e) => setValidId(e.target.value)}
+                    className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                    placeholder="e.g. Passport / License"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Purpose of Visit</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={purposeVisit}
+                    onChange={(e) => setPurposeVisit(e.target.value)}
+                    className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                  placeholder="e.g. Conference"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Occupancy Status</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={occupancyStatus}
+                    onChange={(e) => setOccupancyStatus(e.target.value)}
+                    className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                  placeholder="e.g. Active"
+                  />
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">College</label>
-                <input 
-                  type="text" 
-                  value={college}
-                  onChange={(e) => setCollege(e.target.value)}
-                  className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
-                  placeholder="e.g. CAS"
-                />
+            )}
+
+            {user.role === 'dormitory_manager' && (
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Employee ID</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={employeeId}
+                    onChange={(e) => setEmployeeId(e.target.value)}
+                    className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                    placeholder="e.g. EMP-12345"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Home Address</label>
                 <textarea 
+                  required
                   value={homeAddress}
                   onChange={(e) => setHomeAddress(e.target.value)}
                   className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors resize-y"
@@ -171,6 +328,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                 <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Birthdate</label>
                 <input 
                   type="date" 
+                  required
                   value={birthdate}
                   onChange={(e) => setBirthdate(e.target.value)}
                   className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"

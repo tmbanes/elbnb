@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  if (user.role === "student" || user.role === "guest") {
+  if (user.role === "student" || user.role === "guest" || user.role === "dormitory_manager") {
     return (
       <ProfileComponent user={user} metadata={authUser?.user_metadata} />
     )
