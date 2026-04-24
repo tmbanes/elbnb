@@ -2,7 +2,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { ensureInitialInvoicesForPendingPaymentApplications, getAllBillsForAdmin, getActiveTenants } from "@/services/user-services";
 import { redirect } from "next/navigation";
 import AdminBillingClient from "./AdminBillingClient";
-import LogoutButton from "@/components/logout-button";
 
 export default async function AdminBillingPage() {
   const supabase = await createSupabaseServerClient();
@@ -46,7 +45,6 @@ export default async function AdminBillingPage() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-heading">Billing Management</h1>
             <p className="text-slate-500 mt-1 mb-4 text-sm" style={{ fontFamily: 'Arial, sans-serif' }}>Overview of all tenant invoices, payments, and revenue.</p>
-            <LogoutButton />
           </div>
           <div className="p-6 rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm">
             SUPABASE ERROR: {JSON.stringify(error)}
@@ -62,7 +60,6 @@ export default async function AdminBillingPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-heading">Billing Management</h1>
           <p className="text-slate-500 mt-1 mb-4 text-sm" style={{ fontFamily: 'Arial, sans-serif' }}>Overview of all tenant invoices, payments, and revenue.</p>
-          <LogoutButton />
         </div>
 
         <AdminBillingClient

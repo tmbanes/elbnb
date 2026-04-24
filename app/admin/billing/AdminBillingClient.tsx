@@ -82,6 +82,41 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     { type: BillingItemType.ROOM_RENT, amount: 0 }
   ]);
   const [isSubmittingBill, setIsSubmittingBill] = useState(false);
+  const [feedbackModal, setFeedbackModal] = useState<{
+    open: boolean;
+    variant: "success" | "warning";
+    title: string;
+    message: string;
+    reloadOnClose: boolean;
+  }>({
+    open: false,
+    variant: "warning",
+    title: "",
+    message: "",
+    reloadOnClose: false,
+  });
+
+  const showFeedback = (
+    variant: "success" | "warning",
+    message: string,
+    options?: { title?: string; reloadOnClose?: boolean }
+  ) => {
+    setFeedbackModal({
+      open: true,
+      variant,
+      title: options?.title || (variant === "success" ? "Success" : "Attention"),
+      message,
+      reloadOnClose: Boolean(options?.reloadOnClose),
+    });
+  };
+
+  const closeFeedback = () => {
+    const shouldReload = feedbackModal.reloadOnClose;
+    setFeedbackModal((prev) => ({ ...prev, open: false, reloadOnClose: false }));
+    if (shouldReload) {
+      window.location.reload();
+    }
+  };
 
   const looksLikeJson = (value?: string | null) => {
     const trimmed = String(value || "").trim();
@@ -195,8 +230,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
   const saveEdits = async () => {
     if (!editingBill) return;
-    if (editItems.length === 0) return alert("Add at least one invoice line item.");
-    if (editItems.some(item => item.amount <= 0)) return alert("All line items must have an amount greater than 0.");
+    if (editItems.length === 0) return showFeedback("warning", "Add at least one invoice line item.");
+    if (editItems.some(item => item.amount <= 0)) return showFeedback("warning", "All line items must have an amount greater than 0.");
 
     console.log('Saving invoice:', editingBill.billing_id, 'Items:', editItems, 'Amount:', editItems.reduce((s, i) => s + i.amount, 0));
 
@@ -213,33 +248,32 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
         adminId,
       );
       setEditingBill(null);
-      window.location.reload();
+      showFeedback("success", "Invoice updated successfully.", { reloadOnClose: true });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to save invoice changes.");
+      showFeedback("warning", error instanceof Error ? error.message : "Failed to save invoice changes.");
     } finally {
       setIsSaving(false);
     }
   };
 
   const sendReminders = async () => {
-    if (selectedBillIds.length === 0) return alert("Select invoices first!");
+    if (selectedBillIds.length === 0) return showFeedback("warning", "Select invoices first!");
 
     for (const id of selectedBillIds) {
       await adminUpdateInvoiceAction(id, { reminded_at: new Date().toISOString() });
     }
-    alert(`Reminders registered for ${selectedBillIds.length} invoices.`);
-    window.location.reload();
+    showFeedback("success", `Reminders registered for ${selectedBillIds.length} invoices.`, { reloadOnClose: true });
   };
 
   const exportSelected = () => {
-    if (selectedBillIds.length === 0) return alert("Select invoices first!");
+    if (selectedBillIds.length === 0) return showFeedback("warning", "Select invoices first!");
     window.print();
   };
 
   const handleCreateBill = async () => {
-    if (!newBillAssignmentId) return alert("Select a tenant!");
-    if (!newBillDueDate) return alert("Select a due date!");
-    if (newBillItems.some(item => item.amount <= 0)) return alert("All items must have an amount greater than 0!");
+    if (!newBillAssignmentId) return showFeedback("warning", "Select a tenant!");
+    if (!newBillDueDate) return showFeedback("warning", "Select a due date!");
+    if (newBillItems.some(item => item.amount <= 0)) return showFeedback("warning", "All items must have an amount greater than 0!");
 
     setIsSubmittingBill(true);
     try {
@@ -267,11 +301,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
         setSearchQuery(billingId);
       }
 
-      alert(mode === "updated" ? "Invoice updated for this assignment." : "Bill created successfully!");
+      showFeedback("success", mode === "updated" ? "Invoice updated for this assignment." : "Bill created successfully!", { reloadOnClose: true });
       setIsCreatingBill(false);
-      window.location.reload();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to create bill.");
+      showFeedback("warning", error instanceof Error ? error.message : "Failed to create bill.");
     } finally {
       setIsSubmittingBill(false);
     }
@@ -281,33 +314,33 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     <>
       {/* SUMMARY */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:hidden">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-[#5591AB] text-white p-6 rounded-2xl border border-[#4b839b] shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Total Revenue</h3>
-            <div className="p-2 bg-emerald-50 rounded-lg"><TrendingUp className="w-5 h-5 text-emerald-500" /></div>
+            <h3 className="text-xs font-bold tracking-wide uppercase text-white/90">Total Revenue</h3>
+            <div className="p-2 bg-white/20 rounded-lg"><TrendingUp className="w-5 h-5 text-white" /></div>
           </div>
-          <p className="text-3xl font-bold text-slate-900">₱{summary.totalRevenue.toLocaleString()}</p>
+          <p className="text-4xl font-extrabold text-white">₱{summary.totalRevenue.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-[#F59E0B] text-white p-6 rounded-2xl border border-[#d98a0a] shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Unpaid Balance</h3>
-            <div className="p-2 bg-amber-50 rounded-lg"><Clock className="w-5 h-5 text-amber-500" /></div>
+            <h3 className="text-xs font-bold tracking-wide uppercase text-white/90">Unpaid Balance</h3>
+            <div className="p-2 bg-white/20 rounded-lg"><Clock className="w-5 h-5 text-white" /></div>
           </div>
-          <p className="text-3xl font-bold text-slate-900">₱{summary.unpaidBalance.toLocaleString()}</p>
+          <p className="text-4xl font-extrabold text-white">₱{summary.unpaidBalance.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-[#EF4444] text-white p-6 rounded-2xl border border-[#d63d3d] shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Overdue</h3>
-            <div className="p-2 bg-red-50 rounded-lg"><AlertOctagon className="w-5 h-5 text-red-500" /></div>
+            <h3 className="text-xs font-bold tracking-wide uppercase text-white/90">Overdue</h3>
+            <div className="p-2 bg-white/20 rounded-lg"><AlertOctagon className="w-5 h-5 text-white" /></div>
           </div>
-          <p className="text-3xl font-bold text-red-600">₱{summary.overdueBalance.toLocaleString()}</p>
+          <p className="text-4xl font-extrabold text-white">₱{summary.overdueBalance.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-[#0D2A6B] text-white p-6 rounded-2xl border border-[#0a245c] shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Total Transactions</h3>
-            <div className="p-2 bg-indigo-50 rounded-lg"><List className="w-5 h-5 text-indigo-500" /></div>
+            <h3 className="text-xs font-bold tracking-wide uppercase text-white/90">Total Transactions</h3>
+            <div className="p-2 bg-white/20 rounded-lg"><List className="w-5 h-5 text-white" /></div>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{summary.transactionCount}</p>
+          <p className="text-4xl font-extrabold text-white">{summary.transactionCount}</p>
         </div>
       </div>
 
@@ -713,7 +746,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               Create a new invoice for an active tenant assignment by setting due date and line items.
             </DialogDescription>
             <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-[#FDFFF4]">
-              <h3 className="font-bold text-[28px] text-slate-900 flex items-center gap-2"><Plus className="w-5 h-5" /> Create New Tenant Invoice</h3>
+              <h3 className="font-bold text-[28px] text-slate-900">Create New Tenant Invoice</h3>
               <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="p-2 hover:bg-slate-200/70 rounded-full transition"><X className="w-5 h-5" /></button>
             </div>
 
@@ -832,6 +865,44 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="px-5 py-2.5 font-semibold text-slate-600 bg-transparent rounded-xl hover:bg-white/70 transition">Cancel</button>
               <button disabled={isSubmittingBill} onClick={handleCreateBill} className="px-6 py-2.5 font-semibold text-white bg-[#1BAA77] rounded-xl hover:bg-[#149565] shadow-sm transition flex items-center gap-2">
                 {isSubmittingBill ? "Sending..." : <><Send className="w-4 h-4" /> Send Invoice</>}
+              </button>
+            </div>
+          </DialogContent>
+        </DialogPortal>
+      </Dialog>
+
+      {/* FEEDBACK MODAL */}
+      <Dialog open={feedbackModal.open} onOpenChange={(open) => { if (!open) closeFeedback(); }}>
+        <DialogPortal>
+          <DialogOverlay className="bg-slate-900/35 backdrop-blur-[6px] print:hidden" />
+          <DialogContent
+            showCloseButton={false}
+            className="z-[80] w-full max-w-md rounded-2xl border border-slate-200 bg-[#FDFFF4] p-0 gap-0 overflow-hidden shadow-[0_20px_50px_rgba(15,23,42,0.25)]"
+          >
+            <DialogTitle className="sr-only">{feedbackModal.title}</DialogTitle>
+            <DialogDescription className="sr-only">{feedbackModal.message}</DialogDescription>
+
+            <div className="p-6 border-b border-slate-200/80">
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 flex h-9 w-9 items-center justify-center rounded-full ${feedbackModal.variant === "success" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                  {feedbackModal.variant === "success" ? <Check className="w-5 h-5" /> : <AlertOctagon className="w-5 h-5" />}
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-slate-900">{feedbackModal.title}</h4>
+                  <p className="text-sm text-slate-600 mt-1">{feedbackModal.message}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#F7F8E8] flex justify-end">
+              <button
+                onClick={closeFeedback}
+                className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition ${feedbackModal.variant === "success"
+                  ? "bg-[#1BAA77] text-white hover:bg-[#149565]"
+                  : "bg-[#0D2A6B] text-white hover:bg-[#0b2358]"
+                  }`}
+              >
+                OK
               </button>
             </div>
           </DialogContent>
