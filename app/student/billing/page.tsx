@@ -1,8 +1,11 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { ensureInitialInvoicesForUser, getUserPaymentSummary, getStudentBillsDetailed, getStudentPaymentHistory } from "@/services/user-services";
 import { redirect } from "next/navigation";
+import { Archivo, Archivo_Black } from "next/font/google";
 import BillingClient from "./BillingClient";
-import LogoutButton from "@/components/logout-button";
+
+const archivo = Archivo({ subsets: ["latin"] });
+const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 export default async function StudentBillingPage() {
   const supabase = await createSupabaseServerClient();
@@ -28,9 +31,8 @@ export default async function StudentBillingPage() {
     <main className="min-h-screen p-8 bg-[#F3F6D0]">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Billing & Payments</h1>
-          <p className="text-slate-500 mt-1 mb-4 text-sm">Manage your invoices and view your payment history.</p>
-          <LogoutButton />
+          <h1 className={`${archivoBlack.className} text-3xl font-bold text-slate-900 tracking-tight`}>Billing & Payments</h1>
+          <p className={`${archivo.className} text-slate-500 mt-1 mb-4 text-sm`}>Manage your invoices and view your payment history.</p>
         </div>
 
         <BillingClient

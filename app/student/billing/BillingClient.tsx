@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, Fragment } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { BillingStatus } from "@/types/billing/enums";
@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function BillingClient({
   userId,
@@ -118,12 +119,39 @@ export default function BillingClient({
   const [historySearchQuery, setHistorySearchQuery] = useState("");
 
   const searchedBills = useMemo(() => {
-    if (!invoicesSearchQuery) return normalizedBills;
+    const rankByStatus = (status?: string) => {
+      switch (status) {
+        case BillingStatus.UNPAID:
+        case BillingStatus.OVERDUE:
+        case BillingStatus.FAILED:
+        case BillingStatus.PENDING:
+        case BillingStatus.PENDING_VERIFICATION:
+          return 0;
+        case BillingStatus.PAID:
+        case BillingStatus.PAID_LATE:
+          return 2;
+        default:
+          return 1;
+      }
+    };
+
+    const sortBills = (list: any[]) =>
+      [...list].sort((a: any, b: any) => {
+        const rankDiff = rankByStatus(a?.status) - rankByStatus(b?.status);
+        if (rankDiff !== 0) return rankDiff;
+
+        const aDate = new Date(a?.created_at || 0).getTime();
+        const bDate = new Date(b?.created_at || 0).getTime();
+        return bDate - aDate;
+      });
+
+    if (!invoicesSearchQuery) return sortBills(normalizedBills);
     const lowerQuery = invoicesSearchQuery.toLowerCase();
-    return normalizedBills.filter((bill: any) =>
+    const filtered = normalizedBills.filter((bill: any) =>
       String(bill?.billing_id || "").toLowerCase().includes(lowerQuery) ||
       (bill?.status || "").replace(/_/g, ' ').toLowerCase().includes(lowerQuery)
     );
+    return sortBills(filtered);
   }, [normalizedBills, invoicesSearchQuery]);
 
   const searchedHistory = useMemo(() => {
@@ -419,6 +447,12 @@ export default function BillingClient({
           padding: 0;
         }
       }
+
+      [data-slot="dialog-overlay"] {
+        background: rgba(15, 23, 42, 0.42) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+      }
     `}</style>
       <div className="space-y-8 print:hidden">
         {USE_DUMMY_BILLING_DATA && (
@@ -532,19 +566,10 @@ export default function BillingClient({
               </TableHeader>
               <TableBody>
                 {paginatedInvoices.map((bill: any) => {
-                  const isActionable =
-                    bill?.status === BillingStatus.UNPAID ||
-                    bill?.status === BillingStatus.OVERDUE ||
-                    bill?.status === BillingStatus.FAILED;
-                  const canCancelUploadedReceipt =
-                    bill?.status !== BillingStatus.PAID && bill?.status !== BillingStatus.PAID_LATE;
-
                   const billId = bill?.billing_id || "Unknown";
-                  const isExpanded = selectedBill?.billing_id === billId;
 
                   return (
-                    <Fragment key={billId}>
-                      <TableRow className={`hover:bg-slate-50/60 transition-colors cursor-pointer ${isExpanded ? "bg-slate-50/80" : ""}`} onClick={() => setSelectedBill(isExpanded ? null : bill)}>
+                    <TableRow key={billId} className="hover:bg-slate-50/60 transition-colors">
                         <TableCell className="px-4 py-4">
                           <div className="font-semibold text-slate-900">
                             {bill?.billing_period_date
@@ -560,160 +585,25 @@ export default function BillingClient({
                         <TableCell className="px-4 py-4">
                           <Badge
                             variant="outline"
-                            className={`border ${getStatusColor(bill?.status)} rounded-full px-2.5 py-1 font-semibold`}
+                            className={`border ${getStatusColor(bill?.status)} rounded-full px-2.5 py-1 font-bold`}
                           >
-                            {getStatusFormat(bill?.status)}
+                            {getStatusFormat(bill?.status).toUpperCase()}
                           </Badge>
+                          {bill?.reminded_at && (
+                            <div className="mt-2 text-[11px] font-medium text-amber-700">
+                              Reminded by admin
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="px-4 py-4">
                           <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedBill(isExpanded ? null : bill); }} className="bg-white">
+                            <Button variant="outline" size="sm" onClick={() => setSelectedBill(bill)} className="bg-white">
                               <FileText className="size-4" />
-                              {isExpanded ? "Close" : "View Details"}
+                              View Details
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-
-                      {isExpanded && (
-                        <TableRow className="bg-slate-50/40 hover:bg-slate-50/40">
-                          <TableCell colSpan={5} className="p-0">
-                            <div className="px-6 py-4 animate-in slide-in-from-top-2 fade-in duration-200">
-                              <div className={`rounded-xl bg-[#FDFFF4] border border-slate-200 border-l-[8px] ${getStatusBorderColor(bill?.status)} p-6 shadow-sm w-full max-w-4xl mx-auto flex flex-col gap-6`}>
-                                <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                                  <div className="grid grid-cols-2 gap-x-12 gap-y-6">
-                                    <div>
-                                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Invoice ID</div>
-                                      <div className="font-semibold text-slate-900">{String(billId).split("-")[0]}</div>
-                                    </div>
-                                    <div>
-                                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Billing Period</div>
-                                      <div className="font-semibold text-slate-900">{bill?.billing_period_date ? safeDateLabel(bill.billing_period_date, "MMMM yyyy", "N/A") : "N/A"}</div>
-                                    </div>
-                                    <div>
-                                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Due Date</div>
-                                      <div className="font-semibold text-slate-900">{safeDateLabel(bill?.due_date, "MMM dd, yyyy")}</div>
-                                    </div>
-                                    <div>
-                                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Amount</div>
-                                      <div className="font-semibold text-slate-900">₱{formatPeso(bill?.summary?.total ?? bill?.amount ?? 0)}</div>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-bold text-xs uppercase tracking-wide shadow-sm ${getStatusBadgeBg(bill?.status)}`}>
-                                      {bill?.status === BillingStatus.PAID && <CheckCircle2 className="w-4 h-4" />}
-                                      {bill?.status === BillingStatus.UNPAID && <AlertCircle className="w-4 h-4" />}
-                                      {bill?.status === BillingStatus.OVERDUE && <AlertCircle className="w-4 h-4" />}
-                                      {bill?.status === BillingStatus.FAILED && <AlertCircle className="w-4 h-4" />}
-                                      {(bill?.status === BillingStatus.PENDING || bill?.status === BillingStatus.PENDING_VERIFICATION) && <Clock className="w-4 h-4" />}
-                                      <span>{getStatusFormat(bill?.status)}</span>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <Separator />
-
-                                <div className="space-y-3">
-                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Charge Breakdown</div>
-                                  {getInvoiceLineItems(bill).length > 0 ? (
-                                    getInvoiceLineItems(bill).map((item: any, i: number) => (
-                                      <div key={i} className="flex items-center justify-between text-sm">
-                                        <div className="text-slate-600 capitalize">{String(item.label || "").replace(/_/g, " ")}</div>
-                                        <div className="font-medium text-slate-900">₱{Math.abs(toCurrencyNumber(item?.amount)).toLocaleString()}</div>
-                                      </div>
-                                    ))
-                                  ) : (
-                                    <div className="text-sm text-slate-500">No line items found for this invoice.</div>
-                                  )}
-                                  <Separator className="my-3" />
-                                  <div className="flex items-center justify-between font-extrabold text-slate-900">
-                                    <div>Total Balance Due</div>
-                                    <div className="text-lg">₱{formatPeso(bill?.summary?.total ?? bill?.amount ?? 0)}</div>
-                                  </div>
-                                </div>
-
-                                <Separator />
-
-                                <div className="space-y-3">
-                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
-                                    <span>Payment Receipt</span>
-                                  </div>
-                                  
-                                  {isLoadingReceiptPreview ? (
-                                    <div className="text-sm text-slate-500 flex items-center gap-2 py-2">
-                                      <Clock className="w-4 h-4 animate-spin"/> Loading receipt...
-                                    </div>
-                                  ) : receiptPreviewUrl ? (
-                                    <div className="flex flex-col sm:flex-row gap-4 items-start bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                                      <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0">
-                                        <img src={receiptPreviewUrl} alt="Receipt preview" className="w-full h-full object-cover" />
-                                      </div>
-                                      <div className="flex-1 space-y-3">
-                                        <div className="text-sm text-slate-600">
-                                          {canCancelUploadedReceipt
-                                            ? "A receipt has been uploaded for this invoice and is currently under review by the management."
-                                            : "A receipt has been uploaded and this invoice is already approved/paid by the management."}
-                                        </div>
-                                        {canCancelUploadedReceipt && (
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleCancelReceipt}
-                                            disabled={isCancellingReceipt}
-                                            className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                                          >
-                                            {isCancellingReceipt ? "Cancelling..." : "Cancel Upload"}
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    (bill?.status === BillingStatus.UNPAID || bill?.status === BillingStatus.OVERDUE || bill?.status === BillingStatus.FAILED) ? (
-                                      <div className="rounded-xl border border-dashed border-[#769C51]/40 bg-[#769C51]/5 p-4">
-                                        <div className="text-sm text-slate-600 mb-3">
-                                          If you paid via cash at the management office, upload a clear photo of your receipt for verification.
-                                        </div>
-                                        <div className="flex flex-col sm:flex-row gap-3 items-center">
-                                          <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                                            className="flex-1 block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white file:text-slate-700 hover:file:bg-slate-50 transition cursor-pointer shadow-sm border border-slate-200"
-                                          />
-                                          <Button
-                                            disabled={!uploadFile || isUploading || USE_DUMMY_BILLING_DATA}
-                                            onClick={() => handleUploadPayment(billId)}
-                                            className="w-full sm:w-auto bg-[#769C51] hover:bg-[#608240] text-white"
-                                          >
-                                            {USE_DUMMY_BILLING_DATA ? "Disabled" : isUploading ? "Uploading..." : (
-                                              <>
-                                                <UploadCloud className="size-4 mr-2" /> Submit
-                                              </>
-                                            )}
-                                          </Button>
-                                        </div>
-                                        {uploadError && <div className="mt-2 text-sm text-red-600">{uploadError}</div>}
-                                      </div>
-                                    ) : (
-                                      <div className="text-sm text-slate-500 italic py-2">
-                                        Receipt upload is not required for this invoice.
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-
-                                <div className="pt-4 flex justify-end">
-                                  <Button variant="outline" size="sm" onClick={handlePrint} className="bg-white">
-                                    <Printer className="size-4 mr-2" />
-                                    Download Invoice
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </Fragment>
                   );
                 })}
               </TableBody>
@@ -819,9 +709,9 @@ export default function BillingClient({
                         <TableCell className="px-4 py-3">
                           <Badge
                             variant="outline"
-                            className={`border ${getStatusColor(entry?.status)} rounded-full px-2.5 py-1 font-semibold`}
+                            className={`border ${getStatusColor(entry?.status)} rounded-full px-2.5 py-1 font-bold`}
                           >
-                            {getStatusFormat(entry?.status)}
+                            {getStatusFormat(entry?.status).toUpperCase()}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -889,6 +779,161 @@ export default function BillingClient({
 
 
       </div>
+
+      <Dialog open={Boolean(focusedBill)} onOpenChange={(open) => { if (!open) setSelectedBill(null); }}>
+        <DialogContent className="w-[92vw] max-w-[92vw] sm:max-w-[84vw] md:max-w-[74vw] lg:max-w-[62vw] xl:max-w-[56vw] max-h-[90vh] overflow-y-auto p-0">
+          {focusedBill && (
+            <div className="px-4 py-3 animate-in slide-in-from-top-2 fade-in duration-200">
+              <DialogHeader className="sr-only">
+                <DialogTitle>
+                  Invoice Details {String(focusedBill?.billing_id || "Unknown").split("-")[0]}
+                </DialogTitle>
+                <DialogDescription>
+                  Review invoice details, charge breakdown, payment receipt, and available invoice actions.
+                </DialogDescription>
+              </DialogHeader>
+              <div className={`rounded-xl bg-[#FDFFF4] border border-slate-200 border-l-[8px] ${getStatusBorderColor(focusedBill?.status)} p-5 shadow-sm w-full max-w-none mx-auto flex flex-col gap-4`}>
+                <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Invoice ID</div>
+                      <div className="font-semibold text-slate-900">{String(focusedBill?.billing_id || "Unknown").split("-")[0]}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Billing Period</div>
+                      <div className="font-semibold text-slate-900">{focusedBill?.billing_period_date ? safeDateLabel(focusedBill.billing_period_date, "MMMM yyyy", "N/A") : "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Due Date</div>
+                      <div className="font-semibold text-slate-900">{safeDateLabel(focusedBill?.due_date, "MMM dd, yyyy")}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Amount</div>
+                      <div className="font-semibold text-slate-900">₱{formatPeso(focusedBill?.summary?.total ?? focusedBill?.amount ?? 0)}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-bold text-xs uppercase tracking-wide shadow-sm ${getStatusBadgeBg(focusedBill?.status)}`}>
+                      {focusedBill?.status === BillingStatus.PAID && <CheckCircle2 className="w-4 h-4" />}
+                      {focusedBill?.status === BillingStatus.UNPAID && <AlertCircle className="w-4 h-4" />}
+                      {focusedBill?.status === BillingStatus.OVERDUE && <AlertCircle className="w-4 h-4" />}
+                      {focusedBill?.status === BillingStatus.FAILED && <AlertCircle className="w-4 h-4" />}
+                      {(focusedBill?.status === BillingStatus.PENDING || focusedBill?.status === BillingStatus.PENDING_VERIFICATION) && <Clock className="w-4 h-4" />}
+                      <span>{getStatusFormat(focusedBill?.status)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {focusedBill?.reminded_at && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Reminded by admin on {safeDateLabel(focusedBill.reminded_at, "MMM dd, yyyy HH:mm", "N/A")}.
+                  </div>
+                )}
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Charge Breakdown</div>
+                  {getInvoiceLineItems(focusedBill).length > 0 ? (
+                    getInvoiceLineItems(focusedBill).map((item: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between text-sm">
+                        <div className="text-slate-600 capitalize">{String(item.label || "").replace(/_/g, " ")}</div>
+                        <div className="font-medium text-slate-900">₱{Math.abs(toCurrencyNumber(item?.amount)).toLocaleString()}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-slate-500">No line items found for this invoice.</div>
+                  )}
+                  <Separator className="my-3" />
+                  <div className="flex items-center justify-between font-extrabold text-slate-900">
+                    <div>Total Balance Due</div>
+                    <div className="text-lg">₱{formatPeso(focusedBill?.summary?.total ?? focusedBill?.amount ?? 0)}</div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
+                    <span>Payment Receipt</span>
+                  </div>
+                  
+                  {isLoadingReceiptPreview ? (
+                    <div className="text-sm text-slate-500 flex items-center gap-2 py-2">
+                      <Clock className="w-4 h-4 animate-spin"/> Loading receipt...
+                    </div>
+                  ) : receiptPreviewUrl ? (
+                    <div className="flex flex-col sm:flex-row gap-3 items-start bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0">
+                        <img src={receiptPreviewUrl} alt="Receipt preview" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="text-sm text-slate-600">
+                          {focusedBill?.status !== BillingStatus.PAID && focusedBill?.status !== BillingStatus.PAID_LATE
+                            ? "A receipt has been uploaded for this invoice and is currently under review by the management."
+                            : "A receipt has been uploaded and this invoice is already approved/paid by the management."}
+                        </div>
+                        {focusedBill?.status !== BillingStatus.PAID && focusedBill?.status !== BillingStatus.PAID_LATE && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelReceipt}
+                            disabled={isCancellingReceipt}
+                            className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                          >
+                            {isCancellingReceipt ? "Cancelling..." : "Cancel Upload"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    (focusedBill?.status === BillingStatus.UNPAID || focusedBill?.status === BillingStatus.OVERDUE || focusedBill?.status === BillingStatus.FAILED) ? (
+                      <div className="rounded-xl border border-dashed border-[#769C51]/40 bg-[#769C51]/5 p-4">
+                        <div className="text-sm text-slate-600 mb-3">
+                          If you paid via cash at the management office, upload a clear photo of your receipt for verification.
+                        </div>
+                        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                            className="flex-1 min-w-0 block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white file:text-slate-700 hover:file:bg-slate-50 transition cursor-pointer shadow-sm border border-slate-200"
+                          />
+                          <Button
+                            disabled={!uploadFile || isUploading || USE_DUMMY_BILLING_DATA}
+                            onClick={() => handleUploadPayment(focusedBill?.billing_id || "")}
+                            className="w-full sm:w-auto bg-[#769C51] hover:bg-[#608240] text-white"
+                          >
+                            {USE_DUMMY_BILLING_DATA ? "Disabled" : isUploading ? "Uploading..." : (
+                              <>
+                                <UploadCloud className="size-4 mr-2" /> Submit
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        {uploadError && <div className="mt-2 text-sm text-red-600">{uploadError}</div>}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500 italic py-2">
+                        Receipt upload is not required for this invoice.
+                      </div>
+                    )
+                  )}
+                </div>
+
+                <div className="pt-4 flex justify-end">
+                  <Button variant="outline" size="sm" onClick={handlePrint} className="bg-white">
+                    <Printer className="size-4 mr-2" />
+                    Download Invoice
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Printable View (Hidden in normal screen, block in print) */}
       {printMode === "bill" && focusedBill && (
