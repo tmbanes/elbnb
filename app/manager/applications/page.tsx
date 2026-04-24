@@ -246,6 +246,7 @@ export default function ManagerApplicationsPage() {
         
       setAccommodationName(accommodation.name);
       setApplications(apps);
+      console.log(`applcations: ${applications}`); // DEBUG
       setUnits(fetchedUnits);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load applications.");

@@ -10,13 +10,46 @@ import {
 import { ChevronLeft, Mail, MapPin, Pencil, Trash2, Calendar } from "lucide-react"
 
 import {
-    fetchAdminApplications,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import {
     processApplication,
-    type AdminApplication,
-    type AdminAction,
-    getApplicationById,
     type Unit,
+  type AdminApplication,
+  type AdminAction,
+  type ApplicationInvoiceItemInput,
+  getApplicationById,
+  sendApplicationInvoice,
 } from "@/lib/actions/admin-application-actions";
+
+type InvoiceKind = "first_rental" | "security_deposit" | "reservation_fee" | "other";
+
+const invoiceKindOptions: { value: InvoiceKind; label: string }[] = [
+  { value: "first_rental", label: "First Rental" },
+  { value: "security_deposit", label: "Security Deposit" },
+  { value: "reservation_fee", label: "Reservation Fee" },
+  { value: "other", label: "Other" },
+];
+
+const createDefaultInvoiceItem = (): ApplicationInvoiceItemInput => ({
+  kind: "first_rental",
+  amount: 0,
+  required_to_secure_slot: true,
+  note: "",
+});
+
+function mapBillingTypeToKind(type?: string): InvoiceKind {
+  if (type === "security_deposit") return "security_deposit";
+  if (type === "reservation_fee") return "reservation_fee";
+  if (type === "other") return "reservation_fee";
+  return "first_rental";
+}
 
 export default function ReviewApplication({
     applicationId,
@@ -27,13 +60,52 @@ export default function ReviewApplication({
     onAction: (id: string, action: AdminAction, unitId?: string) => Promise<void>;
     onClose: () => void;
 }) {
-  // --- NEW STATE & LOGIC ---
   const [confirmAction, setConfirmAction] = useState<AdminAction | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [appData, setAppData] = useState<any>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [invoiceDueDate, setInvoiceDueDate] = useState("");
+  const [invoiceNote, setInvoiceNote] = useState("");
+  const [invoiceItems, setInvoiceItems] = useState<ApplicationInvoiceItemInput[]>([
+    createDefaultInvoiceItem(),
+  ]);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
+  const [invoiceSuccess, setInvoiceSuccess] = useState<string | null>(null);
+  const [isSendingInvoice, setIsSendingInvoice] = useState(false);
+
+  const hydrateInvoiceForm = (loadedData: any) => {
+    const invoiceDraft = loadedData?.invoiceDraft;
+
+    if (invoiceDraft?.due_date) {
+      setInvoiceDueDate(new Date(invoiceDraft.due_date).toISOString().slice(0, 10));
+    } else if (loadedData?.check_in) {
+      setInvoiceDueDate(new Date(loadedData.check_in).toISOString().slice(0, 10));
+    } else {
+      setInvoiceDueDate("");
+    }
+
+    const requiredKinds = new Set<string>();
+
+    const draftItems = Array.isArray(invoiceDraft?.billing_item)
+      ? invoiceDraft.billing_item.map((item: any, idx: number) => {
+        const kind = mapBillingTypeToKind(item?.type);
+        const required = idx === 0;
+
+        return {
+          kind,
+          amount: Number(item?.amount ?? 0),
+          required_to_secure_slot: required,
+          note: "",
+        } as ApplicationInvoiceItemInput;
+      })
+      : [];
+
+    setInvoiceItems(draftItems.length ? draftItems : [createDefaultInvoiceItem()]);
+    setInvoiceNote("");
+  };
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
@@ -42,10 +114,14 @@ export default function ReviewApplication({
         setIsLoadingData(true);
         const data = await getApplicationById(applicationId);
         setAppData(data);
+        setInvoiceSuccess(null);
+        setInvoiceError(null);
 
         if (data?.unit_id) {
           setSelectedUnitId(data.unit_id);
         }
+
+        hydrateInvoiceForm(data);
       } catch (err) {
         console.error("Failed to fetch app data:", err);
         setError("Failed to load application details.");
@@ -102,8 +178,89 @@ export default function ReviewApplication({
     }
   }
 
+  async function handleSendInvoice() {
+    if (!invoiceDueDate) {
+      setInvoiceError("Please provide a due date.");
+      return;
+    }
+
+    if (!invoiceItems.length) {
+      setInvoiceError("Add at least one billing item.");
+      return;
+    }
+
+    if (invoiceItems.some((item) => Number(item.amount) <= 0)) {
+      setInvoiceError("All billing item amounts must be greater than 0.");
+      return;
+    }
+
+    if (!invoiceItems.some((item) => item.required_to_secure_slot)) {
+      setInvoiceError("Mark at least one item as required to secure slot.");
+      return;
+    }
+
+    setInvoiceError(null);
+    setIsSendingInvoice(true);
+
+    try {
+      if (data.status === "pending_admin") {
+        if (!selectedUnitId) {
+          throw new Error("Please select a unit before sending invoice.");
+        }
+
+        await processApplication(applicationId, "approve", selectedUnitId);
+
+        const approvedData = await getApplicationById(applicationId);
+        setAppData(approvedData);
+
+        if (approvedData?.unit_id) {
+          setSelectedUnitId(approvedData.unit_id);
+        }
+      }
+
+      await sendApplicationInvoice(applicationId, {
+        due_date: new Date(`${invoiceDueDate}T00:00:00`).toISOString(),
+        items: invoiceItems,
+        note: invoiceNote,
+        unit_id: selectedUnitId,
+      });
+
+      const refreshed = await getApplicationById(applicationId);
+      setAppData(refreshed);
+      hydrateInvoiceForm(refreshed);
+      setIsInvoiceModalOpen(false);
+      setInvoiceSuccess("Invoice sent successfully.");
+    } catch (e) {
+      setInvoiceError(e instanceof Error ? e.message : "Failed to send invoice.");
+    } finally {
+      setIsSendingInvoice(false);
+    }
+  }
+
+  const addInvoiceItem = () => {
+    setInvoiceItems((prev) => [...prev, createDefaultInvoiceItem()]);
+  };
+
+  const updateInvoiceItem = <K extends keyof ApplicationInvoiceItemInput>(
+    index: number,
+    key: K,
+    value: ApplicationInvoiceItemInput[K],
+  ) => {
+    setInvoiceItems((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [key]: value };
+      return copy;
+    });
+  };
+
+  const removeInvoiceItem = (index: number) => {
+    setInvoiceItems((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
   const userData = Array.isArray(appData?.users) ? appData.users[0] : appData?.users;
-  console.log(userData)
 
   const data = {
     id: appData?.application_id || "",
@@ -131,7 +288,6 @@ export default function ReviewApplication({
     ],
   };
 
-  console.log(appData.users);
   return (
     <div className="p-6 space-y-6 bg-[#F6F8D5] h-full overflow-y-auto">
       
@@ -304,19 +460,64 @@ export default function ReviewApplication({
           </ul>
         </div>
 
-        {/* ACTIONS & CONFIRMATION SECTION */}
-        <div className="pt-4 border-t border-gray-300">
-          {data.status === "pending_payment" ? (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+      {/* ACTIONS & CONFIRMATION SECTION */}
+      <div className="pt-4 border-t border-gray-300">
+        {invoiceSuccess && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md text-xs">
+            {invoiceSuccess}
+          </div>
+        )}
+
+        {data.status === "pending_payment" ? (
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+            <div className="text-center">
               <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">
-                ✓ Application Approved
+                ✓ Pending Payment
               </p>
               <p className="text-xs text-blue-600 mt-1">
-                Status updated to: <b>Pending Payment</b>. The user has been notified to settle their dues.
+                Send manual invoice with itemized charges to secure this slot.
               </p>
             </div>
-          ) : data.status === "approved" ? (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+            <div className="grid grid-cols-1 gap-2">
+              <Button
+                className="w-full bg-[#264384] hover:bg-[#1d3268] text-white"
+                onClick={() => {
+                  setInvoiceError(null);
+                  setInvoiceSuccess(null);
+                  setIsInvoiceModalOpen(true);
+                }}
+              >
+                {appData?.invoiceDraft ? "Edit & Resend Invoice" : "Send Invoice to User"}
+              </Button>
+
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                disabled={loading || appData?.invoiceDraft?.status !== "paid"}
+                onClick={async () => {
+                  setLoading(true);
+                  setError(null);
+                  try {
+                    await onAction(applicationId, "pending_payment");
+                    onClose();
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : "Failed to approve application.");
+                    setLoading(false);
+                  }
+                }}
+              >
+                {loading ? "Approving..." : "Approve"}
+              </Button>
+
+              {appData?.invoiceDraft?.status !== "paid" && (
+                <p className="text-[11px] text-blue-700 text-center">
+                  Approve is enabled after the latest invoice is marked as paid.
+                </p>
+              )}
+            </div>
+          </div>
+        ) : data.status === "approved" ? (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
+            <div className="text-center">
               <p className="text-sm font-semibold text-green-700 uppercase tracking-wide">
                 ✓ Application Approved
               </p>
@@ -324,73 +525,206 @@ export default function ReviewApplication({
                 This application has been finalized and a unit has been assigned.
               </p>
             </div>
-          ) : data.status === "rejected" ? (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
-              <p className="text-sm font-semibold text-red-700 uppercase tracking-wide">
-                Application Rejected
-              </p>
-            </div>
-          ) : (
-            <>
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-xs">
-                  {error}
-                </div>
-              )}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setInvoiceError(null);
+                setInvoiceSuccess(null);
+                setIsInvoiceModalOpen(true);
+              }}
+            >
+              {appData?.invoiceDraft ? "Edit Existing Invoice" : "Create Invoice"}
+            </Button>
+          </div>
+        ) : data.status === "rejected" ? (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+            <p className="text-sm font-semibold text-red-700 uppercase tracking-wide">
+              Application Rejected
+            </p>
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-xs">
+                {error}
+              </div>
+            )}
 
-              {confirmAction ? (
-                <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm space-y-4">
-                  <p className="text-sm font-medium text-gray-700 text-center">
-                    {confirmAction === "approve"
-                      ? "Finalize approval for this unit?"
-                      : "Confirm rejection of this application?"}
-                  </p>
-                  <div className="flex gap-2">
+            {confirmAction ? (
+              <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm space-y-4">
+                <p className="text-sm font-medium text-gray-700 text-center">
+                  Confirm rejection of this application?
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setConfirmAction(null);
+                      setError(null);
+                    }}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 text-white bg-red-600 hover:bg-red-700"
+                    onClick={handleConfirm}
+                    disabled={loading}
+                  >
+                    {loading ? "..." : "Confirm"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <Button
+                  className="bg-[#264384] hover:bg-[#1d3268] text-white flex-1"
+                  onClick={() => {
+                    setInvoiceError(null);
+                    setInvoiceSuccess(null);
+                    setIsInvoiceModalOpen(true);
+                  }}
+                >
+                  Send Invoice
+                </Button>
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                  onClick={() => setConfirmAction("reject")}
+                >
+                  Reject
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <Dialog open={isInvoiceModalOpen} onOpenChange={setIsInvoiceModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Send Invoice to User</DialogTitle>
+            <DialogDescription>
+              Add billing items manually (first rental, security deposit, reservation fee).
+              At least one item must be marked as required to secure the slot.
+              {data.status === "pending_admin"
+                ? " Sending this invoice will also approve the application and assign the selected unit."
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-600 uppercase">Due Date</label>
+                <input
+                  type="date"
+                  value={invoiceDueDate}
+                  onChange={(e) => setInvoiceDueDate(e.target.value)}
+                  className="w-full border rounded-md p-2 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-600 uppercase">Internal Note</label>
+                <input
+                  type="text"
+                  value={invoiceNote}
+                  onChange={(e) => setInvoiceNote(e.target.value)}
+                  placeholder="Optional note"
+                  className="w-full border rounded-md p-2 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {invoiceItems.map((item, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-12 gap-2 items-center border rounded-md p-3 bg-slate-50"
+                >
+                  <div className="col-span-4">
+                    <select
+                      value={item.kind}
+                      onChange={(e) =>
+                        updateInvoiceItem(index, "kind", e.target.value as InvoiceKind)
+                      }
+                      className="w-full border rounded-md p-2 text-sm bg-white"
+                    >
+                      {invoiceKindOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="col-span-3">
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={item.amount}
+                      onChange={(e) =>
+                        updateInvoiceItem(index, "amount", Number(e.target.value || 0))
+                      }
+                      className="w-full border rounded-md p-2 text-sm bg-white"
+                      placeholder="Amount"
+                    />
+                  </div>
+
+                  <label className="col-span-4 text-xs flex items-center gap-2 text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={item.required_to_secure_slot}
+                      onChange={(e) =>
+                        updateInvoiceItem(index, "required_to_secure_slot", e.target.checked)
+                      }
+                    />
+                    Required to secure slot
+                  </label>
+
+                  <div className="col-span-1 flex justify-end">
                     <Button
+                      type="button"
+                      size="sm"
                       variant="outline"
-                      className="flex-1"
-                      onClick={() => {
-                        setConfirmAction(null);
-                        setError(null);
-                      }}
-                      disabled={loading}
+                      onClick={() => removeInvoiceItem(index)}
+                      disabled={invoiceItems.length <= 1}
                     >
-                      Cancel
-                    </Button>
-                    <Button
-                      className={`flex-1 text-white ${confirmAction === "approve"
-                        ? "bg-green-600 hover:bg-green-700"
-                        : "bg-red-600 hover:bg-red-700"
-                        }`}
-                      onClick={handleConfirm}
-                      disabled={loading}
-                    >
-                      {loading ? "..." : "Confirm"}
+                      ×
                     </Button>
                   </div>
                 </div>
-              ) : (
-                <div className="flex gap-3">
-                  <Button
-                    className="bg-green-100 text-green-700 border-green-20 flex-1"
-                    onClick={() => setConfirmAction("approve")}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    className="bg-[#FEE2E2] hover:bg-[#FCA5A5] text-red-600 flex-1"
-                    onClick={() => setConfirmAction("reject")}
-                  >
-                    Reject
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+              ))}
+            </div>
 
-      </Card>
+            <Button type="button" variant="outline" onClick={addInvoiceItem}>
+              Add Item
+            </Button>
 
+            {invoiceError && (
+              <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
+                {invoiceError}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsInvoiceModalOpen(false)}
+              disabled={isSendingInvoice}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSendInvoice} disabled={isSendingInvoice}>
+              {isSendingInvoice ? "Sending..." : appData?.invoiceDraft ? "Update Invoice" : "Send Invoice"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
