@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import ResidentList from "./ResidentList";
 import ResidentDetail from "./ResidentDetail";
-import { Loader2 } from "lucide-react";
+import { House, Loader2 } from "lucide-react";
 
 import { Resident } from "./types";
 import { DUMMY_RESIDENTS } from "./dummyData";
@@ -181,7 +181,7 @@ export default function ResidentManagement({ apiEndpoint = "/api/admin/residents
                     <div className="flex-1 flex items-center justify-center p-12 text-center">
                         <div className="max-w-sm space-y-3">
                             <div className="w-16 h-16 bg-[#ebf2f4] rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span className="text-2xl">🏘️</span>
+                                <House className="w-8 h-8" />
                             </div>
                             <h2 className="text-xl font-bold text-[#44291B]">No Resident Selected</h2>
                             <p className="text-sm text-[#44291B]/60 leading-relaxed">
