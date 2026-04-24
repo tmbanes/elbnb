@@ -43,80 +43,93 @@ export function UnitFilters({
   ],
 }: UnitFiltersProps) {
   return (
-    <div className="rounded-xl shadow-sm border border-gray-200 p-5 mb-8" style={{ backgroundColor: '#FDFFF4' }}>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-semibold" style={{ color: '#44291B' }}>Filters</h2>
-        <button
-          onClick={onResetFilters}
-          className="text-sm font-medium transition hover:opacity-80"
-          style={{ color: '#264384' }}
-        >
-          Reset Filters
-        </button>
-      </div>
+    <div className="rounded-xl shadow-sm border border-gray-200 px-5 py-4 mb-8" style={{ backgroundColor: '#FDFFF4' }}>
+      <div className="flex items-center gap-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
 
-      {/* Row 1 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-        <FilterDropdown
-          label="Accommodation Type"
-          value={accommodationType}
-          onChange={(v) => onAccommodationTypeChange(v as AccommodationType | '')}
-          disabled={loading}
-          options={[
-            { value: 'dormitory', label: 'Dormitory' },
-            { value: 'renting_space', label: 'Renting Space' },
-          ]}
-        />
-
-        <FilterDropdown
-          label="Unit Type"
-          value={unitType}
-          onChange={(v) => onUnitTypeChange(v as UnitType | '')}
-          disabled={loading}
-          options={[
-            { value: 'room', label: 'Room' },
-            { value: 'bedspace', label: 'Bedspace' },
-            { value: 'wholeunit', label: 'Whole Unit' },
-          ]}
-        />
-
-        <FilterDropdown
-          label="Furnishing Status"
-          value={furnishingStatus}
-          onChange={(v) => onFurnishingStatusChange(v as FurnishingStatus | '')}
-          disabled={loading}
-          options={[
-            { value: 'furnished', label: 'Furnished' },
-            { value: 'semi-furnished', label: 'Semi-Furnished' },
-            { value: 'unfurnished', label: 'Unfurnished' },
-          ]}
-        />
-      </div>
-
-      {/* Row 2 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <FilterDropdown
-          label="Availability"
-          value={availability}
-          onChange={(v) => onAvailabilityChange(v as 'vacant' | 'all')}
-          disabled={loading}
-          options={[
-            { value: 'vacant', label: 'With Vacant Slots' },
-            { value: 'all', label: 'All Units' },
-          ]}
-        />
-
-        <FilterDropdown
-          label="Property Type"
-          value={propertyType}
-          onChange={(v) => onPropertyTypeChange(v as PropertyType | '')}
-          disabled={loading}
-          options={propertyTypeOptions}
-        />
-
-        <div className="flex items-end lg:justify-end">
-          <ResultsCount count={resultCount} label="units" />
+        {/* Accommodation Type */}
+        <div className="flex-shrink-0 min-w-[160px]">
+          <FilterDropdown
+            label="Accommodation Type"
+            value={accommodationType}
+            onChange={(v) => onAccommodationTypeChange(v as AccommodationType | '')}
+            disabled={loading}
+            options={[
+              { value: 'dormitory', label: 'Dormitory' },
+              { value: 'renting_space', label: 'Renting Space' },
+            ]}
+          />
         </div>
+
+        {/* Unit Type */}
+        <div className="flex-shrink-0 min-w-[130px]">
+          <FilterDropdown
+            label="Unit Type"
+            value={unitType}
+            onChange={(v) => onUnitTypeChange(v as UnitType | '')}
+            disabled={loading}
+            options={[
+              { value: 'room', label: 'Room' },
+              { value: 'bedspace', label: 'Bedspace' },
+              { value: 'wholeunit', label: 'Whole Unit' },
+            ]}
+          />
+        </div>
+
+        {/* Furnishing Status */}
+        <div className="flex-shrink-0 min-w-[150px]">
+          <FilterDropdown
+            label="Furnishing Status"
+            value={furnishingStatus}
+            onChange={(v) => onFurnishingStatusChange(v as FurnishingStatus | '')}
+            disabled={loading}
+            options={[
+              { value: 'furnished', label: 'Furnished' },
+              { value: 'semi-furnished', label: 'Semi-Furnished' },
+              { value: 'unfurnished', label: 'Unfurnished' },
+            ]}
+          />
+        </div>
+
+        {/* Availability */}
+        <div className="flex-shrink-0 min-w-[150px]">
+          <FilterDropdown
+            label="Availability"
+            value={availability}
+            onChange={(v) => onAvailabilityChange(v as 'vacant' | 'all')}
+            disabled={loading}
+            options={[
+              { value: 'vacant', label: 'With Vacant Slots' },
+              { value: 'all', label: 'All Units' },
+            ]}
+          />
+        </div>
+
+        {/* Property Type */}
+        <div className="flex-shrink-0 min-w-[140px]">
+          <FilterDropdown
+            label="Property Type"
+            value={propertyType}
+            onChange={(v) => onPropertyTypeChange(v as PropertyType | '')}
+            disabled={loading}
+            options={propertyTypeOptions}
+          />
+        </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Results + Reset */}
+        <div className="flex-shrink-0 flex flex-col items-end gap-1 self-end pb-0.5">
+          <ResultsCount count={resultCount} label="units" />
+          <button
+            onClick={onResetFilters}
+            className="text-xs font-medium transition hover:opacity-80 whitespace-nowrap"
+            style={{ color: '#264384' }}
+          >
+            Reset Filters
+          </button>
+        </div>
+
       </div>
     </div>
   )
