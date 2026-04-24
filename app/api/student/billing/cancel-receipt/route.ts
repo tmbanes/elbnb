@@ -38,6 +38,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Billing record not found." }, { status: 404 });
     }
 
+    if (billing.status === "paid" || billing.status === "paid_late") {
+      return NextResponse.json(
+        { error: "Cannot cancel receipt for an invoice that is already approved/paid." },
+        { status: 409 },
+      );
+    }
+
     const receiptPath = billing.transaction_reference || null;
 
     if (receiptPath) {

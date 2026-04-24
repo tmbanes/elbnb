@@ -517,98 +517,53 @@ export async function POST(req: NextRequest) {
 
     const internalNotes = "";
 
-    const { data: latestBilling } = await supabase
+    const { data: createdBilling, error: createBillingError } = await supabaseAdmin
       .from("billing")
-      .select("billing_id, status")
-      .eq("assignment_id", assignmentId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .insert({
+        assignment_id: assignmentId,
+        amount: totalAmount,
+        billing_period_date: periodDate.toISOString(),
+        due_date: dueDate.toISOString(),
+        status: "unpaid",
+        payment_method: "cash",
+        internal_notes: internalNotes,
+      })
+      .select("billing_id")
+      .single();
 
-    let billingId: string;
-    let mode: "created" | "updated" = "created";
+    if (createBillingError || !createdBilling?.billing_id) {
+      const maybeCode = (createBillingError as any)?.code;
+      const maybeMessage = String((createBillingError as any)?.message ?? "");
+      const isUniqueAssignment =
+        maybeCode === "23505" && maybeMessage.includes("unique_assignment_billing");
 
-    if (latestBilling?.billing_id) {
-      if (latestBilling.status === "paid") {
-        return NextResponse.json(
-          { error: "Latest invoice is already paid. Create a new invoice from Billing instead." },
-          { status: 409 },
-        );
-      }
-
-      const { error: updateBillingError } = await supabaseAdmin
-        .from("billing")
-        .update({
-          amount: totalAmount,
-          due_date: dueDate.toISOString(),
-          billing_period_date: periodDate.toISOString(),
-          payment_method: "cash",
-          internal_notes: internalNotes,
-        })
-        .eq("billing_id", latestBilling.billing_id);
-
-      if (updateBillingError) {
-        return NextResponse.json({ error: updateBillingError.message }, { status: 500 });
-      }
-
-      await supabaseAdmin.from("billing_item").delete().eq("billing_id", latestBilling.billing_id);
-
-      const { error: insertItemsError } = await supabaseAdmin.from("billing_item").insert(
-        normalizedItems.map((item) => ({
-          billing_id: latestBilling.billing_id,
-          type: mapInvoiceKindToBillingType(item.kind),
-          amount: item.amount,
-        })),
+      return NextResponse.json(
+        {
+          error: isUniqueAssignment
+            ? "Cannot create another invoice for this assignment because database constraint unique_assignment_billing is active. Update the DB constraint to allow multiple invoices."
+            : (createBillingError?.message ?? "Failed to create invoice."),
+        },
+        { status: 500 },
       );
+    }
 
-      if (insertItemsError) {
-        return NextResponse.json({ error: insertItemsError.message }, { status: 500 });
-      }
+    const { error: insertItemsError } = await supabaseAdmin.from("billing_item").insert(
+      normalizedItems.map((item) => ({
+        billing_id: createdBilling.billing_id,
+        type: mapInvoiceKindToBillingType(item.kind),
+        amount: item.amount,
+      })),
+    );
 
-      billingId = latestBilling.billing_id;
-      mode = "updated";
-    } else {
-      const { data: createdBilling, error: createBillingError } = await supabaseAdmin
-        .from("billing")
-        .insert({
-          assignment_id: assignmentId,
-          amount: totalAmount,
-          billing_period_date: periodDate.toISOString(),
-          due_date: dueDate.toISOString(),
-          status: "unpaid",
-          payment_method: "cash",
-          internal_notes: internalNotes,
-        })
-        .select("billing_id")
-        .single();
-
-      if (createBillingError || !createdBilling?.billing_id) {
-        return NextResponse.json(
-          { error: createBillingError?.message ?? "Failed to create invoice." },
-          { status: 500 },
-        );
-      }
-
-      const { error: insertItemsError } = await supabaseAdmin.from("billing_item").insert(
-        normalizedItems.map((item) => ({
-          billing_id: createdBilling.billing_id,
-          type: mapInvoiceKindToBillingType(item.kind),
-          amount: item.amount,
-        })),
-      );
-
-      if (insertItemsError) {
-        await supabaseAdmin.from("billing").delete().eq("billing_id", createdBilling.billing_id);
-        return NextResponse.json({ error: insertItemsError.message }, { status: 500 });
-      }
-
-      billingId = createdBilling.billing_id;
+    if (insertItemsError) {
+      await supabaseAdmin.from("billing").delete().eq("billing_id", createdBilling.billing_id);
+      return NextResponse.json({ error: insertItemsError.message }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
-      billing_id: billingId,
-      mode,
+      billing_id: createdBilling.billing_id,
+      mode: "created",
       required_to_secure_slot_total: requiredAmount,
     });
   } catch (e) {

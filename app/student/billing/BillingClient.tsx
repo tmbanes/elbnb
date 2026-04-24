@@ -536,6 +536,8 @@ export default function BillingClient({
                     bill?.status === BillingStatus.UNPAID ||
                     bill?.status === BillingStatus.OVERDUE ||
                     bill?.status === BillingStatus.FAILED;
+                  const canCancelUploadedReceipt =
+                    bill?.status !== BillingStatus.PAID && bill?.status !== BillingStatus.PAID_LATE;
 
                   const billId = bill?.billing_id || "Unknown";
                   const isExpanded = selectedBill?.billing_id === billId;
@@ -613,12 +615,16 @@ export default function BillingClient({
 
                                 <div className="space-y-3">
                                   <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Charge Breakdown</div>
-                                  {(bill?.breakdown || []).map((item: any, i: number) => (
-                                    <div key={i} className="flex items-center justify-between text-sm">
-                                      <div className="text-slate-600 capitalize">{String(item.label || "").replace(/_/g, " ")}</div>
-                                      <div className="font-medium text-slate-900">₱{Math.abs(toCurrencyNumber(item?.amount)).toLocaleString()}</div>
-                                    </div>
-                                  ))}
+                                  {getInvoiceLineItems(bill).length > 0 ? (
+                                    getInvoiceLineItems(bill).map((item: any, i: number) => (
+                                      <div key={i} className="flex items-center justify-between text-sm">
+                                        <div className="text-slate-600 capitalize">{String(item.label || "").replace(/_/g, " ")}</div>
+                                        <div className="font-medium text-slate-900">₱{Math.abs(toCurrencyNumber(item?.amount)).toLocaleString()}</div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="text-sm text-slate-500">No line items found for this invoice.</div>
+                                  )}
                                   <Separator className="my-3" />
                                   <div className="flex items-center justify-between font-extrabold text-slate-900">
                                     <div>Total Balance Due</div>
@@ -644,17 +650,21 @@ export default function BillingClient({
                                       </div>
                                       <div className="flex-1 space-y-3">
                                         <div className="text-sm text-slate-600">
-                                          A receipt has been uploaded for this invoice and is currently under review by the management.
+                                          {canCancelUploadedReceipt
+                                            ? "A receipt has been uploaded for this invoice and is currently under review by the management."
+                                            : "A receipt has been uploaded and this invoice is already approved/paid by the management."}
                                         </div>
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm" 
-                                          onClick={handleCancelReceipt}
-                                          disabled={isCancellingReceipt}
-                                          className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                                        >
-                                          {isCancellingReceipt ? "Cancelling..." : "Cancel Upload"}
-                                        </Button>
+                                        {canCancelUploadedReceipt && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleCancelReceipt}
+                                            disabled={isCancellingReceipt}
+                                            className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                          >
+                                            {isCancellingReceipt ? "Cancelling..." : "Cancel Upload"}
+                                          </Button>
+                                        )}
                                       </div>
                                     </div>
                                   ) : (
@@ -916,8 +926,8 @@ export default function BillingClient({
               </tr>
             </thead>
             <tbody>
-              {focusedBill?.breakdown && focusedBill.breakdown.length > 0 ? (
-                focusedBill.breakdown.map((item: any, i: number) => (
+              {getInvoiceLineItems(focusedBill).length > 0 ? (
+                getInvoiceLineItems(focusedBill).map((item: any, i: number) => (
                   <tr key={i} className="border-b border-slate-100">
                     <td className="py-3 capitalize text-slate-700">{String(item.label || "").replace(/_/g, " ")}</td>
                     <td className="py-3 text-right">₱{formatPeso(item?.amount)}</td>

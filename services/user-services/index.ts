@@ -301,7 +301,8 @@ export async function createBillingWithItems(
     .insert([
       {
         ...billingData,
-        billing_period_date: periodDate,
+        billing_period_date: periodDate.toISOString(),
+        due_date: billingData.due_date ? new Date(billingData.due_date).toISOString() : undefined,
         amount: total,
       },
     ])
@@ -1103,7 +1104,21 @@ export async function createBillingWithItems(
     .select()
     .single();
 
-  if (error) return { data: null, error };
+  if (error) {
+    const maybeCode = (error as any)?.code;
+    const maybeMessage = String((error as any)?.message ?? "");
+    const isUniqueAssignment =
+      maybeCode === "23505" && maybeMessage.includes("unique_assignment_billing");
+
+    if (isUniqueAssignment) {
+      return {
+        data: null,
+        error: "Cannot create a second invoice for this assignment because of database constraint unique_assignment_billing. Remove or relax that constraint in Supabase to allow multiple invoices.",
+      };
+    }
+
+    return { data: null, error };
+  }
 
   const formattedItems = items.map(item => ({
     billing_id: billing.billing_id,
@@ -1126,7 +1141,7 @@ export async function createBillingWithItems(
 //======================================================//
 
 export async function getStudentBillsDetailed(user_id: string) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin;
 
   const { data, error } = await supabase
     .from("billing")
@@ -1140,10 +1155,6 @@ export async function getStudentBillsDetailed(user_id: string) {
       transaction_reference,
       receipt_files,
       created_at,
-      billing_item (
-        type,
-        amount
-      ),
       accommodation_assignment!inner (
         user_id,
         users (
@@ -1157,11 +1168,39 @@ export async function getStudentBillsDetailed(user_id: string) {
 
   if (error) return { data: null, error };
 
+  const billingIds = (data ?? [])
+    .map((bill: any) => bill?.billing_id)
+    .filter(Boolean);
+
+  let itemsByBillingId = new Map<string, { type: string; amount: number }[]>();
+
+  if (billingIds.length > 0) {
+    const { data: itemRows, error: itemsError } = await supabase
+      .from("billing_item")
+      .select("billing_id, type, amount")
+      .in("billing_id", billingIds);
+
+    if (itemsError) return { data: null, error: itemsError };
+
+    itemsByBillingId = (itemRows ?? []).reduce((acc, row: any) => {
+      const key = String(row.billing_id);
+      const curr = acc.get(key) ?? [];
+      curr.push({
+        type: String(row.type ?? "other"),
+        amount: Number(row.amount ?? 0),
+      });
+      acc.set(key, curr);
+      return acc;
+    }, new Map<string, { type: string; amount: number }[]>());
+  }
+
   const formatted = data.map((bill: any) => {
-    const breakdown = bill.billing_item?.map((item: any) => ({
+    const attachedItems = itemsByBillingId.get(String(bill.billing_id)) ?? [];
+
+    const breakdown = attachedItems.map((item: any) => ({
       label: item.type,
       amount: item.amount,
-    })) || [];
+    }));
 
     const charges = breakdown
       .filter((i: any) => i.amount > 0)
@@ -1173,6 +1212,7 @@ export async function getStudentBillsDetailed(user_id: string) {
 
     return {
       ...bill,
+      billing_item: attachedItems,
       breakdown,
       summary: {
         charges,

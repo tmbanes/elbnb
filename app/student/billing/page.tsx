@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { getUserPaymentSummary, getStudentBillsDetailed, getStudentPaymentHistory } from "@/services/user-services";
+import { ensureInitialInvoicesForUser, getUserPaymentSummary, getStudentBillsDetailed, getStudentPaymentHistory } from "@/services/user-services";
 import { redirect } from "next/navigation";
 import BillingClient from "./BillingClient";
 import LogoutButton from "@/components/logout-button";
@@ -13,6 +13,8 @@ export default async function StudentBillingPage() {
   if (!user) {
     redirect("/");
   }
+
+  await ensureInitialInvoicesForUser(user.id);
 
   const { data: summary } = await getUserPaymentSummary(user.id, "student");
   const { data: bills, error: billsError } = await getStudentBillsDetailed(user.id);

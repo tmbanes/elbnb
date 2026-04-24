@@ -226,9 +226,15 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
         internal_notes: newBillNotes
       };
 
-      await adminCreateBillAction(payload, newBillItems);
+      const result = await adminCreateBillAction(payload, newBillItems);
+      const billingId = (result as any)?.data?.billing_id as string | undefined;
+      const mode = (result as any)?.mode as string | undefined;
 
-      alert("Bill created successfully!");
+      if (billingId) {
+        setSearchQuery(billingId);
+      }
+
+      alert(mode === "updated" ? "Invoice updated for this assignment." : "Bill created successfully!");
       setIsCreatingBill(false);
       window.location.reload();
     } catch (error) {
