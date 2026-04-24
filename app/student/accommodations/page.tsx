@@ -595,7 +595,7 @@ export default function SearchAccommodationsPage() {
             {/* Carousel or List View */}
             {!loading && filteredUnits.length > 0 && (
               viewMode === 'carousel' ? (
-                <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-12">
+                <div className="mb-12">
                   <Carousel>
                     {filteredUnits.map((unit) => {
                       const accommodation = accommodations.find(
