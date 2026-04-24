@@ -1,28 +1,36 @@
-// app\student\history\page.tsx
+// app/student/history/page.tsx
 
-"use client";
+import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { studentProfileService } from "@/services/student_profile";
+import { redirect } from "next/navigation";
+import HistoryUI from "./HistoryUI";
 
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { useState } from "react";
-import HistoryUI from "@/app/student/history/HistoryUI";
+export default async function HistoryPage() {
+    const supabase = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
 
-export default function HistoryPage() {
-  const supabase = getSupabaseBrowserClient();
-  const [isExiting, setIsExiting] = useState(false);
+    if (!user) {
+        redirect("/");
+    }
 
-  const handleLogout = async () => {
-    setIsExiting(true);
-    await supabase.auth.signOut();
+    // Fetch history and current residency
+    const [
+        { data: profile },
+        { data: currentResidency },
+        { data: history }
+    ] = await Promise.all([
+        studentProfileService.getProfile(user.id),
+        studentProfileService.getCurrentAccommodation(user.id),
+        studentProfileService.getAccommodationHistory(user.id)
+    ]);
 
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 300);
-  };
-
-  return (
-    <HistoryUI
-      onLogout={handleLogout}
-      isLoggingOut={isExiting}
-    />
-  );
+    return (
+        <HistoryUI 
+            user={profile}
+            currentResidency={currentResidency}
+            history={history || []}
+        />
+    );
 }
