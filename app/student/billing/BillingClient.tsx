@@ -118,12 +118,39 @@ export default function BillingClient({
   const [historySearchQuery, setHistorySearchQuery] = useState("");
 
   const searchedBills = useMemo(() => {
-    if (!invoicesSearchQuery) return normalizedBills;
+    const rankByStatus = (status?: string) => {
+      switch (status) {
+        case BillingStatus.UNPAID:
+        case BillingStatus.OVERDUE:
+        case BillingStatus.FAILED:
+        case BillingStatus.PENDING:
+        case BillingStatus.PENDING_VERIFICATION:
+          return 0;
+        case BillingStatus.PAID:
+        case BillingStatus.PAID_LATE:
+          return 2;
+        default:
+          return 1;
+      }
+    };
+
+    const sortBills = (list: any[]) =>
+      [...list].sort((a: any, b: any) => {
+        const rankDiff = rankByStatus(a?.status) - rankByStatus(b?.status);
+        if (rankDiff !== 0) return rankDiff;
+
+        const aDate = new Date(a?.created_at || 0).getTime();
+        const bDate = new Date(b?.created_at || 0).getTime();
+        return bDate - aDate;
+      });
+
+    if (!invoicesSearchQuery) return sortBills(normalizedBills);
     const lowerQuery = invoicesSearchQuery.toLowerCase();
-    return normalizedBills.filter((bill: any) =>
+    const filtered = normalizedBills.filter((bill: any) =>
       String(bill?.billing_id || "").toLowerCase().includes(lowerQuery) ||
       (bill?.status || "").replace(/_/g, ' ').toLowerCase().includes(lowerQuery)
     );
+    return sortBills(filtered);
   }, [normalizedBills, invoicesSearchQuery]);
 
   const searchedHistory = useMemo(() => {
@@ -136,7 +163,7 @@ export default function BillingClient({
   }, [normalizedPaymentHistory, historySearchQuery]);
 
   const [invoicesPage, setInvoicesPage] = useState(1);
-  const invoicesPerPage = 5;
+  const invoicesPerPage = 10;
 
   const [historyPage, setHistoryPage] = useState(1);
   const historyPerPage = 5;

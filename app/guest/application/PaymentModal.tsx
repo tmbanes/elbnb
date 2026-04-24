@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,48 +11,74 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Info, MapPin, DoorOpen, UploadCloud } from "lucide-react"; 
+import { Info, MapPin, DoorOpen, UploadCloud } from "lucide-react";
 
-export function PaymentModal({ 
-  applicationId, 
-  accommodation, 
-  unit 
-}: { 
-  applicationId: string; 
-  accommodation: string; 
+export function PaymentModal({
+  applicationId,
+  accommodation,
+  unit,
+}: {
+  applicationId: string;
+  accommodation: string;
   unit: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // --- STATE FOR UPLOAD ---
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState("");
 
-  const handlePayment = async () => {
-    if (!uploadFile) {
-      setUploadError("Please upload a receipt before confirming.");
-      return;
-    }
-
-    setIsProcessing(true);
-    setUploadError("");
-
+  const refreshPaymentDetails = async () => {
+    if (!applicationId) return;
     try {
       const formData = new FormData();
       formData.append("applicationId", applicationId);
       formData.append("receiptFile", uploadFile);
 
       // Note: Make sure this endpoint matches your actual backend route for application payments
-      const response = await fetch("/api/student/applications/upload-receipt", {
+      const response = await fetch("/api/guest/applications/upload-receipt", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
+        const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+        const [paymentDetails, setPaymentDetails] = useState<any>(null);
         const payload = await response.json().catch(() => ({}));
         throw new Error(payload.error || "Failed to upload receipt.");
       }
+
+        const refreshPaymentDetails = async () => {
+          if (!isOpen || !applicationId) return;
+
+          setIsLoadingDetails(true);
+
+          try {
+            const response = await fetch(`/api/applications/payment-details?applicationId=${encodeURIComponent(applicationId)}`);
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+              throw new Error(payload.error || "Failed to load billing details.");
+            }
+
+            setPaymentDetails(payload);
+          } catch (error) {
+            setPaymentDetails(null);
+            console.error("Failed to load payment details:", error);
+          } finally {
+            setIsLoadingDetails(false);
+          }
+        };
+
+        useEffect(() => {
+          refreshPaymentDetails();
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [isOpen, applicationId]);
+
+        const breakdownItems = useMemo(() => {
+          return Array.isArray(paymentDetails?.breakdown) ? paymentDetails.breakdown : [];
+        }, [paymentDetails]);
 
       setIsOpen(false);
       window.location.reload(); // Reload to update the grid status
@@ -119,20 +145,36 @@ export function PaymentModal({
           <div className="space-y-2">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Fees Breakdown</h4>
             <div className="bg-[#F6F8D5] p-4 rounded-lg border border-[#e8e2d6] space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-[#44291B]/60">Reservation Fee:</span>
-                <span className="font-bold text-[#44291B]">₱1,000.00</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[#44291B]/60">Security Deposit:</span>
-                <span className="font-bold text-[#44291B]">₱2,000.00</span>
-              </div>
+              {isLoadingDetails ? (
+                <div className="text-sm text-slate-500">Loading invoice breakdown...</div>
+              ) : breakdownItems.length > 0 ? (
+                breakdownItems.map((item: any, index: number) => (
+                  <div key={`${item.label}-${index}`} className="flex justify-between text-sm">
+                    <span className="text-[#44291B]/60 capitalize">{String(item.label || "Item").replace(/_/g, " ")}</span>
+                    <span className="font-bold text-[#44291B]">₱{Number(item.amount || 0).toLocaleString()}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-slate-500">No invoice breakdown found yet.</div>
+              )}
               <div className="border-t border-[#e8e2d6] pt-2 flex justify-between font-bold text-[#264384] text-lg">
                 <span>Total Due:</span>
-                <span>₱3,000.00</span>
+                <span>₱{Number(paymentDetails?.summary?.total || 0).toLocaleString()}</span>
               </div>
             </div>
           </div>
+
+          {paymentDetails?.receiptPreviewUrl ? (
+            <div className="space-y-2">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Uploaded Receipt</h4>
+              <div className="rounded-xl border border-slate-200 bg-white p-3 flex items-center gap-3">
+                <img src={paymentDetails.receiptPreviewUrl} alt="Uploaded receipt preview" className="w-14 h-14 object-cover rounded-md border border-slate-200" />
+                <div className="text-xs text-slate-600">
+                  A receipt already exists for this invoice. You can review or cancel it from the Billing page.
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {/* --- UPLOAD RECEIPT SECTION --- */}
           <div className="space-y-2">

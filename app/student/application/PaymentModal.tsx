@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,23 +11,52 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Info, MapPin, DoorOpen, UploadCloud } from "lucide-react"; 
+import { Info, MapPin, DoorOpen, UploadCloud } from "lucide-react";
 
-export function PaymentModal({ 
-  applicationId, 
-  accommodation, 
-  unit 
-}: { 
-  applicationId: string; 
-  accommodation: string; 
+export function PaymentModal({
+  applicationId,
+  accommodation,
+  unit,
+}: {
+  applicationId: string;
+  accommodation: string;
   unit: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // --- STATE FOR UPLOAD ---
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState("");
+
+  const refreshPaymentDetails = async () => {
+    if (!applicationId) return;
+
+    setIsLoadingDetails(true);
+    try {
+      const response = await fetch(`/api/applications/payment-details?applicationId=${encodeURIComponent(applicationId)}`);
+      const payload = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        setPaymentDetails(payload);
+      } else {
+        setPaymentDetails(null);
+      }
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshPaymentDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applicationId]);
+
+  const breakdownItems = useMemo(() => {
+    return Array.isArray(paymentDetails?.breakdown) ? paymentDetails.breakdown : [];
+  }, [paymentDetails]);
+
+  const hasUploadedReceipt = Boolean(paymentDetails?.receiptPath);
 
   const handlePayment = async () => {
     if (!uploadFile) {
@@ -43,7 +72,6 @@ export function PaymentModal({
       formData.append("applicationId", applicationId);
       formData.append("receiptFile", uploadFile);
 
-      // Note: Make sure this endpoint matches your actual backend route for application payments
       const response = await fetch("/api/student/applications/upload-receipt", {
         method: "POST",
         body: formData,
@@ -55,17 +83,16 @@ export function PaymentModal({
       }
 
       setIsOpen(false);
-      window.location.reload(); // Reload to update the grid status
-
-    } catch (err: any) {
-      setUploadError(err.message || "An error occurred while uploading.");
+      window.location.reload();
+    } catch (error: any) {
+      setUploadError(error.message || "An error occurred while uploading.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Reset file state when modal closes/opens
   const handleOpenChange = (open: boolean) => {
+    if (hasUploadedReceipt && open) return;
     setIsOpen(open);
     if (!open) {
       setUploadFile(null);
@@ -76,25 +103,24 @@ export function PaymentModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button 
-          className="w-full bg-[#78A24C] hover:bg-[#63853e] text-white font-bold text-xs py-2 rounded-lg shadow-sm transition-all"
-        > 
-          Proceed to Payment
+        <Button
+          className="w-full bg-[#78A24C] hover:bg-[#63853e] text-white font-bold text-xs py-2 rounded-lg shadow-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          disabled={hasUploadedReceipt || isLoadingDetails}
+          type="button"
+        >
+          {hasUploadedReceipt ? "Receipt Already Uploaded" : isLoadingDetails ? "Loading..." : "Proceed to Payment"}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="bg-[#FDFFF4] border-[#e8e2d6] sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-[#44291B] text-xl font-bold">
-            Payment Details
-          </DialogTitle>
+          <DialogTitle className="text-[#44291B] text-xl font-bold">Payment Details</DialogTitle>
           <DialogDescription className="text-[#44291B]/70">
             Please review your assignment and settle the fees to secure your spot.
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-2 space-y-4">
-          {/* Accommodation Summary */}
           <div className="space-y-2">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Accommodation Summary</h4>
             <div className="grid grid-cols-2 gap-2">
@@ -115,26 +141,44 @@ export function PaymentModal({
             </div>
           </div>
 
-          {/* Fees Breakdown Box */}
           <div className="space-y-2">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Fees Breakdown</h4>
             <div className="bg-[#F6F8D5] p-4 rounded-lg border border-[#e8e2d6] space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-[#44291B]/60">Reservation Fee:</span>
-                <span className="font-bold text-[#44291B]">₱1,000.00</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[#44291B]/60">Security Deposit:</span>
-                <span className="font-bold text-[#44291B]">₱2,000.00</span>
-              </div>
+              {isLoadingDetails ? (
+                <div className="text-sm text-slate-500">Loading invoice breakdown...</div>
+              ) : breakdownItems.length > 0 ? (
+                breakdownItems.map((item: any, index: number) => (
+                  <div key={`${item.label}-${index}`} className="flex justify-between text-sm">
+                    <span className="text-[#44291B]/60 capitalize">{String(item.label || "Item").replace(/_/g, " ")}</span>
+                    <span className="font-bold text-[#44291B]">₱{Number(item.amount || 0).toLocaleString()}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-slate-500">No invoice breakdown found yet.</div>
+              )}
               <div className="border-t border-[#e8e2d6] pt-2 flex justify-between font-bold text-[#264384] text-lg">
                 <span>Total Due:</span>
-                <span>₱3,000.00</span>
+                <span>₱{Number(paymentDetails?.summary?.total || 0).toLocaleString()}</span>
               </div>
             </div>
           </div>
 
-          {/* --- UPLOAD RECEIPT SECTION --- */}
+          {paymentDetails?.receiptPreviewUrl ? (
+            <div className="space-y-2">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Uploaded Receipt</h4>
+              <div className="rounded-xl border border-slate-200 bg-white p-3 flex items-center gap-3">
+                <img
+                  src={paymentDetails.receiptPreviewUrl}
+                  alt="Uploaded receipt preview"
+                  className="w-14 h-14 object-cover rounded-md border border-slate-200"
+                />
+                <div className="text-xs text-slate-600">
+                  A receipt already exists for this invoice. You can review or cancel it from the Billing page.
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <div className="space-y-2">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Proof of Payment</h4>
             <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
@@ -144,11 +188,11 @@ export function PaymentModal({
                 </div>
                 <input
                   type="file"
-                  accept=".jpg, .jpeg, .pdf" // OR ".jpg, .jpeg, .pdf, image/jpeg, application/pdf" for maximum compatibility
-                  disabled={isProcessing}
+                  accept=".jpg, .jpeg, .pdf"
+                  disabled={isProcessing || hasUploadedReceipt}
                   onChange={(e) => {
                     setUploadFile(e.target.files?.[0] || null);
-                    setUploadError(""); // Clear any previous errors on change
+                    setUploadError("");
                   }}
                   className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white file:text-slate-700 hover:file:bg-slate-50 transition disabled:opacity-50"
                 />
@@ -157,7 +201,6 @@ export function PaymentModal({
             </div>
           </div>
 
-          {/* Alert/Notice */}
           <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-md border border-blue-100">
             <Info className="w-4 h-4 text-[#264384] mt-0.5 shrink-0" />
             <p className="text-[11px] text-[#264384]/80 leading-tight">
@@ -167,24 +210,24 @@ export function PaymentModal({
         </div>
 
         <DialogFooter className="flex gap-2 sm:gap-0 mt-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => setIsOpen(false)}
             className="text-[#44291B]/60 hover:text-[#44291B] hover:bg-gray-100"
             disabled={isProcessing}
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handlePayment}
             className="bg-[#264384] hover:bg-[#1e3569] text-white px-8 font-bold"
-            disabled={isProcessing || !uploadFile}
+            disabled={isProcessing || !uploadFile || hasUploadedReceipt}
           >
             {isProcessing ? (
-               <span className="inline-flex items-center gap-2">
-                 <UploadCloud className="size-4 animate-bounce" /> Uploading...
-               </span>
-            ) : "Confirm & Pay"}
+              <span className="inline-flex items-center gap-2">
+                <UploadCloud className="size-4 animate-bounce" /> Uploading...
+              </span>
+            ) : hasUploadedReceipt ? "Already Uploaded" : "Confirm & Pay"}
           </Button>
         </DialogFooter>
       </DialogContent>

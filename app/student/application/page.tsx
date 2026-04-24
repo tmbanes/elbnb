@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client"
 import { redirect } from "next/navigation"
 import { studentProfileService } from "@/services/student_profile"
+import { ensureInitialInvoicesForUser } from "@/services/user-services"
 import ApplicationsPage from "./ApplicationsPage";
 
 export default async function AccommodationHistoryPage() {
@@ -11,6 +12,9 @@ export default async function AccommodationHistoryPage() {
   if (!user || authError) {
     redirect("/onboarding");
   }
+
+  // Keep billing invoices in sync for pending_payment applications.
+  await ensureInitialInvoicesForUser(user.id);
 
   // Fetch data from service layer
   const { data: records, error } = await studentProfileService.getAccommodationHistory(user.id);
