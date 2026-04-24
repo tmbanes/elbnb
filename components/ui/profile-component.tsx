@@ -49,7 +49,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
   const college = metadata?.college || 'N/A';
   const contactNum = metadata?.contact_number || 'N/A';
   const homeAddress = metadata?.home_address || 'N/A';
-  const emergencyContact = metadata?.emergency_contact || studentNum;
+  const emergencyContact = metadata?.emergency_contact || "N/A";
 
   let formattedBirthdate = '06/09/2005';
   if (user.birthdate) {

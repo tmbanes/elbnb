@@ -73,8 +73,13 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (contactNum && !/^\d+$/.test(contactNum)) {
-      setError("Contact number must contain only valid numbers.");
+    if (contactNum && !/^\d{11}$/.test(contactNum)) {
+      setError("Contact number must be exactly 11 digits.");
+      return;
+    }
+
+    if (user.role === 'student' && studentNum && !/^\d{9}$/.test(studentNum)) {
+      setError("Student number must be exactly 9 digits.");
       return;
     }
 
@@ -149,8 +154,9 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                   value={contactNum}
                   onChange={(e) => setContactNum(e.target.value.replace(/[^0-9]/g, ''))}
                   className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
-                  placeholder="e.g. 09123456789"
+                  placeholder="e.g. 09760799992"
                 />
+                <p className="text-[10px] text-[#3E2723]/60 font-semibold pl-1">Format: 11 digits (e.g. 09760799992)</p>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Emergency Contact</label>
@@ -170,13 +176,15 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Student Number</label>
                   <input 
-                    type="text" 
+                    type="tel" 
                     required
+                    maxLength={9}
                     value={studentNum}
-                    onChange={(e) => setStudentNum(e.target.value)}
+                    onChange={(e) => setStudentNum(e.target.value.replace(/[^0-9]/g, ''))}
                     className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
-                    placeholder="e.g. 202X-XXXXX"
+                    placeholder="e.g. 202314986"
                   />
+                  <p className="text-[10px] text-[#3E2723]/60 font-semibold pl-1">Format: 9 digits (e.g. 202314986)</p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Degree Program</label>
