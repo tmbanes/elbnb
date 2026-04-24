@@ -2,11 +2,11 @@
 
 import React, { useState, useRef } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-<<<<<<< user-profiles-latest
+
 import { useRouter } from "next/navigation";
-=======
+
 import { createActivityLog, getCurrentUserFromApi, isUserRole } from "@/services/activity_log/browser";
->>>>>>> develop
+
 
 export function ProfileUpload({
   initialProfileUrl,
@@ -72,10 +72,10 @@ export function ProfileUpload({
       if (dbError) throw dbError;
 
       setProfileUrl(publicData.publicUrl);
-<<<<<<< user-profiles-latest
+
       router.refresh();
       if (onUploadSuccess) onUploadSuccess(publicData.publicUrl);
-=======
+
 
       // Log changes
       const profile = await getCurrentUserFromApi();
@@ -92,7 +92,7 @@ export function ProfileUpload({
         });
       }
       
->>>>>>> develop
+
     } catch (err: any) {
       console.error("Upload error:", err);
       setError(err?.message || "An error occurred during upload.");
