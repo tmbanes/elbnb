@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Home, BedDouble, DoorOpen, Users, UserPlus, Wallet, AlertCircle, FileText, House, UserCheck, Clock3, BarChart3, Search, MoreHorizontal, Download } from "lucide-react";
+import { Building2, Home, Users, KeyRound, Scissors, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, MoreHorizontal, Download } from "lucide-react";
 import { Archivo, Archivo_Black } from "next/font/google";
 
 const archivo = Archivo({ subsets: ["latin"] });
@@ -109,12 +109,12 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
   const kpiCards = [
     { label: "Total Properties", value: stats.totalProperties, color: "#5591AB", desc: `${stats.totalProperties} registered`, icon: Building2 },
     { label: "Total Units", value: stats.totalUnits, color: "#1BB586", desc: `Across all properties`, icon: Home },
-    { label: "Occupied Units", value: stats.occupiedUnits, color: "#F59E0B", desc: pct(stats.occupancyRate) + " occupancy", icon: BedDouble },
-    { label: "Available Units", value: stats.availableUnits, color: "#5C9E44", desc: "Ready to assign", icon: DoorOpen },
-    { label: "Students Housed", value: stats.studentsHoused, color: "#0D2A6B", desc: "Currently active", icon: Users },
-    { label: "Waiting List", value: stats.waitingListCount, color: stats.waitingListCount > 5 ? "#EF4444" : "#F59E0B", desc: "Pending review", icon: UserPlus },
+    { label: "Occupied Units", value: stats.occupiedUnits, color: "#F59E0B", desc: pct(stats.occupancyRate) + " occupancy", icon: Users },
+    { label: "Available Units", value: stats.availableUnits, color: "#5C9E44", desc: "Ready to assign", icon: KeyRound },
+    { label: "Students Housed", value: stats.studentsHoused, color: "#0D2A6B", desc: "Currently active", icon: Scissors },
+    { label: "Waiting List", value: stats.waitingListCount, color: stats.waitingListCount > 5 ? "#EF4444" : "#F59E0B", desc: "Pending review", icon: Clock3 },
     { label: "Revenue (MTD)", value: fmt(stats.revenueThisMonth), color: "#1BB586", desc: "This month", isString: true, icon: Wallet },
-    { label: "Overdue Payments", value: stats.overdueCount, color: stats.overdueCount > 0 ? "#EF4444" : "#5C9E44", desc: stats.overdueCount > 0 ? "Action required" : "All clear", icon: AlertCircle },
+    { label: "Overdue Payments", value: stats.overdueCount, color: stats.overdueCount > 0 ? "#EF4444" : "#5C9E44", desc: stats.overdueCount > 0 ? "Action required" : "All clear", icon: AlertTriangle },
   ];
 
   return (
@@ -128,12 +128,6 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
             <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5C9E44] opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-[#5C9E44]" /></span>
             Live overview &middot; {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
           </p>
-          {stats.overdueCount > 0 && (
-            <div className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[#f8c5c5] bg-[#FDEAEA] px-4 py-2.5 text-sm font-semibold text-[#8B1A1A] shadow-sm">
-              <AlertCircle className="w-4 h-4 animate-pulse" />
-              {stats.overdueCount} overdue payment{stats.overdueCount > 1 ? "s" : ""} need immediate attention.
-            </div>
-          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="text-xs font-semibold rounded-xl bg-white shadow-sm h-10 px-4">
@@ -142,7 +136,15 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
         </div>
       </header>
 
-      {/* ── Alerts ── */}
+      {/* ── Overdue Alert Banner ── */}
+      {stats.overdueCount > 0 && (
+        <div className="w-full flex items-center gap-2.5 rounded-xl border border-[#f8c5c5] bg-[#FDEAEA] px-5 py-3 text-sm font-semibold text-[#8B1A1A] shadow-sm animate-in fade-in duration-500 delay-100">
+          <AlertCircle className="w-4 h-4 shrink-0 animate-pulse" />
+          {stats.overdueCount} overdue payment{stats.overdueCount > 1 ? "s" : ""} need immediate attention.
+        </div>
+      )}
+
+      {/* ── Other Alerts ── */}
       {alerts.length > 0 && alerts.filter((a) => !a.message.toLowerCase().includes("overdue payment")).length > 0 && (
         <div className="flex flex-wrap gap-2 animate-in fade-in duration-500 delay-100">
           {alerts
@@ -166,7 +168,7 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
           >
             <CardContent className="p-0 px-4 flex flex-col gap-1.5 relative overflow-hidden">
               <div className="flex items-center justify-between">
-                <span className={`${archivoBlack.className} text-[10px] uppercase tracking-wider text-[#64748b]`}>{card.label}</span>
+                <span className={`${archivo.className} text-[11px] font-semibold tracking-wide text-[#64748b]`}>{card.label}</span>
                 <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center">
                   <card.icon className="w-4 h-4" style={{ color: card.color }} />
                 </div>
@@ -224,11 +226,13 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
                   <span className="font-archivo-black text-[#1F2937]">{pct(p.rate)}</span>
                 </div>
                 <div className="w-full bg-[#EDEEE5] rounded-full h-2 overflow-hidden">
-                  <div className={`h-full rounded-full transition-all duration-700 ease-out ${p.rate > 85 ? "bg-gradient-to-r from-[#E24B4A] to-[#C93C3B]" : p.rate > 60 ? "bg-gradient-to-r from-[#4A5628] to-[#6B7A3A]" : "bg-gradient-to-r from-[#A8C060] to-[#5C9E44]"}`} style={{ width: `${p.rate}%` }} />
+                  <div className="h-full rounded-full transition-all duration-700 ease-out bg-[#2563EB]" style={{ width: `${p.rate}%` }} />
                 </div>
-                <div className="flex gap-4 mt-1 text-[11px] text-[#94a3b8]">
+                <div className="flex gap-1 mt-1 text-[11px] text-[#94a3b8]">
                   <span>{p.currentOccupancy}/{p.totalCapacity} slots</span>
+                  <span>&middot;</span>
                   <span>{p.totalUnits} units</span>
+                  <span>&middot;</span>
                   <span className="text-[#5C9E44]">{p.availableSlots} available</span>
                 </div>
               </div>
@@ -237,16 +241,16 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
         </Card>
 
         {/* Summary Donuts */}
-        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col items-center justify-center gap-6 overflow-hidden relative rounded-2xl">
+        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-5 overflow-hidden relative rounded-2xl">
           <div className="w-full flex items-center justify-between">
             <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Financial Summary</h2>
             <button className="text-slate-400 hover:text-slate-600 transition-colors">
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex flex-col items-center gap-6">
+          <div className="flex items-center justify-center gap-6">
             <DonutChart value={stats.occupancyRate} label="Occupancy" />
-            <DonutChart value={stats.collectionRate} size={100} label="Collection" />
+            <DonutChart value={stats.collectionRate} label="Collection" />
           </div>
           <div className="grid grid-cols-2 gap-3 w-full pt-3 border-t border-[#E5E7EB] text-center">
             <div className="rounded-xl border border-[#E5E7EB] bg-[#f8fafc] p-2.5">
@@ -323,7 +327,10 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
               </button>
             ))}
           </div>
-          <input type="text" placeholder="Search students..." value={studentSearch} onChange={e => setStudentSearch(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E5E7EB] text-sm focus:outline-none focus:ring-2 focus:ring-[#4A5628]/20 focus:border-[#4A5628] transition-all bg-slate-50" />
+          <div className="relative">
+            <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2" />
+            <input type="text" placeholder="Search students..." value={studentSearch} onChange={e => setStudentSearch(e.target.value)} className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-[#E5E7EB] text-sm focus:outline-none focus:ring-2 focus:ring-[#4A5628]/20 focus:border-[#4A5628] transition-all bg-slate-50" />
+          </div>
 
           <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
             {studentTab === "housed" ? (
@@ -404,7 +411,7 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {Object.entries(billingStatusCounts).sort((a, b) => b[1] - a[1]).map(([status, count]) => {
               const total = Object.values(billingStatusCounts).reduce((s, v) => s + v, 0);
               const pctVal = total > 0 ? (count / total) * 100 : 0;
@@ -415,15 +422,15 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
               };
               const color = colorMap[status] ?? "#6B7280";
               return (
-                <div key={status} className="group rounded-xl border border-[#E5E7EB] bg-white p-3 hover:shadow-sm transition-shadow">
+                <div key={status} className="group">
                   <div className="flex justify-between text-xs mb-1.5 items-center">
                     <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
                       <span className="font-medium text-sm text-[#374151] capitalize">{status.replace(/_/g, " ")}</span>
                     </div>
                     <span className={`${archivoBlack.className} text-[#1F2937] text-sm`}>{count} <span className={`${archivo.className} font-normal text-[#9CA3AF]`}>({pct(pctVal)})</span></span>
                   </div>
-                  <div className="w-full bg-[#EDEEE5] rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-[#EDEEE5] rounded-full h-1.5 overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pctVal}%`, backgroundColor: color }} />
                   </div>
                 </div>
