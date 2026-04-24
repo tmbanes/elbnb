@@ -401,7 +401,7 @@ export default function ApplyAccommodationForm() {
       >
         <div className="flex items-center gap-3 mb-2">
           <CheckCircle className="h-7 w-7 text-[#78A24C]" />
-          <h1 className="text-[28px] font-black uppercase tracking-widest text-[#3d2000]">
+          <h1 className="text-[31px] font-black tracking-widest text-[#3d2000]">
             Application Summary
           </h1>
         </div>
@@ -509,7 +509,7 @@ export default function ApplyAccommodationForm() {
     <div
       className={`${archivo.className} min-h-[calc(100vh-4rem)] bg-[#F6F8D5] py-6 px-6 md:px-[1.5in] overflow-y-auto`}
     >
-      <h1 className="text-[28px] font-black uppercase tracking-widest text-[#3d2000] mb-1">
+      <h1 className="text-[31px] font-black tracking-widest text-[#3d2000] mb-1">
         Apply for Accommodation
       </h1>
       <p className="text-sm text-[#5a4a2a] mb-5">
@@ -878,7 +878,7 @@ export default function ApplyAccommodationForm() {
 
         {/* BOTTOM ROW: Upload Document */}
         <div className="mb-6">
-          <SectionCard title="Upload Document (Valid ID or Enrollment Form)" icon={<FileText />} className="p-6 flex-grow flex flex-col !mb-0">
+          <SectionCard title="Upload Document (Valid ID, Enrollment Form, or Any Supporting Document)" icon={<FileText />} className="p-6 flex-grow flex flex-col !mb-0">
             <div
               className="flex-grow border-2 border-dashed border-[#78A24C] rounded-xl p-5 flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-[#78A24C]/5 transition-all"
               onClick={() => document.getElementById("file-upload")?.click()}
@@ -907,20 +907,24 @@ export default function ApplyAccommodationForm() {
                     </div>
                   )}
 
-                  <div className="flex flex-col items-center">
-                    <p className="text-xs text-green-700 font-medium">
+                  <div className="flex flex-col items-center mt-2 cursor-default" onClick={(e) => e.stopPropagation()}>
+                    <p className="text-[10px] text-green-700 font-medium truncate max-w-[200px] text-center mb-1">
                       {file.name}
                     </p>
                     <p className="text-[10px] text-gray-500 font-medium mb-2">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                      1 file selected
                     </p>
                     <Button
                       variant="outline"
                       size="sm"
                       type="button"
                       className="border-[#78A24C] text-[#78A24C] hover:bg-[#78A24C]/10 text-[10px] uppercase font-black px-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        document.getElementById("file-upload")?.click();
+                      }}
                     >
-                      Change File
+                      Change Files
                     </Button>
                   </div>
                 </div>
@@ -929,7 +933,7 @@ export default function ApplyAccommodationForm() {
                 <>
                   <Upload className="h-7 w-7 text-[#78A24C]" />
                   <p className="text-xs text-gray-400 font-medium">
-                    Drag and drop any file here
+                    Drag and drop file here
                   </p>
                   <p className="text-[10px] text-gray-400 -mt-2">
                     Supports PDF, JPG, PNG, DOCX
