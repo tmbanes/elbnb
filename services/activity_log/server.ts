@@ -19,7 +19,7 @@ async function createActivityLog(logData: LogCreationRequest) {
   return { success: true };
 }
 
-//Return id and role only
+//Return id, role and fullname only
 async function getCurrentUserRole(): Promise<{ userId: string; role: UserRole, first_name: string } | null> {
   const supabase = await createSupabaseServerClient();
   const {
@@ -38,7 +38,7 @@ async function getCurrentUserRole(): Promise<{ userId: string; role: UserRole, f
     ? ((profileData as { role?: UserRole } | null)?.role ?? "guest")
     : "guest";
 
-  return { userId: user.id, role, first_name: profileData!.first_name };
+  return { userId: user.id, role, first_name: profileData!.first_name + profileData!.last_name };
 }
 
 
