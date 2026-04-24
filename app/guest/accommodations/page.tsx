@@ -251,11 +251,11 @@ export default function SearchAccommodationsPage() {
   const handleSeeUnitsClick = useCallback((accommodation: Accommodation) => {
     setActiveTab('units')
     setCurrentPage(1)
-    
+
     const newFilters = { ...unitFilters, accommodationId: accommodation.accommodation_id }
     setUnitFilters(newFilters)
     applyUnitFilters(units, newFilters, accommodations, searchQuery)
-    
+
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [units, accommodations, unitFilters, applyUnitFilters, searchQuery])
 
@@ -450,6 +450,7 @@ export default function SearchAccommodationsPage() {
                   validCurrentPage={validCurrentPage}
                   basePath="/guest/accommodations"
                   onSeeUnitsClick={handleSeeUnitsClick}
+                  units={units}
                 />
               )
             )}
