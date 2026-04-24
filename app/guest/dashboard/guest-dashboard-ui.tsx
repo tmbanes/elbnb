@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Archivo } from "next/font/google";
 import { Accommodation } from "@/types/accommodation_units";
-import { AccommodationAssignment } from "@/types/assignment_workflow";
+import { AccommodationHistory } from "@/types/accomodation/accomodationHistory";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -19,17 +19,17 @@ export default function GuestDashboardUI({ onLogout, isLoggingOut }: GuestDashbo
     const [showLogout, setShowLogout] = useState(false);
     const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
     const [isLoadingAccommodations, setIsLoadingAccommodations] = useState(true);
-    const [assignments, setAssignments] = useState<AccommodationAssignment[]>([]);
-    const [isLoadingAssignments, setIsLoadingAssignments] = useState(true);
+    const [history, setHistory] = useState<AccommodationHistory[]>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
     useEffect(() => {
         async function fetchAccommodations() {
             try {
                 const res = await fetch("/api/dashboard/tiles?type=accommodations");
 
-                if (!res.ok) {
-                    throw new Error("Failed to fetch accommodations");
-                }
+            if (!res.ok) {
+                throw new Error("Failed to fetch accommodations");
+            }
 
                 const data = await res.json();
                 setAccommodations(data);
@@ -40,22 +40,26 @@ export default function GuestDashboardUI({ onLogout, isLoggingOut }: GuestDashbo
             }
         }
 
-        async function fetchAssignments() {
+        async function fetchHistory() {
             try {
-                const res = await fetch("/api/dashboard/assignments?type=assignments");
+                const res = await fetch("/api/assignments/history");
+
                 if (!res.ok) {
-                    throw new Error("Failed to fetch assignments");
+                throw new Error("Failed to fetch history");
                 }
-                const data = await res.json();
-                setAssignments(data);
+
+                const result = await res.json();
+
+                setHistory(result.data ?? []);
             } catch (error) {
-                console.error("Error fetching assignments:", error);
+                console.error("Error fetching history:", error);
             } finally {
-                setIsLoadingAssignments(false);
+                setIsLoadingHistory(false);
             }
-        }
-        fetchAccommodations();
-        fetchAssignments();
+            }
+
+    fetchHistory();
+    fetchAccommodations();
     }, []);
 
     return (
@@ -160,21 +164,42 @@ export default function GuestDashboardUI({ onLogout, isLoggingOut }: GuestDashbo
                                 <span className="text-[10px] font-extrabold tracking-[0.2em] uppercase text-white/90">Accommodation History</span>
                                 <History className="w-5 h-5 text-white/70" />
                             </div>
-
+                            
                             <div className="space-y-4 mb-6">
-                                <div className="border-l-2 border-white/20 pl-4 py-0.5">
-                                    <h3 className="text-[15px] font-bold leading-tight">Centtro Residences</h3>
-                                    <p className="text-[11px] text-white/70 mt-0.5">Aug 2023 - Dec 2023</p>
+                                {isLoadingHistory ? (
+                                    <p className="text-[11px] text-white/70">Loading history...</p>
+                                ) : history.length === 0 ? (
+                                    <p className="text-[11px] text-white/70">No history found.</p>
+                                ) : (
+                                    history.slice(0, 3).map((item) => (
+                                    <div
+                                        key={item.assignment_id}
+                                        className="border-l-2 border-white/20 pl-4 py-0.5"
+                                    >
+                                        <h3 className="text-[15px] font-bold leading-tight">
+                                        {item.accommodation?.name ?? "Unnamed Accommodation"}
+                                        </h3>
+
+                                        <p className="text-[11px] text-white/70 mt-0.5">
+                                        {item.move_in_date
+                                            ? new Date(item.move_in_date).toLocaleDateString("en-US", {
+                                                month: "short",
+                                                year: "numeric",
+                                            })
+                                            : "Unknown"}{" "}
+                                        -{" "}
+                                        {item.actual_move_out_date
+                                            ? new Date(item.actual_move_out_date).toLocaleDateString("en-US", {
+                                                month: "short",
+                                                year: "numeric",
+                                            })
+                                            : "Present"}
+                                        </p>
+                                    </div>
+                                    ))
+                                )}
                                 </div>
-                                <div className="border-l-2 border-white/20 pl-4 py-0.5">
-                                    <h3 className="text-[15px] font-bold leading-tight">The Grand Laguna</h3>
-                                    <p className="text-[11px] text-white/70 mt-0.5">Jan 2023 - July 2023</p>
-                                </div>
-                                <div className="border-l-2 border-white/20 pl-4 py-0.5">
-                                    <h3 className="text-[15px] font-bold leading-tight">St. Therese Hall</h3>
-                                    <p className="text-[11px] text-white/70 mt-0.5">Aug 2022 - Dec 2022</p>
-                                </div>
-                            </div>
+                            
                         </div>
 
                         <div className="mt-auto">
@@ -202,9 +227,9 @@ export default function GuestDashboardUI({ onLogout, isLoggingOut }: GuestDashbo
                             Explore All Accommodations <ArrowRight className="w-4 h-4" />
                         </button>
                     </div>
-
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-                        {accommodations.slice(0, 3).map((accommodation, i) => (
+                    {accommodations.slice(0, 3).map((accommodation, i) => (
                             <div key={i} className="bg-[#F9FBEC] rounded-[32px] overflow-hidden border border-slate-100/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] group hover:shadow-2xl hover:shadow-[#709849]/5 transition-all duration-500">
                                 <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
                                     <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center">
@@ -214,10 +239,10 @@ export default function GuestDashboardUI({ onLogout, isLoggingOut }: GuestDashbo
                                         {accommodation.min_price && accommodation.max_price
                                             ? `₱${accommodation.min_price} - ₱${accommodation.max_price}`
                                             : accommodation.min_price
-                                                ? `₱${accommodation.min_price}`
-                                                : accommodation.max_price
-                                                    ? `₱${accommodation.max_price}`
-                                                    : "No price available to show"}
+                                            ? `₱${accommodation.min_price}`
+                                            : accommodation.max_price
+                                            ? `₱${accommodation.max_price}`
+                                            : "No price available to show"}
                                     </div>
                                 </div>
                                 <div className="p-8">
