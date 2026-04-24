@@ -190,3 +190,13 @@
 main>*:not(.page-loader) {
   animation: pageSlideIn 0.5s ease-out forwards;
 }
+
+/* Hide scrollbar but keep scroll */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

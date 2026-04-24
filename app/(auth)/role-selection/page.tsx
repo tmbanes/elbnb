@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+import RoleSelection from "./RoleSelection";
+
+export default function RoleSelectionPage() {
+  return <RoleSelection />;
+}
+=======
 import { redirect } from "next/navigation";
 import RoleSelection from "./RoleSelection";
 import { getUserWithRole } from "@/lib/auth/session";
@@ -12,3 +19,4 @@ export default async function RoleSelectionPage() {
 
   return <RoleSelection />;
 }
+>>>>>>> origin/develop

@@ -17,7 +17,7 @@ import {
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
+import { useSidebar } from "@/components/ui/sidebar"
 import Link from "next/link"
 import {
   Sidebar,
