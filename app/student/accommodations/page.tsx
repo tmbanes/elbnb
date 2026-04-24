@@ -96,7 +96,7 @@ export default function SearchAccommodationsPage() {
       { value: 'M', label: 'Male' },
       { value: 'COED', label: 'Coed' },
     ];
-    
+
     const sexLabels: Record<string, string> = {
       'F': 'Female',
       'M': 'Male',
@@ -110,7 +110,7 @@ export default function SearchAccommodationsPage() {
       const sexStr = sex as string;
       const upperSex = sexStr.toUpperCase();
       let label = sexLabels[upperSex] || sexLabels[sexStr] || (sexStr.charAt(0).toUpperCase() + sexStr.slice(1).toLowerCase());
-      
+
       return {
         value: sexStr,
         label
@@ -524,6 +524,8 @@ export default function SearchAccommodationsPage() {
                   validCurrentPage={validCurrentPage}
                   basePath="/student/accommodations"
                   onSeeUnitsClick={handleSeeUnitsClick}
+                  userRole="student"
+                  units={units}
                 />
               )
             )}
