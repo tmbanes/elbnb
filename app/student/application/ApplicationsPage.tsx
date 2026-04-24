@@ -309,7 +309,11 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                         </span>
                       </TableCell>
                       <TableCell className="text-right pr-6 text-[#44291B]/60 italic text-sm">
-                        {formatDate((record as any).accomodation_assignment?.actual_Move_Out_Date)}
+                        {formatDate(
+                          Array.isArray(record.accommodation_assignment) 
+                            ? record.accommodation_assignment[0]?.actual_move_out_date 
+                            : record.accommodation_assignment?.actual_move_out_date
+                        )}
                       </TableCell>
                     </TableRow>
                   ))

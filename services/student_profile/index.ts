@@ -56,13 +56,13 @@ export const studentProfileService = {
   async getMyAssignment(application_id: string) {
     const client = await supabase();
     const { data, error } = await client
-      .from("accomodation_assignment")
+      .from("accommodation_assignment")
       .select(
         `
         assignment_id,
-        move_In_Date,
-        expected_Move_Out_Date,
-        actual_Move_Out_Date,
+        move_in_date,
+        expected_move_out_date,
+        actual_move_out_date,
         application_id
       `,
       )
@@ -181,6 +181,9 @@ not yet tested
         ),
         unit:unit_id (
           unit_number
+        ),
+        accommodation_assignment (
+          actual_move_out_date
         )
       `)
       .eq("user_id", user_id)
