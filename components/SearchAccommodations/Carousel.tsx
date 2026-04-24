@@ -113,7 +113,7 @@ export function Carousel({ children }: CarouselProps) {
       {/* Scroll Container */}
       <div
         ref={scrollContainerRef}
-        className="flex overflow-x-auto pt-8 pb-12 snap-x snap-mandatory px-4 sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex overflow-x-auto pt-8 pb-12 snap-x snap-mandatory px-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {wrappedChildren}
       </div>
