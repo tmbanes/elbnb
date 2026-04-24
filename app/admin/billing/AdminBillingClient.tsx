@@ -28,6 +28,7 @@ import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const INVOICE_STATUSES: BillingStatus[] = [
   BillingStatus.PAID,
@@ -329,21 +330,27 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
+          <div className="flex items-center gap-2 text-sm">
             <Filter className="w-4 h-4 text-slate-400" />
-            <select
-              className="bg-transparent outline-none text-slate-700 font-medium"
+            <Select
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              onValueChange={(value) => {
+                setStatusFilter(value);
                 setInvoicesPage(1);
               }}
             >
-              <option value="ALL">All Statuses</option>
-              {INVOICE_STATUSES.map(s => (
-                <option key={s} value={s}>{s.replace(/_/g, " ").toUpperCase()}</option>
-              ))}
-            </select>
+              <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] focus:ring-2 focus:ring-indigo-400/30">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                <SelectItem value="ALL" className="text-sm font-medium">All Statuses</SelectItem>
+                {INVOICE_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s} className="text-sm font-medium">
+                    {s.replace(/_/g, " ").toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="h-6 w-px bg-slate-200 mx-2"></div>
@@ -592,25 +599,31 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 <div className="space-y-3">
                   {editItems.map((item, index) => (
                     <div key={index} className="flex gap-2 items-center bg-slate-50/70 p-3 rounded-xl border border-slate-200">
-                      <select
-                        className="flex-1 text-sm border border-slate-200 bg-white rounded-lg p-2 outline-none shadow-sm font-medium text-slate-700"
+                      <Select
                         value={item.type}
-                        onChange={(e) => {
+                        onValueChange={(value) => {
                           const updated = [...editItems];
-                          updated[index].type = e.target.value as BillingItemType;
+                          updated[index].type = value as BillingItemType;
                           setEditItems(updated);
                         }}
                       >
-                        {Object.values(BillingItemType).map(type => (
-                          <option key={type} value={type}>{type.replace(/_/g, " ").toUpperCase()}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="h-10 flex-1 rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] shadow-sm focus:ring-2 focus:ring-indigo-400/30">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                          {Object.values(BillingItemType).map((type) => (
+                            <SelectItem key={type} value={type} className="text-sm font-medium">
+                              {type.replace(/_/g, " ").toUpperCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
                       <div className="relative w-32">
                         <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
                         <input
                           type="number"
-                          className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-white outline-none rounded-lg shadow-sm border border-slate-200 text-slate-900"
+                          className="h-10 w-full rounded-xl border border-[#cfd6e4] bg-white pl-7 pr-3 text-sm font-semibold text-[#30435f] outline-none shadow-sm focus:ring-2 focus:ring-indigo-400/30"
                           value={item.amount || ''}
                           onChange={(e) => {
                             const updated = [...editItems];
@@ -649,23 +662,24 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                   type="date"
                   value={editDueDate}
                   onChange={e => setEditDueDate(e.target.value)}
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
+                  className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] outline-none focus:ring-2 focus:ring-indigo-400/30"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Status</label>
-                <select
-                  value={editStatus}
-                  onChange={e => setEditStatus(e.target.value as BillingStatus)}
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
-                >
-                  {INVOICE_STATUSES.map(status => (
-                    <option key={status} value={status}>
-                      {status.replace(/_/g, " ").toUpperCase()}
-                    </option>
-                  ))}
-                </select>
+                <Select value={editStatus} onValueChange={(value) => setEditStatus(value as BillingStatus)}>
+                  <SelectTrigger className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] focus:ring-2 focus:ring-indigo-400/30">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                    {INVOICE_STATUSES.map((status) => (
+                      <SelectItem key={status} value={status} className="text-sm font-medium">
+                        {status.replace(/_/g, " ").toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {editingBill.reminded_at && (
@@ -706,19 +720,21 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             <div className="p-6 space-y-5 overflow-y-auto">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Select Target Tenant</label>
-                <select
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
-                  value={newBillAssignmentId}
-                  onChange={e => setNewBillAssignmentId(e.target.value)}
-                >
-                  <option value="">-- Select Active Assigned Tenant --</option>
-                  {(activeTenants || []).map((t: any) => (
-                    <option key={t.assignment_id} value={t.assignment_id}>
-                      {t.users ? `${t.users.first_name} ${t.users.last_name}` : "Unknown"}
-                    </option>
-                  ))}
-                  <option value="48fc2483-6ebf-4d7a-ab9c-822d71504af6">TEST: Dummy Tenant (Overrides DB Empty State)</option>
-                </select>
+                <Select value={newBillAssignmentId || undefined} onValueChange={setNewBillAssignmentId}>
+                  <SelectTrigger className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] focus:ring-2 focus:ring-indigo-400/30">
+                    <SelectValue placeholder="-- Select Active Assigned Tenant --" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                    {(activeTenants || []).map((t: any) => (
+                      <SelectItem key={t.assignment_id} value={t.assignment_id} className="text-sm font-medium">
+                        {t.users ? `${t.users.first_name} ${t.users.last_name}` : "Unknown"}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="48fc2483-6ebf-4d7a-ab9c-822d71504af6" className="text-sm font-medium">
+                      TEST: Dummy Tenant (Overrides DB Empty State)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -756,24 +772,30 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 <div className="space-y-3">
                   {newBillItems.map((item, index) => (
                     <div key={index} className="flex gap-2 items-center bg-slate-50/70 p-3 rounded-xl border border-slate-200">
-                      <select
-                        className="flex-1 text-sm border border-slate-200 bg-white rounded-lg p-2 outline-none shadow-sm font-medium text-slate-700"
+                      <Select
                         value={item.type}
-                        onChange={(e) => {
+                        onValueChange={(value) => {
                           const updated = [...newBillItems];
-                          updated[index].type = e.target.value as BillingItemType;
+                          updated[index].type = value as BillingItemType;
                           setNewBillItems(updated);
                         }}
                       >
-                        {Object.values(BillingItemType).map(type => (
-                          <option key={type} value={type}>{type.replace(/_/g, " ").toUpperCase()}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="h-10 flex-1 rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] shadow-sm focus:ring-2 focus:ring-indigo-400/30">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                          {Object.values(BillingItemType).map((type) => (
+                            <SelectItem key={type} value={type} className="text-sm font-medium">
+                              {type.replace(/_/g, " ").toUpperCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <div className="relative w-32">
                         <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
                         <input
                           type="number"
-                          className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-white outline-none rounded-lg shadow-sm border border-slate-200 text-slate-900"
+                          className="h-10 w-full rounded-xl border border-[#cfd6e4] bg-white pl-7 pr-3 text-sm font-semibold text-[#30435f] outline-none shadow-sm focus:ring-2 focus:ring-indigo-400/30"
                           value={item.amount || ''}
                           onChange={(e) => {
                             const updated = [...newBillItems];
