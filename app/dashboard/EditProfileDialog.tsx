@@ -15,6 +15,31 @@ const collegeDegreeMap: Record<string, string[]> = {
   CPAf: ["Master in Public Affairs (MPAf)", "MS Community Development", "MS Development Management and Governance", "MS Extension Education"]
 };
 
+const validIdsList = [
+  "Philippine Identification Card (PhilID / National ID) or ePhilID",
+  "Philippine Passport (issued by DFA)",
+  "Driver’s License (issued by LTO)",
+  "Unified Multi-Purpose ID (UMID)",
+  "Social Security System (SSS) ID",
+  "Government Service Insurance System (GSIS) eCard",
+  "Professional Regulation Commission (PRC) ID",
+  "Postal ID (plastic card format issued by PhlPost)",
+  "Voter’s ID or Voter's Certification (issued by COMELEC)",
+  "Seaman’s Book or Seafarer’s Record and Identification Book (SIRB)",
+  "Overseas Workers Welfare Administration (OWWA) ID or iDOLE Card",
+  "Senior Citizen ID",
+  "Person with Disability (PWD) ID",
+  "Solo Parent ID",
+  "School ID (for currently enrolled students)",
+  "Employee or Company ID (for currently employed individuals, issued by a DOLE-registered institution)",
+  "PhilHealth ID",
+  "Tax Identification Number (TIN) ID",
+  "NBI Clearance",
+  "Police Clearance",
+  "Barangay Clearance or Certification",
+  "Pag-IBIG Loyalty Card"
+];
+
 import { 
   Dialog, 
   DialogContent, 
@@ -63,7 +88,10 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
   const [college, setCollege] = useState(isCustomCollegeInit ? "Others" : initialCollege);
   const [customCollege, setCustomCollege] = useState(isCustomCollegeInit ? initialCollege : '');
   
-  const [validId, setValidId] = useState(metadata?.valid_id || '');
+  const initialValidId = metadata?.valid_id || '';
+  const isCustomValidIdInit = initialValidId && !validIdsList.includes(initialValidId);
+  const [validId, setValidId] = useState(isCustomValidIdInit ? "Others" : initialValidId);
+  const [customValidId, setCustomValidId] = useState(isCustomValidIdInit ? initialValidId : '');
   const [purposeVisit, setPurposeVisit] = useState(metadata?.purpose_visit || '');
   const [occupancyStatus, setOccupancyStatus] = useState(metadata?.occupancy_status || '');
   
@@ -96,7 +124,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
           student_number: studentNum,
           degree_program: degreeProgram === "Others" ? customDegree : degreeProgram,
           college: college === "Others" ? customCollege : college,
-          valid_id: validId,
+          valid_id: validId === "Others" ? customValidId : validId,
           purpose_visit: purposeVisit,
           occupancy_status: occupancyStatus,
           employee_id: employeeId,
@@ -270,14 +298,31 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Valid ID</label>
-                  <input 
-                    type="text" 
+                  <select 
                     required
                     value={validId}
-                    onChange={(e) => setValidId(e.target.value)}
+                    onChange={(e) => {
+                      setValidId(e.target.value);
+                      if (e.target.value !== "Others") setCustomValidId('');
+                    }}
                     className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
-                    placeholder="e.g. Passport / License"
-                  />
+                  >
+                    <option value="" disabled>Select Valid ID</option>
+                    {validIdsList.map(id => (
+                      <option key={id} value={id}>{id}</option>
+                    ))}
+                    <option value="Others">Others</option>
+                  </select>
+                  {validId === "Others" && (
+                    <input 
+                      type="text" 
+                      required
+                      value={customValidId}
+                      onChange={(e) => setCustomValidId(e.target.value)}
+                      className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors mt-2"
+                      placeholder="Please specify your ID"
+                    />
+                  )}
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Purpose of Visit</label>
