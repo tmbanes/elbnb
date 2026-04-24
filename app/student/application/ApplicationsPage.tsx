@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { CancelApplicationModal } from "./CancelModal";
 import { AccommodationApplication } from "@/types/student_profile";
-import { Check, Clock, X } from "lucide-react";
+import { Check, Clock, X, ChevronLeft, ChevronRight} from "lucide-react";
 import { cn } from "@/lib/utils/ui-utils";
 import { PaymentModal } from "./PaymentModal";
 
@@ -50,6 +50,8 @@ function formatUnitType(type: string | undefined) {
 
 export default function ApplicationsPage({ records }: ApplicationsPageProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const ITEMS_PER_PAGE = 5;
 
   const statusConfig: any = {
     approved: { class: "bg-[#78A24C] text-white", icon: <Check className="w-3 h-3" /> },
@@ -69,7 +71,12 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
     return record.application_status === statusFilter;
   });
 
-  // --- GRID LOGIC ---
+  const totalPages = Math.ceil(filteredHistoricalRecords.length / ITEMS_PER_PAGE);
+  const paginatedRecords = filteredHistoricalRecords.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
   const MAX_CARDS = 3;
   const displayedApps = activeApplications.slice(0, MAX_CARDS);
   const emptySlotsCount = MAX_CARDS - displayedApps.length;
@@ -228,7 +235,10 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
 
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className="text-sm border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#264384] font-medium shadow-sm cursor-pointer"
             >
               <option value="all">All Statuses</option>
@@ -260,9 +270,8 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* NOW MAPPING OVER filteredHistoricalRecords */}
-                {filteredHistoricalRecords.length > 0 ? (
-                  filteredHistoricalRecords.map((record) => (
+                {paginatedRecords.length > 0 ? (
+                  paginatedRecords.map((record) => (
                     <TableRow key={record.application_id} className="border-b border-[#e8e2d6] hover:bg-[#F6F8D5]/50 transition-colors">
                       <TableCell className="py-4 text-[#44291B]">
                         {new Date(record.date_submitted).toLocaleDateString()}
@@ -296,6 +305,33 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                 )}
               </TableBody>
             </Table>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-[#e8e2d6] bg-white/50">
+                <span className="text-xs text-[#44291B]/60 font-medium">
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredHistoricalRecords.length)} of {filteredHistoricalRecords.length}
+                </span>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-1.5 rounded-md border border-[#e8e2d6] text-[#264384] bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs font-bold text-[#44291B] px-2">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-1.5 rounded-md border border-[#e8e2d6] text-[#264384] bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </div>
