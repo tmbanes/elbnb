@@ -1,3 +1,5 @@
+"use client";
+
 // app/manager/dashboard/manager-dashboard-ui.tsx
 
 import React, { useEffect, useState } from "react";
@@ -21,11 +23,14 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+import Image from "next/image";
+import Link from "next/link";
 import { Archivo } from "next/font/google";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
 interface ManagerDashboardUIProps {
+    profile: any;
     onLogout?: () => void;
     isLoggingOut?: boolean;
 }
@@ -34,7 +39,7 @@ function formatPHP(amount: number) {
     return `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDashboardUIProps) {
+export default function ManagerDashboardUI({ profile, onLogout, isLoggingOut }: ManagerDashboardUIProps) {
     const [dashboardView, setDashboardView] = useState<'operations' | 'financials'>('operations');
     const [showLogout, setShowLogout] = useState(false);
     const [hasMounted, setHasMounted] = useState(false);
@@ -44,8 +49,9 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
     const [roomView, setRoomView] = useState<'grid' | 'list'>('grid');
 
     // --- Manager / Dorm Info ---
-    const [managerName, setManagerName] = useState("Manager");
-    const [managerInitials, setManagerInitials] = useState("M");
+    const [managerName, setManagerName] = useState(profile ? `${profile.first_name} ${profile.last_name}` : "Manager");
+    const [managerInitials, setManagerInitials] = useState(profile ? `${profile.first_name?.[0]}${profile.last_name?.[0]}`.toUpperCase() : "M");
+    const [managerAvatar, setManagerAvatar] = useState(profile?.profile_picture_url || null);
     const [dormName, setDormName] = useState("Loading...");
     const [dormLocation, setDormLocation] = useState("");
 
@@ -118,17 +124,20 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return;
 
-                // Profile
-                const { data: profile } = await supabase
-                    .from('users')
-                    .select('first_name, last_name')
-                    .eq('user_id', user.id)
-                    .single() as any;
+                // Profile (Already passed via props, but can refresh if needed)
+                if (!profile) {
+                    const { data: userData } = await supabase
+                        .from('users')
+                        .select('first_name, last_name, profile_picture_url')
+                        .eq('user_id', user.id)
+                        .single() as any;
 
-                if (profile) {
-                    const initials = `${profile.first_name?.[0] ?? ""}${profile.last_name?.[0] ?? ""}`.toUpperCase();
-                    setManagerInitials(initials || "M");
-                    setManagerName(`${profile.first_name} ${profile.last_name}`);
+                    if (userData) {
+                        const initials = `${userData.first_name?.[0] ?? ""}${userData.last_name?.[0] ?? ""}`.toUpperCase();
+                        setManagerInitials(initials || "M");
+                        setManagerName(`${userData.first_name} ${userData.last_name}`);
+                        setManagerAvatar(userData.profile_picture_url);
+                    }
                 }
 
                 // Accommodation
@@ -417,11 +426,14 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
 
     if (!hasMounted) return <div className={`flex h-screen bg-[#F6F5ED] overflow-hidden ${archivo.className}`} />;
 
+    if (!hasMounted) return <div className={`flex h-screen bg-[#F6F8D5] overflow-hidden ${archivo.className}`} />;
+
     return (
-        <div className={`flex h-screen bg-[#F6F5ED] overflow-hidden ${archivo.className}`}>
-            <main className="flex-1 flex flex-col h-full overflow-hidden">
-                {/* TOP HEADER */}
-                <header className="flex justify-between items-center px-8 lg:px-16 xl:px-24 mt-6 mb-4">
+        <div className={`flex h-screen bg-[#F6F8D5] overflow-hidden ${archivo.className}`}>
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
+                <div className="flex-1 overflow-auto pb-10" suppressHydrationWarning>
+                    {/* TOP HEADER */}
+                    <header className="flex justify-between items-center px-8 lg:px-16 xl:px-24 mt-6 mb-4">
                     <div className="relative w-full max-w-[400px]">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
@@ -433,7 +445,7 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                     <div className="flex items-center gap-6">
                         <button className="relative text-slate-600 hover:text-slate-900 transition-colors">
                             <Bell className="w-5 h-5" />
-                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#A05C5C] rounded-full ring-2 ring-[#F6F5ED]"></span>
+                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#A05C5C] rounded-full ring-2 ring-[#F6F8D5]"></span>
                         </button>
                         <div className="relative">
                             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setShowLogout(!showLogout)}>
@@ -441,8 +453,18 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                     <span className="text-[13px] font-bold text-slate-900 leading-tight">{managerName}</span>
                                     <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase">MANAGER</span>
                                 </div>
-                                <div className="w-9 h-9 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
-                                    {managerInitials}
+                                <div className="w-9 h-9 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                                    {managerAvatar ? (
+                                        <Image 
+                                            src={managerAvatar} 
+                                            alt="Profile" 
+                                            width={36} 
+                                            height={36} 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        managerInitials
+                                    )}
                                 </div>
                             </div>
                             {showLogout && (
@@ -461,7 +483,7 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                     </div>
                 </header>
 
-                <div className="px-8 lg:px-16 xl:px-24 flex-1 overflow-auto pb-10" suppressHydrationWarning>
+                    <div className="px-8 lg:px-16 xl:px-24">
                     {/* TITLE */}
                     <div className="mb-6">
                         <h1 className="text-[32px] md:text-[38px] font-black text-[#0B3A64] tracking-tight leading-none mb-1">Manager Dashboard</h1>
@@ -492,7 +514,9 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                         </p>
                                     </div>
                                 </div>
-                                <button className="px-5 py-2 border border-slate-200 text-[#0B3A64] text-[11px] font-bold rounded-lg hover:bg-slate-50 transition-colors uppercase tracking-wider">Manage Dorm</button>
+                                <Link href="/manager/dashboard">
+                                    <button className="px-5 py-2 border border-slate-200 text-[#0B3A64] text-[11px] font-bold rounded-lg hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] transition-all uppercase tracking-wider">Manage Dorm</button>
+                                </Link>
                             </div>
 
                             {/* METRICS GRID */}
@@ -548,8 +572,8 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                             <p className="text-[11px] text-slate-400 font-medium tracking-wide">Live view of facility distribution</p>
                                         </div>
                                         <div className="flex bg-slate-100 p-1 rounded-lg">
-                                            <button onClick={() => setRoomView('grid')} className={`px-4 py-1.5 text-[10px] font-bold rounded-md uppercase tracking-wide shadow-sm transition-colors ${roomView === 'grid' ? 'bg-[#0B3A64] text-white' : 'text-slate-500 hover:text-slate-700'}`}>Grid</button>
-                                            <button onClick={() => setRoomView('list')} className={`px-4 py-1.5 text-[10px] font-bold rounded-md uppercase tracking-wide shadow-sm transition-colors ${roomView === 'list' ? 'bg-[#0B3A64] text-white' : 'text-slate-500 hover:text-slate-700'}`}>List</button>
+                                            <button onClick={() => setRoomView('grid')} className={`px-4 py-1.5 text-[10px] font-bold rounded-md uppercase tracking-wide transition-all active:scale-[0.95] ${roomView === 'grid' ? 'bg-[#0B3A64] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Grid</button>
+                                            <button onClick={() => setRoomView('list')} className={`px-4 py-1.5 text-[10px] font-bold rounded-md uppercase tracking-wide transition-all active:scale-[0.95] ${roomView === 'list' ? 'bg-[#0B3A64] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>List</button>
                                         </div>
                                     </div>
 
@@ -680,8 +704,8 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                                     </div>
                                                 )}
 
-                                                <button onClick={handleResetFilters} className="p-2 text-slate-400 hover:text-[#DE7A6A] transition-colors" title="Reset Filters"><RotateCcw className="w-4 h-4" /></button>
-                                                <button className="flex items-center gap-2 px-5 py-2 bg-[#5591AB] text-white rounded-full text-[12px] font-bold hover:bg-[#467A91] transition-all shadow-sm"><Search className="w-3.5 h-3.5" />Search</button>
+                                                <button onClick={handleResetFilters} className="p-2 text-slate-400 hover:text-[#DE7A6A] transition-all hover:rotate-180 duration-500" title="Reset Filters"><RotateCcw className="w-4 h-4" /></button>
+                                                <button className="flex items-center gap-2 px-5 py-2 bg-[#5591AB] text-white rounded-full text-[12px] font-bold hover:bg-[#467A91] hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm"><Search className="w-3.5 h-3.5" />Search</button>
                                             </div>
                                         </div>
                                     </div>
@@ -758,8 +782,8 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                 <div className="px-8 py-5 border-t border-slate-50 flex justify-between items-center">
                                     <p className="text-[12px] font-bold text-slate-400">Page <span className="text-[#5591AB]">{tablePage}</span> of {totalPages || 1}</p>
                                     <div className="flex gap-3">
-                                        <button disabled={tablePage === 1} onClick={() => setTablePage(p => Math.max(1, p - 1))} className="px-4 py-2 bg-white border border-slate-200 rounded-full text-[11px] font-bold text-slate-600 disabled:opacity-30 hover:bg-slate-50 transition-all shadow-sm">Previous</button>
-                                        <button disabled={tablePage === totalPages || totalPages === 0} onClick={() => setTablePage(p => Math.min(totalPages, p + 1))} className="px-4 py-2 bg-white border border-slate-200 rounded-full text-[11px] font-bold text-slate-600 disabled:opacity-30 hover:bg-slate-50 transition-all shadow-sm">Next</button>
+                                        <button disabled={tablePage === 1} onClick={() => setTablePage(p => Math.max(1, p - 1))} className="px-4 py-2 bg-white border border-slate-200 rounded-full text-[11px] font-bold text-slate-600 disabled:opacity-30 hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all shadow-sm">Previous</button>
+                                        <button disabled={tablePage === totalPages || totalPages === 0} onClick={() => setTablePage(p => Math.min(totalPages, p + 1))} className="px-4 py-2 bg-white border border-slate-200 rounded-full text-[11px] font-bold text-slate-600 disabled:opacity-30 hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all shadow-sm">Next</button>
                                     </div>
                                 </div>
                             </div>
@@ -773,9 +797,11 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                             <h3 className="text-[14px] font-extrabold text-[#0B3A64] uppercase tracking-wide">Recent Applications</h3>
                                             <p className="text-[11px] text-slate-400 font-medium mt-0.5">Latest residency requests</p>
                                         </div>
-                                        <button className="flex items-center gap-2 px-4 py-2 bg-[#5591AB] text-white rounded-full text-[11px] font-bold hover:bg-[#467A91] transition-all shadow-sm uppercase tracking-wider">
-                                            View All <ChevronRight className="w-3.5 h-3.5" />
-                                        </button>
+                                        <Link href="/manager/applications">
+                                            <button className="text-[10px] font-black bg-[#5591AB] text-white px-5 py-2 rounded-full uppercase tracking-widest flex items-center gap-1.5 transition-all shadow-md hover:bg-[#467A91] hover:scale-[1.02] hover:shadow-lg active:scale-95 shadow-[#5591AB]/20">
+                                                View All <ChevronRight className="w-3.5 h-3.5" />
+                                            </button>
+                                        </Link>
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left border-collapse">
@@ -796,7 +822,7 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                                         : status === 'pending_admin' ? 'Forwarded'
                                                         : status === 'approved' ? 'Approved'
                                                         : status === 'rejected' ? 'Rejected'
-                                                        : status.replace(/_/g, ' ').replace(/\w/g, (c: string) => c.toUpperCase());
+                                                        : status.replace(/_/g, ' ').replace(/ \w/g, (c: string) => c.toUpperCase());
                                                     const statusColor = status === 'approved' ? 'bg-[#EEF4E7] text-[#4A7A2A]'
                                                         : status === 'rejected' ? 'bg-[#FDECEB] text-[#DE7A6A]'
                                                         : 'bg-[#FFF9E6] text-[#B08E2E]';
@@ -860,9 +886,11 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                             </div>
                                         )}
                                     </div>
-                                    <button className="mt-5 w-full py-3 border border-slate-200 text-[#0B3A64] text-[11px] font-bold rounded-xl hover:bg-slate-50 transition-colors uppercase tracking-widest flex items-center justify-center gap-2">
-                                        Manage Turnover <ChevronRight className="w-3.5 h-3.5" />
-                                    </button>
+                                    <Link href="/manager/residents">
+                                        <button className="mt-5 w-full py-3 border border-slate-200 text-[#0B3A64] text-[11px] font-bold rounded-xl hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] transition-all uppercase tracking-widest flex items-center justify-center gap-2">
+                                            Manage Turnover <ChevronRight className="w-3.5 h-3.5" />
+                                        </button>
+                                    </Link>
                                 </div>
                             </div>
                         </>
@@ -1004,7 +1032,8 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                         </div>
                     )}
                 </div>
-            </main>
+                </div>
+            </div>
 
             {/* ROOM DETAIL MODAL */}
             <Dialog open={isRoomModalOpen} onOpenChange={setIsRoomModalOpen}>
