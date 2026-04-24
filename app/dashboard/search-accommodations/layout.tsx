@@ -5,8 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 export default function SearchAccommodationsLayout({ children }: { children: React.ReactNode }) {
   return (
     <TooltipProvider>
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider>
         <AppSidebar role="student" />
+        <SidebarTrigger />
         <main className="flex-1">
           {children}
         </main>

@@ -56,13 +56,13 @@ export const studentProfileService = {
   async getMyAssignment(application_id: string) {
     const client = await supabase();
     const { data, error } = await client
-      .from("accomodation_assignment")
+      .from("accommodation_assignment")
       .select(
         `
         assignment_id,
-        move_In_Date,
-        expected_Move_Out_Date,
-        actual_Move_Out_Date,
+        move_in_date,
+        expected_move_out_date,
+        actual_move_out_date,
         application_id
       `,
       )
@@ -163,13 +163,6 @@ not yet tested
 
   async getAccommodationHistory(user_id: string) {
     const client = await supabase();
-
-    // TODO (for BACKEND): Di ko gets pano yung joint database query magwork so tinanggal ko muna etong nasa baba, for me to test ung history page
-    // accomodation_assignment(assignment_id, move_in_date, expected_move_out_date, actual_move_out_date)
-    // pa-add nalang ung accommodation_assignment(..) later on, thanks - eunel
-
-    // also NOTE: ung preferred_accommodation raw uuid sya and displayed sya sa UI, so need siguro ng getAccommodationName? function or 
-    // something to convert the uuid to the actual accommodation name?
     const { data, error } = await client
       .from("accommodation_application")
       .select(`
@@ -183,10 +176,14 @@ not yet tested
         check_out,
         number_of_companions,
         accommodation:preferred_accommodation_id (
-          name
+          name,
+          accommodation_type
         ),
         unit:unit_id (
           unit_number
+        ),
+        accommodation_assignment (
+          actual_move_out_date
         )
       `)
       .eq("user_id", user_id)

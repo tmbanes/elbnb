@@ -13,6 +13,7 @@ export enum BillingStatus {
 
 export enum BillingItemType {
   ROOM_RENT = "room_rent",
+  RESERVATION_FEE = "reservation_fee",
   SECURITY_DEPOSIT = "security_deposit",
   UTILITY = "utility",
   WATER = "water",

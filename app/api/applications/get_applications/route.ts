@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CreateApplicationService } from '@/services/application_workflow/create_application'
 import { AccommodationApplication, ApplicationStatus } from '@/types/application_workflow'
-import { getApiAuthenticatedUser } from '@/lib/auth/session'
+import { getApiAuthenticatedUser } from '@/lib/auth/server-auth'
 
 // GET USER'S APPLICATIONS
 export async function GET(request: NextRequest) {
