@@ -31,67 +31,67 @@ export function PaymentModal({
 
   const refreshPaymentDetails = async () => {
     if (!applicationId) return;
+    setIsLoadingDetails(true);
+    try {
+      const response = await fetch(`/api/applications/payment-details?applicationId=${encodeURIComponent(applicationId)}`);
+      const payload = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        setPaymentDetails(payload);
+      } else {
+        setPaymentDetails(null);
+      }
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshPaymentDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applicationId]);
+
+  const breakdownItems = useMemo(() => {
+    return Array.isArray(paymentDetails?.breakdown) ? paymentDetails.breakdown : [];
+  }, [paymentDetails]);
+
+  const hasUploadedReceipt = Boolean(paymentDetails?.receiptPath);
+
+  const handlePayment = async () => {
+    if (!uploadFile) {
+      setUploadError("Please upload a receipt before confirming.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setUploadError("");
+
     try {
       const formData = new FormData();
       formData.append("applicationId", applicationId);
       formData.append("receiptFile", uploadFile);
 
-      // Note: Make sure this endpoint matches your actual backend route for application payments
       const response = await fetch("/api/guest/applications/upload-receipt", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-        const [paymentDetails, setPaymentDetails] = useState<any>(null);
         const payload = await response.json().catch(() => ({}));
         throw new Error(payload.error || "Failed to upload receipt.");
       }
 
-        const refreshPaymentDetails = async () => {
-          if (!isOpen || !applicationId) return;
-
-          setIsLoadingDetails(true);
-
-          try {
-            const response = await fetch(`/api/applications/payment-details?applicationId=${encodeURIComponent(applicationId)}`);
-            const payload = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-              throw new Error(payload.error || "Failed to load billing details.");
-            }
-
-            setPaymentDetails(payload);
-          } catch (error) {
-            setPaymentDetails(null);
-            console.error("Failed to load payment details:", error);
-          } finally {
-            setIsLoadingDetails(false);
-          }
-        };
-
-        useEffect(() => {
-          refreshPaymentDetails();
-          // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [isOpen, applicationId]);
-
-        const breakdownItems = useMemo(() => {
-          return Array.isArray(paymentDetails?.breakdown) ? paymentDetails.breakdown : [];
-        }, [paymentDetails]);
-
       setIsOpen(false);
-      window.location.reload(); // Reload to update the grid status
-
-    } catch (err: any) {
-      setUploadError(err.message || "An error occurred while uploading.");
+      window.location.reload();
+    } catch (error: any) {
+      setUploadError(error.message || "An error occurred while uploading.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Reset file state when modal closes/opens
   const handleOpenChange = (open: boolean) => {
+    if (hasUploadedReceipt && open) return;
     setIsOpen(open);
     if (!open) {
       setUploadFile(null);
@@ -102,10 +102,12 @@ export function PaymentModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button 
-          className="w-full bg-[#78A24C] hover:bg-[#63853e] text-white font-bold text-xs py-2 rounded-lg shadow-sm transition-all"
-        > 
-          Proceed to Payment
+        <Button
+          className="w-full bg-[#78A24C] hover:bg-[#63853e] text-white font-bold text-xs py-2 rounded-lg shadow-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          disabled={hasUploadedReceipt || isLoadingDetails}
+          type="button"
+        >
+          {hasUploadedReceipt ? "Receipt Already Uploaded" : isLoadingDetails ? "Loading..." : "Proceed to Payment"}
         </Button>
       </DialogTrigger>
 
@@ -120,7 +122,6 @@ export function PaymentModal({
         </DialogHeader>
 
         <div className="py-2 space-y-4">
-          {/* Accommodation Summary */}
           <div className="space-y-2">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Accommodation Summary</h4>
             <div className="grid grid-cols-2 gap-2">
@@ -141,7 +142,6 @@ export function PaymentModal({
             </div>
           </div>
 
-          {/* Fees Breakdown Box */}
           <div className="space-y-2">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Fees Breakdown</h4>
             <div className="bg-[#F6F8D5] p-4 rounded-lg border border-[#e8e2d6] space-y-2">
@@ -168,7 +168,11 @@ export function PaymentModal({
             <div className="space-y-2">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Uploaded Receipt</h4>
               <div className="rounded-xl border border-slate-200 bg-white p-3 flex items-center gap-3">
-                <img src={paymentDetails.receiptPreviewUrl} alt="Uploaded receipt preview" className="w-14 h-14 object-cover rounded-md border border-slate-200" />
+                <img
+                  src={paymentDetails.receiptPreviewUrl}
+                  alt="Uploaded receipt preview"
+                  className="w-14 h-14 object-cover rounded-md border border-slate-200"
+                />
                 <div className="text-xs text-slate-600">
                   A receipt already exists for this invoice. You can review or cancel it from the Billing page.
                 </div>
@@ -176,7 +180,6 @@ export function PaymentModal({
             </div>
           ) : null}
 
-          {/* --- UPLOAD RECEIPT SECTION --- */}
           <div className="space-y-2">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Proof of Payment</h4>
             <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
@@ -186,11 +189,11 @@ export function PaymentModal({
                 </div>
                 <input
                   type="file"
-                  accept=".jpg, .jpeg, .pdf" // OR ".jpg, .jpeg, .pdf, image/jpeg, application/pdf" for maximum compatibility
-                  disabled={isProcessing}
+                  accept=".jpg, .jpeg, .pdf"
+                  disabled={isProcessing || hasUploadedReceipt}
                   onChange={(e) => {
                     setUploadFile(e.target.files?.[0] || null);
-                    setUploadError(""); // Clear any previous errors on change
+                    setUploadError("");
                   }}
                   className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white file:text-slate-700 hover:file:bg-slate-50 transition disabled:opacity-50"
                 />
@@ -199,7 +202,6 @@ export function PaymentModal({
             </div>
           </div>
 
-          {/* Alert/Notice */}
           <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-md border border-blue-100">
             <Info className="w-4 h-4 text-[#264384] mt-0.5 shrink-0" />
             <p className="text-[11px] text-[#264384]/80 leading-tight">
@@ -209,24 +211,24 @@ export function PaymentModal({
         </div>
 
         <DialogFooter className="flex gap-2 sm:gap-0 mt-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => setIsOpen(false)}
             className="text-[#44291B]/60 hover:text-[#44291B] hover:bg-gray-100"
             disabled={isProcessing}
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handlePayment}
             className="bg-[#264384] hover:bg-[#1e3569] text-white px-8 font-bold"
-            disabled={isProcessing || !uploadFile}
+            disabled={isProcessing || !uploadFile || hasUploadedReceipt}
           >
             {isProcessing ? (
-               <span className="inline-flex items-center gap-2">
-                 <UploadCloud className="size-4 animate-bounce" /> Uploading...
-               </span>
-            ) : "Confirm & Pay"}
+              <span className="inline-flex items-center gap-2">
+                <UploadCloud className="size-4 animate-bounce" /> Uploading...
+              </span>
+            ) : hasUploadedReceipt ? "Already Uploaded" : "Confirm & Pay"}
           </Button>
         </DialogFooter>
       </DialogContent>
