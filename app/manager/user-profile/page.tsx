@@ -12,12 +12,22 @@ export default async function ManagerProfilePage() {
 
   const supabase = await createSupabaseServerClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
+  const { data: dbMetadata } = await supabase
+    .from('dormitory_manager')
+    .select('*')
+    .eq('user_id', user.user_id)
+    .single();
+
+  const mergedMetadata = {
+    ...(authUser?.user_metadata || {}),
+    ...(dbMetadata || {})
+  };
 
   return (
     <main>
       <ProfileComponent 
         user={user} 
-        metadata={authUser?.user_metadata} 
+        metadata={mergedMetadata} 
       />
     </main>
   )

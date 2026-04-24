@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ProfileUpload } from '@/app/dashboard/ProfileUpload';
 import { EditProfileDialog } from '@/app/dashboard/EditProfileDialog';
+import { PastAccommodationCard } from './past-accommodation-card';
 import { User } from '@/types/user.types';
 import { Home, Edit3, Folder, CircleUser, User as UserIcon, Upload, ShieldCheck, MapPinHouse, Building2 } from 'lucide-react';
 import {
@@ -35,19 +36,28 @@ const nunito = Nunito({
 interface ProfileComponentProps {
   user: User;
   metadata: any;
+  pastAssignments?: any[];
 }
 
-export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
+export function ProfileComponent({ user, metadata, pastAssignments = [] }: ProfileComponentProps) {
   const [uploadPhotoOpen, setUploadPhotoOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'accommodations'>('personal');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const role = user.role;
-
-  // Metadata mapping based on role
   const isStudent = role === 'student';
   const isAdmin = role === 'housing_admin';
   const isManager = role === 'dormitory_manager';
   const isGuest = role === 'guest';
+
+  // Helper to grey out N/A values
+  const getValueClassName = (value: string, baseClass: string) => {
+    return `${baseClass} ${value === 'N/A' ? 'opacity-20 grayscale' : 'opacity-100'}`;
+  };
 
   // Role-specific labels and icons
   const secondFolderLabel = isStudent ? "Accommodations" : 
@@ -64,15 +74,70 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                                isGuest ? "Guest Info" :
                                "Employee Info";
 
-  // Role-specific metadata
-  const studentNum = metadata?.student_number || 'N/A';
+  // Filter to show only non-active assignments or provide mock data for demo
+  const historicalAssignments = pastAssignments.length > 0 ? 
+    pastAssignments.filter(a => a.assignment_status !== 'active') : 
+    (isStudent ? [
+      {
+        assignment_id: 'mock-1',
+        assignment_status: 'completed',
+        move_in_date: '2023-08-15T00:00:00Z',
+        actual_move_out_date: '2024-05-20T00:00:00Z',
+        unit: {
+          unit_number: '101',
+          accommodation: {
+            name: 'Eliazo Hall',
+            location: 'Ateneo de Manila University, Quezon City'
+          }
+        }
+      },
+      {
+        assignment_id: 'mock-2',
+        assignment_status: 'terminated',
+        move_in_date: '2022-08-15T00:00:00Z',
+        actual_move_out_date: '2022-12-15T00:00:00Z',
+        unit: {
+          unit_number: '304',
+          accommodation: {
+            name: 'Cervini Hall',
+            location: 'Loyola Heights, Quezon City'
+          }
+        }
+      },
+      {
+        assignment_id: 'mock-3',
+        assignment_status: 'completed',
+        move_in_date: '2021-08-15T00:00:00Z',
+        actual_move_out_date: '2022-05-30T00:00:00Z',
+        unit: {
+          unit_number: '212',
+          accommodation: {
+            name: 'University Hotel',
+            location: 'UP Campus, Diliman'
+          }
+        }
+      },
+      {
+        assignment_id: 'mock-4',
+        assignment_status: 'cancelled',
+        move_in_date: '2021-06-01T00:00:00Z',
+        actual_move_out_date: '2021-06-05T00:00:00Z',
+        unit: {
+          unit_number: 'G-05',
+          accommodation: {
+            name: 'International House',
+            location: 'Guerrero St., Quezon City'
+          }
+        }
+      }
+    ] : []);
+
+  // Role-specific metadata - using exact database column names
+  const studentNum = metadata?.student_num || 'N/A';
   const degreeProg = metadata?.degree_program || 'N/A';
   const college = metadata?.college || 'CAS';
   
-  const adminId = metadata?.admin_id || 'N/A';
   const officeLocation = metadata?.office_location || 'N/A';
-  
-  const employeeId = metadata?.employee_id || 'N/A';
   
   const validId = metadata?.valid_id || 'N/A';
   const purposeVisit = metadata?.purpose_visit || 'N/A';
@@ -122,7 +187,26 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                             <DialogTitle className="text-[#3E2723] font-bold">Previous Accommodations</DialogTitle>
                             <DialogDescription className="text-[#3E2723]/70">A history of your past dormitory assignments.</DialogDescription>
                           </DialogHeader>
-                          <div className="mt-4"></div>
+                          <div className="mt-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                            {historicalAssignments.length > 0 ? (
+                              historicalAssignments.map((assignment: any) => (
+                                <PastAccommodationCard
+                                  key={assignment.assignment_id}
+                                  name={assignment.unit?.accommodation?.name || 'Unknown Accommodation'}
+                                  unit={assignment.unit?.unit_number || 'N/A'}
+                                  location={assignment.unit?.accommodation?.location || 'N/A'}
+                                  startDate={isMounted ? new Date(assignment.move_in_date).toLocaleDateString() : ''}
+                                  endDate={isMounted ? new Date(assignment.actual_move_out_date || assignment.expected_move_out_date).toLocaleDateString() : ''}
+                                  status={assignment.assignment_status}
+                                />
+                              ))
+                            ) : (
+                              <div className="py-12 text-center bg-white/30 rounded-2xl border border-dashed border-[#7EB647]/30">
+                                <Home className="w-12 h-12 mx-auto mb-3 text-[#7EB647] opacity-20" />
+                                <p className={`${BodyMd} text-[#3E2723]/50 font-medium`}>No previous accommodations found.</p>
+                              </div>
+                            )}
+                          </div>
                         </DialogContent>
                       </Dialog>
                     </div>
@@ -136,14 +220,16 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                 )}
                 {isGuest && (
                   <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
-                    <div><p className={`${SubheaderLg} leading-snug`}>{purposeVisit}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Purpose of Visit</p></div>
-                    <div><p className={`${SubheaderLg} leading-snug`}>{occupancyStatus}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Occupancy Status</p></div>
+                    <div><p className={getValueClassName(purposeVisit, `${SubheaderLg} leading-snug`)}>{purposeVisit}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Purpose of Visit</p></div>
+                    <div><p className={getValueClassName(occupancyStatus, `${SubheaderLg} leading-snug`)}>{occupancyStatus}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Occupancy Status</p></div>
                   </div>
                 )}
                 {(isAdmin || isManager) && (
                   <div className="grid grid-cols-1 gap-y-5 w-full">
                     <div>
-                      <p className={`${SubheaderLg} leading-snug`}>{isAdmin ? officeLocation : "Assigned Dormitory"}</p>
+                      <p className={getValueClassName(isAdmin ? officeLocation : "Assigned Dormitory", isManager ? `text-xl md:text-2xl font-[Arial] font-bold leading-tight mb-1` : `${SubheaderLg} leading-snug`)}>
+                        {isAdmin ? officeLocation : "Assigned Dormitory"}
+                      </p>
                       <p className={`${SubheaderMd} opacity-80 leading-snug`}>{isAdmin ? "Office Location" : "Primary Management Area"}</p>
                     </div>
                   </div>
@@ -176,41 +262,33 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                   <div className="md:col-span-12">
                     <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>{firstFolderSubheader}</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                      <div><p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p></div>
+                      <div><p className={getValueClassName(formattedBirthdate, `${SubheaderLg} leading-snug`)}>{formattedBirthdate}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p></div>
                       
                       {isStudent && (
                         <>
-                          <div><p className={`${SubheaderLg} leading-snug`}>{studentNum}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Student Number</p></div>
-                          <div><p className={`${SubheaderLg} leading-snug`}>{degreeProg}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Degree Program</p></div>
-                          <div><p className={`${SubheaderLg} leading-snug`}>{college}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>College</p></div>
+                          <div><p className={getValueClassName(studentNum, `${SubheaderLg} leading-snug`)}>{studentNum}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Student Number</p></div>
+                          <div><p className={getValueClassName(degreeProg, `${SubheaderLg} leading-snug`)}>{degreeProg}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Degree Program</p></div>
+                          <div><p className={getValueClassName(college, `${SubheaderLg} leading-snug`)}>{college}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>College</p></div>
                         </>
                       )}
                       
-                      {isAdmin && (
-                        <div><p className={`${SubheaderLg} leading-snug`}>{adminId}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Admin ID</p></div>
-                      )}
-
-                      {isManager && (
-                        <div><p className={`${SubheaderLg} leading-snug`}>{employeeId}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Employee ID</p></div>
-                      )}
-
                       {isGuest && (
-                        <div><p className={`${SubheaderLg} leading-snug`}>{validId}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Valid ID Reference</p></div>
+                        <div><p className={getValueClassName(validId, `${SubheaderLg} leading-snug`)}>{validId}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Valid ID Reference</p></div>
                       )}
                     </div>
                   </div>
                   <div className="md:col-span-9">
                     <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Contact Details</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                      <div><p className={`${SubheaderLg} leading-snug break-all`}>{user.email}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Email Address</p></div>
-                      <div><p className={`${SubheaderLg} leading-snug`}>{contactNum}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Contact Number</p></div>
-                      <div><p className={`${SubheaderLg} leading-snug`}>{homeAddress}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Home Address</p></div>
+                      <div><p className={getValueClassName(user.email || 'N/A', `${SubheaderLg} leading-snug break-all`)}>{user.email}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Email Address</p></div>
+                      <div><p className={getValueClassName(contactNum, `${SubheaderLg} leading-snug`)}>{contactNum}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Contact Number</p></div>
+                      <div><p className={getValueClassName(homeAddress, `${SubheaderLg} leading-snug`)}>{homeAddress}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Home Address</p></div>
                     </div>
                   </div>
                   <div className="md:col-span-3">
                     <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Emergency Contacts</h4>
                     <div className="grid grid-cols-1 gap-6">
-                      <div><p className={`${SubheaderLg} leading-snug`}>{emergencyContact}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Emergency Contact</p></div>
+                      <div><p className={getValueClassName(emergencyContact, `${SubheaderLg} leading-snug`)}>{emergencyContact}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Emergency Contact</p></div>
                     </div>
                   </div>
                 </div>
