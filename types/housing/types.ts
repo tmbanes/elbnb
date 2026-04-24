@@ -9,6 +9,9 @@ export interface Unit {
   current_occupancy: number;
   rental_fee: number;
   unit_status: "active" | "reserved" | "occupied" | "under_maintenance" | "inactive";
+  furnishing_status?: string;
+  min_stay_duration?: number;
+  max_stay_duration?: number;
 }
 
 export interface Property {
