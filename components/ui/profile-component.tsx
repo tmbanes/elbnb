@@ -321,8 +321,8 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
             </div>
           </div>
         </div>
-      </div>
-    );
+      );
+    }
   };
 
 
