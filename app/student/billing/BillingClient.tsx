@@ -589,6 +589,11 @@ export default function BillingClient({
                           >
                             {getStatusFormat(bill?.status).toUpperCase()}
                           </Badge>
+                          {bill?.reminded_at && (
+                            <div className="mt-2 text-[11px] font-medium text-amber-700">
+                              Reminded by admin
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="px-4 py-4">
                           <div className="flex justify-end gap-2">
@@ -818,6 +823,14 @@ export default function BillingClient({
                     </div>
                   </div>
                 </div>
+
+                <Separator />
+
+                {focusedBill?.reminded_at && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Reminded by admin on {safeDateLabel(focusedBill.reminded_at, "MMM dd, yyyy HH:mm", "N/A")}.
+                  </div>
+                )}
 
                 <Separator />
 
