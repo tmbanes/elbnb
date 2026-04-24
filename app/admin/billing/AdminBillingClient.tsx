@@ -25,6 +25,14 @@ import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+const INVOICE_STATUSES: BillingStatus[] = [
+  BillingStatus.PAID,
+  BillingStatus.UNPAID,
+  BillingStatus.OVERDUE,
+  BillingStatus.PAID_LATE,
+  BillingStatus.PARTIALLY_PAID,
+];
+
 export default function AdminBillingClient({ adminId, bills, summary, activeTenants }: { adminId: string, bills: any[], summary: any, activeTenants: any[] }) {
   const supabase = getSupabaseBrowserClient();
 
@@ -157,7 +165,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
     setEditItems(existingItems.length ? existingItems : [{ type: BillingItemType.ROOM_RENT, amount: 0 }]);
     setEditDueDate(bill.due_date ? format(new Date(bill.due_date), "yyyy-MM-dd") : "");
-    setEditStatus((bill.status as BillingStatus) || BillingStatus.UNPAID);
+    const currentStatus = bill.status as BillingStatus;
+    setEditStatus(INVOICE_STATUSES.includes(currentStatus) ? currentStatus : BillingStatus.UNPAID);
   };
 
   const saveEdits = async () => {
@@ -302,7 +311,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="ALL">All Statuses</option>
-              {Object.values(BillingStatus).map(s => (
+              {INVOICE_STATUSES.map(s => (
                 <option key={s} value={s}>{s.replace(/_/g, " ").toUpperCase()}</option>
               ))}
             </select>
@@ -565,7 +574,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                   onChange={e => setEditStatus(e.target.value as BillingStatus)}
                   className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
                 >
-                  {Object.values(BillingStatus).map(status => (
+                  {INVOICE_STATUSES.map(status => (
                     <option key={status} value={status}>
                       {status.replace(/_/g, " ").toUpperCase()}
                     </option>
