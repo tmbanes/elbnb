@@ -447,6 +447,12 @@ export default function BillingClient({
           padding: 0;
         }
       }
+
+      [data-slot="dialog-overlay"] {
+        background: rgba(15, 23, 42, 0.42) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+      }
     `}</style>
       <div className="space-y-8 print:hidden">
         {USE_DUMMY_BILLING_DATA && (

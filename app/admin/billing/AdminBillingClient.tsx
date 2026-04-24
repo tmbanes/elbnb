@@ -27,6 +27,7 @@ import {
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 
 const INVOICE_STATUSES: BillingStatus[] = [
   BillingStatus.PAID,
@@ -538,25 +539,34 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       )}
 
       {/* EDITOR MODAL */}
-      {editingBill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
-          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><FileEdit className="w-5 h-5" /> Edit Invoice</h3>
-              <button onClick={() => setEditingBill(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
-            </div>
-
-            <div className="p-8 space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes</label>
-                <textarea
-                  rows={4}
-                  value={editNotes}
-                  onChange={e => setEditNotes(e.target.value)}
-                  className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-4 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  placeholder="Record calls, disputes, or manual actions taken..."
-                ></textarea>
+      <Dialog open={Boolean(editingBill)} onOpenChange={(open) => { if (!open) setEditingBill(null); }}>
+        <DialogPortal>
+          <DialogOverlay className="bg-slate-900/40 backdrop-blur-[8px] print:hidden" />
+          {editingBill && (
+            <DialogContent
+              showCloseButton={false}
+              className="z-[60] w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col rounded-3xl border border-slate-200 bg-[#FDFFF4] shadow-[0_20px_60px_rgba(15,23,42,0.25)] p-0 gap-0 text-sm"
+            >
+              <DialogTitle className="sr-only">Edit Invoice</DialogTitle>
+              <DialogDescription className="sr-only">
+                Update invoice notes, line items, due date, and status.
+              </DialogDescription>
+              <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-[#FDFFF4]">
+                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><FileEdit className="w-5 h-5" /> Edit Invoice</h3>
+                <button onClick={() => setEditingBill(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
               </div>
+
+              <div className="p-6 space-y-5 overflow-y-auto">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes</label>
+                  <textarea
+                    rows={4}
+                    value={editNotes}
+                    onChange={e => setEditNotes(e.target.value)}
+                    className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
+                    placeholder="Record calls, disputes, or manual actions taken..."
+                  ></textarea>
+                </div>
 
               <div>
                 <div className="flex justify-between items-center mb-3">
@@ -571,9 +581,9 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
                 <div className="space-y-3">
                   {editItems.map((item, index) => (
-                    <div key={index} className="flex gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div key={index} className="flex gap-2 items-center bg-slate-50/70 p-3 rounded-xl border border-slate-200">
                       <select
-                        className="flex-1 text-sm border-0 bg-white rounded-lg p-2 outline-none shadow-sm font-medium text-slate-700"
+                        className="flex-1 text-sm border border-slate-200 bg-white rounded-lg p-2 outline-none shadow-sm font-medium text-slate-700"
                         value={item.type}
                         onChange={(e) => {
                           const updated = [...editItems];
@@ -590,7 +600,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                         <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
                         <input
                           type="number"
-                          className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-white outline-none rounded-lg shadow-sm border-0 text-slate-900"
+                          className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-white outline-none rounded-lg shadow-sm border border-slate-200 text-slate-900"
                           value={item.amount || ''}
                           onChange={(e) => {
                             const updated = [...editItems];
@@ -629,7 +639,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                   type="date"
                   value={editDueDate}
                   onChange={e => setEditDueDate(e.target.value)}
-                  className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
                 />
               </div>
 
@@ -638,7 +648,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 <select
                   value={editStatus}
                   onChange={e => setEditStatus(e.target.value as BillingStatus)}
-                  className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
                 >
                   {INVOICE_STATUSES.map(status => (
                     <option key={status} value={status}>
@@ -655,30 +665,39 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               )}
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-              <button onClick={() => setEditingBill(null)} className="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
-              <button disabled={isSaving} onClick={saveEdits} className="px-5 py-2.5 font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition">
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="p-5 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-end gap-3">
+                <button onClick={() => setEditingBill(null)} className="px-5 py-2.5 font-semibold text-slate-600 bg-transparent rounded-xl hover:bg-white/70 transition">Cancel</button>
+                <button disabled={isSaving} onClick={saveEdits} className="px-5 py-2.5 font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm transition">
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </DialogContent>
+          )}
+        </DialogPortal>
+      </Dialog>
 
       {/* CREATE BILL MODAL */}
-      {isCreatingBill && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
-          <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden flex flex-col shadow-2xl max-h-[90vh]">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><Plus className="w-5 h-5" /> Create New Tenant Invoice</h3>
-              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
+      <Dialog open={isCreatingBill} onOpenChange={(open) => { if (!isSubmittingBill) setIsCreatingBill(open); }}>
+        <DialogPortal>
+          <DialogOverlay className="bg-slate-900/40 backdrop-blur-[8px] print:hidden" />
+          <DialogContent
+            showCloseButton={false}
+            className="z-[60] w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col rounded-3xl border border-slate-200 bg-[#FDFFF4] shadow-[0_20px_60px_rgba(15,23,42,0.25)] p-0 gap-0 text-sm"
+          >
+            <DialogTitle className="sr-only">Create New Tenant Invoice</DialogTitle>
+            <DialogDescription className="sr-only">
+              Create a new invoice for an active tenant assignment by setting due date and line items.
+            </DialogDescription>
+            <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-[#FDFFF4]">
+              <h3 className="font-bold text-[28px] text-slate-900 flex items-center gap-2"><Plus className="w-5 h-5" /> Create New Tenant Invoice</h3>
+              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="p-2 hover:bg-slate-200/70 rounded-full transition"><X className="w-5 h-5" /></button>
             </div>
 
-            <div className="p-8 space-y-6 overflow-y-auto">
+            <div className="p-6 space-y-5 overflow-y-auto">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Select Target Tenant</label>
                 <select
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
                   value={newBillAssignmentId}
                   onChange={e => setNewBillAssignmentId(e.target.value)}
                 >
@@ -696,7 +715,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
                 <input
                   type="date"
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
                   value={newBillDueDate}
                   onChange={e => setNewBillDueDate(e.target.value)}
                 />
@@ -706,7 +725,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes <span className="font-normal text-slate-400 text-xs ml-2">(Optional)</span></label>
                 <textarea
                   rows={2}
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
                   value={newBillNotes}
                   onChange={e => setNewBillNotes(e.target.value)}
                   placeholder="Record reasons for specific charges or adjustments..."
@@ -726,9 +745,9 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
                 <div className="space-y-3">
                   {newBillItems.map((item, index) => (
-                    <div key={index} className="flex gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div key={index} className="flex gap-2 items-center bg-slate-50/70 p-3 rounded-xl border border-slate-200">
                       <select
-                        className="flex-1 text-sm border-0 bg-white rounded-lg p-2 outline-none shadow-sm font-medium text-slate-700"
+                        className="flex-1 text-sm border border-slate-200 bg-white rounded-lg p-2 outline-none shadow-sm font-medium text-slate-700"
                         value={item.type}
                         onChange={(e) => {
                           const updated = [...newBillItems];
@@ -744,7 +763,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                         <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
                         <input
                           type="number"
-                          className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-white outline-none rounded-lg shadow-sm border-0 text-slate-900"
+                          className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-white outline-none rounded-lg shadow-sm border border-slate-200 text-slate-900"
                           value={item.amount || ''}
                           onChange={(e) => {
                             const updated = [...newBillItems];
@@ -772,20 +791,20 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
                 <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-sm font-bold text-slate-800">
                   <span>Calculated Total:</span>
-                  <span className="text-xl">₱{newBillItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}</span>
+                  <span className="text-3xl text-slate-900">₱{newBillItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
-              <button disabled={isSubmittingBill} onClick={handleCreateBill} className="px-6 py-2.5 font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm transition flex items-center gap-2">
+            <div className="p-5 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-end gap-3">
+              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="px-5 py-2.5 font-semibold text-slate-600 bg-transparent rounded-xl hover:bg-white/70 transition">Cancel</button>
+              <button disabled={isSubmittingBill} onClick={handleCreateBill} className="px-6 py-2.5 font-semibold text-white bg-[#1BAA77] rounded-xl hover:bg-[#149565] shadow-sm transition flex items-center gap-2">
                 {isSubmittingBill ? "Sending..." : <><Send className="w-4 h-4" /> Send Invoice</>}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+        </DialogPortal>
+      </Dialog>
 
       {/* PRINT OUT (PDF) EXPORT SECTION */}
       <div className="hidden print:block absolute inset-0 bg-white p-8 font-sans">
