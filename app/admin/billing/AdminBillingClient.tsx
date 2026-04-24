@@ -542,13 +542,13 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
           {viewedReceipt && (
             <DialogContent
               showCloseButton={false}
-              className="z-[60] bg-white rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] p-0 gap-0 text-sm"
+              className="z-[60] w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-[#FDFFF4] shadow-[0_20px_60px_rgba(15,23,42,0.25)] flex flex-col max-h-[90vh] p-0 gap-0 text-sm"
             >
               <DialogTitle className="sr-only">Receipt Viewer</DialogTitle>
               <DialogDescription className="sr-only">
                 Preview uploaded receipt for invoice verification and perform approval actions.
               </DialogDescription>
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-[#FDFFF4]">
               <div>
                 <h3 className="font-bold text-lg text-slate-900">Receipt Viewer</h3>
                 <p className="text-sm text-slate-500">Invoice #{viewedReceipt.billing_id.split("-")[0]}</p>
@@ -556,7 +556,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               <button onClick={() => setViewedReceipt(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
             </div>
 
-            <div className="flex-1 bg-slate-200 overflow-y-auto flex items-center justify-center p-8">
+            <div className="flex-1 bg-[#E7ECF3] overflow-y-auto flex items-center justify-center p-8">
               {receiptUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={receiptUrl} alt="Receipt" className="max-w-full rounded-lg shadow-md border border-slate-300 bg-white" />
@@ -565,7 +565,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               )}
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-white flex justify-between items-center">
+            <div className="p-6 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-slate-500">Target Amount: <span className="font-bold text-slate-900 text-lg">₱{viewedReceipt.amount.toLocaleString()}</span></p>
                 <span className={`mt-1 inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(viewedReceipt.status)}`}>

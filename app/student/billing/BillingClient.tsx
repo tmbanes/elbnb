@@ -585,9 +585,9 @@ export default function BillingClient({
                         <TableCell className="px-4 py-4">
                           <Badge
                             variant="outline"
-                            className={`border ${getStatusColor(bill?.status)} rounded-full px-2.5 py-1 font-semibold`}
+                            className={`border ${getStatusColor(bill?.status)} rounded-full px-2.5 py-1 font-bold`}
                           >
-                            {getStatusFormat(bill?.status)}
+                            {getStatusFormat(bill?.status).toUpperCase()}
                           </Badge>
                         </TableCell>
                         <TableCell className="px-4 py-4">
@@ -704,9 +704,9 @@ export default function BillingClient({
                         <TableCell className="px-4 py-3">
                           <Badge
                             variant="outline"
-                            className={`border ${getStatusColor(entry?.status)} rounded-full px-2.5 py-1 font-semibold`}
+                            className={`border ${getStatusColor(entry?.status)} rounded-full px-2.5 py-1 font-bold`}
                           >
-                            {getStatusFormat(entry?.status)}
+                            {getStatusFormat(entry?.status).toUpperCase()}
                           </Badge>
                         </TableCell>
                       </TableRow>
