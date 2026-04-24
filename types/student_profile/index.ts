@@ -50,6 +50,7 @@ export interface AccommodationApplication {
   accomodation_assignment?: AccommodationAssignment | null;
   accommodation?: {
     name: string;
+    accommodation_type: string;
   };
   unit?: {
     unit_number: string;
