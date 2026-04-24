@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import Modal from "./Modal";
 import UnitEntryCard, { UnitFormData, EMPTY_UNIT } from "./UnitEntryCard";
 
@@ -69,6 +70,7 @@ export default function AddRentalSpaceModal({
   const [managers, setManagers] = useState<Manager[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const isEditing = !!existingRental;
   const existingUnits = (existingRental?.units ?? []) as any[];
@@ -80,7 +82,7 @@ export default function AddRentalSpaceModal({
     fetch("/api/admin/housing/managers")
       .then((r) => r.json())
       .then(setManagers)
-      .catch(() => {});
+      .catch(() => { });
   }, [isOpen]);
 
   // Pre-fill / reset
@@ -111,6 +113,7 @@ export default function AddRentalSpaceModal({
     setUnits([]);
     setStep(1);
     setError(null);
+    setShowConfirm(false);
   }, [existingRental, isOpen]);
 
   const handleChange = (name: string, value: any) => {
@@ -147,21 +150,17 @@ export default function AddRentalSpaceModal({
       );
     }
     if (step === 1) {
-      const hasAtLeastOneUnit = units.length > 0;
-      const hasValidUnitCapacity = units.some(
-        (u) => Number(u.max_occupancy) > 0 && u.unit_number.trim() !== ""
-      );
-      return (
-        hasAtLeastOneUnit &&
-        hasValidUnitCapacity &&
-        units.every(
-          (u) =>
-            u.unit_number.trim() !== "" &&
-            u.max_occupancy !== "" &&
-            u.rental_fee !== "" &&
-            u.billing_period !== "" &&
-            u.furnishing_status !== ""
-        )
+      if (units.length === 0) return true;
+      return units.every(
+        (u) =>
+          u.unit_type.trim() !== "" &&
+          u.number_of_units !== "" &&
+          Number(u.number_of_units) > 0 &&
+          u.max_occupancy !== "" &&
+          Number(u.max_occupancy) > 0 &&
+          u.rental_fee !== "" &&
+          u.billing_period !== "" &&
+          u.furnishing_status !== ""
       );
     }
     if (step === 2)
@@ -174,6 +173,15 @@ export default function AddRentalSpaceModal({
     return true;
   };
 
+  const handleNext = () => {
+    if (step === 1 && !showConfirm && units.length > 0) {
+      setShowConfirm(true);
+      return;
+    }
+    setStep((s) => s + 1);
+    setShowConfirm(false);
+  };
+
   // ── Submit ─────────────────────────────────────────────────────────────────
   async function handleSubmit() {
     if (!canProceed()) return;
@@ -184,7 +192,8 @@ export default function AddRentalSpaceModal({
       const editableUnits = isEditing ? existingUnits : units;
       const unitCapacitySum = editableUnits.reduce((sum: number, unit: any) => {
         const capacity = Number(unit.max_occupancy);
-        return Number.isFinite(capacity) && capacity > 0 ? sum + capacity : sum;
+        const count = Number(unit.number_of_units || 1);
+        return Number.isFinite(capacity) && capacity > 0 ? sum + (capacity * count) : sum;
       }, 0);
       const computedTotalCapacity = unitCapacitySum;
 
@@ -234,7 +243,7 @@ export default function AddRentalSpaceModal({
         await Promise.all(
           units
             .filter(
-              (u) => u.unit_number.trim() && u.max_occupancy && u.rental_fee
+              (u) => u.unit_type.trim() && u.max_occupancy && u.rental_fee
             )
             .map((u) =>
               fetch("/api/admin/housing/units", {
@@ -242,8 +251,8 @@ export default function AddRentalSpaceModal({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   accommodation_id: accommodationId,
-                  unit_number: u.unit_number.trim(),
-                  unit_type: u.unit_type.trim() || null,
+                  unit_type: u.unit_type.trim(),
+                  number_of_units: Number(u.number_of_units),
                   max_occupancy: Number(u.max_occupancy),
                   rental_fee: Number(u.rental_fee),
                   billing_period: u.billing_period,
@@ -289,21 +298,19 @@ export default function AddRentalSpaceModal({
             <div key={i} className="flex items-center gap-2">
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors
-                ${
-                  step === i + 1
+                ${step === i + 1
                     ? "bg-[#EB8A0B] text-white"
                     : step > i + 1
-                    ? "bg-[#78A24C] text-white"
-                    : "bg-muted text-muted-foreground"
-                }`}
+                      ? "bg-[#78A24C] text-white"
+                      : "bg-muted text-muted-foreground"
+                  }`}
               >
                 {step > i + 1 ? "✓" : i + 1}
               </div>
               {i < totalSteps - 1 && (
                 <div
-                  className={`h-[2px] w-6 ${
-                    step > i + 1 ? "bg-[#78A24C]" : "bg-muted"
-                  }`}
+                  className={`h-[2px] w-6 ${step > i + 1 ? "bg-[#78A24C]" : "bg-muted"
+                    }`}
                 />
               )}
             </div>
@@ -447,210 +454,224 @@ export default function AddRentalSpaceModal({
 
         {!isEditing && (
           <>
-        {/* Step 1 — Add Units */}
-        {step === 1 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-[#44291B]">
-                  Add Units <span className="text-[#DF3538]">*</span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Total capacity is auto-calculated from all unit capacities.
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addUnit}
-                className="gap-1 border-[#EB8A0B] text-[#EB8A0B] hover:bg-[#EB8A0B] hover:text-white text-xs"
-              >
-                <Plus className="h-3 w-3" />
-                Add Unit
-              </Button>
-            </div>
+            {/* Step 1 — Add Units */}
+            {step === 1 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-[#44291B]">
+                      Add Unit Types <span className="text-[#DF3538]">*</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Total capacity is auto-calculated from all unit type capacities.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addUnit}
+                    className="gap-1 border-[#EB8A0B] text-[#EB8A0B] hover:bg-[#EB8A0B] hover:text-white text-xs"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add Unit Type
+                  </Button>
+                </div>
 
-            {units.length === 0 && (
-              <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-                Add at least one unit to continue.
+                {units.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+                    Add at least one unit type to continue.
+                  </div>
+                )}
+
+                {units.length > 0 && (
+                  <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
+                    {units.map((unit, i) => (
+                      <UnitEntryCard
+                        key={i}
+                        index={i}
+                        data={unit}
+                        onChange={updateUnit}
+                        onRemove={removeUnit}
+                        accentColor="#EB8A0B"
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {showConfirm && step === 1 && (
+                  <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 animate-in fade-in slide-in-from-top-1">
+                    <p className="font-semibold mb-1 text-xs uppercase tracking-wider opacity-70">Confirm Unit Creation</p>
+                    <p className="mb-2">Are you sure you want to create the following unit types?</p>
+                    <ul className="space-y-1 list-disc list-inside ml-2 text-xs">
+                      {units.map((u, i) => (
+                        <li key={i}>
+                          <span className="font-bold underline">{u.number_of_units}</span> units of type <span className="font-bold underline">{u.unit_type}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 
-            {units.length > 0 && (
-              <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
-                {units.map((unit, i) => (
-                  <UnitEntryCard
-                    key={i}
-                    index={i}
-                    data={unit}
-                    onChange={updateUnit}
-                    onRemove={removeUnit}
-                    accentColor="#EB8A0B"
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Step 2 — Property Details */}
-        {step === 2 && (
-          <>
-            <Field>
-              <Label htmlFor="name" className="font-semibold">
-                Property Name <span className="text-[#DF3538]">*</span>
-              </Label>
-              <Input
-                id="name"
-                value={form.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-                placeholder="e.g. Mabini Boarding House"
-                required
-              />
-            </Field>
-            <Field>
-              <Label htmlFor="location" className="font-semibold">
-                Location <span className="text-[#DF3538]">*</span>
-              </Label>
-              <Input
-                id="location"
-                value={form.location}
-                onChange={(e) => handleChange("location", e.target.value)}
-                placeholder="e.g. Near East Gate"
-                required
-              />
-            </Field>
-            <Field>
-              <Label className="font-semibold">
-                Property Type <span className="text-[#DF3538]">*</span>
-              </Label>
-              <Select
-                value={form.property_type}
-                onValueChange={(val) => handleChange("property_type", val)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="apartment">Apartment</SelectItem>
-                  <SelectItem value="boarding">Boarding House</SelectItem>
-                  <SelectItem value="transient">Transient</SelectItem>
-                  <SelectItem value="house">House</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-          </>
-        )}
-
-        {/* Step 3 — Stay Configuration */}
-        {step === 3 && (
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="shortterm"
-                className="data-[state=checked]:bg-[#EB8A0B] data-[state=checked]:border-[#EB8A0B]"
-                checked={form.allow_shortterm_stay}
-                onCheckedChange={(val) =>
-                  handleChange("allow_shortterm_stay", val)
-                }
-              />
-              <Label
-                htmlFor="shortterm"
-                className="text-sm font-semibold cursor-pointer"
-              >
-                Allow Short-Term Stay
-              </Label>
-            </div>
-
-            {form.allow_shortterm_stay && (
-              <div className="grid grid-cols-2 gap-4 pt-2">
+            {/* Step 2 — Property Details */}
+            {step === 2 && (
+              <>
                 <Field>
-                  <Label className="font-semibold">Min Stay (Days)</Label>
+                  <Label htmlFor="name" className="font-semibold">
+                    Property Name <span className="text-[#DF3538]">*</span>
+                  </Label>
                   <Input
-                    type="number"
-                    value={form.minimum_stay_days}
-                    onChange={(e) =>
-                      handleChange("minimum_stay_days", e.target.value)
-                    }
+                    id="name"
+                    value={form.name}
+                    onChange={(e) => handleChange("name", e.target.value)}
+                    placeholder="e.g. Mabini Boarding House"
+                    required
                   />
                 </Field>
                 <Field>
-                  <Label className="font-semibold">Max Stay (Days)</Label>
+                  <Label htmlFor="location" className="font-semibold">
+                    Location <span className="text-[#DF3538]">*</span>
+                  </Label>
                   <Input
-                    type="number"
-                    value={form.maximum_stay_days}
-                    onChange={(e) =>
-                      handleChange("maximum_stay_days", e.target.value)
-                    }
+                    id="location"
+                    value={form.location}
+                    onChange={(e) => handleChange("location", e.target.value)}
+                    placeholder="e.g. Near East Gate"
+                    required
                   />
                 </Field>
+                <Field>
+                  <Label className="font-semibold">
+                    Property Type <span className="text-[#DF3538]">*</span>
+                  </Label>
+                  <Select
+                    value={form.property_type}
+                    onValueChange={(val) => handleChange("property_type", val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="apartment">Apartment</SelectItem>
+                      <SelectItem value="boarding">Boarding House</SelectItem>
+                      <SelectItem value="transient">Transient</SelectItem>
+                      <SelectItem value="house">House</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </>
+            )}
+
+            {/* Step 3 — Stay Configuration */}
+            {step === 3 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="shortterm"
+                    className="data-[state=checked]:bg-[#EB8A0B] data-[state=checked]:border-[#EB8A0B]"
+                    checked={form.allow_shortterm_stay}
+                    onCheckedChange={(val) =>
+                      handleChange("allow_shortterm_stay", val)
+                    }
+                  />
+                  <Label
+                    htmlFor="shortterm"
+                    className="text-sm font-semibold cursor-pointer"
+                  >
+                    Allow Short-Term Stay
+                  </Label>
+                </div>
+
+                {form.allow_shortterm_stay && (
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <Field>
+                      <Label className="font-semibold">Min Stay (Days)</Label>
+                      <Input
+                        type="number"
+                        value={form.minimum_stay_days}
+                        onChange={(e) =>
+                          handleChange("minimum_stay_days", e.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field>
+                      <Label className="font-semibold">Max Stay (Days)</Label>
+                      <Input
+                        type="number"
+                        value={form.maximum_stay_days}
+                        onChange={(e) =>
+                          handleChange("maximum_stay_days", e.target.value)
+                        }
+                      />
+                    </Field>
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="longterm"
+                    className="data-[state=checked]:bg-[#EB8A0B] data-[state=checked]:border-[#EB8A0B]"
+                    checked={form.allow_longterm_stay}
+                    onCheckedChange={(val) =>
+                      handleChange("allow_longterm_stay", val)
+                    }
+                  />
+                  <Label
+                    htmlFor="longterm"
+                    className="text-sm font-semibold cursor-pointer"
+                  >
+                    Allow Long-Term Stay
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="deposit"
+                    className="data-[state=checked]:bg-[#EB8A0B] data-[state=checked]:border-[#EB8A0B]"
+                    checked={form.security_deposit_required}
+                    onCheckedChange={(val) =>
+                      handleChange("security_deposit_required", val)
+                    }
+                  />
+                  <Label
+                    htmlFor="deposit"
+                    className="text-sm font-semibold cursor-pointer"
+                  >
+                    Security Deposit Required
+                  </Label>
+                </div>
               </div>
             )}
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="longterm"
-                className="data-[state=checked]:bg-[#EB8A0B] data-[state=checked]:border-[#EB8A0B]"
-                checked={form.allow_longterm_stay}
-                onCheckedChange={(val) =>
-                  handleChange("allow_longterm_stay", val)
-                }
-              />
-              <Label
-                htmlFor="longterm"
-                className="text-sm font-semibold cursor-pointer"
-              >
-                Allow Long-Term Stay
-              </Label>
-            </div>
+            {/* Step 4 — Assign Manager */}
+            {step === 4 && (
+              <Field>
+                <Label className="font-semibold">
+                  Assign a Property Manager <span className="text-[#DF3538]">*</span>
+                </Label>
+                <Select
+                  value={form.manager_id}
+                  onValueChange={(val) => handleChange("manager_id", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {managers.map((m) => (
+                      <SelectItem key={m.employee_id} value={m.users.user_id}>
+                        {m.users.first_name} {m.users.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="deposit"
-                className="data-[state=checked]:bg-[#EB8A0B] data-[state=checked]:border-[#EB8A0B]"
-                checked={form.security_deposit_required}
-                onCheckedChange={(val) =>
-                  handleChange("security_deposit_required", val)
-                }
-              />
-              <Label
-                htmlFor="deposit"
-                className="text-sm font-semibold cursor-pointer"
-              >
-                Security Deposit Required
-              </Label>
-            </div>
-          </div>
-        )}
-
-        {/* Step 4 — Assign Manager */}
-        {step === 4 && (
-          <Field>
-            <Label className="font-semibold">
-              Assign a Property Manager <span className="text-[#DF3538]">*</span>
-            </Label>
-            <Select
-              value={form.manager_id}
-              onValueChange={(val) => handleChange("manager_id", val)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a manager" />
-              </SelectTrigger>
-              <SelectContent>
-                {managers.map((m) => (
-                  <SelectItem key={m.employee_id} value={m.users.user_id}>
-                    {m.users.first_name} {m.users.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-        )}
-
-        {error && (
-          <p className="text-xs font-medium text-destructive">{error}</p>
-        )}
+            {error && (
+              <p className="text-xs font-medium text-destructive">{error}</p>
+            )}
           </>
         )}
         {isEditing && error && (
@@ -680,23 +701,26 @@ export default function AddRentalSpaceModal({
             {step === 1 ? "Cancel" : "Back"}
           </Button>
           {step < totalSteps ? (
-          <Button
-            disabled={!canProceed()}
-            onClick={() => setStep((s) => s + 1)}
-            className="bg-[#EB8A0B] hover:bg-[#EFC58F] text-white"
-          >
-            Next
-          </Button>
-        ) : (
-          <Button
-            disabled={loading || !canProceed()}
-            onClick={handleSubmit}
-            className="bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
-          >
-            {loading
-              ? "Saving..."
-              : "Create Rental Space"}
-          </Button>
+            <Button
+              disabled={!canProceed()}
+              onClick={handleNext}
+              className={cn(
+                "transition-all duration-200",
+                showConfirm && step === 1
+                  ? "bg-[#DF3538] hover:bg-[#DF3538]/90 text-white"
+                  : "bg-[#EB8A0B] hover:bg-[#EFC58F] text-white"
+              )}
+            >
+              {showConfirm && step === 1 ? "Confirm & Next" : "Next"}
+            </Button>
+          ) : (
+            <Button
+              disabled={loading || !canProceed()}
+              onClick={handleSubmit}
+              className="bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
+            >
+              {loading ? "Saving..." : "Create Rental Space"}
+            </Button>
           )}
         </div>
       )}

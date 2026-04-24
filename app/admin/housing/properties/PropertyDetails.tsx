@@ -340,19 +340,9 @@ export default function PropertyDetail({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-[family-name:var(--font-archivo-black)] text-[#44291B]">Units</h2>
-            <p className="text-sm text-[#8c8b82]">Manage rooms for occupancy</p>
+            <h2 className="text-2xl font-[family-name:var(--font-archivo-black)] text-[#44291B]">Unit Types</h2>
+            <p className="text-sm text-[#8c8b82]">Manage room templates for occupancy</p>
           </div>
-
-          {/* Button for Add Unit */}
-          {/* <div className="flex items-center gap-3">
-            <Button
-              onClick={openAddUnitModal}
-              className="flex items-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-2.5 py-1 rounded-xl transition h-auto"
-            >
-              <span className="text-lg">+</span> Add Unit
-            </Button>
-          </div> */}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -461,7 +451,7 @@ export default function PropertyDetail({
               <p className={cn(
                 "text-sm font-bold text-[#8c8b82] transition-colors",
                 isDorm ? "group-hover:text-[#5591AB]" : "group-hover:text-[#EB8A0B]"
-              )}>Add New Unit</p>
+              )}>Add New Unit Type</p>
             </div>
           </button>
         </div>

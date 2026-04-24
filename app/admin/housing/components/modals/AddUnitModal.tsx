@@ -14,9 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { cn } from "@/lib/utils";
+
 interface UnitFormData {
-  unit_number: string;
   unit_type: string;
+  number_of_units: string;
   max_occupancy: string;
   rental_fee: string;
   billing_period: string;
@@ -26,8 +28,8 @@ interface UnitFormData {
 }
 
 const EMPTY_FORM: UnitFormData = {
-  unit_number: "",
   unit_type: "",
+  number_of_units: "1",
   max_occupancy: "",
   rental_fee: "",
   billing_period: "monthly",
@@ -52,11 +54,13 @@ export default function AddUnitModal({
   const [form, setForm] = useState<UnitFormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       setForm(EMPTY_FORM);
       setError(null);
+      setShowConfirm(false);
     }
   }, [isOpen]);
 
@@ -65,8 +69,12 @@ export default function AddUnitModal({
   }
 
   async function handleSubmit() {
-    if (!form.unit_number.trim()) {
-      setError("Unit number is required");
+    if (!form.unit_type.trim()) {
+      setError("Unit type is required");
+      return;
+    }
+    if (!form.number_of_units || parseInt(form.number_of_units) < 1) {
+      setError("Number of units must be at least 1");
       return;
     }
     if (!form.max_occupancy || parseInt(form.max_occupancy) < 1) {
@@ -75,6 +83,12 @@ export default function AddUnitModal({
     }
     if (!form.rental_fee || parseFloat(form.rental_fee) < 0) {
       setError("Rental fee is required");
+      return;
+    }
+
+    if (!showConfirm) {
+      setError(null);
+      setShowConfirm(true);
       return;
     }
 
@@ -87,8 +101,8 @@ export default function AddUnitModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           accommodation_id: accommodationId,
-          unit_number: form.unit_number,
-          unit_type: form.unit_type,
+          unit_type: form.unit_type.trim(),
+          number_of_units: parseInt(form.number_of_units),
           max_occupancy: parseInt(form.max_occupancy),
           rental_fee: parseFloat(form.rental_fee),
           billing_period: form.billing_period,
@@ -121,8 +135,8 @@ export default function AddUnitModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Add New Unit"
-      description="Fill in the unit details below"
+      title="Add Unit Type"
+      description="Define a new unit template for this property"
     >
       <div className="space-y-4">
         {/* Error */}
@@ -132,28 +146,32 @@ export default function AddUnitModal({
           </p>
         )}
 
-        {/* Row 1: Unit No. | Unit Type */}
+        {/* Row 1: Unit Type | Number of Units */}
         <div className="grid grid-cols-2 gap-3">
           <Field>
             <Label className="text-sm font-medium">
-              Unit No. <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              value={form.unit_number}
-              onChange={(e) => handleChange("unit_number", e.target.value)}
-              placeholder="e.g. 101"
-              disabled={loading}
-            />
-          </Field>
-          <Field>
-            <Label className="text-sm font-medium text-muted-foreground">
-              Unit Type
+              Unit Type <span className="text-destructive">*</span>
             </Label>
             <Input
               value={form.unit_type}
               onChange={(e) => handleChange("unit_type", e.target.value)}
               placeholder="e.g. 1BR, Studio"
               disabled={loading}
+              className="bg-[#FDFFF4]"
+            />
+          </Field>
+          <Field>
+            <Label className="text-sm font-medium">
+              Number of Units <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              type="number"
+              min="1"
+              value={form.number_of_units}
+              onChange={(e) => handleChange("number_of_units", e.target.value)}
+              placeholder="1"
+              disabled={loading}
+              className="bg-[#FDFFF4]"
             />
           </Field>
         </div>
@@ -171,6 +189,7 @@ export default function AddUnitModal({
               onChange={(e) => handleChange("max_occupancy", e.target.value)}
               placeholder="1"
               disabled={loading}
+              className="bg-[#FDFFF4]"
             />
           </Field>
           <Field>
@@ -184,6 +203,7 @@ export default function AddUnitModal({
               onChange={(e) => handleChange("rental_fee", e.target.value)}
               placeholder="0"
               disabled={loading}
+              className="bg-[#FDFFF4]"
             />
           </Field>
         </div>
@@ -199,7 +219,7 @@ export default function AddUnitModal({
               onValueChange={(val) => handleChange("billing_period", val)}
               disabled={loading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-[#FDFFF4]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -219,7 +239,7 @@ export default function AddUnitModal({
               onValueChange={(val) => handleChange("furnishing_status", val)}
               disabled={loading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-[#FDFFF4]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -246,6 +266,7 @@ export default function AddUnitModal({
               }
               placeholder="Optional"
               disabled={loading}
+              className="bg-[#FDFFF4]"
             />
           </Field>
           <Field>
@@ -261,21 +282,42 @@ export default function AddUnitModal({
               }
               placeholder="Optional"
               disabled={loading}
+              className="bg-[#FDFFF4]"
             />
           </Field>
         </div>
 
+        {/* Confirmation Message */}
+        {showConfirm && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 animate-in fade-in slide-in-from-top-1">
+            <p className="font-semibold">Confirm Creation</p>
+            <p>
+              Are you sure you want to create {form.number_of_units} units of
+              type <span className="font-bold underline">{form.unit_type}</span>?
+            </p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex justify-between gap-2 pt-3 border-t">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
+          <Button
+            variant="outline"
+            onClick={() => (showConfirm ? setShowConfirm(false) : onClose())}
+            disabled={loading}
+          >
+            {showConfirm ? "Back" : "Cancel"}
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-[#78A24C] hover:!bg-[#E7FAD3] text-white hover:!text-[#78A24C]"
+            className={cn(
+              "transition-all duration-200",
+              showConfirm
+                ? "bg-[#DF3538] hover:bg-[#DF3538]/90 text-white"
+                : "bg-[#78A24C] hover:!bg-[#E7FAD3] text-white hover:!text-[#78A24C]"
+            )}
           >
-            {loading ? "Adding..." : "Add Unit"}
+            {loading ? "Adding..." : showConfirm ? "Confirm & Create" : "Add Unit Type"}
           </Button>
         </div>
       </div>
