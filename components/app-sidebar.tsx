@@ -36,7 +36,7 @@ const sidebarConfig = {
   student: {
     label: "Student",
     nav: [
-      { title: "Dashboard", url: "/dashboard", icon: PieChart },
+      { title: "Dashboard", url: "/student/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/student/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/student/application", icon: Newspaper },
       { title: "Billing", url: "/student/billing", icon: Banknote },
@@ -58,7 +58,7 @@ const sidebarConfig = {
   manager: {
     label: "Dorm Manager",
     nav: [
-      { title: "Dashboard", url: "/dashboard", icon: PieChart },
+      { title: "Dashboard", url: "/manager/dashboard", icon: PieChart },
       { title: "Applications", url: "/manager/applications", icon: Newspaper },
       { title: "Residents", url: "/manager/residents", icon: Users },
     ],
@@ -67,7 +67,6 @@ const sidebarConfig = {
   guest: {
     label: "Guest",
     nav: [
-      // should be "/guest/dashboard" but use /dashboard for testing
       { title: "Dashboard", url: "/guest/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/guest/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/guest/application", icon: Newspaper },
@@ -98,11 +97,13 @@ export function AppSidebar({
     async function fetchUser() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: userProfile } = await supabase
+        const { data } = await (supabase as any)
           .from("users")
           .select("first_name, last_name, email, profile_picture_url")
           .eq("user_id", user.id)
           .single()
+
+        const userProfile = data;
 
         if (userProfile) {
           setUserData({
@@ -128,7 +129,7 @@ export function AppSidebar({
     fetchUser()
   }, [supabase])
 
-  const { toggleSidebar, state } = useSidebar()
+  const { toggleSidebar, state, setOpen } = useSidebar()
 
   if (!hasMounted) {
     return <div className="w-[var(--sidebar-width)] bg-[#8ba665] h-screen" />;
@@ -136,6 +137,14 @@ export function AppSidebar({
 
   return (
     <>
+      {/* Click-away overlay for explicitly closing the sidebar when it is expanded */}
+      {state === "expanded" && (
+        <div
+          className="fixed inset-0 z-30 bg-black/5 backdrop-blur-sm cursor-pointer"
+          onClick={() => setOpen ? setOpen(false) : toggleSidebar()}
+        />
+      )}
+
       <Sidebar
         collapsible="offcanvas"
         className="bg-[#8ba665] text-white border-none shadow-xl z-40"
@@ -158,7 +167,7 @@ export function AppSidebar({
         </SidebarContent>
 
         <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2 bg-[#8ba665] overflow-hidden">
-          <NavUser user={userData} />
+          <NavUser user={userData} role={role} />
         </SidebarFooter>
 
         <SidebarRail />

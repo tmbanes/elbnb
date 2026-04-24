@@ -3,27 +3,36 @@ import { ProfileComponent } from '@/components/ui/profile-component'
 import { getApiAuthenticatedUser } from '@/lib/auth/session'
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 
-export default async function DashboardPage() {
+export default async function StudentProfilePage() {
   const auth = await getApiAuthenticatedUser()
+
   if ("error" in auth) {
     redirect("/");
   }
 
   const user = auth.user;
 
-  // Fetch metadata from supabase auth
+  // Fetch data from database and auth metadata
   const supabase = await createSupabaseServerClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
+  const { data: dbMetadata } = await supabase
+    .from('student')
+    .select('*')
+    .eq('user_id', user.user_id)
+    .single();
 
-  if (user.role === "student") redirect("/student/dashboard");
-  if (user.role === "guest") redirect("/guest/dashboard");
-  if (user.role === "dormitory_manager") redirect("/manager/dashboard");
-  if (user.role === "housing_admin") redirect("/admin/dashboard");
+  // Merge: Database values take priority over auth metadata
+  const mergedMetadata = {
+    ...(authUser?.user_metadata || {}),
+    ...(dbMetadata || {})
+  };
 
   return (
-    <div className="p-10">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <p>Other role dashboards can be implemented here.</p>
-    </div>
+    <main>
+      <ProfileComponent
+        user={user}
+        metadata={mergedMetadata}
+      />
+    </main>
   )
 }
