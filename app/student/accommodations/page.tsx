@@ -18,7 +18,9 @@ interface AccommodationFiltersType {
   accommodationType: AccommodationType | ''
   propertyType: PropertyType | ''
   availability: 'vacant' | 'all'
-  sexFilter?: 'female' | 'male' | 'coed' | ''
+  sexFilter?: 'female' | 'male' | 'coed' | string
+  minPrice: number | ''
+  maxPrice: number | ''
 }
 
 interface UnitFiltersType {
@@ -45,6 +47,8 @@ export default function SearchAccommodationsPage() {
     propertyType: '',
     availability: 'all',
     sexFilter: '',
+    minPrice: '',
+    maxPrice: '',
   })
 
   const [unitFilters, setUnitFilters] = useState<UnitFiltersType>({
@@ -88,14 +92,30 @@ export default function SearchAccommodationsPage() {
   const dynamicSexOptions = useMemo(() => {
     const sexes = new Set(accommodations.map(a => a.accomm_sex).filter(Boolean));
     if (sexes.size === 0) return [
-      { value: 'female', label: 'Female' },
-      { value: 'male', label: 'Male' },
-      { value: 'coed', label: 'Coed' },
+      { value: 'F', label: 'Female' },
+      { value: 'M', label: 'Male' },
+      { value: 'COED', label: 'Coed' },
     ];
-    return Array.from(sexes).map(sex => ({
-      value: sex as string,
-      label: (sex as string).charAt(0).toUpperCase() + (sex as string).slice(1).toLowerCase()
-    }));
+    
+    const sexLabels: Record<string, string> = {
+      'F': 'Female',
+      'M': 'Male',
+      'COED': 'Coed',
+      'female': 'Female',
+      'male': 'Male',
+      'coed': 'Coed'
+    };
+
+    return Array.from(sexes).map(sex => {
+      const sexStr = sex as string;
+      const upperSex = sexStr.toUpperCase();
+      let label = sexLabels[upperSex] || sexLabels[sexStr] || (sexStr.charAt(0).toUpperCase() + sexStr.slice(1).toLowerCase());
+      
+      return {
+        value: sexStr,
+        label
+      };
+    });
   }, [accommodations]);
 
   // Apply accommodation filters
@@ -109,12 +129,20 @@ export default function SearchAccommodationsPage() {
 
       if (filters.propertyType) {
         filtered = filtered.filter(
-          (a) => a.accommodation_type === 'renting_space' && a.property_type === filters.propertyType
+          (a) => a.property_type?.toLowerCase() === filters.propertyType.toLowerCase()
         )
       }
 
       if (filters.sexFilter) {
-        filtered = filtered.filter((a) => a.accomm_sex === filters.sexFilter)
+        filtered = filtered.filter((a) => a.accomm_sex?.toLowerCase() === filters.sexFilter?.toLowerCase())
+      }
+
+      if (filters.minPrice !== '') {
+        filtered = filtered.filter((a) => a.min_price !== undefined && a.min_price !== null && a.min_price >= filters.minPrice)
+      }
+
+      if (filters.maxPrice !== '') {
+        filtered = filtered.filter((a) => a.min_price !== undefined && a.min_price !== null && a.min_price <= filters.maxPrice)
       }
 
       if (filters.availability === 'vacant') {
@@ -158,12 +186,12 @@ export default function SearchAccommodationsPage() {
       }
 
       if (filters.propertyType) {
-        const rentingSpaceIds = new Set(
+        const matchingIds = new Set(
           accomList
-            .filter((a) => a.accommodation_type === 'renting_space' && a.property_type === filters.propertyType)
+            .filter((a) => a.property_type?.toLowerCase() === filters.propertyType.toLowerCase())
             .map((a) => a.accommodation_id)
         )
-        filtered = filtered.filter((u) => rentingSpaceIds.has(u.accommodation_id))
+        filtered = filtered.filter((u) => matchingIds.has(u.accommodation_id))
       }
 
       if (filters.accommodationType) {
@@ -273,10 +301,6 @@ export default function SearchAccommodationsPage() {
     setUnitFilters(defaults)
     applyUnitFilters(units, defaults, accommodations, searchQuery)
   }, [units, accommodations, applyUnitFilters, searchQuery])
-
-  const showPropertyTypeInAccommodations =
-    accommodationFilters.accommodationType === 'renting_space' ||
-    accommodationFilters.accommodationType === ''
 
   const handleAccommodationDetailsClick = (accommodation: Accommodation) => {
     // Navigate to detail page or open modal
@@ -418,16 +442,19 @@ export default function SearchAccommodationsPage() {
               propertyType={accommodationFilters.propertyType}
               availability={accommodationFilters.availability}
               sexFilter={accommodationFilters.sexFilter}
+              minPrice={accommodationFilters.minPrice}
+              maxPrice={accommodationFilters.maxPrice}
               onAccommodationTypeChange={(v) =>
                 handleAccommodationFilterChange({ accommodationType: v, propertyType: '' })
               }
               onPropertyTypeChange={(v) => handleAccommodationFilterChange({ propertyType: v })}
               onAvailabilityChange={(v) => handleAccommodationFilterChange({ availability: v })}
               onSexFilterChange={(v) => handleAccommodationFilterChange({ sexFilter: v })}
+              onMinPriceChange={(v) => handleAccommodationFilterChange({ minPrice: v })}
+              onMaxPriceChange={(v) => handleAccommodationFilterChange({ maxPrice: v })}
               onResetFilters={resetAccommodationFilters}
               resultCount={filteredAccommodations.length}
               loading={loading}
-              showPropertyType={showPropertyTypeInAccommodations}
               propertyTypeOptions={dynamicPropertyTypes}
               sexOptions={dynamicSexOptions}
             />
@@ -519,6 +546,7 @@ export default function SearchAccommodationsPage() {
               onResetFilters={resetUnitFilters}
               resultCount={filteredUnits.length}
               loading={loading}
+              propertyTypeOptions={dynamicPropertyTypes}
             />
 
             {/* Results Section */}

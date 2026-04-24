@@ -11,10 +11,14 @@ interface AccommodationFiltersProps {
   propertyType: PropertyType | ''
   availability: 'vacant' | 'all'
   sexFilter?: 'female' | 'male' | 'coed' | string
+  minPrice?: number | ''
+  maxPrice?: number | ''
   onAccommodationTypeChange: (value: AccommodationType | '') => void
   onPropertyTypeChange: (value: PropertyType | '') => void
   onAvailabilityChange: (value: 'vacant' | 'all') => void
   onSexFilterChange?: (value: 'female' | 'male' | 'coed' | string) => void
+  onMinPriceChange?: (value: number | '') => void
+  onMaxPriceChange?: (value: number | '') => void
   onResetFilters: () => void
   resultCount: number
   loading?: boolean
@@ -28,10 +32,14 @@ export function AccommodationFilters({
   propertyType,
   availability,
   sexFilter = '',
+  minPrice = '',
+  maxPrice = '',
   onAccommodationTypeChange,
   onPropertyTypeChange,
   onAvailabilityChange,
   onSexFilterChange,
+  onMinPriceChange,
+  onMaxPriceChange,
   onResetFilters,
   resultCount,
   loading = false,
@@ -103,6 +111,33 @@ export function AccommodationFilters({
               disabled={loading}
               options={sexOptions}
             />
+          )}
+
+          {onMinPriceChange && onMaxPriceChange && (
+            <div className="flex flex-col gap-1.5 col-span-1 sm:col-span-2 lg:col-span-1 xl:col-span-2">
+              <label className="text-sm font-semibold" style={{ color: '#44291B' }}>Price Range</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={minPrice}
+                  onChange={(e) => onMinPriceChange(e.target.value ? Number(e.target.value) : '')}
+                  disabled={loading}
+                  className="w-full h-11 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50"
+                  style={{ backgroundColor: '#FDFFF4', color: '#44291B', '--tw-ring-color': '#264384' } as any}
+                />
+                <span style={{ color: '#44291B' }}>-</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxPrice}
+                  onChange={(e) => onMaxPriceChange(e.target.value ? Number(e.target.value) : '')}
+                  disabled={loading}
+                  className="w-full h-11 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50"
+                  style={{ backgroundColor: '#FDFFF4', color: '#44291B', '--tw-ring-color': '#264384' } as any}
+                />
+              </div>
+            </div>
           )}
 
           <div className="flex items-end h-[68px]">
