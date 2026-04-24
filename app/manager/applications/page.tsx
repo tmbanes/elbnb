@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import ReviewApplication from "./ReviewApplication";
 import {
   fetchManagerApplications,
   updateApplicationStatus,
@@ -14,6 +15,8 @@ function ApplicationRow({
   app,
   units,
   onAction,
+  onClick,
+  isSelected,
 }: {
   app: Application;
   units: Unit[];
@@ -22,6 +25,8 @@ function ApplicationRow({
     action: ManagerAction,
     unitId?: string,
   ) => Promise<void>;
+  onClick?: () => void;
+  isSelected?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,15 +59,24 @@ function ApplicationRow({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col gap-3">
+    <div
+      onClick={onClick}
+      className={`rounded-lg p-4 flex flex-col gap-3 cursor-pointer transition-all duration-200 border
+        ${
+          isSelected
+            ? "bg-[#f3f6dc] border-[#44291B] shadow-md"
+            : "bg-[#FDFFF4] border-gray-200 hover:bg-[#F6F8D5] hover:shadow-md hover:border-[#c9c3a8]"
+        }
+      `}
+    >
       {/* Applicant */}
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-gray-900">
+          <p className="text-lg font-semibold text-[#44291B]">
             {app.users?.first_name || "Unknown"}{" "}
             {app.users?.last_name || "User"}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-[#44291B]/70">
             {app.users?.email || "No email provided"}
           </p>
         </div>
@@ -72,27 +86,27 @@ function ApplicationRow({
       </div>
 
       {/* Details grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-gray-600">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-[#44291B]">
         <div>
-          <span className="block text-gray-400 uppercase tracking-wide mb-0.5">
+          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
             Unit Type
           </span>
           <span className="capitalize">{app.preferred_unit_type}</span>
         </div>
         <div>
-          <span className="block text-gray-400 uppercase tracking-wide mb-0.5">
+          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
             Check-in
           </span>
           <span>{app.check_in}</span>
         </div>
         <div>
-          <span className="block text-gray-400 uppercase tracking-wide mb-0.5">
+          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
             Check-out
           </span>
           <span>{app.check_out}</span>
         </div>
         <div>
-          <span className="block text-gray-400 uppercase tracking-wide mb-0.5">
+          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
             Duration
           </span>
           <span>
@@ -101,13 +115,13 @@ function ApplicationRow({
           </span>
         </div>
         <div>
-          <span className="block text-gray-400 uppercase tracking-wide mb-0.5">
+          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
             Companions
           </span>
           <span>{app.number_of_companions}</span>
         </div>
         <div>
-          <span className="block text-gray-400 uppercase tracking-wide mb-0.5">
+          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
             Date Submitted
           </span>
           <span>{app.date_submitted}</span>
@@ -117,19 +131,19 @@ function ApplicationRow({
       {/* Confirm prompt */}
       {confirmAction && (
         <div
-          className={`rounded px-3 py-2 text-xs flex flex-col gap-3 ${
+          className={`p-4 bg-white border border-gray-200 rounded-lg shadow-sm space-y-4 ${
             confirmAction === "forward"
               ? "bg-green-50 border border-green-200 text-green-800"
               : "bg-red-50 border border-red-200 text-red-800"
           }`}
         >
-          <div className="flex items-center justify-between gap-3">
+          <div className="text-sm font-medium text-gray-700 text-center">
             <span>
               {confirmAction === "forward"
                 ? "Forward this application to the admin for final approval?"
                 : "Reject this application? This cannot be undone."}
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={() => {
                   setConfirmAction(null);
@@ -137,7 +151,7 @@ function ApplicationRow({
                   setError(null);
                 }}
                 disabled={loading}
-                className="px-2 py-1 rounded border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 cursor-pointer"
+                className="px-2 py-1 rounded border border-gray-300 bg-white text-[#44291B] hover:bg-[#F6F8D5] cursor-pointer"
               >
                 Cancel
               </button>
@@ -165,7 +179,7 @@ function ApplicationRow({
                   setError(null); // Clear error when they select something
                 }}
                 disabled={loading}
-                className="text-xs border border-gray-300 rounded px-2 py-1.5 bg-white text-gray-900 flex-1 max-w-[200px]"
+                className="text-xs border border-gray-300 rounded px-2 py-1.5 bg-white text-[#44291B] flex-1 max-w-[200px]"
               >
                 <option value="">-- Choose a unit --</option>
                 {units.map((unit) => (
@@ -185,14 +199,14 @@ function ApplicationRow({
           <button
             onClick={() => setConfirmAction("forward")}
             disabled={loading}
-            className="px-3 py-1.5 text-xs font-medium bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-xs font-medium bg-green-100 border-green-20 hover:bg-green-200 disabled:opacity-50 text-green-700 rounded transition-colors cursor-pointer"
           >
             Forward to Admin
           </button>
           <button
             onClick={() => setConfirmAction("reject")}
             disabled={loading}
-            className="px-3 py-1.5 text-xs font-medium bg-red-100 hover:bg-red-200 disabled:opacity-50 text-red-700 rounded transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-xs font-medium bg-[#FEE2E2] hover:bg-[#FCA5A5] disabled:opacity-50 text-red-600 rounded transition-colors cursor-pointer"
           >
             Reject
           </button>
@@ -205,6 +219,7 @@ function ApplicationRow({
         </p>
       )}
     </div>
+    
   );
 }
 
@@ -215,6 +230,11 @@ export default function ManagerApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
+
+  const pagePadding = selectedApp
+  ? "px-10 sm:px-12"   // split view
+  : "px-24";           // full view
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -223,7 +243,6 @@ export default function ManagerApplicationsPage() {
     try {
       const { accommodation, applications: apps, units: fetchedUnits } =
         await fetchManagerApplications();
-
         
       setAccommodationName(accommodation.name);
       setApplications(apps);
@@ -246,20 +265,23 @@ export default function ManagerApplicationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-5">
-        <h1 className="text-xl font-semibold text-gray-900">
-          Applications for Review
-        </h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          {accommodationName
-            ? `${accommodationName} — pending your review`
-            : "Loading your assigned accommodation..."}
-        </p>
-      </div>
+    <div className="h-[100dvh] flex overflow-hidden bg-[#F6F8D5]">
 
-      <div className="max-w-4xl mx-auto px-6 py-6 flex flex-col gap-4">
+      {/* LEFT SIDE (LIST) */}
+      <div className={`flex-[7] overflow-y-auto py-10 flex flex-col gap-6 ${pagePadding}`}>
+        
+        {/* Header */}
+        <div className="border-b border-gray-200 pb-4">
+          <h1 className="text-[32px] font-bold text-[#44291B]">
+            Applications for Review
+          </h1>
+          <p className="text-sm text-[#44291B]/70">
+            {accommodationName
+              ? `${accommodationName} — pending your review`
+              : "Loading your assigned accommodation..."}
+          </p>
+        </div>
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded px-4 py-3">
             <strong>Error:</strong> {error}
@@ -267,28 +289,24 @@ export default function ManagerApplicationsPage() {
         )}
 
         {loading && (
-          <p className="text-center text-gray-400 py-20 text-sm">
+          <p className="text-center text-[#44291B] py-20 text-sm">
             Loading applications...
           </p>
         )}
 
         {!loading && !error && applications.length === 0 && (
-          <div className="text-center py-20 text-gray-400">
+          <div className="text-center py-20 text-[#44291B]">
             <p className="text-sm">No applications pending your review.</p>
           </div>
         )}
 
-        {!loading && (
+        {!loading && applications.length > 0 && (
           <>
-            {/* Count */}
-            {applications.length > 0 && (
-              <p className="text-sm text-gray-500">
-                {applications.length} application
-                {applications.length !== 1 ? "s" : ""} pending review
-              </p>
-            )}
+            <p className="text-sm text-[#44291B]/70">
+              {applications.length} application
+              {applications.length !== 1 ? "s" : ""} pending review
+            </p>
 
-            {/* List */}
             <div className="flex flex-col gap-3">
               {applications.map((app) => (
                 <ApplicationRow
@@ -296,12 +314,28 @@ export default function ManagerApplicationsPage() {
                   units={units}
                   app={app}
                   onAction={handleAction}
+                  onClick={() => setSelectedApp(app)}
+                  isSelected={selectedApp?.application_id === app.application_id}
                 />
               ))}
             </div>
           </>
         )}
       </div>
+
+      {/* RIGHT SIDE (DETAIL PANEL) */}
+      {selectedApp && (
+        <div className="flex-[3] border-l border-gray-200 overflow-y-auto">
+          <ReviewApplication
+            application={selectedApp}
+            applicationId={selectedApp.application_id}
+            units={units}
+            onAction={handleAction}
+            onClose={() => setSelectedApp(null)}
+          />
+        </div>
+      )}
+
     </div>
   );
 }
