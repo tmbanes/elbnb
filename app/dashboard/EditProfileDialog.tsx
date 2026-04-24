@@ -51,7 +51,8 @@ import {
 import { User as UserType } from '@/types/user.types';
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser-client';
 import { useRouter } from 'next/navigation';
-import { Edit3, Loader2 } from 'lucide-react';
+import { Edit3, Loader2, Camera } from 'lucide-react';
+import { ProfileUpload } from './ProfileUpload';
 
 interface EditProfileDialogProps {
   user: UserType;
@@ -96,6 +97,8 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
   const [occupancyStatus, setOccupancyStatus] = useState(metadata?.occupancy_status || '');
   
   const [employeeId, setEmployeeId] = useState(metadata?.employee_id || '');
+  const [adminId, setAdminId] = useState(metadata?.admin_id || '');
+  const [officeLocation, setOfficeLocation] = useState(metadata?.office_location || '');
   const [birthdate, setBirthdate] = useState(user.birthdate || '');
 
   const handleSave = async (e: React.FormEvent) => {
@@ -128,6 +131,8 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
           purpose_visit: purposeVisit,
           occupancy_status: occupancyStatus,
           employee_id: employeeId,
+          admin_id: adminId,
+          office_location: officeLocation,
           birthdate: birthdate,
         }
       });
@@ -171,6 +176,22 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
             <h3 className="uppercase tracking-widest text-xs font-black text-[#7EB647] flex items-center gap-2">
               Editable Details <div className="h-[2px] w-full bg-[#7EB647]/30 rounded-full" />
             </h3>
+
+            {/* Profile Picture Section */}
+            <div className="bg-[#3E2723]/5 p-4 rounded-2xl border-2 border-dashed border-[#3E2723]/20">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="shrink-0">
+                  <ProfileUpload initialProfileUrl={user.profile_picture_url} />
+                </div>
+                <div className="text-center md:text-left">
+                  <p className="text-sm font-bold text-[#3E2723]">Profile Picture</p>
+                  <p className="text-xs text-[#3E2723]/60 mt-1">
+                    Click the circle or drag a file to upload.<br/>
+                    Accepts JPG, PNG, WEBP (Max 5MB)
+                  </p>
+                </div>
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
@@ -360,6 +381,33 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                     onChange={(e) => setEmployeeId(e.target.value)}
                     className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
                     placeholder="e.g. EMP-12345"
+                  />
+                </div>
+              </div>
+            )}
+
+            {user.role === 'housing_admin' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Admin ID</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={adminId}
+                    onChange={(e) => setAdminId(e.target.value)}
+                    className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                    placeholder="e.g. ADM-99"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Office Location</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={officeLocation}
+                    onChange={(e) => setOfficeLocation(e.target.value)}
+                    className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                    placeholder="e.g. Housing Office 1"
                   />
                 </div>
               </div>

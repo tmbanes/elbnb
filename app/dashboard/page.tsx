@@ -15,11 +15,10 @@ export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  if (user.role === "student" || user.role === "guest" || user.role === "dormitory_manager") {
-    return (
-      <ProfileComponent user={user} metadata={authUser?.user_metadata} />
-    )
-  }
+  if (user.role === "student") redirect("/student/dashboard");
+  if (user.role === "guest") redirect("/guest/dashboard");
+  if (user.role === "dormitory_manager") redirect("/manager/dashboard");
+  if (user.role === "housing_admin") redirect("/admin/dashboard");
 
   return (
     <div className="p-10">

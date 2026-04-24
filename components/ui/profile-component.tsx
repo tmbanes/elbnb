@@ -150,21 +150,26 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
   const formattedBirthdate = user.birthdate || 'N/A';
 
   const renderContent = () => {
-    return (
-      <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full min-h-[280px] sm:min-h-[350px] md:min-h-[400px]">
-        {/* Second Folder (Accommodations/Admin/etc) */}
-        <div
-          onClick={() => setActiveTab('accommodations')}
-          className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 rounded-tl-[200px] sm:rounded-tl-[400px] md:rounded-tl-[700px] rounded-tr-[40px] sm:rounded-tr-[60px] md:rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations'
-            ? 'h-full'
-            : 'hover:bg-[#8bc453] hover:shadow-lg'
-            }`}
-          style={{ filter: 'url(#grain)', backgroundBlendMode: 'multiply' }}
-        >
-          <div className="flex items-center justify-end gap-3 text-[#3E2723] pt-6 mb-4">
-            <SecondFolderIcon className="w-6 h-6 stroke-[2.5]" />
-            <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>{secondFolderLabel}</h3>
-          </div>
+    if (role === "student" || role === "guest" || role === "dormitory_manager" || role === "housing_admin") {
+      return (
+        <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full min-h-[280px] sm:min-h-[350px] md:min-h-[400px]">
+          {/* Accommodations Container */}
+          {role !== "dormitory_manager" && role !== "housing_admin" && (
+            <div
+              onClick={() => setActiveTab('accommodations')}
+              className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 rounded-tl-[200px] sm:rounded-tl-[400px] md:rounded-tl-[700px] rounded-tr-[40px] sm:rounded-tr-[60px] md:rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations'
+                ? 'h-full'
+                : 'hover:bg-[#8bc453] hover:shadow-lg'
+                }`}
+              style={{ filter: 'url(#grain)', backgroundBlendMode: 'multiply' }}
+            >
+              {/* Accommodations title */}
+              <div className="flex items-center justify-end gap-3 text-[#3E2723] pt-6 mb-4">
+                <Home className="w-6 h-6 stroke-[2.5]" />
+                <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Accommodations</h3>
+              </div>
+            </div>
+          )}
 
           <div className="pb-6 pt-3 pl-4 sm:pl-10 md:pl-[180px] pr-4 sm:pr-6 md:pr-12">
             <div className="grid grid-cols-2 gap-y-8 gap-x-6 md:gap-x-8 w-full">
@@ -275,6 +280,26 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
                       {isGuest && (
                         <div><p className={getValueClassName(validId, `${SubheaderLg} leading-snug`)}>{validId}</p><p className={`${SubheaderMd} opacity-80 leading-snug`}>Valid ID Reference</p></div>
                       )}
+
+                      {role === 'housing_admin' && (
+                        <>
+                          <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Admin Info</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
+                            </div>
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{metadata?.admin_id || 'N/A'}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Admin ID</p>
+                            </div>
+                            <div>
+                              <p className={`${SubheaderLg} leading-snug`}>{metadata?.office_location || 'N/A'}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Office Location</p>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="md:col-span-9">
@@ -318,7 +343,7 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
         </div>
 
         {/* House & Profile breakout */}
-        <div className="absolute top-[-40px] sm:top-[-60px] md:top-[-70px] left-[10px] sm:left-[20px] md:left-[30px] z-20 w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] md:w-[280px] md:h-[280px]">
+        <div className="absolute top-[-40px] sm:top-[-60px] md:top-[-70px] left-[10px] sm:left-[20px] md:left-[30px] z-[60] w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] md:w-[280px] md:h-[280px]">
           <div className="absolute left-1/2 top-[64%] -translate-x-1/2 -translate-y-1/2 w-[63%] h-[63%] z-10 rounded-full overflow-hidden bg-[#3E2723] flex items-center justify-center">
             {user.profile_picture_url ? (
               <img src={user.profile_picture_url} alt="Profile" className="w-full h-full object-cover" />
@@ -344,7 +369,10 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
                 <DialogDescription className="text-[#3E2723]/70">Upload a new photo to your account.</DialogDescription>
               </DialogHeader>
               <div className="mt-4">
-                <ProfileUpload initialProfileUrl={user.profile_picture_url} />
+                <ProfileUpload
+                  initialProfileUrl={user.profile_picture_url}
+                  onUploadSuccess={() => setUploadPhotoOpen(false)}
+                />
               </div>
             </DialogContent>
           </Dialog>

@@ -36,7 +36,7 @@ const sidebarConfig = {
   student: {
     label: "Student",
     nav: [
-      { title: "Dashboard", url: "/dashboard", icon: PieChart },
+      { title: "Dashboard", url: "/student/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/student/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/student/application", icon: Newspaper },
       { title: "Billing", url: "/student/billing", icon: Banknote },
@@ -57,7 +57,7 @@ const sidebarConfig = {
   manager: {
     label: "Dorm Manager",
     nav: [
-      { title: "Dashboard", url: "/dashboard", icon: PieChart },
+      { title: "Dashboard", url: "/manager/dashboard", icon: PieChart },
       { title: "Applications", url: "/manager/applications", icon: Newspaper },
       { title: "Sample", url: "#", icon: Users },
     ],
@@ -66,7 +66,6 @@ const sidebarConfig = {
   guest: {
     label: "Guest",
     nav: [
-      // should be "/guest/dashboard" but use /dashboard for testing
       { title: "Dashboard", url: "/guest/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/guest/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/guest/application", icon: Newspaper },
