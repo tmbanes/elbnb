@@ -86,12 +86,6 @@ export default function ApplicationPreview({
                 </p>
               </div>
 
-              {/* SIGNATURE */}
-              <div className="pt-10">
-                <div className="w-64 border-t border-black"></div>
-                <p className="text-xs text-gray-500 mt-1">Applicant Signature</p>
-              </div>
-
             </div>
           </div>
         </div>
