@@ -33,9 +33,9 @@ export function StudentDashboard({ user, metadata }: StudentDashboardProps) {
   // Extract info from metadata
   const studentNum = metadata?.student_number || 'N/A';
   const degreeProg = metadata?.degree_program || 'N/A';
-  const college = metadata?.college || 'CAS'; // Providing CAS as requested placeholder if empty
-  const contactNum = metadata?.contact_number || '09662981806'; // Example generic placeholder
-  const homeAddress = metadata?.home_address || 'Tondo, Manila';
+  const college = metadata?.college || 'N/A'; // Providing CAS as requested placeholder if empty
+  const contactNum = metadata?.contact_number || 'N/A'; // Example generic placeholder
+  const homeAddress = metadata?.home_address || 'Tondo, N/A';
   const emergencyContact = metadata?.emergency_contact || studentNum; // Use studentNum as placeholder as per image
 
   // Safely format birthdate to avoid SSR-Client hydration mismatches
