@@ -87,6 +87,11 @@ export function AppSidebar({
     email: "",
     avatar: "/avatars/shadcn.jpg",
   })
+  const [hasMounted, setHasMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setHasMounted(true)
+  }, [])
 
   React.useEffect(() => {
     async function fetchUser() {
@@ -123,6 +128,10 @@ export function AppSidebar({
   }, [supabase])
 
   const { toggleSidebar, state } = useSidebar()
+
+  if (!hasMounted) {
+    return <div className="w-[var(--sidebar-width)] bg-[#8ba665] h-screen" />;
+  }
 
   return (
     <>
@@ -161,6 +170,7 @@ export function AppSidebar({
         onClick={toggleSidebar}
         className="fixed -bottom-20 -left-6 w-40 h-40 bg-[#8ba665] rounded-full z-30 transition-transform duration-500 ease-out hover:-translate-y-6 outline-none shadow-2xl cursor-pointer group"
         title="Open Sidebar"
+        suppressHydrationWarning
       >
         <img 
           src="/logo/logo_house.png" 

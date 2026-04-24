@@ -93,6 +93,10 @@ export default function ApplicationList({
             unit_id,
             preferred_unit_type,
             preferred_accommodation_id,
+            check_in,
+            check_out,
+            number_of_companions,
+            duration_of_stay,
             users (
               first_name,
               last_name
@@ -148,7 +152,16 @@ export default function ApplicationList({
 
     console.log("DATA:", data);
 
-    setApplications(data ?? []);
+    const mappedData = (data as any[])?.map((app) => ({
+      ...app,
+      users: Array.isArray(app.users) ? app.users[0] : app.users,
+      accommodation: Array.isArray(app.accommodation)
+        ? app.accommodation[0]
+        : app.accommodation,
+      unit: Array.isArray(app.unit) ? app.unit[0] : app.unit,
+    }));
+
+    setApplications(mappedData ?? []);
 
     setLoading(false);
   }
