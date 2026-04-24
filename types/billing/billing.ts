@@ -33,7 +33,6 @@ export interface BillingInformation {
   transaction_reference: string | null;
   receipt_files?: string[] | null;
 
-  admin_flag?: boolean;
   internal_notes?: string | null;
   reminded_at?: Date | null;
 }

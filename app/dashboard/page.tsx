@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ProfileUpload } from './ProfileUpload'
-import { getApiAuthenticatedUser } from '@/lib/auth/session'
+import { getApiAuthenticatedUser } from '@/lib/auth/server-auth'
 import { NextResponse } from 'next/server'
 
 export default async function DashboardPage() {

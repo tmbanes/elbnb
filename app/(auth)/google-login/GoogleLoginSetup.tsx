@@ -54,8 +54,8 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#8dbd59] p-4 font-sans selection:bg-emerald-500/30">
       <div className="w-full max-w-md space-y-6">
-
-
+        
+        
 
         {!currentUser && (
           <div>

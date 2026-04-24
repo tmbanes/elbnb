@@ -23,7 +23,7 @@ import {
 //style constants
 const label_style = "block text-xs font-semibold uppercase tracking-wider text-slate-300"
 
-const field_style =
+const field_style = 
   "rounded-full border-none bg-[#fcf4d9] px-4 py-1.5 text-base " +
   "text-[#2d1a12] placeholder-[#2d1a12]/30 shadow-sm " +
   "transition-all outline-none";
@@ -127,7 +127,7 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
                   <p className="text-sm text-red-500">{status}</p>
                 )}
 
-                <Button type="submit" className="w-full rounded-full bg-[#fbbc05] text-[#2d1a12] font-semibold hover:bg-[#f9d776]">
+                 <Button type="submit" className="w-full rounded-full bg-[#fbbc05] text-[#2d1a12] font-semibold hover:bg-[#f9d776]">
                   Log In
                 </Button>
 

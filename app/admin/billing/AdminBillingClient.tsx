@@ -16,7 +16,6 @@ import {
   X,
   Send,
   Download,
-  Flag,
   FileEdit,
   Image as ImageIcon,
   Plus,
@@ -53,8 +52,9 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
   const [editingBill, setEditingBill] = useState<any>(null);
   const [editNotes, setEditNotes] = useState("");
-  const [editFlag, setEditFlag] = useState(false);
-  const [editAmount, setEditAmount] = useState<number>(0);
+  const [editItems, setEditItems] = useState<{ type: BillingItemType, amount: number }[]>([
+    { type: BillingItemType.ROOM_RENT, amount: 0 }
+  ]);
   const [editDueDate, setEditDueDate] = useState<string>("");
   const [editStatus, setEditStatus] = useState<BillingStatus>(BillingStatus.UNPAID);
   const [isSaving, setIsSaving] = useState(false);
@@ -68,6 +68,11 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     { type: BillingItemType.ROOM_RENT, amount: 0 }
   ]);
   const [isSubmittingBill, setIsSubmittingBill] = useState(false);
+
+  const looksLikeJson = (value?: string | null) => {
+    const trimmed = String(value || "").trim();
+    return trimmed.startsWith("{") || trimmed.startsWith("[");
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -140,26 +145,38 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
   const openEditor = (bill: any) => {
     setEditingBill(bill);
-    setEditNotes(bill.internal_notes || "");
-    setEditFlag(bill.admin_flag || false);
-    setEditAmount(Number(bill.amount || 0));
+    setEditNotes(looksLikeJson(bill.internal_notes) ? "" : (bill.internal_notes || ""));
+    const existingItems = Array.isArray(bill.billing_item) && bill.billing_item.length > 0
+      ? bill.billing_item
+          .map((item: any) => ({
+            type: item.type as BillingItemType,
+            amount: Number(item.amount || 0),
+          }))
+          .filter((item: any) => Number.isFinite(item.amount))
+      : [{ type: BillingItemType.ROOM_RENT, amount: Number(bill.amount || 0) }];
+
+    setEditItems(existingItems.length ? existingItems : [{ type: BillingItemType.ROOM_RENT, amount: 0 }]);
     setEditDueDate(bill.due_date ? format(new Date(bill.due_date), "yyyy-MM-dd") : "");
     setEditStatus((bill.status as BillingStatus) || BillingStatus.UNPAID);
   };
 
   const saveEdits = async () => {
     if (!editingBill) return;
+    if (editItems.length === 0) return alert("Add at least one invoice line item.");
+    if (editItems.some(item => item.amount <= 0)) return alert("All line items must have an amount greater than 0.");
+
+    console.log('Saving invoice:', editingBill.billing_id, 'Items:', editItems, 'Amount:', editItems.reduce((s, i) => s + i.amount, 0));
+
     setIsSaving(true);
     try {
       await adminUpdateInvoiceAction(
         editingBill.billing_id,
         {
           internal_notes: editNotes,
-          admin_flag: editFlag,
-          amount: editAmount,
           due_date: editDueDate ? new Date(`${editDueDate}T00:00:00`).toISOString() : undefined,
           status: editStatus,
         },
+        editItems,
         adminId,
       );
       setEditingBill(null);
@@ -192,31 +209,38 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     if (newBillItems.some(item => item.amount <= 0)) return alert("All items must have an amount greater than 0!");
 
     setIsSubmittingBill(true);
-    const dueDate = new Date(newBillDueDate);
-    const billingPeriodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
+    try {
+      const dueDate = new Date(newBillDueDate);
+      const billingPeriodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
 
-    // Automatically sum amount for the parent status based on the items attached.
-    const totalAmount = newBillItems.reduce((acc, curr) => acc + curr.amount, 0);
+      // Automatically sum amount for the parent status based on the items attached.
+      const totalAmount = newBillItems.reduce((acc, curr) => acc + curr.amount, 0);
 
-    const payload = {
-      assignment_id: newBillAssignmentId,
-      amount: totalAmount,
-      billing_period_date: billingPeriodDate,
-      due_date: dueDate,
-      status: BillingStatus.UNPAID,
-      payment_method: "cash",
-      internal_notes: newBillNotes
-    };
+      const payload = {
+        assignment_id: newBillAssignmentId,
+        amount: totalAmount,
+        billing_period_date: billingPeriodDate,
+        due_date: dueDate,
+        status: BillingStatus.UNPAID,
+        payment_method: "cash",
+        internal_notes: newBillNotes
+      };
 
-    const { error } = await adminCreateBillAction(payload, newBillItems);
+      const result = await adminCreateBillAction(payload, newBillItems);
+      const billingId = (result as any)?.data?.billing_id as string | undefined;
+      const mode = (result as any)?.mode as string | undefined;
 
-    setIsSubmittingBill(false);
-    if (error) {
-      alert("Error: " + (typeof error === 'object' ? JSON.stringify(error, null, 2) : error));
-    } else {
-      alert("Bill created successfully!");
+      if (billingId) {
+        setSearchQuery(billingId);
+      }
+
+      alert(mode === "updated" ? "Invoice updated for this assignment." : "Bill created successfully!");
       setIsCreatingBill(false);
       window.location.reload();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to create bill.");
+    } finally {
+      setIsSubmittingBill(false);
     }
   };
 
@@ -449,19 +473,6 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
             <div className="p-8 space-y-6">
               <div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editFlag}
-                    onChange={e => setEditFlag(e.target.checked)}
-                    className="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500"
-                  />
-                  <span className="font-semibold text-slate-800 flex items-center gap-2">Flag this invoice <Flag className="w-4 h-4 text-amber-500" /></span>
-                </label>
-                <p className="text-xs text-slate-500 ml-8 mt-1">Flagging pinpoints invoices requiring special administrative attention.</p>
-              </div>
-
-              <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes</label>
                 <textarea
                   rows={4}
@@ -472,28 +483,79 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 ></textarea>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Amount</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={Number.isFinite(editAmount) ? editAmount : 0}
-                    onChange={e => setEditAmount(Number(e.target.value || 0))}
-                    className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  />
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <label className="block text-sm font-semibold text-slate-700">Invoice Line Items</label>
+                  <button
+                    onClick={() => setEditItems([...editItems, { type: BillingItemType.OTHER, amount: 0 }])}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition"
+                  >
+                    <Plus className="w-3 h-3" /> Add Item
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
-                  <input
-                    type="date"
-                    value={editDueDate}
-                    onChange={e => setEditDueDate(e.target.value)}
-                    className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  />
+                <div className="space-y-3">
+                  {editItems.map((item, index) => (
+                    <div key={index} className="flex gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <select
+                        className="flex-1 text-sm border-0 bg-white rounded-lg p-2 outline-none shadow-sm font-medium text-slate-700"
+                        value={item.type}
+                        onChange={(e) => {
+                          const updated = [...editItems];
+                          updated[index].type = e.target.value as BillingItemType;
+                          setEditItems(updated);
+                        }}
+                      >
+                        {Object.values(BillingItemType).map(type => (
+                          <option key={type} value={type}>{type.replace(/_/g, " ").toUpperCase()}</option>
+                        ))}
+                      </select>
+
+                      <div className="relative w-32">
+                        <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
+                        <input
+                          type="number"
+                          className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-white outline-none rounded-lg shadow-sm border-0 text-slate-900"
+                          value={item.amount || ''}
+                          onChange={(e) => {
+                            const updated = [...editItems];
+                            updated[index].amount = Number(e.target.value);
+                            setEditItems(updated);
+                          }}
+                          placeholder="0"
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          if (editItems.length === 1) return;
+                          const updated = [...editItems];
+                          updated.splice(index, 1);
+                          setEditItems(updated);
+                        }}
+                        className={`p-2 rounded-lg transition ${editItems.length > 1 ? 'text-red-500 hover:bg-red-50' : 'text-slate-300'}`}
+                        disabled={editItems.length <= 1}
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
+
+                <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-sm font-bold text-slate-800">
+                  <span>Total:</span>
+                  <span className="text-xl">₱{editItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
+                <input
+                  type="date"
+                  value={editDueDate}
+                  onChange={e => setEditDueDate(e.target.value)}
+                  className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                />
               </div>
 
               <div>
@@ -691,3 +753,4 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     </>
   );
 }
+
