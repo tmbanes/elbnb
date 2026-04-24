@@ -51,26 +51,17 @@ export function AccommodationFilters({
     { value: 'house', label: 'House' },
   ],
   sexOptions = [
-    { value: 'female', label: 'Female' },
-    { value: 'male', label: 'Male' },
-    { value: 'coed', label: 'Coed' },
+    { value: 'F', label: 'Female' },
+    { value: 'M', label: 'Male' },
+    { value: 'COED', label: 'Coed' },
   ],
 }: AccommodationFiltersProps) {
   return (
-    <div className="rounded-xl shadow-sm border border-gray-200 p-5 mb-8" style={{ backgroundColor: '#FDFFF4' }}>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-semibold" style={{ color: '#44291B' }}>Filters</h2>
-        <button
-          onClick={onResetFilters}
-          className="text-sm font-medium transition hover:opacity-80"
-          style={{ color: '#264384' }}
-        >
-          Reset Filters
-        </button>
-      </div>
+    <div className="rounded-xl shadow-sm border border-gray-200 px-5 py-4 mb-8" style={{ backgroundColor: '#FDFFF4' }}>
+      <div className="flex items-center gap-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
 
-      <div className="flex flex-col gap-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {/* Accommodation Type */}
+        <div className="flex-shrink-0 min-w-[150px]">
           <FilterDropdown
             label="Accommodation Type"
             value={accommodationType}
@@ -81,8 +72,11 @@ export function AccommodationFilters({
               { value: 'renting_space', label: 'Renting Space' },
             ]}
           />
+        </div>
 
-          {showPropertyType && (
+        {/* Property Type */}
+        {showPropertyType && (
+          <div className="flex-shrink-0 min-w-[140px]">
             <FilterDropdown
               label="Property Type"
               value={propertyType}
@@ -90,8 +84,11 @@ export function AccommodationFilters({
               disabled={loading}
               options={propertyTypeOptions}
             />
-          )}
+          </div>
+        )}
 
+        {/* Availability */}
+        <div className="flex-shrink-0 min-w-[150px]">
           <FilterDropdown
             label="Availability"
             value={availability}
@@ -102,8 +99,11 @@ export function AccommodationFilters({
               { value: 'all', label: 'All Accommodations' },
             ]}
           />
+        </div>
 
-          {onSexFilterChange && (
+        {/* Sex Options */}
+        {onSexFilterChange && (
+          <div className="flex-shrink-0 min-w-[120px]">
             <FilterDropdown
               label="Sex Options"
               value={sexFilter}
@@ -111,40 +111,56 @@ export function AccommodationFilters({
               disabled={loading}
               options={sexOptions}
             />
-          )}
-
-          {onMinPriceChange && onMaxPriceChange && (
-            <div className="flex flex-col gap-1.5 col-span-1 sm:col-span-2 lg:col-span-1 xl:col-span-2">
-              <label className="text-sm font-semibold" style={{ color: '#44291B' }}>Price Range</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={minPrice}
-                  onChange={(e) => onMinPriceChange(e.target.value ? Number(e.target.value) : '')}
-                  disabled={loading}
-                  className="w-full h-11 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50"
-                  style={{ backgroundColor: '#FDFFF4', color: '#44291B', '--tw-ring-color': '#264384' } as any}
-                />
-                <span style={{ color: '#44291B' }}>-</span>
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={maxPrice}
-                  onChange={(e) => onMaxPriceChange(e.target.value ? Number(e.target.value) : '')}
-                  disabled={loading}
-                  className="w-full h-11 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50"
-                  style={{ backgroundColor: '#FDFFF4', color: '#44291B', '--tw-ring-color': '#264384' } as any}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-end h-[68px]">
-            <ResultsCount count={resultCount} label="accommodations" />
           </div>
+        )}
+
+        {/* Price Range */}
+        {onMinPriceChange && onMaxPriceChange && (
+          <div className="flex-shrink-0 flex flex-col gap-1.5">
+            <label className="text-sm font-semibold whitespace-nowrap" style={{ color: '#44291B' }}>Price Range</label>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min="0"
+                placeholder="Min"
+                value={minPrice}
+                onChange={(e) => onMinPriceChange(e.target.value ? Number(e.target.value) : '')}
+                disabled={loading}
+                className="w-24 h-[42px] px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50"
+                style={{ backgroundColor: '#FDFFF4', color: '#44291B', '--tw-ring-color': '#264384' } as any}
+              />
+              <span className="text-gray-400 text-sm">–</span>
+              <input
+                type="number"
+                min="0"
+                placeholder="Max"
+                value={maxPrice}
+                onChange={(e) => onMaxPriceChange(e.target.value ? Number(e.target.value) : '')}
+                disabled={loading}
+                className="w-24 h-[42px] px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50"
+                style={{ backgroundColor: '#FDFFF4', color: '#44291B', '--tw-ring-color': '#264384' } as any}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Results + Reset */}
+        <div className="flex-shrink-0 flex flex-col items-end gap-1 self-end pb-0.5">
+          <ResultsCount count={resultCount} label="accommodations" />
+          <button
+            onClick={onResetFilters}
+            className="text-xs font-medium transition hover:opacity-80 whitespace-nowrap"
+            style={{ color: '#264384' }}
+          >
+            Reset Filters
+          </button>
         </div>
+
       </div>
     </div>
   )
 }
+

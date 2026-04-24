@@ -283,6 +283,8 @@ export default function SearchAccommodationsPage() {
       propertyType: '',
       availability: 'all',
       sexFilter: '',
+      minPrice: '',
+      maxPrice: '',
     }
     setAccommodationFilters(defaults)
     applyAccommodationFilters(accommodations, units, defaults, searchQuery)

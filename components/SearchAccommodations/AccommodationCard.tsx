@@ -19,10 +19,28 @@ export function AccommodationCard({
 
   return (
     <div className="flex-shrink-0 w-72 min-h-[420px] rounded-2xl shadow-md hover:shadow-xl transition-shadow overflow-hidden group flex flex-col" style={{ backgroundColor: '#FDFFF4' }}>
-      {/* Image Placeholder */}
-      <div className="h-48 bg-gradient-to-br from-gray-300 to-gray-400 relative overflow-hidden flex-shrink-0">
-        <div className="absolute inset-0 bg-gray-300 group-hover:scale-105 transition-transform duration-300" />
-        
+      {/* Image */}
+      <div className="h-48 relative overflow-hidden flex-shrink-0 bg-gray-200">
+        {accommodation.image ? (
+          <img
+            src={accommodation.image}
+            alt={accommodation.name}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              // Hide broken image and reveal placeholder behind it
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
+            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <polyline strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span className="mt-2 text-xs text-gray-400 font-medium">No Image Available</span>
+          </div>
+        )}
+
         {/* Availability Chip */}
         <div className="absolute top-3 left-3 z-10">
           {totalVacantSlots > 5 ? (
