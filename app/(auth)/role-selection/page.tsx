@@ -1,4 +1,3 @@
-
 import { redirect } from "next/navigation";
 import RoleSelection from "./RoleSelection";
 import { getUserWithRole } from "@/lib/auth/client-auth";

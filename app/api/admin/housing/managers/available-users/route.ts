@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // app/api/admin/housing/managers/available-users/route.ts
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
@@ -32,7 +31,6 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
-=======
 // app/api/admin/housing/managers/available-users/route.ts
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
@@ -80,4 +78,3 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
->>>>>>> origin/develop
