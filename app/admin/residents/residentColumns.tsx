@@ -60,22 +60,22 @@ export const getResidentColumns = (
         const status = row.getValue("status") as string;
 
         const statusMapping: Record<string, { label: string; style: string }> = {
-          pending: { label: "Awaiting", style: "bg-[#ebf2f4] text-[#5591AB]" },
-          waiting_payment: { label: "Awaiting", style: "bg-[#ebf2f4] text-[#5591AB]" },
           active: { label: "Active", style: "bg-[#E7FAD3] text-[#78A24C]" },
-          completed: { label: "Completed", style: "bg-gray-100 text-gray-700" },
-          terminated: { label: "Terminated", style: "bg-red-50 text-red-700" },
-          cancelled: { label: "Cancelled", style: "bg-gray-100 text-gray-700" },
+          completed: { label: "Completed", style: "bg-[#E0F2FE] text-[#0369A1]" },
+          cancelled: { label: "Cancelled", style: "bg-[#F3F4F6] text-[#6B7280]" },
+          terminated: { label: "Terminated", style: "bg-[#FEF2F2] text-[#B91C1C]" },
+          waiting_payment: { label: "Waiting Payment", style: "bg-[#FFF7ED] text-[#EA580C]" },
+          pending: { label: "Pending Approval", style: "bg-[#EEF2FF] text-[#4F46E5]" },
         };
 
         const { label, style } = statusMapping[status] || { label: status, style: "bg-gray-100 text-gray-600" };
 
         return (
           <div className={cn(
-            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+            "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
             style
           )}>
-            <span className="mr-1.5 h-2 w-2 rounded-full bg-current" />
+            <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-current" />
             {label}
           </div>
         )

@@ -8,22 +8,44 @@ import { Loader2 } from "lucide-react";
 import { Resident } from "@/app/admin/residents/types";
 import { DUMMY_RESIDENTS } from "@/app/admin/residents/dummyData";
 
+interface AccommodationOption {
+  accommodation_id: string;
+  name: string;
+}
 
 interface Props {
   apiEndpoint?: string;
   title?: string;
 }
 
-
-
 export default function ResidentManagement({ apiEndpoint = "/api/manager/residents", title = "Resident Management" }: Props) {
-  const [residents, setResidents] = useState<Resident[]>(DUMMY_RESIDENTS);
-  const [selectedId, setSelectedId] = useState<string | null>(DUMMY_RESIDENTS[0]?.assignment_id || null);
-  const [loading, setLoading] = useState(false);
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [accommodations] = useState<AccommodationOption[]>([
+    { accommodation_id: "acc-1", name: "University Hall" },
+    { accommodation_id: "acc-2", name: "Garden Residences" },
+    { accommodation_id: "acc-3", name: "Sunrise Apartments" }
+  ]);
 
   const selectedResident = residents.find(r => r.assignment_id === selectedId) || null;
+
+  // Dummy manager residents - in production, fetch from API based on logged-in manager
+  useEffect(() => {
+    // Filter residents to only show those under manager's accommodations
+    const accNames = new Set(accommodations.map(a => a.name));
+    const filteredResidents = DUMMY_RESIDENTS.filter(r =>
+      accNames.has(r.unit.accommodation.name)
+    );
+    setResidents(filteredResidents);
+
+    // Update selectedId to first filtered resident
+    if (filteredResidents.length > 0) {
+      setSelectedId(filteredResidents[0].assignment_id);
+    }
+  }, [accommodations]);
 
   // Dummy action handler
   async function handleAction(assignmentId: string, action: string, date: string, details?: any) {
@@ -54,11 +76,12 @@ export default function ResidentManagement({ apiEndpoint = "/api/manager/residen
         overflow-y-auto
         ${selectedId ? "hidden lg:block" : "block"}
       `}>
-        <ResidentList 
-          residents={residents} 
-          selectedId={selectedId} 
+        <ResidentList
+          residents={residents}
+          selectedId={selectedId}
           onSelect={setSelectedId}
           title={title}
+          accommodations={accommodations}
         />
       </div>
 
@@ -73,8 +96,8 @@ export default function ResidentManagement({ apiEndpoint = "/api/manager/residen
         ${selectedId ? "block" : "hidden lg:flex"}
       `}>
         {selectedResident ? (
-          <ResidentDetail 
-            resident={selectedResident} 
+          <ResidentDetail
+            resident={selectedResident}
             onAction={handleAction}
             onBack={() => setSelectedId(null)}
             isLoading={actionLoading}

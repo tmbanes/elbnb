@@ -77,7 +77,21 @@ export default function ResidentDetail({
 
   const isAwaiting = resident.assignment_status === "waiting_payment" || resident.assignment_status === "pending";
   const isActive = resident.assignment_status === "active";
-  const isCheckedOut = resident.assignment_status === "completed" || resident.assignment_status === "terminated" || resident.assignment_status === "cancelled";
+  const isCompleted = resident.assignment_status === "completed";
+  const isTerminated = resident.assignment_status === "terminated";
+  const isCancelled = resident.assignment_status === "cancelled";
+  const isCheckedOut = isCompleted || isTerminated || isCancelled;
+
+  const statusMapping: Record<string, { label: string; style: string }> = {
+    active: { label: "Active Stay", style: "bg-[#E7FAD3] text-[#78A24C]" },
+    completed: { label: "Completed", style: "bg-[#E0F2FE] text-[#0369A1]" },
+    cancelled: { label: "Cancelled", style: "bg-[#F3F4F6] text-[#6B7280]" },
+    terminated: { label: "Terminated", style: "bg-[#FEF2F2] text-[#B91C1C]" },
+    waiting_payment: { label: "Waiting Payment", style: "bg-[#FFF7ED] text-[#EA580C]" },
+    pending: { label: "Pending Approval", style: "bg-[#EEF2FF] text-[#4F46E5]" },
+  };
+
+  const currentStatus = statusMapping[resident.assignment_status] || { label: resident.assignment_status, style: "bg-gray-100 text-gray-600" };
 
   const formatDate = (date: string | null | undefined) => {
     if (!date) return "—";
@@ -98,7 +112,15 @@ export default function ResidentDetail({
         </button>
       </div>
 
-      <div className="p-8 space-y-8">
+      <div className="p-8 pb-4 space-y-4">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
+              {resident.users.first_name} {resident.users.last_name}
+            </h1>
+            <p className="text-sm text-[#44291B]/60 font-medium">{resident.users.email}</p>
+          </div>
+        </div>
 
         <Card className="overflow-hidden border-[#e8e2d6] bg-[#FDFFF4] shadow-sm rounded-xl">
           <CardContent className="p-0">
@@ -185,11 +207,16 @@ export default function ResidentDetail({
               {/* Event: Checked Out */}
               {isCheckedOut && (
                 <div className="relative flex items-start">
-                  <div className="absolute left-[-26px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-gray-400 shadow-sm z-10" />
+                  <div className={cn(
+                    "absolute left-[-26px] top-1.5 h-3 w-3 rounded-full border-2 border-white shadow-sm z-10",
+                    isCompleted ? "bg-[#0369A1]" : isTerminated ? "bg-[#B91C1C]" : "bg-gray-400"
+                  )} />
                   <div>
-                    <p className="text-sm font-bold text-[#44291B] leading-none mb-1">Checked out</p>
+                    <p className="text-sm font-bold text-[#44291B] leading-none mb-1">
+                      {isCompleted ? "Completed Stay" : isTerminated ? "Stay Terminated" : "Assignment Cancelled"}
+                    </p>
                     <p className="text-xs text-[#44291B]/50 font-medium">
-                      {formatDate(resident.actual_move_out_date)} • Transferred to off-campus.
+                      {formatDate(resident.actual_move_out_date || resident.expected_move_out_date)}
                     </p>
                   </div>
                 </div>
@@ -201,11 +228,19 @@ export default function ResidentDetail({
         {/* Status Message & Actions */}
         <div className="pt-4 space-y-4">
           {confirmingAction ? (
-            <div className="bg-[#FDFFF4] border-[#264384] rounded-2xl p-6 shadow-xl animate-in zoom-in-95 duration-200">
+            <div className={cn(
+              "bg-[#FDFFF4] rounded-2xl p-6 shadow-xl animate-in zoom-in-95 duration-200 border",
+              confirmingAction === "terminate" ? "border-[#DF3538]" :
+                confirmingAction === "record-move-in" ? "border-[#78A24C]" :
+                  "border-[#264384]"
+            )}>
               <div className="flex items-center gap-3 mb-4">
                 <div className={cn(
                   "h-10 w-10 rounded-full flex items-center justify-center",
-                  confirmingAction === "override" ? "bg-amber-100 text-amber-700" : "bg-[#264384]/10 text-[#264384]"
+                  confirmingAction === "override" ? "bg-amber-100 text-amber-700" :
+                    confirmingAction === "terminate" ? "bg-[#FBB0B2]/20 text-[#DF3538]" :
+                      confirmingAction === "record-move-in" ? "bg-[#E7FAD3] text-[#78A24C]" :
+                        "bg-[#264384]/10 text-[#264384]"
                 )}>
                   {confirmingAction === "record-move-in" ? <CalendarArrowDown className="w-5 h-5" /> :
                     confirmingAction === "override" ? <RefreshCw className="w-5 h-5" /> :
@@ -310,7 +345,11 @@ export default function ResidentDetail({
                         ? (targetUnit
                           ? "bg-[#EB8A0B] hover:bg-[#EFC58F] text-white shadow-amber-600/20"
                           : "bg-[#44291B]/5 text-[#44291B]/30 shadow-none")
-                        : "bg-[#264384] hover:bg-[#1a2d5a] text-white shadow-[#264384]/20"
+                        : confirmingAction === "terminate"
+                          ? "bg-[#DF3538] hover:bg-[#B52A2D] text-white shadow-[#DF3538]/20"
+                          : confirmingAction === "record-move-in"
+                            ? "bg-[#78A24C] hover:bg-[#60833D] text-white shadow-[#78A24C]/20"
+                            : "bg-[#264384] hover:bg-[#1a2d5a] text-white shadow-[#264384]/20"
                     )}
                     disabled={isLoading || (confirmingAction === "override" && !targetUnit)}
                   >
@@ -323,14 +362,30 @@ export default function ResidentDetail({
 
           ) : (
             <>
-              {isAwaiting && (
-                <div className="bg-[#E7FAD3] border border-[#78A24C] rounded-2xl p-6 space-y-4">
+              {/* STATUS-SPECIFIC MESSAGING & ACTIONS */}
+
+              {resident.assignment_status === "pending" && (
+                <div className="bg-[#EEF2FF] border border-[#4F46E5]/30 rounded-2xl p-6 space-y-4">
                   <div className="flex gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-[#78A24C] shrink-0 mt-0.5" />
+                    <Clock className="h-5 w-5 text-[#4F46E5] shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold text-[#44291B]/80 text-sm">Ready for move-in</p>
+                      <p className="font-bold text-[#44291B]/80 text-sm">Awaiting Admin Approval</p>
                       <p className="text-xs text-[#44291B]/70 mt-1 leading-relaxed">
-                        Expected check-in by {formatDate(resident.move_in_date)}. Record physical arrival below.
+                        The assignment has been made by the Dorm Manager and is currently pending final application approval from the Admin.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {resident.assignment_status === "waiting_payment" && (
+                <div className="bg-[#FFF7ED] border border-[#EA580C]/30 rounded-2xl p-6 space-y-4">
+                  <div className="flex gap-3">
+                    <AlertCircle className="h-5 w-5 text-[#EA580C] shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-[#44291B]/80 text-sm">Approved & Awaiting Arrival</p>
+                      <p className="text-xs text-[#44291B]/70 mt-1 leading-relaxed">
+                        Resident has been approved. Record their physical arrival below to activate the stay.
                       </p>
                     </div>
                   </div>
@@ -339,32 +394,22 @@ export default function ResidentDetail({
                       setConfirmingAction("record-move-in");
                       setActionDate(new Date().toISOString().split('T')[0]);
                     }}
-                    className="w-full bg-[#78A24C] hover:bg-[#AED39E] text-white font-bold h-11 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#EB8A0B] hover:bg-[#B56C0D] text-white font-bold h-11 rounded-xl shadow-lg shadow-[#264384]/10"
                     disabled={isLoading}
                   >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CalendarArrowDown className="w-4 h-4 mr-2" />
-                        Record move-in
-                      </>
-                    )}
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Record Physical Move-in"}
                   </Button>
                 </div>
               )}
 
               {isActive && (
                 <div className="space-y-4">
-                  <div className="bg-[#EFC58F]/30 border border-[#EB8A0B] rounded-2xl p-6 flex gap-3">
-                    <AlertCircle className="h-5 w-5 text-[#EB8A0B] shrink-0 mt-0.5" />
+                  <div className="bg-[#E7FAD3] border border-[#78A24C] rounded-2xl p-6 flex gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-[#78A24C] shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold text-[#44291B]/80 text-sm">Active stay</p>
+                      <p className="font-bold text-[#44291B]/80 text-sm">Currently Active Stay</p>
                       <p className="text-xs text-[#44291B]/70 mt-1 leading-relaxed">
-                        Expected move-out: {formatDate(resident.expected_move_out_date)}. Record departure when the resident vacates.
+                        Resident is currently staying in Unit {resident.unit.unit_number}. Expected move-out: {formatDate(resident.expected_move_out_date)}.
                       </p>
                     </div>
                   </div>
@@ -376,11 +421,11 @@ export default function ResidentDetail({
                         setActionDate(new Date().toISOString().split('T')[0]);
                       }}
                       variant="outline"
-                      className="bg-[#FDFFF4] border-[#e8e2d6] text-[#44291B] font-bold h-11 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                      className="bg-[#FDFFF4] border-[#e8e2d6] text-[#44291B] font-bold h-11 rounded-xl shadow-sm hover:[#F3F5CB]"
                       disabled={isLoading}
                     >
                       <CalendarArrowUp className="w-4 h-4 mr-2" />
-                      Record move-out
+                      Move-out
                     </Button>
                     <Button
                       onClick={() => {
@@ -388,17 +433,59 @@ export default function ResidentDetail({
                         setActionDate(new Date().toISOString().split('T')[0]);
                       }}
                       variant="outline"
-                      className="bg-[#FDFFF4] border-[#e8e2d6] text-[#44291B] font-bold h-11 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                      className="bg-[#FDFFF4] border-[#e8e2d6] text-[#DF3538] font-bold h-11 rounded-xl shadow-sm hover:bg-[#FBB0B2]/20 hover:text-[#DF3538]"
                       disabled={isLoading}
                     >
-                      Early move-out
+                      Terminate
                       <ShieldAlert className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
                 </div>
               )}
 
-              {showOverride && !isCheckedOut && (
+              {isCompleted && (
+                <div className="bg-[#E0F2FE] border border-[#0369A1]/30 rounded-2xl p-6">
+                  <div className="flex gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-[#0369A1] shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-[#44291B]/80 text-sm">Stay Completed</p>
+                      <p className="text-xs text-[#44291B]/70 mt-1 leading-relaxed">
+                        The resident has successfully completed their stay and moved out on {formatDate(resident.actual_move_out_date)}.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {isTerminated && (
+                <div className="bg-[#FEF2F2] border border-[#B91C1C]/30 rounded-2xl p-6">
+                  <div className="flex gap-3">
+                    <ShieldAlert className="h-5 w-5 text-[#B91C1C] shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-[#B91C1C] text-sm">Stay Terminated</p>
+                      <p className="text-xs text-[#B91C1C]/70 mt-1 leading-relaxed">
+                        This stay was terminated by administration before the expected end date. Effective: {formatDate(resident.actual_move_out_date)}.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {isCancelled && (
+                <div className="bg-[#F3F4F6] border border-gray-300 rounded-2xl p-6">
+                  <div className="flex gap-3">
+                    <AlertCircle className="h-5 w-5 text-gray-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-gray-700 text-sm">Assignment Cancelled</p>
+                      <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                        The accommodation assignment was cancelled. This often happens automatically if payment is not received within the required timeframe.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {showOverride && isActive && (
                 <Button
                   onClick={() => {
                     setConfirmingAction("override");
@@ -412,20 +499,6 @@ export default function ResidentDetail({
                   <RefreshCw className="w-3.5 h-3.5" />
                   Admin Override: Transfer to Different Unit
                 </Button>
-              )}
-
-              {isCheckedOut && (
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-                  <div className="flex gap-3">
-                    <Clock className="h-5 w-5 text-gray-400 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm">Checked out</p>
-                      <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                        This resident's stay has ended. Room {resident.unit.unit_number} is now available for new assignments.
-                      </p>
-                    </div>
-                  </div>
-                </div>
               )}
             </>
           )}

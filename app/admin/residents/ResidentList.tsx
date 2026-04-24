@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Resident } from "./types";
 
-import { Search, Users, Plus, Clock, CheckCircle2, History, UserCheck, UserPlus, Filter } from "lucide-react";
+import { Search, Users, Plus, Clock, CheckCircle2, History, UserCheck, UserPlus, Filter, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DataTable } from "@/components/ui/data-table";
 import { getResidentColumns, ResidentColumn } from "./residentColumns";
@@ -19,28 +19,56 @@ import {
 
 
 
+interface AccommodationOption {
+  accommodation_id: string;
+  name: string;
+}
+
 interface Props {
   residents: Resident[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   title: string;
+  accommodations?: AccommodationOption[];
 }
 
 type FilterStatus = "all" | "awaiting" | "active" | "checked-out";
 
-export default function ResidentList({ residents, selectedId, onSelect, title }: Props) {
+export default function ResidentList({ residents, selectedId, onSelect, title, accommodations = [] }: Props) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterStatus>("all");
+  const [accommodationFilter, setAccommodationFilter] = useState<string>("all");
+
+  // Get unique accommodations from residents if no accommodations prop provided
+  const availableAccommodations = accommodations.length > 0
+    ? accommodations
+    : Array.from(new Set(residents.map(r => r.unit.accommodation.name))).map(name => ({
+      accommodation_id: name,
+      name
+    }));
+
+  const showAccommodationFilter = availableAccommodations.length > 1;
 
   const filtered = residents.filter(r => {
     const fullName = `${r.users.first_name} ${r.users.last_name}`.toLowerCase();
-    const matchesSearch = fullName.includes(search.toLowerCase()) || r.users.email.toLowerCase().includes(search.toLowerCase());
+    const searchLower = search.toLowerCase();
+    const matchesSearch = fullName.includes(searchLower) || r.users.email.toLowerCase().includes(searchLower);
 
-    if (filter === "all") return matchesSearch;
-    if (filter === "awaiting") return matchesSearch && (r.assignment_status === "waiting_payment" || r.assignment_status === "pending");
-    if (filter === "active") return matchesSearch && r.assignment_status === "active";
-    if (filter === "checked-out") return matchesSearch && (r.assignment_status === "completed" || r.assignment_status === "terminated" || r.assignment_status === "cancelled");
-    return matchesSearch;
+    // Filter by accommodation name (matching the value in Select)
+    const matchesAccommodation = accommodationFilter === "all" ||
+      r.unit.accommodation.name.trim().toLowerCase() === accommodationFilter.trim().toLowerCase();
+
+    // Filter by status
+    let matchesStatus = true;
+    if (filter === "awaiting") {
+      matchesStatus = r.assignment_status === "waiting_payment" || r.assignment_status === "pending";
+    } else if (filter === "active") {
+      matchesStatus = r.assignment_status === "active";
+    } else if (filter === "checked-out") {
+      matchesStatus = r.assignment_status === "completed" || r.assignment_status === "terminated" || r.assignment_status === "cancelled";
+    }
+
+    return matchesSearch && matchesAccommodation && matchesStatus;
   });
 
   const tableData: ResidentColumn[] = filtered.map((r) => ({
@@ -83,6 +111,33 @@ export default function ResidentList({ residents, selectedId, onSelect, title }:
 
         {/* Filters */}
         <div className="flex items-center gap-3">
+          {/* Accommodation Filter - Only show if more than 1 accommodation */}
+          {showAccommodationFilter && (
+            <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] bg-[#FDFFF4]">
+              <Building2 className="w-4 h-4 text-[#44291B]/50" />
+              <Select
+                value={accommodationFilter}
+                onValueChange={(val) => setAccommodationFilter(val)}
+              >
+                <SelectTrigger className="w-[180px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] h-10">
+                  <SelectValue placeholder="All Properties" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md font-[family-name:var(--font-archivo)]">
+                  <SelectItem value="all" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer text-sm">All Properties</SelectItem>
+                  {availableAccommodations.map((acc) => (
+                    <SelectItem
+                      key={acc.accommodation_id}
+                      value={acc.name}
+                      className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer text-sm"
+                    >
+                      {acc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] bg-[#FDFFF4]">
             <Filter className="w-4 h-4 text-[#44291B]/50" />
             <Select

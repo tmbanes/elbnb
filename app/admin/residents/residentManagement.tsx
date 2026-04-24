@@ -8,6 +8,10 @@ import { Loader2 } from "lucide-react";
 import { Resident } from "./types";
 import { DUMMY_RESIDENTS } from "./dummyData";
 
+interface AccommodationOption {
+    accommodation_id: string;
+    name: string;
+}
 
 interface Props {
     apiEndpoint?: string;
@@ -20,7 +24,13 @@ export default function ResidentManagement({ apiEndpoint = "/api/admin/residents
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
-
+    const [accommodations] = useState<AccommodationOption[]>([
+        { accommodation_id: "acc-1", name: "University Hall" },
+        { accommodation_id: "acc-2", name: "Garden Residences" },
+        { accommodation_id: "acc-3", name: "Sunrise Apartments" },
+        { accommodation_id: "acc-4", name: "Greenwood Oaks" },
+        { accommodation_id: "acc-5", name: "Skyline Tower" }
+    ]);
 
     const selectedResident = residents.find(r => r.assignment_id === selectedId) || null;
 
@@ -145,6 +155,7 @@ export default function ResidentManagement({ apiEndpoint = "/api/admin/residents
                     selectedId={selectedId}
                     onSelect={setSelectedId}
                     title={title}
+                    accommodations={accommodations}
                 />
             </div>
 
