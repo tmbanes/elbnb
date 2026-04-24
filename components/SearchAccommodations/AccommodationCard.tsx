@@ -15,32 +15,63 @@ export function AccommodationCard({
 }: AccommodationCardProps) {
   const vacantUnits = units.filter((unit) => unit.vacant_slots > 0)
   const hasVacant = vacantUnits.length > 0
+  const totalVacantSlots = vacantUnits.reduce((acc, curr) => acc + curr.vacant_slots, 0)
 
   return (
-    <div className="flex-shrink-0 w-64 rounded-2xl shadow-md hover:shadow-lg transition-shadow overflow-hidden cursor-pointer group -mr-12" style={{ backgroundColor: '#FDFFF4' }}>
+    <div className="flex-shrink-0 w-72 min-h-[420px] rounded-2xl shadow-md hover:shadow-xl transition-shadow overflow-hidden group flex flex-col" style={{ backgroundColor: '#FDFFF4' }}>
       {/* Image Placeholder */}
-      <div className="h-48 bg-gradient-to-b from-gray-300 to-gray-200 relative overflow-hidden">
+      <div className="h-48 bg-gradient-to-br from-gray-300 to-gray-400 relative overflow-hidden flex-shrink-0">
         <div className="absolute inset-0 bg-gray-300 group-hover:scale-105 transition-transform duration-300" />
+        
+        {/* Availability Chip */}
+        <div className="absolute top-3 left-3 z-10">
+          {totalVacantSlots > 5 ? (
+            <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+              Available
+            </span>
+          ) : totalVacantSlots > 0 ? (
+            <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+              Limited
+            </span>
+          ) : (
+            <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+              Full
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-5 flex-1 flex flex-col">
         {/* Title */}
-        <h3 className="text-base font-bold mb-1 truncate" style={{ color: '#44291B' }}>
-          {accommodation.name.toUpperCase()}
+        <h3 className="text-lg font-bold mb-2 line-clamp-2 min-h-[3.5rem]" style={{ color: '#44291B', lineHeight: '1.75rem' }} title={accommodation.name}>
+          {accommodation.name}
         </h3>
 
-        {/* Address */}
-        <p className="text-xs mb-4 line-clamp-2" style={{ color: '#44291B' }}>
-          {accommodation.location}
-        </p>
+        {/* Key Details */}
+        <div className="flex flex-col gap-2 mb-4 flex-1">
+          <div className="flex items-start gap-2 text-sm" style={{ color: '#44291B' }}>
+            <svg className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <span className="line-clamp-2 min-h-[2.5rem]" style={{ lineHeight: '1.25rem' }}>{accommodation.location}</span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#264384' }}>
+            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {units.length > 0 ? `From ₱${Math.min(...units.map(u => u.rental_fee)).toLocaleString()}` : 'Price not set'}
+          </div>
+        </div>
 
-        {/* Buttons */}
-        <div className="flex gap-2">
+        {/* Actions */}
+        <div className="flex flex-col gap-2 mt-auto">
           <button
-            className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${
+            className={`w-full px-4 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm ${
               hasVacant
-                ? 'text-white hover:opacity-90'
+                ? 'text-white hover:opacity-90 active:scale-[0.98]'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
             style={{
@@ -48,18 +79,21 @@ export function AccommodationCard({
             }}
             disabled={!hasVacant}
           >
-            SHARED ROOM
+            Apply
           </button>
           <button
-            onClick={() => onDetailsClick(accommodation)}
-            className="flex-1 px-3 py-2 rounded-md text-xs font-semibold hover:opacity-90 transition"
+            onClick={(e) => {
+              e.preventDefault();
+              onDetailsClick(accommodation);
+            }}
+            className="w-full px-4 py-2.5 rounded-lg text-sm font-bold transition-all active:scale-[0.98] bg-transparent hover:bg-black/5"
             style={{
               borderColor: '#264384',
               color: '#264384',
               borderWidth: '2px',
             }}
           >
-            DETAILS
+            View Accommodation
           </button>
         </div>
       </div>

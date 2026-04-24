@@ -60,6 +60,7 @@ export interface Accommodation {
     allowed_application: string; // ISO date string
     property_type?: PropertyType;
     no_of_units: number;
+    accomm_sex?: string | null;
 }
 
 // BASED ON SUPABASE PROPERTIES
