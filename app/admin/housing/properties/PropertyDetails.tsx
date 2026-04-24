@@ -19,7 +19,11 @@ import {
   UserMinus,
   LayoutGrid,
   List,
-  Info
+  Info,
+  Plus,
+  X,
+  Upload,
+  Image as ImageIcon
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -71,6 +75,10 @@ export default function PropertyDetail({
   const [activeUnit, setActiveUnit] = useState<any | null>(null);
   const [unitAction, setUnitAction] = useState<"view" | "edit" | "delete" | null>(null);
   const [addUnitModalOpen, setAddUnitModalOpen] = useState(false);
+  const [propertyImages, setPropertyImages] = useState<string[]>([
+    "https://placehold.co/600x400/e2e4c0/44291B?text=Property+Photo+1",
+    "https://placehold.co/600x400/e2e4c0/44291B?text=Property+Photo+2"
+  ]);
   const isDorm = property.accommodation_type === "dormitory";
 
   // DUMMY COMPLAINTS FOR DEMO PURPOSES ONLY
@@ -133,6 +141,22 @@ export default function PropertyDetail({
     if (onAddUnit) onAddUnit();
   }
 
+  // dummy add image functionality for testing
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPropertyImages(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function removeImage(index: number) {
+    setPropertyImages(prev => prev.filter((_, i) => i !== index));
+  }
+
   return (
     <div className="p-6 space-y-6 font-[family-name:var(--font-archivo)]">
       <Button variant="link" onClick={onBack} className="pl-0 text-[#264384] h-auto py-0">
@@ -180,22 +204,42 @@ export default function PropertyDetail({
                 </div>
 
                 {/* Vertical Divider */}
+                <div className="hidden lg:block w-px h-12 bg-[#e2e4c0]" />
+
+                {/* Assigned Manager (Moved to Header) */}
+                {property.dormitory_manager && (
+                  <div className="hidden xl:flex items-center gap-2.5 bg-transparent">
+                    <Avatar className="h-7 w-7 border shadow-sm shrink-0">
+                      <AvatarFallback className="bg-[#264384] text-white text-[10px] font-black">
+                        {property.dormitory_manager.users.first_name[0]}
+                        {property.dormitory_manager.users.last_name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col leading-tight pr-1">
+                      <span className="text-sm font-bold text-[#44291B] whitespace-nowrap">
+                        {property.dormitory_manager.users.first_name} {property.dormitory_manager.users.last_name}
+                      </span>
+                      <span className="text-xs text-[#8c8b82] font-medium whitespace-nowrap">
+                        Dorm Manager
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Vertical Divider */}
                 <div className="hidden md:block w-px h-12 bg-[#e2e4c0]" />
 
                 {/*Occupancy */}
-                <div className="flex flex-col gap-1.5 shrink-0 w-[300px]">
+                <div className="flex flex-col gap-1.5 shrink-0 w-[240px]">
                   <div className="flex justify-between items-end">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-[11px] font-semibold text-[#44291B] uppercase tracking-wider">
-                        Property Occupancy
+                        Occupancy
                       </span>
-                      <p className="text-[10px] text-[#8c8b82] italic leading-tight mb-0.5">
-                        {occupancyPercentage}% capacity reached
-                      </p>
                     </div>
-                    <span className="text-2xl font-bold text-[#264384] leading-none ml-2 mb-0.5">
+                    <span className="text-xl font-bold text-[#264384] leading-none ml-2 mb-0.5">
                       {currentOccupancy}
-                      <span className="text-sm font-normal text-[#8c8b82]"> / {totalCapacity}</span>
+                      <span className="text-xs font-normal text-[#8c8b82]"> / {totalCapacity}</span>
                     </span>
                   </div>
                   <Progress
@@ -215,37 +259,7 @@ export default function PropertyDetail({
           </CardContent>
 
           <CollapsibleContent className="border-t border-[#e2e4c0] bg-[#FDFFF4]">
-            <div className="p-5 flex flex-col md:flex-row gap-8">
-
-              {/* Left Column: Manager Section */}
-              {property.dormitory_manager && (
-                <div className="space-y-3 shrink-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#44291B] pl-2">
-                    Assigned Manager
-                  </p>
-                  <div className="flex items-center gap-3 bg-[#FDFFF4] p-3 rounded-xl border border-[#e2e4c0] min-w-[280px]">
-                    <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-                      <AvatarImage />
-                      <AvatarFallback className="bg-[#264384] text-white font-bold">
-                        {property.dormitory_manager.users.first_name[0]}
-                        {property.dormitory_manager.users.last_name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <span className="text-lg font-bold text-[#44291B]">
-                        {property.dormitory_manager.users.first_name} {property.dormitory_manager.users.last_name}
-                      </span>
-                      <span className="text-xs text-[#8c8b82]">
-                        {property.dormitory_manager.users.email}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="hidden md:block w-px bg-[#e2e4c0] self-stretch" />
-
-              {/* Right Column: Details */}
+            <div className="p-5">
               <div className="space-y-3 flex-1">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#44291B] pl-1">
                   Property Details
@@ -271,6 +285,50 @@ export default function PropertyDetail({
                       <ConfigDetail label="Max Stay" value={`${property.renting_space.maximum_stay_days || 0} days`} />
                     </>
                   )}
+                </div>
+              </div>
+
+              {/* Property Images Section */}
+              <div className="mt-8 space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]">
+                    Property Gallery
+                  </p>
+                  <span className="text-[10px] text-[#8c8b82] font-medium">
+                    {propertyImages.length} images uploaded
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {propertyImages.map((src, index) => (
+                    <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border border-[#e2e4c0] bg-white shadow-sm">
+                      <img
+                        src={src}
+                        alt={`Property ${index + 1}`}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <button
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1.5 right-1.5 bg-red-500/90 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Upload Placeholder */}
+                  <label className="relative aspect-square rounded-xl border-2 border-dashed border-[#e2e4c0] hover:border-[#264384]/30 hover:bg-[#F6F8D5]/30 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center gap-2 group">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                    <div className="w-8 h-8 rounded-full bg-[#ebf2f4] flex items-center justify-center group-hover:bg-[#264384]/10 transition-colors duration-200">
+                      <Plus className="w-4 h-4 text-[#264384]" />
+                    </div>
+                    <span className="text-[10px] font-bold text-[#264384]/60 uppercase tracking-tight">Add Photo</span>
+                  </label>
                 </div>
               </div>
             </div>
