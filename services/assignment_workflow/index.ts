@@ -13,20 +13,35 @@ export class AssignmentService {
   // ─── READ ────────────────────────────────────────────────────────────────────
 
   /** Fetch all assignments for a given user, joined with unit + accommodation data. */
-  static async getAssignmentsByUser(userId: string): Promise<AccommodationAssignment[]> {
-    const supabase = await createSupabaseServerClient()
+  async getAssignmentsByUser(userId: string) {
+    const supabase = await createSupabaseServerClient();
 
     const { data, error } = await supabase
-      .from('accommodation_assignment')
-      .select('*')
-      .eq('user_id', userId)
-      .order('move_in_date', { ascending: false })
+      .from("accommodation_assignment")
+      .select(`
+        *,
+        accommodation:accommodation_id (
+          accommodation_id,
+          name,
+          location,
+          accommodation_type
+        ),
+        unit:unit_id (
+          unit_id,
+          unit_number,
+          unit_type,
+          rental_fee,
+          billing_period
+        )
+      `)
+      .eq("user_id", userId)
+      .order("move_in_date", { ascending: false });
 
     if (error) {
-      throw new Error(`Failed to fetch assignments: ${error.message}`)
+      throw new Error(error.message);
     }
-    console.log("Fetched Assignments from Service: " + data)
-    return data || []
+
+    return data ?? [];
   }
 
   /** Fetch a single assignment by ID. */

@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
     Search, Bell, Building2, History, FileText,
     Folder, Download, Plus, ArrowRight, LogOut
 } from "lucide-react";
 import { Archivo } from "next/font/google";
+import { Accommodation } from "@/types/accommodation_units";
+import { AccommodationAssignment } from "@/types/assignment_workflow";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -15,6 +17,46 @@ interface GuestDashboardUIProps {
 
 export default function GuestDashboardUI({ onLogout, isLoggingOut }: GuestDashboardUIProps) {
     const [showLogout, setShowLogout] = useState(false);
+    const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
+    const [isLoadingAccommodations, setIsLoadingAccommodations] = useState(true);
+    const [assignments, setAssignments] = useState<AccommodationAssignment[]>([]);
+    const [isLoadingAssignments, setIsLoadingAssignments] = useState(true);
+
+    useEffect(() => {
+        async function fetchAccommodations() {
+            try {
+                const res = await fetch("/api/dashboard/tiles?type=accommodations");
+
+                if (!res.ok) {
+                    throw new Error("Failed to fetch accommodations");
+                }
+
+                const data = await res.json();
+                setAccommodations(data);
+            } catch (error) {
+                console.error("Error fetching accommodations:", error);
+            } finally {
+                setIsLoadingAccommodations(false);
+            }
+        }
+
+        async function fetchAssignments() {
+            try {
+                const res = await fetch("/api/dashboard/assignments?type=assignments");
+                if (!res.ok) {
+                    throw new Error("Failed to fetch assignments");
+                }
+                const data = await res.json();
+                setAssignments(data);
+            } catch (error) {
+                console.error("Error fetching assignments:", error);
+            } finally {
+                setIsLoadingAssignments(false);
+            }
+        }
+        fetchAccommodations();
+        fetchAssignments();
+    }, []);
 
     return (
         <div className={`min-h-screen bg-[#F6F8D5] py-6 px-6 lg:py-10 lg:px-[1in] text-slate-800 flex flex-col items-center ${archivo.className}`}>
@@ -118,7 +160,7 @@ export default function GuestDashboardUI({ onLogout, isLoggingOut }: GuestDashbo
                                 <span className="text-[10px] font-extrabold tracking-[0.2em] uppercase text-white/90">Accommodation History</span>
                                 <History className="w-5 h-5 text-white/70" />
                             </div>
-                            
+
                             <div className="space-y-4 mb-6">
                                 <div className="border-l-2 border-white/20 pl-4 py-0.5">
                                     <h3 className="text-[15px] font-bold leading-tight">Centtro Residences</h3>
@@ -162,23 +204,25 @@ export default function GuestDashboardUI({ onLogout, isLoggingOut }: GuestDashbo
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-                        {[
-                            { name: "Centtro Residences", type: "Studio Unit • Near UPLB Gate", price: "₱1,200/day" },
-                            { name: "The Grand Laguna", type: "Suite • Full Amenities", price: "₱1,500/day" },
-                            { name: "St. Therese Private Hall", type: "Shared • High Security", price: "₱650/day" }
-                        ].map((dorm, i) => (
+                        {accommodations.slice(0, 3).map((accommodation, i) => (
                             <div key={i} className="bg-[#F9FBEC] rounded-[32px] overflow-hidden border border-slate-100/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] group hover:shadow-2xl hover:shadow-[#709849]/5 transition-all duration-500">
                                 <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
                                     <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center">
                                         <Building2 className="w-10 h-10 text-[#709849]/20" />
                                     </div>
                                     <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg">
-                                        {dorm.price}
+                                        {accommodation.min_price && accommodation.max_price
+                                            ? `₱${accommodation.min_price} - ₱${accommodation.max_price}`
+                                            : accommodation.min_price
+                                                ? `₱${accommodation.min_price}`
+                                                : accommodation.max_price
+                                                    ? `₱${accommodation.max_price}`
+                                                    : "No price available to show"}
                                     </div>
                                 </div>
                                 <div className="p-8">
-                                    <h4 className="text-[18px] font-bold text-[#2A3F2D] mb-1.5">{dorm.name}</h4>
-                                    <p className="text-[10px] font-extrabold text-[#709849] uppercase tracking-[0.15em] mb-6">{dorm.type}</p>
+                                    <h4 className="text-[18px] font-bold text-[#2A3F2D] mb-1.5">{accommodation.name}</h4>
+                                    <p className="text-[10px] font-extrabold text-[#709849] uppercase tracking-[0.15em] mb-6">{accommodation.accommodation_type}</p>
                                     <button className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-2xl transition-all active:scale-[0.98] shadow-md shadow-[#6492A7]/10">
                                         Details
                                     </button>
