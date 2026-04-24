@@ -94,7 +94,62 @@ export class CreateApplicationService {
     }
 
     // GUARD 4: if user is currently assigned to this unit
-    // TO DO: GUARD 4
+    const { data: assignment, error: assignmentError } = await supabase
+      .from('accommodation_assignment')
+      .select('*')
+      .eq('user_id', data.user_id)
+      .eq('accommodation_id', data.preferred_accommodation_id)
+      .eq('accommodation_status', 'active')
+      .single()
+
+    if (assignmentError || !assignment) throw new Error('Failed to fetch assignment.')
+
+    if (assignment.unit_id) {
+      throw new Error('You are already assigned to a unit.')
+    }
+
+    // GUARD 5: user cannot apply to more than 3 dormitory-type accommodations
+    const { data: accommodationType, error: typeError } = await supabase
+      .from('accommodation')
+      .select('accommodation_type')
+      .eq('accommodation_id', data.preferred_accommodation_id)
+      .single()
+
+    if (typeError || !accommodationType) throw new Error('Accommodation not found.')
+
+    const { data: applications, error: applicationsError } = await supabase
+      .from('accommodation_application')
+      .select('*')
+      .eq('user_id', data.user_id)
+      .eq('accommodation_type', accommodationType.accommodation_type)
+      .in('application_status', CANCELLABLE_STATUSES)
+
+    if (applicationsError) throw new Error('Failed to fetch applications.')
+
+    if (applications.length >= 3) {
+      throw new Error('You cannot apply to more than 3 dormitory-type accommodations.')
+    }
+
+    // GUARD 6: check if the accomm_sex of the accommodation matches the sex of the user
+    const { data: user, error: userError } = await supabase
+      .from('user')
+      .select('sex')
+      .eq('user_id', data.user_id)
+      .single()
+
+    if (userError || !user) throw new Error('User not found.')
+
+    const { data: accommodationSex, error: accommodationSexError } = await supabase
+      .from('accommodation')
+      .select('accomm_sex')
+      .eq('accommodation_id', data.preferred_accommodation_id)
+      .single()
+
+    if (accommodationSexError || !accommodationSex) throw new Error('Accommodation not found.')
+
+    if (accommodationSex.accomm_sex !== 'COED' && accommodationSex.accomm_sex !== user.sex) {
+      throw new Error('The sex of the accommodation does not match the sex of the user.')
+    }
 
     //////// SERVER CONTROLLING FIELDS ////////////////
     const payload = {

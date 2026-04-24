@@ -32,16 +32,16 @@ export function UnitCard({
   }, []);
   return (
     <div
-      className="flex-shrink-0 w-64 rounded-2xl shadow-md hover:shadow-lg transition-shadow overflow-hidden cursor-pointer group -mr-12"
+      className="flex-shrink-0 w-64 h-96 rounded-2xl shadow-md hover:shadow-lg transition-shadow overflow-hidden cursor-pointer group flex flex-col -mr-8"
       style={{ backgroundColor: "#FDFFF4" }}
     >
       {/* Image Placeholder */}
-      <div className="h-48 bg-gradient-to-b from-blue-300 to-blue-200 relative overflow-hidden">
+      <div className="h-48 bg-gradient-to-b from-blue-300 to-blue-200 relative overflow-hidden flex-shrink-0">
         <div className="absolute inset-0 bg-blue-300 group-hover:scale-105 transition-transform duration-300" />
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 flex-1 flex flex-col">
         {/* Title */}
         <h3
           className="text-base font-bold mb-1 truncate"
@@ -63,7 +63,7 @@ export function UnitCard({
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-auto flex-shrink-0">
           <Link
             href={
               unit.vacant_slots > 0

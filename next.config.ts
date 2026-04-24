@@ -6,15 +6,8 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'cywurzembhxgwqvpsrlh.supabase.co',
-        port: '',
-        pathname: '/storage/v1/object/public/**',
+        pathname: '/storage/v1/object/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'international.uplb.edu.ph',
-        port: '',
-        pathname: '/**',
-      }
     ],
   },
 };
