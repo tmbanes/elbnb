@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BillingStatus, BillingItemType } from "@/types/billing/enums";
 import { adminUpdateInvoiceAction, adminApproveReceiptAction, adminRejectReceiptAction, adminCreateBillAction } from "./actions";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
@@ -20,6 +20,9 @@ import {
   Image as ImageIcon,
   Plus,
   Trash
+  ,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -39,6 +42,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedBillIds, setSelectedBillIds] = useState<string[]>([]);
+  const [invoicesPage, setInvoicesPage] = useState(1);
   const router = useRouter();
 
   useEffect(() => {
@@ -102,6 +106,24 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
     return matchesSearch && matchesStatus;
   });
+
+  const invoicesPerPage = 5;
+  const totalInvoicesPages = Math.max(1, Math.ceil(filteredBills.length / invoicesPerPage));
+  const safeInvoicesPage = Math.max(1, Math.min(invoicesPage, totalInvoicesPages));
+  const startInvoiceIndex = (safeInvoicesPage - 1) * invoicesPerPage;
+  const paginatedBills = useMemo(
+    () => filteredBills.slice(startInvoiceIndex, startInvoiceIndex + invoicesPerPage),
+    [filteredBills, startInvoiceIndex]
+  );
+
+  const getVisibleInvoicePages = () => {
+    const pages: number[] = [];
+    let start = Math.max(1, safeInvoicesPage - 1);
+    let end = Math.min(totalInvoicesPages, start + 2);
+    start = Math.max(1, end - 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  };
 
   const toggleSelection = (id: string) => {
     setSelectedBillIds(prev =>
@@ -297,7 +319,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             type="text"
             placeholder="Search tenant or invoice #"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setInvoicesPage(1);
+            }}
             className="w-full px-3 py-2 bg-transparent text-sm outline-none"
           />
         </div>
@@ -308,7 +333,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             <select
               className="bg-transparent outline-none text-slate-700 font-medium"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setInvoicesPage(1);
+              }}
             >
               <option value="ALL">All Statuses</option>
               {INVOICE_STATUSES.map(s => (
@@ -359,7 +387,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               </tr>
             </thead>
             <tbody>
-              {filteredBills.map((bill: any) => (
+              {paginatedBills.map((bill: any) => (
                 <tr key={bill.billing_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <input
@@ -418,6 +446,52 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             </tbody>
           </table>
         </div>
+        {filteredBills.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
+            <p className="text-sm text-slate-500">
+              Showing <span className="font-semibold text-slate-700">{startInvoiceIndex + 1}</span> to{" "}
+              <span className="font-semibold text-slate-700">{Math.min(startInvoiceIndex + invoicesPerPage, filteredBills.length)}</span> of{" "}
+              <span className="font-semibold text-slate-700">{filteredBills.length}</span> results
+            </p>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setInvoicesPage((p) => Math.max(1, p - 1))}
+                disabled={safeInvoicesPage <= 1}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safeInvoicesPage <= 1
+                  ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {getVisibleInvoicePages().map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setInvoicesPage(page)}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${page === safeInvoicesPage
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                    }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setInvoicesPage((p) => Math.min(totalInvoicesPages, p + 1))}
+                disabled={safeInvoicesPage >= totalInvoicesPages}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safeInvoicesPage >= totalInvoicesPages
+                  ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* RECEIPT VIEWER MODAL */}

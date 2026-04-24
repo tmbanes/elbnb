@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function BillingClient({
   userId,
@@ -777,6 +777,9 @@ export default function BillingClient({
                 <DialogTitle>
                   Invoice Details {String(focusedBill?.billing_id || "Unknown").split("-")[0]}
                 </DialogTitle>
+                <DialogDescription>
+                  Review invoice details, charge breakdown, payment receipt, and available invoice actions.
+                </DialogDescription>
               </DialogHeader>
               <div className={`rounded-xl bg-[#FDFFF4] border border-slate-200 border-l-[8px] ${getStatusBorderColor(focusedBill?.status)} p-5 shadow-sm w-full max-w-none mx-auto flex flex-col gap-4`}>
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4">
