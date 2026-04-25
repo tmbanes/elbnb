@@ -10,6 +10,7 @@ interface AccommodationCardProps {
   onSeeUnitsClick?: (accommodation: Accommodation) => void
   basePath?: string
   userRole?: 'student' | 'guest'
+  appliedAccommodationIds?: Set<string>
 }
 
 export function AccommodationCard({
@@ -19,6 +20,7 @@ export function AccommodationCard({
   onSeeUnitsClick,
   basePath = '/student/accommodations',
   userRole = 'student',
+  appliedAccommodationIds = new Set(),
 }: AccommodationCardProps) {
   const vacantUnits = units.filter((unit) => unit.vacant_slots > 0)
   const hasVacant = vacantUnits.length > 0
@@ -75,7 +77,7 @@ export function AccommodationCard({
       {/* Content */}
       <div className="p-5 flex-1 flex flex-col">
         {/* Title */}
-        <h3 className="text-lg font-bold mb-2 line-clamp-2 min-h-[3.5rem]" style={{ color: '#44291B', lineHeight: '1.75rem' }} title={accommodation.name}>
+        <h3 className="text-2xl font-black mb-2 line-clamp-2 min-h-[4rem]" style={{ color: '#44291B', lineHeight: '2rem' }} title={accommodation.name}>
           {accommodation.name}
         </h3>
 
@@ -102,13 +104,22 @@ export function AccommodationCard({
           {userRole === 'student' ? (
             isApplicationOpen ? (
               hasVacant ? (
-                <Link
-                  href={`${basePath}/application?accommodationId=${accommodation.accommodation_id}`}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] text-center block"
-                  style={{ backgroundColor: '#264384' }}
-                >
-                  Apply
-                </Link>
+                appliedAccommodationIds.has(accommodation.accommodation_id) ? (
+                  <button
+                    disabled
+                    className="w-full px-4 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
+                  >
+                    Already Applied
+                  </button>
+                ) : (
+                  <Link
+                    href={`${basePath}/application?accommodationId=${accommodation.accommodation_id}`}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] text-center block"
+                    style={{ backgroundColor: '#264384' }}
+                  >
+                    Apply
+                  </Link>
+                )
               ) : (
                 <button
                   disabled

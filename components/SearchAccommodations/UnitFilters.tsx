@@ -19,6 +19,9 @@ interface UnitFiltersProps {
   resultCount: number
   loading?: boolean
   propertyTypeOptions?: { value: string; label: string }[]
+  sortBy: string
+  onSortByChange: (value: string) => void
+  userRole?: string
 }
 
 export function UnitFilters({
@@ -35,12 +38,10 @@ export function UnitFilters({
   onResetFilters,
   resultCount,
   loading = false,
-  propertyTypeOptions = [
-    { value: 'apartment', label: 'Apartment' },
-    { value: 'boarding', label: 'Boarding House' },
-    { value: 'transient', label: 'Transient' },
-    { value: 'house', label: 'House' },
-  ],
+  propertyTypeOptions = [],
+  sortBy,
+  onSortByChange,
+  userRole = 'guest',
 }: UnitFiltersProps) {
   return (
     <div className="rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 px-6 py-5 mb-10 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]" style={{ backgroundColor: '#FDFFF4' }}>
@@ -79,19 +80,21 @@ export function UnitFilters({
           </div>
 
           {/* Furnishing Status */}
-          <div className="flex-shrink-0 min-w-[160px]">
-            <FilterDropdown
-              label="Furnishing Status"
-              value={furnishingStatus}
-              onChange={(v) => onFurnishingStatusChange(v as FurnishingStatus | '')}
-              disabled={loading}
-              options={[
-                { value: 'furnished', label: 'Furnished' },
-                { value: 'semi-furnished', label: 'Semi-Furnished' },
-                { value: 'unfurnished', label: 'Unfurnished' },
-              ]}
-            />
-          </div>
+          {userRole !== 'guest' && (
+            <div className="flex-shrink-0 min-w-[160px]">
+              <FilterDropdown
+                label="Furnishing Status"
+                value={furnishingStatus}
+                onChange={(v) => onFurnishingStatusChange(v as FurnishingStatus | '')}
+                disabled={loading}
+                options={[
+                  { value: 'furnished', label: 'Furnished' },
+                  { value: 'semi-furnished', label: 'Semi-Furnished' },
+                  { value: 'unfurnished', label: 'Unfurnished' },
+                ]}
+              />
+            </div>
+          )}
 
           {/* Availability */}
           <div className="flex-shrink-0 min-w-[170px]">
@@ -115,6 +118,22 @@ export function UnitFilters({
               onChange={(v) => onPropertyTypeChange(v as PropertyType | '')}
               disabled={loading}
               options={propertyTypeOptions}
+            />
+          </div>
+
+          {/* Sort By */}
+          <div className="flex-shrink-0 min-w-[160px] md:ml-auto">
+            <FilterDropdown
+              label="Sort By"
+              value={sortBy}
+              onChange={(v) => onSortByChange(v)}
+              disabled={loading}
+              options={[
+                { value: 'name-asc', label: 'Name (A-Z)' },
+                { value: 'price-asc', label: 'Price (Lowest)' },
+                { value: 'price-desc', label: 'Price (Highest)' },
+                { value: 'vacant-desc', label: 'Most Vacancy' },
+              ]}
             />
           </div>
         </div>

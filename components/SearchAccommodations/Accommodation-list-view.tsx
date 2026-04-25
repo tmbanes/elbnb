@@ -12,6 +12,7 @@ interface AccommodationListViewProps {
   onSeeUnitsClick?: (accommodation: Accommodation) => void
   userRole?: 'student' | 'guest'
   units?: Unit[]
+  appliedAccommodationIds?: Set<string>
 }
 
 export function AccommodationListView({
@@ -24,6 +25,7 @@ export function AccommodationListView({
   onSeeUnitsClick,
   userRole = 'guest',
   units = [],
+  appliedAccommodationIds = new Set(),
 }: AccommodationListViewProps) {
   return (
     <div className="space-y-6">
@@ -87,7 +89,7 @@ export function AccommodationListView({
               {/* CONTENT SIDE */}
               <div className="flex-1 min-w-0 p-6">
                 <div className="flex justify-between gap-4">
-                  <h2 className="font-archivo font-extrabold text-2xl uppercase text-[#44291B] truncate">
+                  <h2 className="font-archivo font-black text-2xl uppercase text-[#44291B] truncate">
                     {acc.name}
                   </h2>
 
@@ -192,17 +194,26 @@ export function AccommodationListView({
                   {userRole === 'student' ? (
                     isApplicationOpen ? (
                       vacantSlots > 0 ? (
-                        <Link
-                          href={`${basePath}/application?accommodationId=${acc.accommodation_id}`}
-                          className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] inline-block"
-                          style={{ backgroundColor: '#264384' }}
-                        >
-                          Apply
-                        </Link>
+                        appliedAccommodationIds.has(acc.accommodation_id) ? (
+                          <button
+                            disabled
+                            className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed transition-all text-center"
+                          >
+                            Already Applied
+                          </button>
+                        ) : (
+                          <Link
+                            href={`${basePath}/application?accommodationId=${acc.accommodation_id}`}
+                            className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] inline-block text-center"
+                            style={{ backgroundColor: '#264384' }}
+                          >
+                            Apply
+                          </Link>
+                        )
                       ) : (
                         <button
                           disabled
-                          className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
+                          className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed transition-all"
                         >
                           Apply (Full)
                         </button>
@@ -210,7 +221,7 @@ export function AccommodationListView({
                     ) : (
                       <button
                         disabled
-                        className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
+                        className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed transition-all"
                       >
                         Applications Closed
                       </button>

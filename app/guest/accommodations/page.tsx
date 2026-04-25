@@ -59,6 +59,7 @@ export default function SearchAccommodationsPage() {
     accommodationType: '',
     accommodationId: '',
   })
+  const [sortBy, setSortBy] = useState<string>('')
 
   // Loading & Error states
   const [loading, setLoading] = useState(true)
@@ -144,7 +145,6 @@ export default function SearchAccommodationsPage() {
         filtered = filtered.filter((a) => accomIdsWithVacancy.has(a.accommodation_id))
       }
 
-      // Apply search filter
       if (search.trim()) {
         const query = search.toLowerCase()
         filtered = filtered.filter((a) =>
@@ -152,10 +152,39 @@ export default function SearchAccommodationsPage() {
         )
       }
 
-      setFilteredAccommodations(filtered)
+      // Sorting logic
+      const sorted = [...filtered]
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const isDormOpen = (a: Accommodation) => {
+        if (!a.allowed_application) return false;
+        const deadline = new Date(a.allowed_application);
+        deadline.setHours(23, 59, 59, 999);
+        return today <= deadline;
+      };
+
+      if (sortBy === '' || sortBy === 'open-first') {
+        sorted.sort((a, b) => {
+          const aOpen = isDormOpen(a);
+          const bOpen = isDormOpen(b);
+          if (aOpen === bOpen) return a.name.localeCompare(b.name);
+          return aOpen ? -1 : 1;
+        });
+      } else if (sortBy === 'price-asc') {
+        sorted.sort((a, b) => ((a as any).min_price || 0) - ((b as any).min_price || 0))
+      } else if (sortBy === 'price-desc') {
+        sorted.sort((a, b) => ((b as any).min_price || 0) - ((a as any).min_price || 0))
+      } else if (sortBy === 'name-asc') {
+        sorted.sort((a, b) => a.name.localeCompare(b.name))
+      } else if (sortBy === 'name-desc') {
+        sorted.sort((a, b) => b.name.localeCompare(a.name))
+      }
+
+      setFilteredAccommodations(sorted)
       setCurrentPage(1)
     },
-    []
+    [sortBy]
   )
 
   // Apply unit filters
@@ -208,10 +237,41 @@ export default function SearchAccommodationsPage() {
         filtered = filtered.filter((u) => matchingAccomIds.has(u.accommodation_id))
       }
 
-      setFilteredUnits(filtered)
+      // Sorting logic
+      const sorted = [...filtered]
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const isDormOpen = (a: Accommodation) => {
+        if (!a.allowed_application) return false;
+        const deadline = new Date(a.allowed_application);
+        deadline.setHours(23, 59, 59, 999);
+        return today <= deadline;
+      };
+
+      if (sortBy === '' || sortBy === 'open-first') {
+        sorted.sort((a, b) => {
+          const aDorm = accomList.find(acc => acc.accommodation_id === a.accommodation_id);
+          const bDorm = accomList.find(acc => acc.accommodation_id === b.accommodation_id);
+          const aOpen = aDorm ? isDormOpen(aDorm) : false;
+          const bOpen = bDorm ? isDormOpen(bDorm) : false;
+          if (aOpen === bOpen) return String(a.unit_number || '').localeCompare(String(b.unit_number || ''));
+          return aOpen ? -1 : 1;
+        });
+      } else if (sortBy === 'price-asc') {
+        sorted.sort((a, b) => (a.rental_fee || 0) - (b.rental_fee || 0))
+      } else if (sortBy === 'price-desc') {
+        sorted.sort((a, b) => (b.rental_fee || 0) - (a.rental_fee || 0))
+      } else if (sortBy === 'name-asc') {
+        sorted.sort((a, b) => String(a.unit_number || '').localeCompare(String(b.unit_number || '')))
+      } else if (sortBy === 'vacant-desc') {
+        sorted.sort((a, b) => ((b.max_occupancy - b.current_occupancy) || 0) - ((a.max_occupancy - a.current_occupancy) || 0))
+      }
+
+      setFilteredUnits(sorted)
       setCurrentPage(1)
     },
-    []
+    [sortBy]
   )
 
   // Fetch data on component mount
@@ -311,6 +371,14 @@ export default function SearchAccommodationsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [units, accommodations, unitFilters, applyUnitFilters, searchQuery])
 
+  useEffect(() => {
+    applyAccommodationFilters(accommodations, units, accommodationFilters, searchQuery)
+  }, [accommodations, units, accommodationFilters, applyAccommodationFilters, searchQuery])
+
+  useEffect(() => {
+    applyUnitFilters(units, unitFilters, accommodations, searchQuery)
+  }, [units, accommodations, unitFilters, applyUnitFilters, searchQuery])
+
   const handleUnitDetailsClick = (unit: Unit) => {
     // Navigate to detail page or open modal
     console.log('View details for:', unit)
@@ -320,11 +388,23 @@ export default function SearchAccommodationsPage() {
   const validCurrentPage = Math.min(currentPage, totalAccommodationsPages);
   const startIndex = (validCurrentPage - 1) * pageSize;
   const groupedUnits = useMemo(() => {
+    const counts: Record<string, number> = {}
     const seen = new Set()
+    
+    // Count units with vacancy for each type within an accommodation
+    filteredUnits.forEach(u => {
+      if (u.current_occupancy < u.max_occupancy) {
+        const key = `${u.accommodation_id}-${u.unit_type}`
+        counts[key] = (counts[key] || 0) + 1
+      }
+    })
+
     return filteredUnits.filter((unit) => {
       const key = `${unit.accommodation_id}-${unit.unit_type}`
       if (seen.has(key)) return false
       seen.add(key)
+      // Attach the count to the unit object
+      ;(unit as any).available_units_count = counts[key] || 0
       return true
     })
   }, [filteredUnits])
@@ -461,6 +541,8 @@ export default function SearchAccommodationsPage() {
               loading={loading}
               propertyTypeOptions={dynamicPropertyTypes}
               sexOptions={dynamicSexOptions}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
             />
 
             {/* Results Section */}
@@ -530,19 +612,19 @@ export default function SearchAccommodationsPage() {
 
             {/* Carousel or List View */}
             {!loading && filteredAccommodations.length > 0 && (
-              <div key={`accom-${viewMode}-${JSON.stringify(accommodationFilters)}`}>
+              <div key={`accom-${viewMode}-${JSON.stringify(accommodationFilters)}-${sortBy}`}>
                 {viewMode === 'carousel' ? (
                   <Carousel>
                     {filteredAccommodations.map((accommodation, index) => (
                       <div key={accommodation.accommodation_id} style={{ animation: 'pageSlideIn 0.3s ease-out both', animationDelay: `${index * 0.05}s` }}>
-                        <AccommodationCard
-                          accommodation={accommodation}
-                          units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
-                          onDetailsClick={handleAccommodationDetailsClick}
-                          onSeeUnitsClick={handleSeeUnitsClick}
-                          basePath="/guest/accommodations"
-                          userRole="guest"
-                        />
+                          <AccommodationCard
+                            accommodation={accommodation}
+                            units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
+                            onDetailsClick={handleAccommodationDetailsClick}
+                            onSeeUnitsClick={handleSeeUnitsClick}
+                            basePath="/guest/accommodations"
+                            userRole="guest"
+                          />
                       </div>
                     ))}
                   </Carousel>
@@ -556,6 +638,7 @@ export default function SearchAccommodationsPage() {
                     basePath="/guest/accommodations"
                     onSeeUnitsClick={handleSeeUnitsClick}
                     units={units}
+                    userRole="guest"
                   />
                 )}
               </div>
@@ -582,6 +665,9 @@ export default function SearchAccommodationsPage() {
               resultCount={filteredUnits.length}
               loading={loading}
               propertyTypeOptions={dynamicPropertyTypes}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              userRole="guest"
             />
 
             {/* Results Section */}
@@ -651,7 +737,7 @@ export default function SearchAccommodationsPage() {
 
             {/* Carousel or List View */}
             {!loading && filteredUnits.length > 0 && (
-              <div key={`unit-${viewMode}-${JSON.stringify(unitFilters)}`}>
+              <div key={`unit-${viewMode}-${JSON.stringify(unitFilters)}-${sortBy}`}>
                 {viewMode === 'carousel' ? (
                   <Carousel>
                     {groupedUnits.map((unit, index) => {
@@ -664,6 +750,7 @@ export default function SearchAccommodationsPage() {
                             unit={unit}
                             accommodation={accommodation}
                             onDetailsClick={handleUnitDetailsClick}
+                            userRole="guest"
                           />
                         </div>
                       )

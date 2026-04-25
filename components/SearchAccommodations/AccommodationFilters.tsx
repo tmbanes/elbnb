@@ -25,6 +25,8 @@ interface AccommodationFiltersProps {
   showPropertyType?: boolean
   propertyTypeOptions?: FilterOption[]
   sexOptions?: FilterOption[]
+  sortBy: string
+  onSortByChange: (value: string) => void
 }
 
 export function AccommodationFilters({
@@ -44,17 +46,10 @@ export function AccommodationFilters({
   resultCount,
   loading = false,
   showPropertyType = true,
-  propertyTypeOptions = [
-    { value: 'apartment', label: 'Apartment' },
-    { value: 'boarding', label: 'Boarding House' },
-    { value: 'transient', label: 'Transient' },
-    { value: 'house', label: 'House' },
-  ],
-  sexOptions = [
-    { value: 'F', label: 'Female' },
-    { value: 'M', label: 'Male' },
-    { value: 'COED', label: 'Coed' },
-  ],
+  propertyTypeOptions = [],
+  sexOptions = [],
+  sortBy,
+  onSortByChange,
 }: AccommodationFiltersProps) {
   return (
 
@@ -120,39 +115,53 @@ export function AccommodationFilters({
 
           {/* Price Range */}
           {onMinPriceChange && onMaxPriceChange && (
-            <>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-black uppercase tracking-wider ml-1 opacity-60" style={{ color: '#44291B' }}>Price Range</label>
-                <div className="flex items-center gap-1.5">
-                  <div className="relative group">
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Min"
-                      value={minPrice}
-                      onChange={(e) => onMinPriceChange(e.target.value ? Number(e.target.value) : '')}
-                      disabled={loading}
-                      className="w-24 px-4 py-3 text-sm font-semibold shadow-sm transition-all border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#264384]/5 focus:border-[#264384] bg-white/50 disabled:opacity-50"
-                      style={{ color: '#44291B' }}
-                    />
-                  </div>
-                  <span className="text-gray-300 font-bold">–</span>
-                  <div className="relative group">
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Max"
-                      value={maxPrice}
-                      onChange={(e) => onMaxPriceChange(e.target.value ? Number(e.target.value) : '')}
-                      disabled={loading}
-                      className="w-24 px-4 py-3 text-sm font-semibold shadow-sm transition-all border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#264384]/5 focus:border-[#264384] bg-white/50 disabled:opacity-50"
-                      style={{ color: '#44291B' }}
-                    />
-                  </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-black uppercase tracking-wider ml-1 opacity-60" style={{ color: '#44291B' }}>Price Range</label>
+              <div className="flex items-center gap-1.5">
+                <div className="relative group">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Min"
+                    value={minPrice}
+                    onChange={(e) => onMinPriceChange(e.target.value ? Number(e.target.value) : '')}
+                    disabled={loading}
+                    className="w-24 px-4 py-3 text-sm font-semibold shadow-sm transition-all border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#264384]/5 focus:border-[#264384] bg-white/50 disabled:opacity-50"
+                    style={{ color: '#44291B' }}
+                  />
+                </div>
+                <span className="text-gray-300 font-bold">–</span>
+                <div className="relative group">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Max"
+                    value={maxPrice}
+                    onChange={(e) => onMaxPriceChange(e.target.value ? Number(e.target.value) : '')}
+                    disabled={loading}
+                    className="w-24 px-4 py-3 text-sm font-semibold shadow-sm transition-all border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#264384]/5 focus:border-[#264384] bg-white/50 disabled:opacity-50"
+                    style={{ color: '#44291B' }}
+                  />
                 </div>
               </div>
-            </>
+            </div>
           )}
+
+          {/* Sort By */}
+          <div className="flex-shrink-0 min-w-[160px] md:ml-auto">
+            <FilterDropdown
+              label="Sort By"
+              value={sortBy}
+              onChange={(v) => onSortByChange(v)}
+              disabled={loading}
+              options={[
+                { value: 'name-asc', label: 'Name (A-Z)' },
+                { value: 'name-desc', label: 'Name (Z-A)' },
+                { value: 'price-asc', label: 'Price (Lowest)' },
+                { value: 'price-desc', label: 'Price (Highest)' },
+              ]}
+            />
+          </div>
         </div>
       </div>
 
