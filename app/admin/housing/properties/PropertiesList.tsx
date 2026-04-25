@@ -78,7 +78,7 @@ function StatCard({
   return (
     //Stat Card UI
     <Card
-      className="shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-md cursor-default border-none"
+      className="shadow-sm transition-all border-none"
       style={{ backgroundColor: accentColor }}
     >
       <CardHeader className="p-4">
@@ -141,9 +141,8 @@ export default function PropertiesList({
   return (
     <div className="p-6 space-y-4 font-[family-name:var(--font-archivo)]">
       <div>
-        <h1 className="text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] mr-2">Properties Page</h1>
-        <p className="text-md text-[#44291B] pt-3">Manage your Properties and view their details</p>
-
+        <h1 className="text-3xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] mr-2">Properties Page</h1>
+        <p className="text-sm md:text-md text-[#44291B] pt-3">Manage your Properties and view their details</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 pt-2">
@@ -179,7 +178,7 @@ export default function PropertiesList({
 
       {/* FILTER & ACTIONS */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm mt-4">
-        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md">
+        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 w-full md:max-w-md">
           <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
             <Search className="w-4 h-4" />
           </div>
@@ -192,14 +191,14 @@ export default function PropertiesList({
           />
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6]">
+        <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] w-full sm:w-auto">
             <Filter className="w-4 h-4 text-[#44291B]/50" />
             <Select
               value={typeFilter || "all"}
               onValueChange={(val) => onFilterChange(val === "all" ? "" : val)}
             >
-              <SelectTrigger className="w-[140px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
+              <SelectTrigger className="w-full sm:w-[140px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
                 <SelectValue placeholder="All Properties" />
               </SelectTrigger>
               <SelectContent className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md">
@@ -210,14 +209,14 @@ export default function PropertiesList({
             </Select>
           </div>
 
-          <div className="h-6 w-px bg-[#e8e2d6] mx-2"></div>
+          <div className="hidden sm:block h-6 w-px bg-[#e8e2d6] mx-2"></div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 disabled={managerCount === 0}
                 title={managerCount === 0 ? "Please add a Property Manager first" : ""}
-                className="flex items-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto"
+                className="flex items-center justify-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Property</span>
