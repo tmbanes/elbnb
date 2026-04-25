@@ -11,7 +11,7 @@ export const studentProfileService = {
   async getProfile(user_id: string) {
     const client = await supabase();
     const { data, error } = await client
-      .from("USER")
+      .from("users")
       .select("*")
       .eq("user_id", user_id)
       .single();
@@ -22,7 +22,7 @@ export const studentProfileService = {
   async updateProfile(user_id: string, updates: Partial<UserProfile>) {
     const client = await supabase();
     const { data, error } = await client
-      .from('USER')
+      .from("users")
       .update({
         // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
         first_name: updates.first_name,
@@ -56,7 +56,7 @@ export const studentProfileService = {
   async getMyAssignment(application_id: string) {
     const client = await supabase();
     const { data, error } = await client
-      .from("accomodation_assignment")
+      .from("accommodation_assignment")
       .select(
         `
         assignment_id,
@@ -126,7 +126,7 @@ not yet tested
 
     // added document successfully
     const { data: dbData, error: dbError } = await client
-      .from("Document")
+      .from("documents")
       .insert({
         user_id: user_id,
         application_id: application_id,
@@ -217,6 +217,27 @@ not yet tested
     }
 
     return { data, error: null };
+  },
+
+  async getDocuments(user_id: string) {
+    const client = await supabase();
+
+    const { data, error } = await client
+      .from("documents")
+      .select("*")
+      .eq("user_id", user_id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      // PGRST116 is the error code for 'relation not found' (table missing)
+      if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn("Documents table is missing in Supabase. Returning empty array.");
+        return { data: [], error: null };
+      }
+      console.error("Error fetching documents:", error.message, error.details, error.hint);
+    }
+
+    return { data, error };
   },
 };
 

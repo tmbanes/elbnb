@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { Archivo } from "next/font/google";
+import Link from "next/link";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -708,7 +709,11 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                                     )}
                                                     <td className="py-5 px-8">
                                                         <div className="flex justify-end">
-                                                            <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-[#0B3A64] hover:bg-slate-100 transition-all"><User className="w-4 h-4" /></button>
+                                                            <Link href={`/manager/student-history/${student.id}`}>
+                                                                <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-[#0B3A64] hover:bg-slate-100 transition-all" title="View History">
+                                                                    <History className="w-4 h-4" />
+                                                                </button>
+                                                            </Link>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -750,7 +755,8 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                                     <th className="py-5 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Student / Property</th>
                                                     <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Student Number</th>
                                                     <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Date Applied</th>
-                                                    <th className="py-5 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em] text-right">Status</th>
+                                                    <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em] text-right">Status</th>
+                                                    <th className="py-5 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em] text-right">History</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50 bg-[#FDFCF6]/50">
@@ -784,6 +790,13 @@ export default function ManagerDashboardUI({ onLogout, isLoggingOut }: ManagerDa
                                                             }`}>
                                                                 {app.status}
                                                             </span>
+                                                        </td>
+                                                        <td className="py-4 px-6 text-right">
+                                                            <Link href={`/manager/student-history/${app.user_id}`}>
+                                                                <button className="text-slate-300 hover:text-[#5591AB] transition-colors">
+                                                                    <History className="w-4 h-4" />
+                                                                </button>
+                                                            </Link>
                                                         </td>
                                                     </tr>
                                                 )) : (
