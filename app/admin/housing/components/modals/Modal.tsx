@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import {
   Dialog,
@@ -12,7 +12,6 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   description?: string;
-  required?: boolean;
   children: React.ReactNode;
 }
 

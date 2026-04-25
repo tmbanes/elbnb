@@ -17,7 +17,7 @@ import {
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
+import { useSidebar } from "@/components/ui/sidebar"
 import Link from "next/link"
 import {
   Sidebar,
@@ -36,7 +36,7 @@ const sidebarConfig = {
   student: {
     label: "Student",
     nav: [
-      { title: "Dashboard", url: "/dashboard", icon: PieChart },
+      { title: "Dashboard", url: "/student/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/student/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/student/application", icon: Newspaper },
       { title: "Billing", url: "/student/billing", icon: Banknote },
@@ -58,7 +58,9 @@ const sidebarConfig = {
   manager: {
     label: "Dorm Manager",
     nav: [
-      { title: "Dashboard", url: "/dashboard", icon: PieChart },
+      { title: "Dashboard", url: "/manager/dashboard", icon: PieChart },
+      { title: "Housing", url: "/manager/housing", icon: Building2 },
+      { title: "Residents", url: "/manager/residents", icon: Users },
       { title: "Applications", url: "/manager/applications", icon: Newspaper },
       { title: "Residents", url: "/manager/residents", icon: Users },
     ],
@@ -67,7 +69,6 @@ const sidebarConfig = {
   guest: {
     label: "Guest",
     nav: [
-      // should be "/guest/dashboard" but use /dashboard for testing
       { title: "Dashboard", url: "/guest/dashboard", icon: PieChart },
       { title: "Accommodations", url: "/guest/accommodations", icon: MapPinHouse },
       { title: "Applications", url: "/guest/application", icon: Newspaper },
@@ -88,20 +89,27 @@ export function AppSidebar({
     email: "",
     avatar: "/avatars/shadcn.jpg",
   })
+  const [hasMounted, setHasMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setHasMounted(true)
+  }, [])
 
   React.useEffect(() => {
     async function fetchUser() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: userProfile } = await supabase
+        const { data } = await (supabase as any)
           .from("users")
           .select("first_name, last_name, email, profile_picture_url")
           .eq("user_id", user.id)
           .single()
 
+        const userProfile = data;
+
         if (userProfile) {
           setUserData({
-            name: `${userProfile.first_name} ${userProfile.last_name}`.trim() || user.email?.split("@")[0] || "User",
+            name: `${userProfile.first_name || ""} ${userProfile.last_name || ""}`.trim() || user.email?.split("@")[0] || "User",
             email: userProfile.email || user.email || "",
             avatar: userProfile.profile_picture_url || "/avatars/shadcn.jpg",
           })
@@ -123,10 +131,22 @@ export function AppSidebar({
     fetchUser()
   }, [supabase])
 
-  const { toggleSidebar, state } = useSidebar()
+  const { toggleSidebar, state, setOpen } = useSidebar()
+
+  if (!hasMounted) {
+    return <div className="w-[var(--sidebar-width)] bg-[#8ba665] h-screen" />;
+  }
 
   return (
     <>
+      {/* Click-away overlay for explicitly closing the sidebar when it is expanded */}
+      {state === "expanded" && (
+        <div
+          className="fixed inset-0 z-30 bg-black/5 backdrop-blur-sm cursor-pointer"
+          onClick={() => setOpen ? setOpen(false) : toggleSidebar()}
+        />
+      )}
+
       <Sidebar
         collapsible="offcanvas"
         className="bg-[#8ba665] text-white border-none shadow-xl z-40"
@@ -149,7 +169,7 @@ export function AppSidebar({
         </SidebarContent>
 
         <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2 bg-[#8ba665] overflow-hidden">
-          <NavUser user={userData} />
+          <NavUser user={userData} role={role} />
         </SidebarFooter>
 
         <SidebarRail />

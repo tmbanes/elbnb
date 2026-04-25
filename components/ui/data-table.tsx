@@ -32,6 +32,8 @@ interface DataTableProps<TData, TValue> {
   activeRowId?: string
 }
 
+
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -142,4 +144,4 @@ export function DataTable<TData, TValue>({
       )}
     </div>
   )
-}
+}

@@ -11,7 +11,7 @@ export const studentProfileService = {
   async getProfile(user_id: string) {
     const client = await supabase();
     const { data, error } = await client
-      .from("USER")
+      .from("users")
       .select("*")
       .eq("user_id", user_id)
       .single();
@@ -22,7 +22,7 @@ export const studentProfileService = {
   async updateProfile(user_id: string, updates: Partial<UserProfile>) {
     const client = await supabase();
     const { data, error } = await client
-      .from('USER')
+      .from('users')
       .update({
         // only the name can be changed (as of now ??), nacheck ko rin supabase, srs, and specs, either not indicated/not possible
         first_name: updates.first_name,
@@ -56,13 +56,13 @@ export const studentProfileService = {
   async getMyAssignment(application_id: string) {
     const client = await supabase();
     const { data, error } = await client
-      .from("accomodation_assignment")
+      .from("accommodation_assignment")
       .select(
         `
         assignment_id,
-        move_In_Date,
-        expected_Move_Out_Date,
-        actual_Move_Out_Date,
+        move_in_date,
+        expected_move_out_date,
+        actual_move_out_date,
         application_id
       `,
       )
@@ -126,7 +126,7 @@ not yet tested
 
     // added document successfully
     const { data: dbData, error: dbError } = await client
-      .from("Document")
+      .from("documents")
       .insert({
         user_id: user_id,
         application_id: application_id,
@@ -163,13 +163,6 @@ not yet tested
 
   async getAccommodationHistory(user_id: string) {
     const client = await supabase();
-
-    // TODO (for BACKEND): Di ko gets pano yung joint database query magwork so tinanggal ko muna etong nasa baba, for me to test ung history page
-    // accomodation_assignment(assignment_id, move_in_date, expected_move_out_date, actual_move_out_date)
-    // pa-add nalang ung accommodation_assignment(..) later on, thanks - eunel
-
-    // also NOTE: ung preferred_accommodation raw uuid sya and displayed sya sa UI, so need siguro ng getAccommodationName? function or 
-    // something to convert the uuid to the actual accommodation name?
     const { data, error } = await client
       .from("accommodation_application")
       .select(`
@@ -183,10 +176,14 @@ not yet tested
         check_out,
         number_of_companions,
         accommodation:preferred_accommodation_id (
-          name
+          name,
+          accommodation_type
         ),
         unit:unit_id (
           unit_number
+        ),
+        accommodation_assignment (
+          actual_move_out_date
         )
       `)
       .eq("user_id", user_id)
@@ -218,6 +215,119 @@ not yet tested
 
     return { data, error: null };
   },
+
+  async getDocuments(user_id: string) {
+    const client = await supabase();
+
+    const { data, error } = await client
+      .from("documents")
+      .select("*")
+      .eq("user_id", user_id);
+
+    if (error) {
+      if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn("Documents table is missing in Supabase. Returning empty array.");
+        return { data: [], error: null };
+      }
+      console.error("Error fetching documents:", error.message);
+    }
+
+    return { data, error };
+  },
+
+  async getCurrentAccommodation(user_id: string) {
+    const client = await supabase();
+    const { data, error } = await client
+      .from("accommodation_assignment")
+      .select(`
+        assignment_id,
+        move_in_date,
+        expected_move_out_date,
+        assignment_status,
+        unit:unit_id (
+          unit_number,
+          unit_type,
+          accommodation:accommodation_id (
+            name,
+            location,
+            renewal_start_date,
+            renewal_end_date
+          )
+        )
+      `)
+      .eq("user_id", user_id)
+      .in("assignment_status", ["active", "waiting_payment", "pending"])
+      .maybeSingle();
+
+    return { data, error };
+  },
+
+  async getDashboardStats(user_id: string) {
+    const client = await supabase();
+
+    // Get summary of bills
+    const { data: billingData } = await client
+      .from("billing")
+      .select("amount, status, accommodation_assignment!inner(user_id)")
+      .eq("accommodation_assignment.user_id", user_id);
+
+    let totalBalance = 0;
+    billingData?.forEach(bill => {
+      if (bill.status !== 'paid') totalBalance += bill.amount;
+    });
+
+    // Get latest application
+    const { data: latestApp } = await client
+      .from("accommodation_application")
+      .select("application_status, date_submitted")
+      .eq("user_id", user_id)
+      .order("date_submitted", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return {
+      totalBalance,
+      latestApplicationStatus: latestApp?.application_status || null,
+    };
+  },
+
+  async createExtensionApplication(user_id: string, currentResidency: any) {
+    const client = await supabase();
+
+    const { data, error } = await client
+      .from("accommodation_application")
+      .insert({
+        user_id: user_id,
+        preferred_accommodation_id: currentResidency.unit.accommodation.accommodation_id,
+        unit_id: currentResidency.unit.unit_id,
+        preferred_unit_type: currentResidency.unit.unit_type,
+        application_status: "pending_dorm_manager",
+        date_submitted: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    return { data, error };
+  },
+
+  async getNotifications(user_id: string) {
+    const client = await supabase();
+    const { data, error } = await client
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user_id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn("Notifications table is missing in Supabase. Returning empty array.");
+        return { data: [], error: null };
+      }
+      console.error("Error fetching notifications:", error.message);
+    }
+
+    return { data, error };
+  }
 };
 
 /*

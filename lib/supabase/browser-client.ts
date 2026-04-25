@@ -6,7 +6,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // TYPE: Temporary schema placeholder for Supabase datatypes
-type SupabaseSchema = Record<string, never>;
+type SupabaseSchema = any;
 
 // VARIABLE: Stores a single browser instance of the Supabase client
 let client: SupabaseClient<SupabaseSchema> | null = null;
