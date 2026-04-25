@@ -32,6 +32,12 @@ export function AccommodationListView({
         const vacantSlots = accUnits.reduce((sum, u) => sum + (u.vacant_slots ?? Math.max(0, u.max_occupancy - u.current_occupancy)), 0);
         const applicationPeriod = acc.allowed_application ? new Date(acc.allowed_application).toLocaleDateString() : 'N/A';
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const deadline = acc.allowed_application ? new Date(acc.allowed_application) : null;
+        if (deadline) deadline.setHours(23, 59, 59, 999);
+        const isApplicationOpen = deadline ? today <= deadline : false;
+
         return (
           <div
             key={acc.accommodation_id}
@@ -191,20 +197,29 @@ export function AccommodationListView({
 
                 {/* APPLY BUTTON */}
                 {userRole === 'student' ? (
-                  vacantSlots > 0 ? (
-                    <Link
-                      href={`${basePath}/application?accommodationId=${acc.accommodation_id}`}
-                      className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] inline-block"
-                      style={{ backgroundColor: '#264384' }}
-                    >
-                      Apply
-                    </Link>
+                  isApplicationOpen ? (
+                    vacantSlots > 0 ? (
+                      <Link
+                        href={`${basePath}/application?accommodationId=${acc.accommodation_id}`}
+                        className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] inline-block"
+                        style={{ backgroundColor: '#264384' }}
+                      >
+                        Apply
+                      </Link>
+                    ) : (
+                      <button
+                        disabled
+                        className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
+                      >
+                        Apply (Full)
+                      </button>
+                    )
                   ) : (
                     <button
                       disabled
                       className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
                     >
-                      Apply
+                      Applications Closed
                     </button>
                   )
                 ) : (

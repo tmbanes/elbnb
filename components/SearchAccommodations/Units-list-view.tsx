@@ -29,6 +29,12 @@ export function UnitsListView({
         )
         const vacantSlots = unit.vacant_slots ?? Math.max(0, unit.max_occupancy - unit.current_occupancy)
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const deadline = accommodation?.allowed_application ? new Date(accommodation.allowed_application) : null;
+        if (deadline) deadline.setHours(23, 59, 59, 999);
+        const isApplicationOpen = deadline ? today <= deadline : false;
+
         return (
           <div
             key={unit.unit_id}
@@ -185,18 +191,31 @@ export function UnitsListView({
                 </button>
 
                 {/* APPLY BUTTON */}
-                <Link
-                  href={vacantSlots > 0 ? `${basePath}/application?accommodationId=${unit.accommodation_id}&unitId=${unit.unit_id}` : '#'}
-                  className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm inline-block ${vacantSlots > 0
-                    ? 'text-white hover:opacity-90 active:scale-[0.98]'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none'
-                    }`}
-                  style={{
-                    backgroundColor: vacantSlots > 0 ? '#264384' : undefined,
-                  }}
-                >
-                  Apply
-                </Link>
+                {isApplicationOpen ? (
+                  vacantSlots > 0 ? (
+                    <Link
+                      href={`${basePath}/application?accommodationId=${unit.accommodation_id}&unitId=${unit.unit_id}`}
+                      className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm inline-block text-white hover:opacity-90 active:scale-[0.98]"
+                      style={{ backgroundColor: '#264384' }}
+                    >
+                      Apply
+                    </Link>
+                  ) : (
+                    <button
+                      disabled
+                      className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none"
+                    >
+                      Apply (Full)
+                    </button>
+                  )
+                ) : (
+                  <button
+                    disabled
+                    className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none"
+                  >
+                    Applications Closed
+                  </button>
+                )}
               </div>
             </div>
           </div>

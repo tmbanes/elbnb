@@ -24,6 +24,12 @@ export function AccommodationCard({
   const hasVacant = vacantUnits.length > 0
   const totalVacantSlots = vacantUnits.reduce((acc, curr) => acc + curr.vacant_slots, 0)
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const deadline = accommodation?.allowed_application ? new Date(accommodation.allowed_application) : null;
+  if (deadline) deadline.setHours(23, 59, 59, 999);
+  const isApplicationOpen = deadline ? today <= deadline : false;
+
   return (
     <div className="flex-shrink-0 w-72 min-h-[420px] rounded-2xl shadow-md hover:shadow-xl transition-shadow overflow-hidden group flex flex-col" style={{ backgroundColor: '#FDFFF4' }}>
       {/* Image */}
@@ -94,20 +100,29 @@ export function AccommodationCard({
         {/* Actions */}
         <div className="flex flex-col gap-2 mt-auto">
           {userRole === 'student' ? (
-            hasVacant ? (
-              <Link
-                href={`${basePath}/application?accommodationId=${accommodation.accommodation_id}`}
-                className="w-full px-4 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] text-center block"
-                style={{ backgroundColor: '#264384' }}
-              >
-                Apply
-              </Link>
+            isApplicationOpen ? (
+              hasVacant ? (
+                <Link
+                  href={`${basePath}/application?accommodationId=${accommodation.accommodation_id}`}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] text-center block"
+                  style={{ backgroundColor: '#264384' }}
+                >
+                  Apply
+                </Link>
+              ) : (
+                <button
+                  disabled
+                  className="w-full px-4 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
+                >
+                  Apply (Full)
+                </button>
+              )
             ) : (
               <button
                 disabled
-                className="w-full px-4 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
+                className="w-full px-4 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed text-center block"
               >
-                Apply
+                Applications Closed
               </button>
             )
           ) : (
