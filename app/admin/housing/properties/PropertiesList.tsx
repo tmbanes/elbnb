@@ -66,14 +66,16 @@ function StatCard({
   label,
   value,
   icon,
-  bgColor,
+  accentColor,
   iconBg,
+  description
 }: {
   label: string;
   value: number;
   icon: React.ReactNode;
-  bgColor: string;
+  accentColor: string;
   iconBg: string;
+  description: string
 }) {
   return (
     //Stat Card UI

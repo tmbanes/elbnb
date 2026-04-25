@@ -28,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { submitExtensionRequest } from "./actions";
 import { createActivityLog } from "@/services/activity_log";
 
+import { useRealtimeSync } from "@/lib/realtime-sync";
+
 const archivo = Archivo({ subsets: ["latin"] });
 
 interface StudentDashboardUIProps {
@@ -64,6 +66,9 @@ export default function StudentDashboardUI({
 
     const supabase = getSupabaseBrowserClient();
     const router = useRouter();
+
+    // Sync notifications in real-time
+    useRealtimeSync('notifications', `user_id=eq.${user?.user_id}`, 'INSERT');
 
     const handleLogout = async () => {
         setIsLoggingOut(true);

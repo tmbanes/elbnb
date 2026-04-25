@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Property, Complaint } from "../../../../types/housing/types";
+import { Property } from "../../../../types/housing/types";
 import AddUnitModal from "@/app/admin/housing/components/modals/AddUnitModal";
 
 // ui components
@@ -82,44 +82,44 @@ export default function PropertyDetail({
   const isDorm = property.accommodation_type === "dormitory";
 
   // DUMMY COMPLAINTS FOR DEMO PURPOSES ONLY
-  const [complaints, setComplaints] = useState<Complaint[]>([
-    {
-      complaint_id: "c1",
-      complainant_id: "user123",
-      accommodation_id: property.accommodation_id,
-      unit_id: "u1",
-      complaint_type: "maintenance",
-      complaint_desc: "The light in the room is not working.",
-      complaint_status: "open",
-      submit_date: "2024-04-15T10:00:00Z",
-    },
-    {
-      complaint_id: "c2",
-      complainant_id: "user456",
-      accommodation_id: property.accommodation_id,
-      unit_id: "u2",
-      complaint_type: "utility",
-      complaint_desc: "Water heater is broken.",
-      complaint_status: "under_review",
-      submit_date: "2024-04-10T14:30:00Z",
-    },
-    {
-      complaint_id: "c3",
-      complainant_id: "user789",
-      accommodation_id: property.accommodation_id,
-      unit_id: "u3",
-      complaint_type: "sanitation",
-      complaint_desc: "Bathroom needs cleaning.",
-      complaint_status: "closed",
-      submit_date: "2024-04-05T09:15:00Z",
-    },
-  ]);
+  // const [complaints, setComplaints] = useState<Complaint[]>([
+  //   {
+  //     complaint_id: "c1",
+  //     complainant_id: "user123",
+  //     accommodation_id: property.accommodation_id,
+  //     unit_id: "u1",
+  //     complaint_type: "maintenance",
+  //     complaint_desc: "The light in the room is not working.",
+  //     complaint_status: "open",
+  //     submit_date: "2024-04-15T10:00:00Z",
+  //   },
+  //   {
+  //     complaint_id: "c2",
+  //     complainant_id: "user456",
+  //     accommodation_id: property.accommodation_id,
+  //     unit_id: "u2",
+  //     complaint_type: "utility",
+  //     complaint_desc: "Water heater is broken.",
+  //     complaint_status: "under_review",
+  //     submit_date: "2024-04-10T14:30:00Z",
+  //   },
+  //   {
+  //     complaint_id: "c3",
+  //     complainant_id: "user789",
+  //     accommodation_id: property.accommodation_id,
+  //     unit_id: "u3",
+  //     complaint_type: "sanitation",
+  //     complaint_desc: "Bathroom needs cleaning.",
+  //     complaint_status: "closed",
+  //     submit_date: "2024-04-05T09:15:00Z",
+  //   },
+  // ]);
 
-  const handleStatusChange = async (id: string, status: Complaint["complaint_status"]) => {
-    setComplaints(prev =>
-      prev.map(c => c.complaint_id === id ? { ...c, complaint_status: status } : c)
-    );
-  };
+  // const handleStatusChange = async (id: string, status: Complaint["complaint_status"]) => {
+  //   setComplaints(prev =>
+  //     prev.map(c => c.complaint_id === id ? { ...c, complaint_status: status } : c)
+  //   );
+  // };
 
   const totalCapacity = property.total_capacity ?? 0;
   const currentOccupancy = property.units?.reduce(

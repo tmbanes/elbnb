@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: roleUpdate.error.message }, { status: 500 });
     }
 
-    const metadataUpdates: Record<string, unknown> = {};
+    const metadataUpdates: Record<string, unknown> = { role };
 
     // STUDENTS: student_number, degree_program, enrollment_status, residency_status, violation_count
     if (role === "student") {

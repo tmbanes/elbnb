@@ -1,10 +1,10 @@
-import { getUserWithRole } from "@/lib/auth/session";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { RotatingLanding } from "@/components/RotatingLanding";
 
 export default async function LandingPage() {
   // Check if user is logged in
-  const user = await getUserWithRole();
+  const user = await getApiAuthenticatedUser();
 
   // Explicitly handle redirects ONLY if user is clearly logged in
   if (user && user.role) {

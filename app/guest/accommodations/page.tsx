@@ -221,8 +221,8 @@ export default function SearchAccommodationsPage() {
       setError(null)
       try {
         const [accomRes, unitsRes] = await Promise.all([
-          fetch('/api/dashboard/tiles?type=accommodations'),
-          fetch('/api/dashboard/tiles?type=units'),
+          fetch('/api/shared/dashboard/tiles?type=accommodations'),
+          fetch('/api/shared/dashboard/tiles?type=units'),
         ])
 
         if (!accomRes.ok) throw new Error('Failed to fetch accommodations')

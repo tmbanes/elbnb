@@ -33,7 +33,7 @@ function BillingPageContent() {
     const fetchData = async () => {
       try {
         // Fetch the assignment
-        const assignRes = await fetch('/api/assignments')
+        const assignRes = await fetch('/api/student/assignments')
         if (!assignRes.ok) {
           throw new Error('Failed to fetch assignments')
         }
@@ -45,7 +45,7 @@ function BillingPageContent() {
         if (!found) return
 
         // Fetch accommodations for lookup
-        const accomRes = await fetch('/api/dashboard/tiles?type=accommodations')
+        const accomRes = await fetch('/api/shared/dashboard/tiles?type=accommodations')
         const accomData: Accommodation[] = accomRes.ok ? await accomRes.json() : []
 
         // Fetch unit from each accommodation until found
@@ -53,7 +53,7 @@ function BillingPageContent() {
         let matchedAccom: Accommodation | null = null
 
         for (const accom of accomData) {
-          const unitRes = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accom.accommodation_id}`)
+          const unitRes = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accom.accommodation_id}`)
           if (!unitRes.ok) continue
           const units: Unit[] = await unitRes.json()
           const u = units.find(u => u.unit_id === found.unit_id) ?? null
@@ -80,7 +80,7 @@ function BillingPageContent() {
     setPayState('paying')
     setErrorMsg('')
     try {
-      const res = await fetch('/api/assignments', {
+      const res = await fetch('/api/student/assignments', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assignmentId: assignmentId, action: 'activate' }),

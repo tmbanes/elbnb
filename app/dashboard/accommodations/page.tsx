@@ -201,7 +201,7 @@ export default function AccommodationsDashboardPage() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch('/api/dashboard/tiles?type=accommodations')
+      const response = await fetch('/api/shared/dashboard/tiles?type=accommodations')
       if (!response.ok) throw new Error('Failed to fetch accommodations')
       const result: Accommodation[] = await response.json()
       setAccommodations(result)
@@ -217,7 +217,7 @@ export default function AccommodationsDashboardPage() {
     setLoadingUnits(true)
     setError(null)
     try {
-      let url = '/api/dashboard/tiles?type='
+      let url = '/api/shared/dashboard/tiles?type='
       if (type === 'all') {
         url += 'units'
       } else if (type === 'by-accommodation' && accommodationId) {
@@ -249,8 +249,8 @@ export default function AccommodationsDashboardPage() {
       setError(null)
       try {
         const [accomRes, unitsRes] = await Promise.all([
-          fetch('/api/dashboard/tiles?type=accommodations'),
-          fetch('/api/dashboard/tiles?type=units'),
+          fetch('/api/shared/dashboard/tiles?type=accommodations'),
+          fetch('/api/shared/dashboard/tiles?type=units'),
         ])
         if (!accomRes.ok) throw new Error('Failed to fetch accommodations')
         if (!unitsRes.ok) throw new Error('Failed to fetch units')
@@ -335,7 +335,7 @@ export default function AccommodationsDashboardPage() {
     setViewMode('units')
     setLoadingUnits(true)
     try {
-      const response = await fetch('/api/dashboard/tiles?type=units')
+      const response = await fetch('/api/shared/dashboard/tiles?type=units')
       if (!response.ok) throw new Error('Failed to fetch units')
       const result: Unit[] = await response.json()
       setAllUnits(result)
@@ -362,7 +362,7 @@ export default function AccommodationsDashboardPage() {
 
     try {
       const response = await fetch(
-        `/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`
+        `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`
       )
       if (!response.ok) throw new Error('Failed to fetch units')
       const result: Unit[] = await response.json()

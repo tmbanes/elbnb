@@ -299,7 +299,7 @@ export default function ApplyAccommodationForm() {
       }));
 
       // Single request — no Content-Type header, browser sets multipart boundary
-      const response = await fetch("/api/applications/create_application", {
+      const response = await fetch("/api/student/applications", {
         method: "POST",
         body: formData,
       });
@@ -374,7 +374,7 @@ export default function ApplyAccommodationForm() {
 
     const fetchAccommodation = async () => {
       try {
-        const res = await fetch("/api/dashboard/tiles?type=accommodations");
+        const res = await fetch("/api/shared/dashboard/tiles?type=accommodations");
         if (!res.ok) throw new Error("Failed to fetch accommodations");
 
         const data: Accommodation[] = await res.json();
@@ -385,7 +385,7 @@ export default function ApplyAccommodationForm() {
 
         if (unitIdFromQuery) {
           const resUnit = await fetch(
-            `/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
+            `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
           );
           if (!resUnit.ok) throw new Error("Failed to fetch units");
 

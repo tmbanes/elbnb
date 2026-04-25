@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withRole } from "@/lib/auth/api-guard";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
@@ -15,10 +16,10 @@ function mapInvoiceKindToBillingType(kind: ManualInvoiceItem["kind"]) {
   return "room_rent";
 }
 
-export async function GET(_req: NextRequest) {
+export const GET = withRole(["housing_admin"], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
-    const { searchParams } = new URL(_req.url);
+    const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
     // If an ID is provided, fetch just that one application
@@ -85,26 +86,6 @@ export async function GET(_req: NextRequest) {
       });
     }
 
-    // Verify session
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Verify admin role
-    const { data: profile } = await supabase
-      .from("users")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!profile || profile.role !== "housing_admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     // Fetch all applications that have passed dorm manager review
     const { data: applications, error: appError } = await supabase
       .from("accommodation_application")
@@ -154,31 +135,11 @@ export async function GET(_req: NextRequest) {
       e instanceof Error ? e.message : "Failed to fetch applications.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withRole(["housing_admin"], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
-
-    // Verify session
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Verify admin role
-    const { data: profile } = await supabase
-      .from("users")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!profile || profile.role !== "housing_admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     const body = await req.json();
     const { application_id, action, unit_id } = body as {
@@ -371,30 +332,11 @@ export async function PATCH(req: NextRequest) {
       e instanceof Error ? e.message : "Failed to process application.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withRole(["housing_admin"], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: profile } = await supabase
-      .from("users")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!profile || profile.role !== "housing_admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     const body = await req.json();
     const {
@@ -567,8 +509,7 @@ export async function POST(req: NextRequest) {
       required_to_secure_slot_total: requiredAmount,
     });
   } catch (e) {
-    const message =
-      e instanceof Error ? e.message : "Failed to send manual invoice.";
+    const message = e instanceof Error ? e.message : "Failed to send manual invoice.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});

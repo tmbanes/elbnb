@@ -122,7 +122,7 @@ export default function MyAssignmentsPage() {
 
     try {
       // 1. Fetch assignments for the authenticated user
-      const assignRes = await fetch('/api/assignments')
+      const assignRes = await fetch('/api/student/assignments')
       if (!assignRes.ok) {
         if (assignRes.status === 401) { router.push('/login'); return }
         throw new Error('Failed to fetch assignments')
@@ -134,7 +134,7 @@ export default function MyAssignmentsPage() {
       const visibleAssignments = assignments.filter(a => a.assignment_status !== 'pending')
 
       // 3. Fetch accommodations
-      const accomRes = await fetch('/api/dashboard/tiles?type=accommodations')
+      const accomRes = await fetch('/api/shared/dashboard/tiles?type=accommodations')
       const accomData: Accommodation[] = accomRes.ok ? await accomRes.json() : []
       const accomMap = new Map(accomData.map(a => [a.accommodation_id, a]))
       const unitMap = new Map<string, Unit>()
@@ -143,7 +143,7 @@ export default function MyAssignmentsPage() {
       // First get all accommodations' units
       await Promise.all(
         accomData.map(async (accom) => {
-          const res = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accom.accommodation_id}`)
+          const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accom.accommodation_id}`)
           if (!res.ok) return
           const units: Unit[] = await res.json()
           units.forEach(u => unitMap.set(u.unit_id, u))
@@ -191,7 +191,7 @@ export default function MyAssignmentsPage() {
     setTerminatingId(assignmentId)
     setConfirmTerminateId(null)
     try {
-      const res = await fetch('/api/assignments', {
+      const res = await fetch('/api/student/assignments', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assignmentId: assignmentId, action: 'terminate' }),
@@ -214,7 +214,7 @@ export default function MyAssignmentsPage() {
     setRejectingId(assignmentId)
     setConfirmRejectId(null)
     try {
-      const res = await fetch('/api/assignments', {
+      const res = await fetch('/api/student/assignments', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assignmentId: assignmentId, action: 'cancel' }),
