@@ -5,6 +5,7 @@ import { userProfileService } from "@/services/user_profile";
 import { getStudentBillsDetailed } from "@/services/user-services";
 import { redirect } from "next/navigation";
 import GuestDashboardUI from "./guest-dashboard-ui";
+import { createActivityLog, isUserRole } from "@/services/activity_log";
 
 export default async function GuestDashboardPage() {
   const supabase = await createSupabaseServerClient();

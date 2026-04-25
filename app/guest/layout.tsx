@@ -13,7 +13,6 @@ export default async function GuestLayout({ children }: { children: React.ReactN
             <SidebarProvider>
 
                 <AppSidebar role="guest" />
-                <SidebarTrigger />
 
                 <main className="flex-1">
                     {/* optional trigger button */}

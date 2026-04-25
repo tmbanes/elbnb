@@ -47,6 +47,7 @@ export default function GuestDashboardUI({
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [bills, setBills] = useState<any[]>(initialBills);
     const [isLoadingBills, setIsLoadingBills] = useState(false);
+    
 
     useEffect(() => {
         async function fetchAccommodations() {
