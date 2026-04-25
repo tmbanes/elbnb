@@ -62,6 +62,7 @@ const sidebarConfig = {
       { title: "Housing", url: "/manager/housing", icon: Building2 },
       { title: "Residents", url: "/manager/residents", icon: Users },
       { title: "Applications", url: "/manager/applications", icon: Newspaper },
+      { title: "Residents", url: "/manager/residents", icon: Users },
     ],
   },
 
