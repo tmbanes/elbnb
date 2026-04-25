@@ -13,7 +13,7 @@ export async function proxy(req: NextRequest) {
   // Create supabase client to handle auth cookies
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_KEY!,
     {
       cookies: {
         getAll: () => req.cookies.getAll(),
