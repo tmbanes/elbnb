@@ -275,35 +275,33 @@ export default function ApplyAccommodationForm() {
     setShowSuccess(true);
     setFileError("");
 
-    // Calculate duration in months for the backend
-    const months = Math.round(
-      (data.checkOut.getTime() - data.checkIn.getTime()) /
-        (1000 * 60 * 60 * 24 * 30.44),
-    );
-
-    const payload = {
-      //preferred_accommodation: accommodationIdFromQuery,
-      preferred_accommodation_id: accommodationIdFromQuery,
-      preferred_unit_type: unitIdFromQuery ? "" : data.preferred_unit_type,
-      date_submitted: new Date().toISOString(),
-      duration_of_stay: months || 1,
-      check_in: format(data.checkIn, "yyyy-MM-dd"),
-      check_out: format(data.checkOut, "yyyy-MM-dd"),
-      number_of_companions:
-        userRole === "guest" &&
-        accommodation?.accommodation_type === "renting_space"
-          ? 1
-          : 0,
-      application_status: "pending_dorm_manager" as ApplicationStatus,
-      user_id: userId,
-      unit_id: unitIdFromQuery,
-    };
-
     try {
+      const months = Math.round(
+        (data.checkOut.getTime() - data.checkIn.getTime()) /
+          (1000 * 60 * 60 * 24 * 30.44)
+      );
+
+      // Pack the application JSON as a string field alongside the file
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("data", JSON.stringify({
+        preferred_accommodation_id: accommodationIdFromQuery,
+        preferred_unit_type: unitIdFromQuery ? "" : data.preferred_unit_type,
+        duration_of_stay: months || 1,
+        check_in: format(data.checkIn, "yyyy-MM-dd"),
+        check_out: format(data.checkOut, "yyyy-MM-dd"),
+        number_of_companions:
+          userRole === "guest" &&
+          accommodation?.accommodation_type === "renting_space"
+            ? 1
+            : 0,
+        unit_id: unitIdFromQuery,
+      }));
+
+      // Single request — no Content-Type header, browser sets multipart boundary
       const response = await fetch("/api/applications/create_application", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       if (!response.ok) {
