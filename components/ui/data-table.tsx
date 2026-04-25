@@ -119,29 +119,34 @@ export function DataTable<TData, TValue>({
           )}
         </TableBody>
       </Table>
-      {table.getPageCount() > 1 && (
-        <div className="flex items-center justify-center space-x-4 px-4 py-3 border-t border-slate-200 bg-transparent">
+      <div className="px-6 py-4 bg-transparent border-t border-slate-200 flex items-center justify-between">
+        <p className="text-xs text-slate-500 font-medium">
+          Showing {table.getRowModel().rows.length} of {data.length} items
+        </p>
+        <div className="flex gap-2">
           <Button
-            className="h-8 w-8 p-0 text-slate-700 bg-[#FDFFF4] hover:bg-[#F6F8D5] hover:text-[#44291B]"
+            size="sm"
+            variant="ghost"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            className="h-8 bg-transparent text-slate-700 hover:bg-[#E3E3E3]"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="w-4 h-4 mr-1" />
           </Button>
-
-          <div className="text-sm font-medium text-[#44291B]">
-            {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+          <div className="flex items-center px-3 text-xs font-bold text-slate-600">
+            {table.getState().pagination.pageIndex + 1} / {table.getPageCount() || 1}
           </div>
-
           <Button
-            className="h-8 w-8 p-0 text-slate-700 bg-[#FDFFF4] hover:bg-[#F6F8D5] hover:text-[#44291B]"
+            size="sm"
+            variant="ghost"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            className="h-8 bg-transparent text-slate-700 hover:bg-[#E3E3E3]"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
-      )}
+      </div>
     </div>
   )
 }
