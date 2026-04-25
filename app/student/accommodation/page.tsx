@@ -1,8 +1,7 @@
 import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation";
 import { Accommodation } from "@/types/accommodation_units";
-import Link from "next/link";
 
-export default async function ListOfAccommodationsPage() {
+export default async function Page() {
   const { data: accommodations, error } =
     await UnitAccomodationsDisplayService.listAccomodations("student");
 
@@ -172,12 +171,9 @@ export default async function ListOfAccommodationsPage() {
                         View Details
                       </button>
 
-                      <Link 
-                        href={`/student/accommodations/application?accommodationId=${acc.accommodation_id}`}
-                        className="px-8 py-2 bg-[#2B4A8B] text-white rounded-lg text-sm inline-block"
-                      >
+                      <button className="px-8 py-2 bg-[#2B4A8B] text-white rounded-lg text-sm">
                         Apply
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </div>
