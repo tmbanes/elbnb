@@ -96,7 +96,7 @@ export default function SearchAccommodationsPage() {
       { value: 'M', label: 'Male' },
       { value: 'COED', label: 'Coed' },
     ];
-    
+
     const sexLabels: Record<string, string> = {
       'F': 'Female',
       'M': 'Male',
@@ -110,7 +110,7 @@ export default function SearchAccommodationsPage() {
       const sexStr = sex as string;
       const upperSex = sexStr.toUpperCase();
       let label = sexLabels[upperSex] || sexLabels[sexStr] || (sexStr.charAt(0).toUpperCase() + sexStr.slice(1).toLowerCase());
-      
+
       return {
         value: sexStr,
         label
@@ -402,19 +402,7 @@ export default function SearchAccommodationsPage() {
             >
               Accommodations
             </button>
-            <button
-              onClick={() => { setActiveTab('units'); setCurrentPage(1); }}
-              className={`px-6 py-3 rounded-lg font-semibold transition ${activeTab === 'units'
-                ? 'text-white shadow-md'
-                : 'border border-gray-200 hover:border-gray-300'
-                }`}
-              style={{
-                backgroundColor: activeTab === 'units' ? '#264384' : '#FDFFF4',
-                color: activeTab === 'units' ? 'white' : '#44291B',
-              }}
-            >
-              All Units
-            </button>
+
             <button
               onClick={() => setViewMode(viewMode === 'list' ? 'carousel' : 'list')}
               className="px-6 py-3 rounded-lg font-semibold border border-gray-200 hover:border-gray-300 transition shadow-sm"
@@ -503,15 +491,17 @@ export default function SearchAccommodationsPage() {
             {/* Carousel or List View */}
             {!loading && filteredAccommodations.length > 0 && (
               viewMode === 'carousel' ? (
-                <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-12">
+                <div className="mb-12">
                   <Carousel>
                     {filteredAccommodations.map((accommodation) => (
-                      <AccommodationCard
-                        key={accommodation.accommodation_id}
-                        accommodation={accommodation}
-                        units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
-                        onDetailsClick={handleAccommodationDetailsClick}
-                      />
+                        <AccommodationCard
+                          key={accommodation.accommodation_id}
+                          accommodation={accommodation}
+                          units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
+                          onDetailsClick={handleAccommodationDetailsClick}
+                          basePath="/student/accommodations"
+                          userRole="student"
+                        />
                     ))}
                   </Carousel>
                 </div>
@@ -524,6 +514,8 @@ export default function SearchAccommodationsPage() {
                   validCurrentPage={validCurrentPage}
                   basePath="/student/accommodations"
                   onSeeUnitsClick={handleSeeUnitsClick}
+                  userRole="student"
+                  units={units}
                 />
               )
             )}
@@ -593,7 +585,7 @@ export default function SearchAccommodationsPage() {
             {/* Carousel or List View */}
             {!loading && filteredUnits.length > 0 && (
               viewMode === 'carousel' ? (
-                <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-12">
+                <div className="mb-12">
                   <Carousel>
                     {filteredUnits.map((unit) => {
                       const accommodation = accommodations.find(
