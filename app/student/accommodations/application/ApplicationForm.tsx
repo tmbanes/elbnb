@@ -291,7 +291,7 @@ export default function ApplyAccommodationForm() {
         check_in: format(data.checkIn, "yyyy-MM-dd"),
         check_out: format(data.checkOut, "yyyy-MM-dd"),
         number_of_companions:
-          userRole === "guest" &&
+          //userRole === "guest" &&
           accommodation?.accommodation_type === "renting_space"
             ? 1
             : 0,

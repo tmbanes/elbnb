@@ -99,7 +99,7 @@ export class CreateApplicationService {
       .select('assignment_id')
       .eq('user_id', data.user_id)
       .eq('assignment_status', 'active')
-      .maybeSingle()
+      .limit(1)
 
     if (assignmentError) throw new Error(`Failed to fetch assignment: ${assignmentError.message}`)
 
