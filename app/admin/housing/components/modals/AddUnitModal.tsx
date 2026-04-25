@@ -119,7 +119,7 @@ export default function AddUnitModal({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to create unit");
+        throw new Error(data.error || "Failed to create units");
       }
 
       onSuccess(data);
@@ -129,6 +129,7 @@ export default function AddUnitModal({
     } finally {
       setLoading(false);
     }
+
   }
 
   return (
