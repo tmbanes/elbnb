@@ -221,11 +221,25 @@ not yet tested
 
     const { data, error } = await client
       .from("documents")
+      .select("*")
+      .eq("user_id", user_id);
+
+    if (error) {
+      if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn("Documents table is missing in Supabase. Returning empty array.");
+        return { data: [], error: null };
+      }
+      console.error("Error fetching documents:", error.message);
+    }
+
+    return { data, error };
+  },
+
   async getCurrentAccommodation(user_id: string) {
-      const client = await supabase();
-      const { data, error } = await client
-        .from("accommodation_assignment")
-        .select(`
+    const client = await supabase();
+    const { data, error } = await client
+      .from("accommodation_assignment")
+      .select(`
         assignment_id,
         move_in_date,
         expected_move_out_date,
@@ -241,90 +255,77 @@ not yet tested
           )
         )
       `)
-        .eq("user_id", user_id)
-        .in("assignment_status", ["active", "waiting_payment", "pending"])
-        .maybeSingle();
+      .eq("user_id", user_id)
+      .in("assignment_status", ["active", "waiting_payment", "pending"])
+      .maybeSingle();
 
-      return { data, error };
-    },
+    return { data, error };
+  },
 
   async getDashboardStats(user_id: string) {
-      const client = await supabase();
+    const client = await supabase();
 
-      // Get summary of bills
-      const { data: billingData } = await client
-        .from("billing")
-        .select("amount, status, accommodation_assignment!inner(user_id)")
-        .eq("accommodation_assignment.user_id", user_id);
+    // Get summary of bills
+    const { data: billingData } = await client
+      .from("billing")
+      .select("amount, status, accommodation_assignment!inner(user_id)")
+      .eq("accommodation_assignment.user_id", user_id);
 
-      let totalBalance = 0;
-      billingData?.forEach(bill => {
-        if (bill.status !== 'paid') totalBalance += bill.amount;
-      });
+    let totalBalance = 0;
+    billingData?.forEach(bill => {
+      if (bill.status !== 'paid') totalBalance += bill.amount;
+    });
 
-      // Get latest application
-      const { data: latestApp } = await client
-        .from("accommodation_application")
-        .select("application_status, date_submitted")
-        .eq("user_id", user_id)
-        .order("date_submitted", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+    // Get latest application
+    const { data: latestApp } = await client
+      .from("accommodation_application")
+      .select("application_status, date_submitted")
+      .eq("user_id", user_id)
+      .order("date_submitted", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-      return {
-        totalBalance,
-        latestApplicationStatus: latestApp?.application_status || null,
-      };
-    },
-
-  async getDocuments(user_id: string) {
-      const client = await supabase();
-      const { data, error } = await client
-        .from("Document")
-        .select("*")
-        .eq("user_id", user_id);
-
-      return { data, error };
-    },
+    return {
+      totalBalance,
+      latestApplicationStatus: latestApp?.application_status || null,
+    };
+  },
 
   async createExtensionApplication(user_id: string, currentResidency: any) {
-      const client = await supabase();
+    const client = await supabase();
 
-      const { data, error } = await client
-        .from("accommodation_application")
-        .insert({
-          user_id: user_id,
-          preferred_accommodation_id: currentResidency.unit.accommodation.accommodation_id,
-          unit_id: currentResidency.unit.unit_id,
-          preferred_unit_type: currentResidency.unit.unit_type,
-          application_status: "pending_dorm_manager",
-          date_submitted: new Date().toISOString(),
-        })
-        .select()
-        .single();
+    const { data, error } = await client
+      .from("accommodation_application")
+      .insert({
+        user_id: user_id,
+        preferred_accommodation_id: currentResidency.unit.accommodation.accommodation_id,
+        unit_id: currentResidency.unit.unit_id,
+        preferred_unit_type: currentResidency.unit.unit_type,
+        application_status: "pending_dorm_manager",
+        date_submitted: new Date().toISOString(),
+      })
+      .select()
+      .single();
 
-      return { data, error };
-    },
+    return { data, error };
+  },
 
   async getNotifications(user_id: string) {
-      const client = await supabase();
-      const { data, error } = await client
-        .from("notifications")
-        .select("*")
-        .eq("user_id", user_id)
-        .order("created_at", { ascending: false });
+    const client = await supabase();
+    const { data, error } = await client
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user_id)
+      .order("created_at", { ascending: false });
 
-      if (error) {
-        // PGRST116 is the error code for 'relation not found' (table missing)
-        if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
-          console.warn("Documents table is missing in Supabase. Returning empty array.");
-          return { data: [], error: null };
-        }
-        console.error("Error fetching documents:", error.message, error.details, error.hint);
+    if (error) {
+      if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn("Notifications table is missing in Supabase. Returning empty array.");
+        return { data: [], error: null };
       }
+      console.error("Error fetching notifications:", error.message);
+    }
 
-      return { data, error };
-    },
     return { data, error };
   }
 };

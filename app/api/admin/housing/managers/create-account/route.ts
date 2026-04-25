@@ -104,11 +104,11 @@ export async function POST(req: NextRequest) {
   if (createError) {
     // If a stale partial row exists, try cleanup then retry once.
     if (createError.code === "unexpected_failure") {
-      const { data: existingUser } = await supabaseAdmin
+      const { data: existingUser } = await (supabaseAdmin
         .from("users")
         .select("user_id, role")
         .eq("email", normalizedEmail)
-        .maybeSingle();
+        .maybeSingle() as any);
 
       if (existingUser?.user_id && existingUser.role === "dormitory_manager") {
         await cleanupDormManagerByUserId(existingUser.user_id);
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
     await sendManagerAccountCreatedEmail({
       to: normalizedEmail,
       name: `${first_name} ${last_name}`.trim(),
-      temporaryPassword: tempPassword,
+      tempPass: tempPassword,
     });
     emailSent = true;
   } catch (err: any) {

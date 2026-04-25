@@ -37,3 +37,32 @@ export async function sendEmail({
   if (error) throw new Error(`Email failed: ${error.message}`)
 }
 
+export async function sendManagerAccountCreatedEmail({
+  to,
+  name,
+  tempPass,
+}: {
+  to: string
+  name: string
+  tempPass: string
+}) {
+  const emailData = templates.managerAccountCreated(name, tempPass)
+
+  const html = await render(
+    NotificationEmail({
+      title: emailData.title,
+      message: emailData.message,
+      actionUrl: emailData.actionUrl,
+    })
+  )
+
+  const { error } = await resend.emails.send({
+    from: process.env.EMAIL_FROM!,
+    to,
+    subject: emailData.title,
+    html,
+  })
+
+  if (error) throw new Error(`Email failed: ${error.message}`)
+}
+

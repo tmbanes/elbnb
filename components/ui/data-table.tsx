@@ -32,7 +32,7 @@ interface DataTableProps<TData, TValue> {
   activeRowId?: string
 }
 
-import * as React from "react"
+
 
 export function DataTable<TData, TValue>({
   columns,

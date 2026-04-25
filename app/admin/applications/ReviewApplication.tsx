@@ -353,378 +353,393 @@ export default function ReviewApplication({
         </CardContent>
       </Card>
 
-      <Card className="p-5 space-y-6">
+      {/* <Card className="p-5 space-y-6"> */}
+      <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm">
+        <CardContent className="px-5 py-4 space-y-4">
+          {/* STAY DETAILS */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+              Stay Details
+            </h3>
 
-        {/* STAY DETAILS */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-            Stay Details
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="label font-semibold">Duration:</p>
-              <p>{data.stay.duration}</p>
-            </div>
-
-            <div>
-              <p className="label font-semibold">Companions:</p>
-              <p>{data.stay.companions}</p>
-            </div>
-
-            <div>
-              <p className="label font-semibold">Check-in:</p>
-              <p>{data.stay.checkIn}</p>
-            </div>
-
-            <div>
-              <p className="label font-semibold">Check-out:</p>
-              <p>{data.stay.checkOut}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* ACCOMMODATION */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-            Accommodation Details
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="label font-semibold">Accommodation:</p>
-              <p>{data.stay.dorm}</p>
-            </div>
-
-            <div>
-              <p className="label font-semibold">Room Type:</p>
-              <p>{data.stay.roomType}</p>
-            </div>
-          </div>
-
-          <select
-            className="w-full border rounded-md p-2 text-sm mt-2"
-            value={selectedUnitId}
-            onChange={(e) => setSelectedUnitId(e.target.value)}
-          >
-            <option value="">Assign unit</option>
-            {appData?.availableUnits?.map((unit: any) => (
-              <option key={unit.unit_id} value={unit.unit_id}>
-                {unit.unit_number}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* DOCUMENTS */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-            Uploaded Documents
-          </h3>
-
-          <div className="space-y-2">
-            {data.documents.map((doc, i) => (
-              <div
-                key={i}
-                className="flex justify-between items-center border rounded-md px-3 py-2"
-              >
-                <span>{doc}</span>
-
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowPreview(true)}
-                >
-                  Preview
-                </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="label font-semibold">Duration:</p>
+                <p>{data.stay.duration}</p>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* MODAL (ONLY ONCE) */}
-        {showPreview && (
-          <ApplicationPreview onClose={() => setShowPreview(false)} />
+              <div>
+                <p className="label font-semibold">Companions:</p>
+                <p>{data.stay.companions}</p>
+              </div>
+
+              <div>
+                <p className="label font-semibold">Check-in:</p>
+                <p>{data.stay.checkIn}</p>
+              </div>
+
+              <div>
+                <p className="label font-semibold">Check-out:</p>
+                <p>{data.stay.checkOut}</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ACCOMMODATION */}
+      <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm">
+        <CardContent className="px-5 py-4 space-y-4">
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+              Accommodation Details
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="label font-semibold">Accommodation:</p>
+                <p>{data.stay.dorm}</p>
+              </div>
+
+              <div>
+                <p className="label font-semibold">Room Type:</p>
+                <p>{data.stay.roomType}</p>
+              </div>
+            </div>
+
+            <select
+              className="w-full border rounded-md p-2 text-sm mt-2"
+              value={selectedUnitId}
+              onChange={(e) => setSelectedUnitId(e.target.value)}
+            >
+              <option value="">Assign unit</option>
+              {appData?.availableUnits?.map((unit: any) => (
+                <option key={unit.unit_id} value={unit.unit_id}>
+                  {unit.unit_number}
+                </option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* DOCUMENTS */}
+      <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm">
+        <CardContent className="px-5 py-4 space-y-4">
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+              Uploaded Documents
+            </h3>
+
+            <div className="space-y-2">
+              {data.documents.map((doc, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between items-center border rounded-md px-3 py-2"
+                >
+                  <span>{doc}</span>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowPreview(true)}
+                  >
+                    Preview
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODAL (ONLY ONCE) */}
+          {showPreview && (
+            <ApplicationPreview onClose={() => setShowPreview(false)} />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* HISTORY */}
+      <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm">
+        <CardContent className="px-5 py-4 space-y-4">
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+              Application History
+            </h3>
+
+            <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+              {data.history.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ACTIONS & CONFIRMATION SECTION */}
+      <div className="pt-4 border-t border-gray-300">
+        {invoiceSuccess && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md text-xs">
+            {invoiceSuccess}
+          </div>
         )}
 
-        {/* HISTORY */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-            Application History
-          </h3>
-
-          <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-            {data.history.map((item, i) => (
-              <li key={i}>{item}</li>
-            ))}
-          </ul>
-        </div>
-
-        {/* ACTIONS & CONFIRMATION SECTION */}
-        <div className="pt-4 border-t border-gray-300">
-          {invoiceSuccess && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md text-xs">
-              {invoiceSuccess}
+        {data.status === "pending_payment" ? (
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+            <div className="text-center">
+              <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">
+                ✓ Pending Payment
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Send manual invoice with itemized charges to secure this slot.
+              </p>
             </div>
-          )}
-
-          {data.status === "pending_payment" ? (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
-              <div className="text-center">
-                <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">
-                  ✓ Pending Payment
-                </p>
-                <p className="text-xs text-blue-600 mt-1">
-                  Send manual invoice with itemized charges to secure this slot.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-2">
-                <Button
-                  className="w-full bg-[#264384] hover:bg-[#1d3268] text-white"
-                  onClick={() => {
-                    setInvoiceError(null);
-                    setInvoiceSuccess(null);
-                    setIsInvoiceModalOpen(true);
-                  }}
-                >
-                  {appData?.invoiceDraft ? "Edit & Resend Invoice" : "Send Invoice to User"}
-                </Button>
-
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
-                  disabled={loading || appData?.invoiceDraft?.status !== "paid"}
-                  onClick={async () => {
-                    setLoading(true);
-                    setError(null);
-                    try {
-                      await onAction(applicationId, "pending_payment");
-                      onClose();
-                    } catch (e) {
-                      setError(e instanceof Error ? e.message : "Failed to approve application.");
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  {loading ? "Approving..." : "Approve"}
-                </Button>
-
-                {appData?.invoiceDraft?.status !== "paid" && (
-                  <p className="text-[11px] text-blue-700 text-center">
-                    Approve is enabled after the latest invoice is marked as paid.
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : data.status === "approved" ? (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
-              <div className="text-center">
-                <p className="text-sm font-semibold text-green-700 uppercase tracking-wide">
-                  ✓ Application Approved
-                </p>
-                <p className="text-xs text-green-600 mt-1">
-                  This application has been finalized and a unit has been assigned.
-                </p>
-              </div>
+            <div className="grid grid-cols-1 gap-2">
               <Button
-                variant="outline"
-                className="w-full"
+                className="w-full bg-[#264384] hover:bg-[#1d3268] text-white"
                 onClick={() => {
                   setInvoiceError(null);
                   setInvoiceSuccess(null);
                   setIsInvoiceModalOpen(true);
                 }}
               >
-                {appData?.invoiceDraft ? "Edit Existing Invoice" : "Create Invoice"}
+                {appData?.invoiceDraft ? "Edit & Resend Invoice" : "Send Invoice to User"}
               </Button>
+
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                disabled={loading || appData?.invoiceDraft?.status !== "paid"}
+                onClick={async () => {
+                  setLoading(true);
+                  setError(null);
+                  try {
+                    await onAction(applicationId, "pending_payment");
+                    onClose();
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : "Failed to approve application.");
+                    setLoading(false);
+                  }
+                }}
+              >
+                {loading ? "Approving..." : "Approve"}
+              </Button>
+
+              {appData?.invoiceDraft?.status !== "paid" && (
+                <p className="text-[11px] text-blue-700 text-center">
+                  Approve is enabled after the latest invoice is marked as paid.
+                </p>
+              )}
             </div>
-          ) : data.status === "rejected" ? (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
-              <p className="text-sm font-semibold text-red-700 uppercase tracking-wide">
-                Application Rejected
+          </div>
+        ) : data.status === "approved" ? (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
+            <div className="text-center">
+              <p className="text-sm font-semibold text-green-700 uppercase tracking-wide">
+                ✓ Application Approved
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                This application has been finalized and a unit has been assigned.
               </p>
             </div>
-          ) : (
-            <>
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-xs">
-                  {error}
-                </div>
-              )}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setInvoiceError(null);
+                setInvoiceSuccess(null);
+                setIsInvoiceModalOpen(true);
+              }}
+            >
+              {appData?.invoiceDraft ? "Edit Existing Invoice" : "Create Invoice"}
+            </Button>
+          </div>
+        ) : data.status === "rejected" ? (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+            <p className="text-sm font-semibold text-red-700 uppercase tracking-wide">
+              Application Rejected
+            </p>
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-xs">
+                {error}
+              </div>
+            )}
 
-              {confirmAction ? (
-                <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm space-y-4">
-                  <p className="text-sm font-medium text-gray-700 text-center">
-                    Confirm rejection of this application?
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => {
-                        setConfirmAction(null);
-                        setError(null);
-                      }}
-                      disabled={loading}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      className="flex-1 text-white bg-red-600 hover:bg-red-700"
-                      onClick={handleConfirm}
-                      disabled={loading}
-                    >
-                      {loading ? "..." : "Confirm"}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex gap-3">
+            {confirmAction ? (
+              <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm space-y-4">
+                <p className="text-sm font-medium text-gray-700 text-center">
+                  Confirm rejection of this application?
+                </p>
+                <div className="flex gap-2">
                   <Button
-                    className="bg-[#264384] hover:bg-[#1d3268] text-white flex-1"
+                    variant="outline"
+                    className="flex-1"
                     onClick={() => {
-                      setInvoiceError(null);
-                      setInvoiceSuccess(null);
-                      setIsInvoiceModalOpen(true);
+                      setConfirmAction(null);
+                      setError(null);
                     }}
+                    disabled={loading}
                   >
-                    Send Invoice
+                    Cancel
                   </Button>
                   <Button
-                    className="bg-red-600 hover:bg-red-700 text-white flex-1"
-                    onClick={() => setConfirmAction("reject")}
+                    className="flex-1 text-white bg-red-600 hover:bg-red-700"
+                    onClick={handleConfirm}
+                    disabled={loading}
                   >
-                    Reject
+                    {loading ? "..." : "Confirm"}
                   </Button>
                 </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <Dialog open={isInvoiceModalOpen} onOpenChange={setIsInvoiceModalOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Send Invoice to User</DialogTitle>
-              <DialogDescription>
-                Add billing items manually (first rental, security deposit, reservation fee).
-                At least one item must be marked as required to secure the slot.
-                {data.status === "pending_admin"
-                  ? " Sending this invoice will also approve the application and assign the selected unit."
-                  : ""}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Due Date</label>
-                  <input
-                    type="date"
-                    value={invoiceDueDate}
-                    onChange={(e) => setInvoiceDueDate(e.target.value)}
-                    className="w-full border rounded-md p-2 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Internal Note</label>
-                  <input
-                    type="text"
-                    value={invoiceNote}
-                    onChange={(e) => setInvoiceNote(e.target.value)}
-                    placeholder="Optional note"
-                    className="w-full border rounded-md p-2 text-sm"
-                  />
-                </div>
               </div>
-
-              <div className="space-y-2">
-                {invoiceItems.map((item, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-12 gap-2 items-center border rounded-md p-3 bg-slate-50"
-                  >
-                    <div className="col-span-4">
-                      <select
-                        value={item.kind}
-                        onChange={(e) =>
-                          updateInvoiceItem(index, "kind", e.target.value as InvoiceKind)
-                        }
-                        className="w-full border rounded-md p-2 text-sm bg-white"
-                      >
-                        {invoiceKindOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="col-span-3">
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={item.amount}
-                        onChange={(e) =>
-                          updateInvoiceItem(index, "amount", Number(e.target.value || 0))
-                        }
-                        className="w-full border rounded-md p-2 text-sm bg-white"
-                        placeholder="Amount"
-                      />
-                    </div>
-
-                    <label className="col-span-4 text-xs flex items-center gap-2 text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={item.required_to_secure_slot}
-                        onChange={(e) =>
-                          updateInvoiceItem(index, "required_to_secure_slot", e.target.checked)
-                        }
-                      />
-                      Required to secure slot
-                    </label>
-
-                    <div className="col-span-1 flex justify-end">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => removeInvoiceItem(index)}
-                        disabled={invoiceItems.length <= 1}
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+            ) : (
+              <div className="flex gap-3">
+                <Button
+                  className="bg-[#264384] hover:bg-[#1d3268] text-white flex-1"
+                  onClick={() => {
+                    setInvoiceError(null);
+                    setInvoiceSuccess(null);
+                    setIsInvoiceModalOpen(true);
+                  }}
+                >
+                  Send Invoice
+                </Button>
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                  onClick={() => setConfirmAction("reject")}
+                >
+                  Reject
+                </Button>
               </div>
+            )}
+          </>
+        )}
+      </div>
 
-              <Button type="button" variant="outline" onClick={addInvoiceItem}>
-                Add Item
-              </Button>
+      <Dialog open={isInvoiceModalOpen} onOpenChange={setIsInvoiceModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Send Invoice to User</DialogTitle>
+            <DialogDescription>
+              Add billing items manually (first rental, security deposit, reservation fee).
+              At least one item must be marked as required to secure the slot.
+              {data.status === "pending_admin"
+                ? " Sending this invoice will also approve the application and assign the selected unit."
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
 
-              {invoiceError && (
-                <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
-                  {invoiceError}
-                </div>
-              )}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-600 uppercase">Due Date</label>
+                <input
+                  type="date"
+                  value={invoiceDueDate}
+                  onChange={(e) => setInvoiceDueDate(e.target.value)}
+                  className="w-full border rounded-md p-2 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-600 uppercase">Internal Note</label>
+                <input
+                  type="text"
+                  value={invoiceNote}
+                  onChange={(e) => setInvoiceNote(e.target.value)}
+                  placeholder="Optional note"
+                  className="w-full border rounded-md p-2 text-sm"
+                />
+              </div>
             </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsInvoiceModalOpen(false)}
-                disabled={isSendingInvoice}
-              >
-                Cancel
-              </Button>
-              <Button type="button" onClick={handleSendInvoice} disabled={isSendingInvoice}>
-                {isSendingInvoice ? "Sending..." : appData?.invoiceDraft ? "Update Invoice" : "Send Invoice"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            <div className="space-y-2">
+              {invoiceItems.map((item, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-12 gap-2 items-center border rounded-md p-3 bg-slate-50"
+                >
+                  <div className="col-span-4">
+                    <select
+                      value={item.kind}
+                      onChange={(e) =>
+                        updateInvoiceItem(index, "kind", e.target.value as InvoiceKind)
+                      }
+                      className="w-full border rounded-md p-2 text-sm bg-white"
+                    >
+                      {invoiceKindOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="col-span-3">
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={item.amount}
+                      onChange={(e) =>
+                        updateInvoiceItem(index, "amount", Number(e.target.value || 0))
+                      }
+                      className="w-full border rounded-md p-2 text-sm bg-white"
+                      placeholder="Amount"
+                    />
+                  </div>
+
+                  <label className="col-span-4 text-xs flex items-center gap-2 text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={item.required_to_secure_slot}
+                      onChange={(e) =>
+                        updateInvoiceItem(index, "required_to_secure_slot", e.target.checked)
+                      }
+                    />
+                    Required to secure slot
+                  </label>
+
+                  <div className="col-span-1 flex justify-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => removeInvoiceItem(index)}
+                      disabled={invoiceItems.length <= 1}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button type="button" variant="outline" onClick={addInvoiceItem}>
+              Add Item
+            </Button>
+
+            {invoiceError && (
+              <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
+                {invoiceError}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsInvoiceModalOpen(false)}
+              disabled={isSendingInvoice}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSendInvoice} disabled={isSendingInvoice}>
+              {isSendingInvoice ? "Sending..." : appData?.invoiceDraft ? "Update Invoice" : "Send Invoice"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
