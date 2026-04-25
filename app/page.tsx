@@ -6,11 +6,6 @@ export default async function LandingPage() {
   // Check if user is logged in
   const user = await getApiAuthenticatedUser();
 
-  // If user is not registered
-  if (!user) {
-    redirect("/onboarding");
-  }
-
   // If user is logged in but no role defined
   if (user && !user.role) {
     redirect("/role-selection");
