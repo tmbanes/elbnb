@@ -7,7 +7,7 @@ const CANCELLABLE_STATUSES: CancellableStatus[] = ['pending_dorm_manager', 'pend
 const INITIAL_SUBMIT_APPLICATION_STATUS = 'pending_dorm_manager' as ApplicationStatus
 
 export class CreateApplicationService {
-
+  
   // CREATE ACCOMMODATION APPLICATION WITH GUARD CHECKERS
   static async createApplication(data: CreateApplicationInput): Promise<AccommodationApplication> {
     const supabase = await createSupabaseServerClient()
@@ -99,7 +99,7 @@ export class CreateApplicationService {
       .select('assignment_id')
       .eq('user_id', data.user_id)
       .eq('assignment_status', 'active')
-      .maybeSingle()
+      .limit(1)
 
     if (assignmentError) throw new Error(`Failed to fetch assignment: ${assignmentError.message}`)
 

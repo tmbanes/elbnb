@@ -1,3 +1,5 @@
+// app/api/manager/dashboard/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 
@@ -5,7 +7,6 @@ export async function GET(_req: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
 
-    // Verify session
     const {
       data: { user },
       error: authError,
@@ -14,7 +15,6 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify role
     const { data: profile } = await supabase
       .from("users")
       .select("role")
@@ -28,33 +28,39 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Get the accommodation assigned to this manager
-    const { data: accommodationData, error: managerError } = await supabase
+    // Use maybeSingle() so a missing row returns null instead of throwing,
+    // preventing the route from returning an HTML error page.
+    const { data: accommodationData, error: accomError } = await supabase
       .from("accommodation")
       .select("accommodation_id, name")
       .eq("manager_id", user.id)
-      .single();
+      .maybeSingle();
 
-    if (managerError) {
-      console.error("REAL SUPABASE ERROR:", managerError);
-    }
-
-    if (managerError || !accommodationData) {
+    if (accomError) {
+      console.error("Accommodation lookup error:", accomError.message);
       return NextResponse.json(
-        { error: "No accommodation assignment found for this manager." },
-        { status: 404 },
+        { error: `Accommodation lookup failed: ${accomError.message}` },
+        { status: 500 }
       );
     }
 
-    const accommodation = accommodationData?.accommodation_id;
+    // Return a valid empty response instead of 404 so the UI never
+    // tries to parse an HTML error page as JSON.
+    if (!accommodationData) {
+      return NextResponse.json({
+        accommodation: null,
+        applications: [],
+        units: [],
+      });
+    }
 
-    // Fetch all applications for this accommodation that are pending dorm manager review
+    const accommodationId = accommodationData.accommodation_id;
+
     const { data: applications, error: appError } = await supabase
       .from("accommodation_application")
       .select(
         `
         application_id,
-        preferred_accommodation_id,
         preferred_accommodation_id,
         preferred_unit_type,
         date_submitted,
@@ -69,20 +75,32 @@ export async function GET(_req: NextRequest) {
           last_name,
           email
         )
-      `,
+      `
       )
-      .eq("preferred_accommodation_id", accommodation)
+      .eq("preferred_accommodation_id", accommodationId)
       .eq("application_status", "pending_dorm_manager")
       .order("date_submitted", { ascending: false });
 
-    if (appError) throw new Error(appError.message);
+    if (appError) {
+      console.error("Applications fetch error:", appError.message);
+      return NextResponse.json(
+        { error: `Failed to fetch applications: ${appError.message}` },
+        { status: 500 }
+      );
+    }
 
     const { data: units, error: unitsError } = await supabase
-      .from("unit") 
-      .select("unit_id, unit_number") //
-      .eq("accommodation_id", accommodation);
+      .from("unit")
+      .select("unit_id, unit_number")
+      .eq("accommodation_id", accommodationId);
 
-    if (unitsError) throw new Error(unitsError.message);
+    if (unitsError) {
+      console.error("Units fetch error:", unitsError.message);
+      return NextResponse.json(
+        { error: `Failed to fetch units: ${unitsError.message}` },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       accommodation: accommodationData,
@@ -91,7 +109,8 @@ export async function GET(_req: NextRequest) {
     });
   } catch (e) {
     const message =
-      e instanceof Error ? e.message : "Failed to fetch applications.";
+      e instanceof Error ? e.message : "Failed to fetch dashboard data.";
+    console.error("Dashboard GET unhandled error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -100,7 +119,6 @@ export async function PATCH(req: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
 
-    // Verify session
     const {
       data: { user },
       error: authError,
@@ -109,7 +127,6 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify role
     const { data: profile } = await supabase
       .from("users")
       .select("role")
@@ -133,44 +150,50 @@ export async function PATCH(req: NextRequest) {
     if (!application_id || !action) {
       return NextResponse.json(
         { error: "Missing application_id or action." },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     if (!["forward", "reject"].includes(action)) {
       return NextResponse.json(
         { error: "Invalid action. Must be 'forward' or 'reject'." },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     if (action === "forward" && !unit_id) {
-        return NextResponse.json(
-          { error: "A unit_id is required to forward the application." },
-          { status: 400 },
-        );
+      return NextResponse.json(
+        { error: "A unit_id is required to forward the application." },
+        { status: 400 }
+      );
     }
 
-    // Map manager action to the correct enum status
     const newStatus = action === "forward" ? "pending_admin" : "rejected";
-
-    const updateData: any = { application_status: newStatus };
+    const updateData: Record<string, string> = { application_status: newStatus };
 
     if (action === "forward" && unit_id) {
-      updateData.unit_id = unit_id; 
+      updateData.unit_id = unit_id;
     }
+
     const { error } = await supabase
       .from("accommodation_application")
       .update(updateData)
       .eq("application_id", application_id)
-      .eq("application_status", "pending_dorm_manager"); // safety: only update if still at manager stage
+      .eq("application_status", "pending_dorm_manager");
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("Application update error:", error.message);
+      return NextResponse.json(
+        { error: `Failed to update application: ${error.message}` },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ success: true, new_status: newStatus });
   } catch (e) {
     const message =
       e instanceof Error ? e.message : "Failed to update application.";
+    console.error("Dashboard PATCH unhandled error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

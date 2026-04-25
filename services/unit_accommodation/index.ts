@@ -53,8 +53,15 @@ export const UnitAccomodationsDisplayService = {
         const cheapestUnit = units.find((u: any) => u.rental_fee === minPrice && u.billing_period)
         const billingPeriod = cheapestUnit?.billing_period || null
 
-        // Flatten renting_space property_type
-        const propertyType = a.renting_space?.property_type ?? null
+        // Flatten renting_space property_type or use the new direct column
+        let propertyType = a.property_type;
+        if (!propertyType) {
+          if (Array.isArray(a.renting_space)) {
+            propertyType = a.renting_space[0]?.property_type ?? null;
+          } else {
+            propertyType = a.renting_space?.property_type ?? null;
+          }
+        }
 
         return {
           ...a,

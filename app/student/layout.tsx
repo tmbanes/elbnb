@@ -1,26 +1,26 @@
 // app\student\layout.tsx
-import { requireRole } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/client-auth";
 
 //ui components
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
     await requireRole(["student"]);
-    return (
+    return(
         <TooltipProvider>
-            <SidebarProvider defaultOpen={false}>
-
+            <SidebarProvider>
+                
                 <AppSidebar role="student" />
 
                 <main className="flex-1">
                     {/* optional trigger button */}
-
+                    
 
                     {children}
                 </main>
-
+                
             </SidebarProvider>
         </TooltipProvider>
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 ///ui components
@@ -29,8 +29,6 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { User } from "@/types/user.types";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 //style constants
 const label_style = "block text-xs font-semibold uppercase tracking-wider text-slate-300"
@@ -100,34 +98,7 @@ export default function RoleSelection() {
   const [roleData, setRoleData] = useState<RoleFormData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
 
-    const onFocus = async () => {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("users")
-        .select("role")
-        .eq("user_id", user.id)
-        .single<User>();
-
-      if (!data) return;
-
-      if (data.role) {
-        router.push(`/`);
-      }
-    };
-
-    window.addEventListener("focus", onFocus);
-
-    return () => window.removeEventListener("focus", onFocus);
-  }, []);
 
   //parse date for guest occupancy_status if roleData exists and role is guest
   const selectedDateString =
