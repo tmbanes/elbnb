@@ -1,5 +1,5 @@
 // app\manager\layout.tsx
-import { requireRole } from "@/lib/auth/client-auth";
+import { requireRole } from "@/lib/auth/session";
 
 //ui components
 import { SidebarProvider } from "@/components/ui/sidebar"

@@ -60,7 +60,7 @@ export default function GuestDashboardUI({
         async function fetchAccommodations() {
             try {
                 // Fetch Accommodations Preview
-                const resAcc = await fetch("/api/dashboard/tiles?type=accommodations");
+                const resAcc = await fetch("/api/shared/dashboard/tiles?type=accommodations");
                 if (resAcc.ok) {
                     const data = await resAcc.json();
                     setAccommodations(data);

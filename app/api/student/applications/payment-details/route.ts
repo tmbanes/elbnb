@@ -1,27 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { supabaseAdmin } from "@/lib/supabase/admin-client";
+import { NextRequest, NextResponse } from 'next/server';
+import { withRole } from '@/lib/auth/api-guard';
+import { supabaseAdmin } from '@/lib/supabase/admin-client';
 
-export async function GET(req: NextRequest) {
+// GET — fetch payment details for an application
+export const GET = withRole(['student', 'guest'], async (req, { user }) => {
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
-    const applicationId = searchParams.get("applicationId");
+    const applicationId = searchParams.get('applicationId');
 
     if (!applicationId) {
-      return NextResponse.json({ error: "Missing applicationId" }, { status: 400 });
+      return NextResponse.json({ error: 'Missing applicationId' }, { status: 400 });
     }
 
     const { data: billing, error } = await supabaseAdmin
-      .from("billing")
+      .from('billing')
       .select(`
         billing_id,
         amount,
@@ -51,16 +43,15 @@ export async function GET(req: NextRequest) {
           )
         )
       `)
-      .eq("accommodation_assignment.application_id", applicationId)
-      .eq("accommodation_assignment.user_id", user.id)
+      .eq('accommodation_assignment.application_id', applicationId)
+      .eq('accommodation_assignment.user_id', user.user_id)
       .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
-
     if (!billing) {
-      return NextResponse.json({ error: "Billing record not found." }, { status: 404 });
+      return NextResponse.json({ error: 'Billing record not found.' }, { status: 404 });
     }
 
     const receiptPath = billing.transaction_reference || billing.receipt_files?.[billing.receipt_files.length - 1] || null;
@@ -68,12 +59,9 @@ export async function GET(req: NextRequest) {
 
     if (receiptPath) {
       const { data: signed, error: signError } = await supabaseAdmin.storage
-        .from("payment_receipts")
+        .from('payment_receipts')
         .createSignedUrl(receiptPath, 60 * 10);
-
-      if (!signError) {
-        receiptPreviewUrl = signed.signedUrl;
-      }
+      if (!signError) receiptPreviewUrl = signed.signedUrl;
     }
 
     const items = Array.isArray(billing.billing_item)
@@ -95,13 +83,11 @@ export async function GET(req: NextRequest) {
         label: item.type,
         amount: Number(item.amount || 0),
       })),
-      summary: {
-        total: Number(billing.amount || 0),
-      },
+      summary: { total: Number(billing.amount || 0) },
       applicant: billing.accommodation_assignment?.users ?? null,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to load payment details.";
+    const message = error instanceof Error ? error.message : 'Failed to load payment details.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});

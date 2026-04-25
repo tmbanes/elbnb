@@ -1,9 +1,10 @@
+import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 // GET /api/admin/housing/managers          → all managers
 // GET /api/admin/housing/managers?id=123   → single manager
-export async function GET(req: NextRequest) {
+export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
 
   if (id) {
@@ -33,11 +34,11 @@ export async function GET(req: NextRequest) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
-}
+});
 
 // POST /api/admin/housing/managers
 // Body (existing user): { user_id, office_location }
-export async function POST(req: NextRequest) {
+export const POST = withRole(['housing_admin'], async (req: NextRequest) => {
   const body = await req.json();
 
   const { data, error } = await supabaseAdmin.rpc("create_dormitory_manager", {
@@ -51,10 +52,10 @@ export async function POST(req: NextRequest) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
-}
+});
 
 // PATCH /api/admin/housing/managers?id=123
-export async function PATCH(req: NextRequest) {
+export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
@@ -79,10 +80,10 @@ export async function PATCH(req: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
-}
+});
 
 // DELETE /api/admin/housing/managers?id=123
-export async function DELETE(req: NextRequest) {
+export const DELETE = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
@@ -137,4 +138,4 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: deleteAuthError.message }, { status: 500 });
 
   return NextResponse.json({ success: true });
-}
+});

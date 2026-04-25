@@ -4,14 +4,14 @@ import { getApiAuthenticatedUser } from '@/lib/auth/session'
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 
 export default async function AdminProfilePage() {
-  const auth = await getApiAuthenticatedUser()
-  if ("error" in auth) redirect("/");
+  const user = await getApiAuthenticatedUser()
+  if (!user) {
+    redirect("/");
+  }
 
-  const user = auth.user;
   if (user.role !== "housing_admin") redirect("/dashboard");
 
   const supabase = await createSupabaseServerClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
   const { data: dbMetadata } = await supabase
     .from('housing_admin')
     .select('*')
@@ -19,15 +19,15 @@ export default async function AdminProfilePage() {
     .single();
 
   const mergedMetadata = {
-    ...(authUser?.user_metadata || {}),
+    ...(user || {}),
     ...(dbMetadata || {})
   };
 
   return (
     <main>
-      <ProfileComponent 
-        user={user} 
-        metadata={mergedMetadata} 
+      <ProfileComponent
+        user={user}
+        metadata={mergedMetadata}
       />
     </main>
   )
