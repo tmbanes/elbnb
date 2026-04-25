@@ -17,7 +17,6 @@ export interface UserProfile {
   email: string;
   role: UserRole;
   user_status: string;
-  profile_picture_url?: string | null;
   created_at?: string;
   profile_picture_url?: string | null;
 }

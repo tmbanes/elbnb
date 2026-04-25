@@ -183,6 +183,8 @@ not yet tested
           unit_number
         ),
         accommodation_assignment (
+          move_in_date,
+          expected_move_out_date,
           actual_move_out_date
         )
       `)

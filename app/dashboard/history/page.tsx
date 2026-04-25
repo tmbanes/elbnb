@@ -95,6 +95,10 @@ export default async function AccommodationHistoryPage() {
   const currentStatus = currentApplication.application_status || 'unknown';
   const isPending = currentStatus.includes('pending');
 
+  const assignment = Array.isArray(currentApplication.accommodation_assignment)
+  ? currentApplication.accommodation_assignment[0]
+  : currentApplication.accommodation_assignment;
+
   return (
     <div className="container mx-auto p-6 space-y-8 max-w-5xl">
       <div>
@@ -116,14 +120,14 @@ export default async function AccommodationHistoryPage() {
               {isPending ? (
                 <>
                   <p className="font-medium">Date Submitted: <span className="font-normal">{new Date(currentApplication.date_submitted).toLocaleDateString()}</span></p>
-                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.preferred_accommodation_id}</span></p>
+                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.accommodation?.name}</span></p>
                   <p className="font-medium">Room Type: <span className="font-normal">{currentApplication.preferred_unit_type}</span></p>
                 </>
               ) : (
                 <>
-                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.preferred_accommodation_id}</span></p>
-                  <p className="font-medium">Move-in Date: <span className="font-normal">{currentApplication.accomodation_assignment?.move_In_Date ? new Date(currentApplication.accomodation_assignment.move_In_Date).toLocaleDateString() : 'TBA'}</span></p>
-                  <p className="font-medium">Expected Move-out: <span className="font-normal">{currentApplication.accomodation_assignment?.expected_Move_Out_Date ? new Date(currentApplication.accomodation_assignment.expected_Move_Out_Date).toLocaleDateString() : 'TBA'}</span></p>
+                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.accommodation?.name}</span></p>
+                  <p className="font-medium">Move-in Date: <span className="font-normal">{assignment?.move_in_date ? new Date(assignment.move_in_date).toLocaleDateString() : 'TBA'}</span></p>
+                  <p className="font-medium">Expected Move-out: <span className="font-normal">{assignment?.expected_move_out_date ? new Date(assignment.expected_move_out_date).toLocaleDateString() : 'TBA'}</span></p>
                 </>
               )}
             </div>
@@ -164,11 +168,14 @@ export default async function AccommodationHistoryPage() {
               {historicalRecords.length > 0 ? (
                 historicalRecords.map((record) => {
                   const status = record.application_status || 'unknown';
+                  const histAssignment = Array.isArray(record.accommodation_assignment)
+                    ? record.accommodation_assignment[0]
+                    : record.accommodation_assignment;
                   return (
                     <TableRow key={record.application_id}>
                       <TableCell className="font-medium text-xs">{record.application_id}</TableCell>
                       <TableCell>{new Date(record.date_submitted).toLocaleDateString()}</TableCell>
-                      <TableCell>{record.preferred_accommodation_id}</TableCell>
+                      <TableCell>{record.accommodation?.name || 'Unknown'}</TableCell>
                       <TableCell>{record.preferred_unit_type}</TableCell>
                       <TableCell>
                         <Badge variant={getBadgeVariant(status)}>
@@ -176,8 +183,8 @@ export default async function AccommodationHistoryPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        {record.accomodation_assignment?.actual_Move_Out_Date
-                          ? new Date(record.accomodation_assignment.actual_Move_Out_Date).toLocaleDateString()
+                        {histAssignment?.actual_move_out_date
+                          ? new Date(histAssignment?.actual_move_out_date).toLocaleDateString()
                           : "—"}
                       </TableCell>
                     </TableRow>
