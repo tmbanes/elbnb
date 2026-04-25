@@ -22,6 +22,22 @@ export interface AccommodationApplication {
   number_of_companions: number;
   application_status: ApplicationStatus;
   accommodation_assignment?: AccommodationAssignment | null;
+  users?: {
+    first_name: string;
+    last_name: string;
+    email?: string;
+  };
+  unit?: {
+    unit_id: string;
+    accommodation?: {
+      name: string;
+    };
+  };
+  accommodation?: {
+    accommodataion_id: string;
+    name: string;
+  };
+  file: string;
 }
 
 export interface TransitionApplicationStatus {

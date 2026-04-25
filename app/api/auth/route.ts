@@ -26,34 +26,3 @@ export async function GET() {
 		user: userData as User,
 	});
 }
-// export async function GET() {
-//   const supabase = await createSupabaseServerClient()
-
-  const {data: { user },
-    error,
-  } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    return NextResponse.json({ user: null }, { status: 401 })
-  }
-
-  console.log('Authenticated user:', user)
-
-  // get user object from database to retrieve role
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
-
-  if (userError || !userData) {
-    return NextResponse.json(
-      { user: null, error: userError?.message ?? "User profile not found" },
-      { status: 404 },
-    )
-  }
-
-  return NextResponse.json({
-    user: userData as User
-  })
-}
