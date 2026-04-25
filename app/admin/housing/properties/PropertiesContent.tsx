@@ -86,7 +86,12 @@ export default function PropertiesContent() {
   }
 
   function handleBackToList() {
-    router.push("/admin/housing");
+    const from = searchParams.get("from");
+    if (from === "managers") {
+      router.push("/admin/housing/managers");
+    } else {
+      router.push("/admin/housing");
+    }
   }
 
   function handleBackToHousing() {
