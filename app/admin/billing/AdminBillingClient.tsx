@@ -381,7 +381,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 <SelectValue placeholder="All Statuses" />
               </div>
             </SelectTrigger>
-            <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] text-[#30435f]">
+            <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] text-[#44291B]">
               <SelectItem value="ALL" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Statuses</SelectItem>
               {INVOICE_STATUSES.map((s) => (
                 <SelectItem key={s} value={s} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
@@ -394,14 +394,14 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
           <button
             onClick={sendReminders}
-            className="flex items-center gap-2 text-sm font-medium text-slate-700  bg-[#FDFFF4] border border-slate-200 px-4 py-2 rounded-xl hover:bg-[#F6F8D5] transition"
+            className="flex items-center gap-2 text-sm font-medium text-[#44291B]  bg-[#FDFFF4] border border-slate-200 px-4 py-2 rounded-xl hover:bg-[#F6F8D5] transition"
           >
             <Send className="w-4 h-4" /> Remind
           </button>
 
           <button
             onClick={exportSelected}
-            className="flex items-center gap-2 text-sm font-medium text-slate-700  bg-[#FDFFF4] border border-slate-200 px-4 py-2 rounded-xl hover:bg-[#F6F8D5] transition"
+            className="flex items-center gap-2 text-sm font-medium text-[#44291B]  bg-[#FDFFF4] border border-slate-200 px-4 py-2 rounded-xl hover:bg-[#F6F8D5] transition"
           >
             <Download className="w-4 h-4" /> PDF
           </button>
@@ -416,8 +416,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       </div>
 
       {/* DATA TABLE */}
-      <div className="bg-[#FDFFF4] border text-sm border-[#cfd6e4] rounded-2xl shadow-sm overflow-hidden print:hidden">
-        <div className="overflow-x-auto text-slate-700">
+      <div className="bg-[#FDFFF4] border text-sm  border-[#cfd6e4] rounded-2xl shadow-sm overflow-hidden print:hidden">
+        <div className="overflow-x-auto text-[#44291B]">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#FDFFF4] border-b border-[#cfd6e4]">
@@ -443,17 +443,17 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                     />
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-bold text-slate-900 flex items-center gap-2">
+                    <p className="font-bold text-[#44291B] flex items-center gap-2">
                       {bill.accommodation_assignment?.users ? `${bill.accommodation_assignment.users.first_name} ${bill.accommodation_assignment.users.last_name}` : "Unknown Tenant"}
                     </p>
-                    <p className="text-xs text-slate-500">Prop: {bill.accommodation_assignment?.accommodation_application?.preferred_accommodation_id || "N/A"}</p>
+                    <p className="text-xs text-[#44291B]/70">Prop: {bill.accommodation_assignment?.accommodation_application?.preferred_accommodation_id || "N/A"}</p>
                   </td>
                   <td className="px-6 py-4 font-mono text-xs">
                     {bill.billing_id.split("-")[0]}
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-bold text-slate-900">₱{bill.amount.toLocaleString()}</p>
-                    <p className="text-xs text-slate-500 text-nowrap">Due: {format(new Date(bill.due_date), 'MMM dd, yyyy')}</p>
+                    <p className="font-bold text-[#44291B]">₱{bill.amount.toLocaleString()}</p>
+                    <p className="text-xs text-[#44291B]/70 text-nowrap">Due: {format(new Date(bill.due_date), 'MMM dd, yyyy')}</p>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${getStatusColor(bill.status)}`}>
@@ -504,7 +504,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               >
                 <ChevronLeft className="w-4 h-4 mr-1" /> Prev
               </button>
-              <div className="flex items-center px-3 text-xs font-bold text-[#44291B]">
+              <div className="flex items-center px-3 text-xs font-bold text-slate-700">
                 {safeInvoicesPage} / {totalInvoicesPages || 1}
               </div>
               <button
