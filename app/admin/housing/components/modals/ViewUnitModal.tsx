@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 
 interface Occupant {
   assignment_id: string;
+  assignment_status: string;
   users: {
     first_name: string;
     last_name: string;
