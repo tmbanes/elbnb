@@ -11,6 +11,7 @@ interface UnitListViewProps {
   validCurrentPage: number
   basePath: string
   appliedAccommodationIds?: Set<string>
+  onDetailsClick?: (unit: Unit) => void
 }
 
 export function UnitsListView({
@@ -22,6 +23,7 @@ export function UnitsListView({
   validCurrentPage,
   basePath,
   appliedAccommodationIds = new Set(),
+  onDetailsClick,
 }: UnitListViewProps) {
   return (
     <div className="space-y-6">
@@ -166,6 +168,7 @@ export function UnitsListView({
                 <div className="flex gap-3 mt-4">
                   {/* VIEW UNIT BUTTON */}
                   <button
+                    onClick={() => onDetailsClick?.(unit)}
                     className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all active:scale-[0.98] bg-transparent hover:bg-[#264384]/5 border-2 border-[#264384] text-[#264384]"
                   >
                     View Unit

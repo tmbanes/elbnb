@@ -13,6 +13,7 @@ interface AccommodationListViewProps {
   userRole?: 'student' | 'guest'
   units?: Unit[]
   appliedAccommodationIds?: Set<string>
+  onDetailsClick?: (accommodation: Accommodation) => void
 }
 
 export function AccommodationListView({
@@ -26,6 +27,7 @@ export function AccommodationListView({
   userRole = 'guest',
   units = [],
   appliedAccommodationIds = new Set(),
+  onDetailsClick,
 }: AccommodationListViewProps) {
   return (
     <div className="space-y-6">
@@ -185,6 +187,7 @@ export function AccommodationListView({
                 <div className="flex gap-3 mt-4">
                   {/* VIEW ACCOMMODATION BUTTON */}
                   <button
+                    onClick={() => onDetailsClick?.(acc)}
                     className="px-8 py-2.5 rounded-lg text-sm font-bold transition-all active:scale-[0.98] bg-transparent hover:bg-[#264384]/5 border-2 border-[#264384] text-[#264384]"
                   >
                     View Accommodation

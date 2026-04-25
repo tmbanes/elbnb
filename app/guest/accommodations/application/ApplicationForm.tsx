@@ -71,9 +71,7 @@ const formSchema = z
     //     message: "Zip code must be numbers only",
     //   }),
     preferred_accommodation: z.string().min(1, "Dormitory is required"),
-    preferred_unit_type: z.enum(unitTypes, {
-      errorMap: () => ({ message: "Please select a valid unit type" }),
-    }),
+    preferred_unit_type: z.string().min(1, "Please select a valid unit type"),
     checkIn: z.date().refine((val) => val !== undefined && val !== null, {
       message: "Check-in date is required",
     }),
@@ -219,6 +217,7 @@ export default function ApplyAccommodationForm() {
   const [userRole, setUserRole] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormValues | null>(null);
+  const [dynamicUnitTypes, setDynamicUnitTypes] = useState<string[]>([]);
 
   const [userInfo, setUserInfo] = useState({
     firstName: "",
@@ -370,17 +369,22 @@ export default function ApplyAccommodationForm() {
           null;
         setAccommodation(matched);
 
-        if (unitIdFromQuery) {
           const resUnit = await fetch(
             `/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
           );
           if (!resUnit.ok) throw new Error("Failed to fetch units");
 
           const dataUnits: Unit[] = await resUnit.json();
-          const matchedUnit =
-            dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
-          setUnit(matchedUnit);
-        }
+          
+          // Derive available unit types from the fetched units
+          const types = Array.from(new Set(dataUnits.map(u => u.unit_type)));
+          setDynamicUnitTypes(types);
+
+          if (unitIdFromQuery) {
+            const matchedUnit =
+              dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
+            setUnit(matchedUnit);
+          }
       } catch (error) {
         console.error("Failed to fetch accommodation:", error);
       }
@@ -670,15 +674,19 @@ export default function ApplyAccommodationForm() {
                             <SelectValue placeholder="Select type" />
                           </SelectTrigger>
                           <SelectContent>
-                            {unitTypes.map((type) => (
-                              <SelectItem
-                                key={type}
-                                value={type}
-                                className="capitalize"
-                              >
-                                {type === "wholeunit" ? "Whole Unit" : type}
-                              </SelectItem>
-                            ))}
+                            {dynamicUnitTypes.length > 0 ? (
+                                dynamicUnitTypes.map((type) => (
+                                    <SelectItem
+                                        key={type}
+                                        value={type}
+                                        className="capitalize"
+                                    >
+                                        {type === "wholeunit" ? "Whole Unit" : type}
+                                    </SelectItem>
+                                ))
+                            ) : (
+                                <SelectItem value="none" disabled>No types available</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       )}

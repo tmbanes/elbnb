@@ -11,6 +11,7 @@ import { AccommodationListView } from '@/components/SearchAccommodations/Accommo
 import { UnitsListView } from '@/components/SearchAccommodations/Units-list-view'
 import next from 'next'
 import Link from 'next/link'
+import { ViewAccommodation, ViewUnit } from '@/components/SearchAccommodations'
 
 type TabType = 'accommodations' | 'units'
 
@@ -75,6 +76,13 @@ export default function SearchAccommodationsPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 3
+
+  // Detail view state
+  const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null)
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
+  const [accommodationUnits, setAccommodationUnits] = useState<Unit[]>([])
+  const [isViewingUnit, setIsViewingUnit] = useState(false)
+  const [unitViewSource, setUnitViewSource] = useState<'accommodation' | 'search'>('accommodation')
 
   // Dynamic filter options based on fetched data
   const dynamicPropertyTypes = useMemo(() => {
@@ -379,8 +387,24 @@ export default function SearchAccommodationsPage() {
     applyUnitFilters(units, defaults, accommodations, searchQuery)
   }, [units, accommodations, applyUnitFilters, searchQuery])
 
-  const handleAccommodationDetailsClick = (accommodation: Accommodation) => {
-    console.log('View details for:', accommodation)
+  const handleAccommodationDetailsClick = async (accommodation: Accommodation) => {
+    setSelectedAccommodation(accommodation)
+    setIsViewingUnit(false)
+    setUnitViewSource('accommodation')
+    setSelectedUnit(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+
+    // Fetch all units for this accommodation to show real data
+    try {
+      const res = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setAccommodationUnits(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch accommodation units:', err)
+      setAccommodationUnits([])
+    }
   }
 
   const handleSeeUnitsClick = useCallback((accommodation: Accommodation) => {
@@ -402,8 +426,26 @@ export default function SearchAccommodationsPage() {
     applyUnitFilters(units, unitFilters, accommodations, searchQuery)
   }, [units, accommodations, unitFilters, applyUnitFilters, searchQuery])
 
-  const handleUnitDetailsClick = (unit: Unit) => {
-    console.log('View details for:', unit)
+  const handleUnitDetailsClick = async (unit: Unit) => {
+    const accommodation = accommodations.find(a => a.accommodation_id === unit.accommodation_id)
+    if (accommodation) {
+      setSelectedAccommodation(accommodation)
+      setSelectedUnit(unit)
+      setIsViewingUnit(true)
+      setUnitViewSource('search')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+
+      // Also fetch units context if needed
+      try {
+        const res = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setAccommodationUnits(data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch accommodation units:', err)
+      }
+    }
   }
 
   const totalAccommodationsPages = Math.ceil(filteredAccommodations.length / pageSize) || 1;
@@ -424,7 +466,42 @@ export default function SearchAccommodationsPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F6F8D5' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {selectedAccommodation ? (
+        isViewingUnit && selectedUnit ? (
+          <ViewUnit 
+            accommodation={selectedAccommodation}
+            unit={selectedUnit}
+            onBack={() => {
+                if (unitViewSource === 'accommodation') {
+                    setIsViewingUnit(false)
+                } else {
+                    setSelectedAccommodation(null)
+                    setIsViewingUnit(false)
+                }
+            }}
+            onApply={() => {
+                window.location.href = `/student/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}&unitId=${selectedUnit.unit_id}`
+            }}
+          />
+        ) : (
+          <ViewAccommodation 
+            accommodation={selectedAccommodation}
+            units={accommodationUnits}
+            userRole="student"
+            onUnitTypeClick={(unit) => {
+                setSelectedUnit(unit)
+                setIsViewingUnit(true)
+                setUnitViewSource('accommodation')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            onBack={() => setSelectedAccommodation(null)}
+            onApply={() => {
+                window.location.href = `/student/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}`
+            }}
+          />
+        )
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: '#44291B' }}>Search accommodations</h1>
@@ -623,6 +700,7 @@ export default function SearchAccommodationsPage() {
                     userRole="student"
                     units={units}
                     appliedAccommodationIds={appliedAccommodationIds}
+                    onDetailsClick={handleAccommodationDetailsClick}
                   />
                 )}
               </div>
@@ -752,6 +830,7 @@ export default function SearchAccommodationsPage() {
                     validCurrentPage={validCurrentUnitsPage}
                     basePath="/student/accommodations"
                     appliedAccommodationIds={appliedAccommodationIds}
+                    onDetailsClick={handleUnitDetailsClick}
                   />
                 )}
               </div>
@@ -759,6 +838,7 @@ export default function SearchAccommodationsPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }
