@@ -11,6 +11,8 @@ import { Archivo } from "next/font/google";
 import { Accommodation } from "@/types/accommodation_units";
 import { AccommodationHistory } from "@/types/accomodation/accomodationHistory";
 
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+
 const archivo = Archivo({ subsets: ["latin"] });
 
 interface GuestDashboardUIProps {
@@ -20,8 +22,6 @@ interface GuestDashboardUIProps {
     initialHistory?: any[];
     initialDocuments?: any[];
     initialBills?: any[];
-    onLogout?: () => void;
-    isLoggingOut?: boolean;
 }
 
 export default function GuestDashboardUI({ 
@@ -30,11 +30,18 @@ export default function GuestDashboardUI({
     initialApplications = [], 
     initialHistory = [], 
     initialDocuments = [],
-    initialBills = [],
-    onLogout, 
-    isLoggingOut 
+    initialBills = []
 }: GuestDashboardUIProps) {
     const [showLogout, setShowLogout] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    
+    const supabase = getSupabaseBrowserClient();
+
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        await supabase.auth.signOut();
+        window.location.href = "/";
+    };
     const [activeResidency, setActiveResidency] = useState<any>(initialActiveResidency);
     const [isLoadingResidency, setIsLoadingResidency] = useState(false);
     const [applications, setApplications] = useState<any[]>(initialApplications);
@@ -115,15 +122,8 @@ export default function GuestDashboardUI({
 
                             {showLogout && (
                                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-slate-100 p-2 z-50 overflow-hidden">
-                                    <Link href="/guest/settings">
-                                        <button className="w-full flex items-center gap-2 text-left px-3 py-2.5 text-[13px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer mb-1">
-                                            <Search className="w-4 h-4 text-slate-400" />
-                                            Settings
-                                        </button>
-                                    </Link>
-                                    <div className="h-px bg-slate-100 my-1 mx-1" />
                                     <button
-                                        onClick={onLogout}
+                                        onClick={handleLogout}
                                         disabled={isLoggingOut}
                                         className="w-full flex items-center gap-2 text-left px-3 py-2.5 text-[13px] font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                                     >
