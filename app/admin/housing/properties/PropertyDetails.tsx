@@ -305,7 +305,7 @@ export default function PropertyDetail({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-[family-name:var(--font-archivo-black)] text-[#44291B]">Unit Types</h2>
-            <p className="text-sm text-[#8c8b82]">Manage room templates for occupancy</p>
+            <p className="text-sm text-[#44291B]">Manage room units for occupancy</p>
           </div>
         </div>
 
