@@ -150,7 +150,7 @@ export const getPropertyColumns = (
               onClick={() => handleSelectProperty(p.accommodation_id)}
             > 
               <Eye className="mr-2 h-4 w-4" />
-              <span>View</span>
+              <span>Manage</span>
             </DropdownMenuItem>
             
   

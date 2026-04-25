@@ -1,12 +1,14 @@
 "use client";
 
+import React, { useState } from "react";
 import { Manager } from "../../../../types/housing/types";
 import { getManagerColumns, ManagerColumn } from "@/app/admin/housing/components/columns/managerColumns";
 
 // ui components
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Plus } from "lucide-react";
+import { Search, Plus } from "lucide-react";
+import Modal from "@/app/admin/housing/components/modals/Modal";
 
 interface ManagersListProps {
   managers: Manager[];
@@ -14,7 +16,8 @@ interface ManagersListProps {
   onAdd: () => void;
   onSelect: (id: string) => void;
   onEdit: (manager: Manager) => void;
-  onDelete: (id: string) => void;
+  onDelete: (manager: Manager) => void;
+  selectedId?: string | null;
 }
 
 export default function ManagersList({
@@ -24,45 +27,76 @@ export default function ManagersList({
   onSelect,
   onEdit,
   onDelete,
+  selectedId,
 }: ManagersListProps) {
-  const tableData: ManagerColumn[] = managers.map((manager) => ({
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredManagers = managers.filter((m) => {
+    const name = `${m.users.first_name} ${m.users.last_name}`.toLowerCase();
+    return name.includes(searchQuery.toLowerCase()) || m.users.email.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const tableData: ManagerColumn[] = filteredManagers.map((manager) => ({
     id: manager.employee_id,
     name: `${manager.users.first_name} ${manager.users.last_name}`,
     email: manager.users.email,
     office: manager.office_location || "—",
     original: manager,
-  }))
+  }));
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 md:p-6 space-y-4 font-[family-name:var(--font-archivo)]">
+      <div>
+        <h1 className="text-3xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] mr-2">Managers Page</h1>
+        <p className="text-sm md:text-md text-[#44291B] pt-3">Manage property managers and their assignments</p>
+      </div>
 
-      {managers.length > 0 ? (
+      {/* FILTER & ACTIONS */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm mt-4">
+        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md bg-white">
+          <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
+            <Search className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search manager name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-2 text-sm outline-none bg-[#FDFFF4] text-[#44291B] placeholder:text-[#44291B]/50"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={onAdd}
+            className="flex items-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Manager</span>
+          </Button>
+        </div>
+      </div>
+
+      {filteredManagers.length > 0 ? (
         <DataTable
-          columns={getManagerColumns(onSelect, onEdit, onDelete)}
+          columns={getManagerColumns(
+            onSelect,
+            onEdit,
+            (id) => {
+              const m = managers.find(x => x.employee_id === id);
+              if (m) onDelete(m);
+            }
+          )}
           data={tableData}
-          header={
-            <div>
-              <h1 className="text-2xl font-bold text-[#44291B]">Managers</h1>
-              <p className="text-sm text-[#44291B]">Manage property managers and assignments</p>
-            </div>
-          }
-          toolbar={
-            <div className="flex items-center gap-4 mr-7">
-              <Button
-                className="bg-[#264384] hover:bg-[#5273BC] text-white"
-                onClick={onAdd}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                <span className="mr-4">Add Manager</span>
-              </Button>
-            </div>
-          }
+          activeRowId={selectedId || undefined}
+          onRowClick={(row: any) => onSelect(row.id)}
         />
       ) : (
-        <div className="rounded-md border border-dashed border-gray-300 bg-white p-6 text-center text-gray-500">
-          No managers yet. Add one to get started.
+        <div className="flex h-[200px] items-center justify-center rounded-md border border-dashed mt-4 bg-white/50">
+          <p className="text-muted-foreground">No managers found. Click Add Manager to get started.</p>
         </div>
       )}
+
     </div>
   );
 }
