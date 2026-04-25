@@ -1,7 +1,7 @@
 // app/student/history/page.tsx
 
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { studentProfileService } from "@/services/student_profile";
+import { userProfileService } from "@/services/user_profile";
 import { redirect } from "next/navigation";
 import HistoryUI from "./HistoryUI";
 
@@ -21,13 +21,13 @@ export default async function HistoryPage() {
         { data: currentResidency },
         { data: history }
     ] = await Promise.all([
-        studentProfileService.getProfile(user.id),
-        studentProfileService.getCurrentAccommodation(user.id),
-        studentProfileService.getAccommodationHistory(user.id)
+        userProfileService.getProfile(user.id),
+        userProfileService.getCurrentAccommodation(user.id),
+        userProfileService.getAccommodationHistory(user.id)
     ]);
 
     return (
-        <HistoryUI 
+        <HistoryUI
             user={profile}
             currentResidency={currentResidency}
             history={history || []}
