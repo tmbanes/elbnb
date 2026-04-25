@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Eye, Pencil, Trash2, MapPin } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
+import { cn } from "@/lib/utils"
 
 export type PropertyColumn = {
   id: string
@@ -108,7 +109,6 @@ export const getPropertyColumns = (
     },
     {
       //CAPACITY
-      //TODO - fix occupancy values
       accessorKey: "capacity",
       header: "CAPACITY",
       cell: ({ row }) => {
@@ -136,7 +136,7 @@ export const getPropertyColumns = (
               value={Math.round(percentage)}
               className={`h-1.5 bg-[#DFDFD0] ${percentage >= 100
                 ? "[&>div]:bg-[#DF3538]"
-                : "[&>div]:bg-[#5591AB]"
+                : "[&>div]:bg-[#264384]"
                 }`}
             />
           </div>

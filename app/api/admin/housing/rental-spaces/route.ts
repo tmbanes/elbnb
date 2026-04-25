@@ -62,14 +62,23 @@ export async function GET(req: NextRequest) {
         minimum_stay_days,
         maximum_stay_days,
         security_deposit_required
-      )
-    `,
+    ),
+    unit (
+      current_occupancy
     )
-    .eq("accommodation_type", "renting_space");
+  `,
+  )
+  .eq("accommodation_type", "renting_space");
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+if (error)
+  return NextResponse.json({ error: error.message }, { status: 500 });
+
+const response = data?.map((item: any) => ({
+  ...item,
+  units: item.unit || []
+}));
+
+return NextResponse.json(response);
 }
 
 // POST /api/admin/housing/rental-spaces
