@@ -53,22 +53,22 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
     return `${baseClass} ${value === 'N/A' || !value ? 'opacity-20 grayscale' : 'opacity-100'}`;
   };
 
-  const secondFolderLabel = isStudent ? "Accommodations" : 
-                            isGuest ? "Visit Details" :
-                            isAdmin ? "Administrative Info" :
-                            "Management Info";
-  
+  const secondFolderLabel = isStudent ? "Accommodations" :
+    isGuest ? "Visit Details" :
+      isAdmin ? "Administrative Info" :
+        "Management Info";
+
   const SecondFolderIcon = isStudent ? Home :
-                           isGuest ? MapPinHouse :
-                           isAdmin ? ShieldCheck :
-                           Building2;
+    isGuest ? MapPinHouse :
+      isAdmin ? ShieldCheck :
+        Building2;
 
   const firstFolderSubheader = isStudent ? "Academic Info" :
-                               isGuest ? "Guest Info" :
-                               "Employee Info";
+    isGuest ? "Guest Info" :
+      "Employee Info";
 
-  const historicalAssignments = pastAssignments.length > 0 ? 
-    pastAssignments.filter(a => a.assignment_status !== 'active') : 
+  const historicalAssignments = pastAssignments.length > 0 ?
+    pastAssignments.filter(a => a.assignment_status !== 'active') :
     (isStudent ? [
       {
         assignment_id: 'mock-1',
@@ -141,7 +141,7 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
                           </DialogHeader>
                           <div className="mt-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                             {historicalAssignments.length > 0 ? (
-                                historicalAssignments.map((assignment: any) => (
+                              historicalAssignments.map((assignment: any) => (
                                 <PastAccommodationCard
                                   key={assignment.assignment_id}
                                   name={assignment.unit?.accommodation?.name || 'Unknown Accommodation'}
@@ -197,9 +197,9 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
             mt-[60px] sm:mt-[80px]
             transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
             ${activeTab === 'personal'
-              ? 'rounded-tl-[40px] rounded-tr-[150px] sm:rounded-tr-[300px] rounded-b-[40px]'
-              : 'rounded-[40px] hover:bg-[#8bc453] hover:shadow-lg'
-            }`}
+                ? 'rounded-tl-[40px] rounded-tr-[150px] sm:rounded-tr-[300px] rounded-b-[40px]'
+                : 'rounded-[40px] hover:bg-[#8bc453] hover:shadow-lg'
+              }`}
             style={activeTab === 'personal' ? { filter: 'url(#grain)', backgroundBlendMode: 'multiply' } : {}}
           >
             <div className={`flex items-center gap-3 text-[#3E2723] transition-all duration-500 ${activeTab === 'personal' ? 'pt-8 mb-4' : 'py-5 sm:py-6'}`}>
@@ -230,16 +230,16 @@ export function ProfileComponent({ user, metadata, pastAssignments = [] }: Profi
                         {role === 'housing_admin' && (
                           <>
                             <div>
-                               <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
-                               <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
+                              <p className={`${SubheaderLg} leading-snug`}>{formattedBirthdate}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Birthdate</p>
                             </div>
                             <div>
-                               <p className={`${SubheaderLg} leading-snug`}>{metadata?.admin_id || 'N/A'}</p>
-                               <p className={`${SubheaderMd} opacity-80 leading-snug`}>Admin ID</p>
+                              <p className={`${SubheaderLg} leading-snug`}>{metadata?.admin_id || 'N/A'}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Admin ID</p>
                             </div>
                             <div>
-                               <p className={`${SubheaderLg} leading-snug`}>{metadata?.office_location || 'N/A'}</p>
-                               <p className={`${SubheaderMd} opacity-80 leading-snug`}>Office Location</p>
+                              <p className={`${SubheaderLg} leading-snug`}>{metadata?.office_location || 'N/A'}</p>
+                              <p className={`${SubheaderMd} opacity-80 leading-snug`}>Office Location</p>
                             </div>
                           </>
                         )}
