@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import {
   ColumnDef,
   flexRender,
@@ -56,6 +57,7 @@ export function DataTable<TData, TValue>({
     state: {
       pagination,
     },
+    autoResetPageIndex: false,
   })
 
   return (
@@ -94,8 +96,9 @@ export function DataTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   className={cn(
-                    onRowClick ? "cursor-pointer hover:bg-[#F6F8D5] transition-colors" : "",
-                    isSelected ? "bg-[#F6F8D5]" : ""
+                    "transition-colors group",
+                    onRowClick ? "cursor-pointer hover:bg-[#F6F8D5]/60" : "",
+                    isSelected ? "bg-[#F6F8D5] border-l-4 border-l-[#264384]" : "border-l-4 border-l-transparent"
                   )}
                   onClick={() => onRowClick?.(row.original)}
                 >
@@ -109,7 +112,7 @@ export function DataTable<TData, TValue>({
             })
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+              <TableCell colSpan={columns.length} className="h-24 text-center text-[#44291B]/40">
                 No results.
               </TableCell>
             </TableRow>

@@ -1,4 +1,4 @@
-// app/dashboard/history/actions.ts
+// app/guest/application/actions.ts
 "use server"
 
 import { studentProfileService } from "@/services/student_profile"
@@ -9,7 +9,7 @@ export async function cancelApplicationAction(applicationId: string) {
   const result = await studentProfileService.cancelAccommodationApplication(applicationId);
   
   // This automatically clears the cache so the page immediately shows the updated data
-  revalidatePath("/dashboard/history"); 
+  revalidatePath("/guest/application"); 
   
   if (result.error) {
     return { error: "Failed to cancel application." }; 

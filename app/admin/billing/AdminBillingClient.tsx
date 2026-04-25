@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BillingStatus, BillingItemType } from "@/types/billing/enums";
 import { adminUpdateInvoiceAction, adminApproveReceiptAction, adminRejectReceiptAction, adminCreateBillAction } from "./actions";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
@@ -16,15 +16,27 @@ import {
   X,
   Send,
   Download,
-  Flag,
   FileEdit,
   Image as ImageIcon,
   Plus,
   Trash
+  ,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const INVOICE_STATUSES: BillingStatus[] = [
+  BillingStatus.PAID,
+  BillingStatus.UNPAID,
+  BillingStatus.OVERDUE,
+  BillingStatus.PAID_LATE,
+  BillingStatus.PARTIALLY_PAID,
+];
 
 export default function AdminBillingClient({ adminId, bills, summary, activeTenants }: { adminId: string, bills: any[], summary: any, activeTenants: any[] }) {
   const supabase = getSupabaseBrowserClient();
@@ -32,6 +44,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedBillIds, setSelectedBillIds] = useState<string[]>([]);
+  const [invoicesPage, setInvoicesPage] = useState(1);
   const router = useRouter();
 
   useEffect(() => {
@@ -53,8 +66,9 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
   const [editingBill, setEditingBill] = useState<any>(null);
   const [editNotes, setEditNotes] = useState("");
-  const [editFlag, setEditFlag] = useState(false);
-  const [editAmount, setEditAmount] = useState<number>(0);
+  const [editItems, setEditItems] = useState<{ type: BillingItemType, amount: number }[]>([
+    { type: BillingItemType.ROOM_RENT, amount: 0 }
+  ]);
   const [editDueDate, setEditDueDate] = useState<string>("");
   const [editStatus, setEditStatus] = useState<BillingStatus>(BillingStatus.UNPAID);
   const [isSaving, setIsSaving] = useState(false);
@@ -68,6 +82,46 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     { type: BillingItemType.ROOM_RENT, amount: 0 }
   ]);
   const [isSubmittingBill, setIsSubmittingBill] = useState(false);
+  const [feedbackModal, setFeedbackModal] = useState<{
+    open: boolean;
+    variant: "success" | "warning";
+    title: string;
+    message: string;
+    reloadOnClose: boolean;
+  }>({
+    open: false,
+    variant: "warning",
+    title: "",
+    message: "",
+    reloadOnClose: false,
+  });
+
+  const showFeedback = (
+    variant: "success" | "warning",
+    message: string,
+    options?: { title?: string; reloadOnClose?: boolean }
+  ) => {
+    setFeedbackModal({
+      open: true,
+      variant,
+      title: options?.title || (variant === "success" ? "Success" : "Attention"),
+      message,
+      reloadOnClose: Boolean(options?.reloadOnClose),
+    });
+  };
+
+  const closeFeedback = () => {
+    const shouldReload = feedbackModal.reloadOnClose;
+    setFeedbackModal((prev) => ({ ...prev, open: false, reloadOnClose: false }));
+    if (shouldReload) {
+      window.location.reload();
+    }
+  };
+
+  const looksLikeJson = (value?: string | null) => {
+    const trimmed = String(value || "").trim();
+    return trimmed.startsWith("{") || trimmed.startsWith("[");
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -89,6 +143,24 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
     return matchesSearch && matchesStatus;
   });
+
+  const invoicesPerPage = 5;
+  const totalInvoicesPages = Math.max(1, Math.ceil(filteredBills.length / invoicesPerPage));
+  const safeInvoicesPage = Math.max(1, Math.min(invoicesPage, totalInvoicesPages));
+  const startInvoiceIndex = (safeInvoicesPage - 1) * invoicesPerPage;
+  const paginatedBills = useMemo(
+    () => filteredBills.slice(startInvoiceIndex, startInvoiceIndex + invoicesPerPage),
+    [filteredBills, startInvoiceIndex]
+  );
+
+  const getVisibleInvoicePages = () => {
+    const pages: number[] = [];
+    let start = Math.max(1, safeInvoicesPage - 1);
+    let end = Math.min(totalInvoicesPages, start + 2);
+    start = Math.max(1, end - 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  };
 
   const toggleSelection = (id: string) => {
     setSelectedBillIds(prev =>
@@ -140,83 +212,101 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
   const openEditor = (bill: any) => {
     setEditingBill(bill);
-    setEditNotes(bill.internal_notes || "");
-    setEditFlag(bill.admin_flag || false);
-    setEditAmount(Number(bill.amount || 0));
+    setEditNotes(looksLikeJson(bill.internal_notes) ? "" : (bill.internal_notes || ""));
+    const existingItems = Array.isArray(bill.billing_item) && bill.billing_item.length > 0
+      ? bill.billing_item
+          .map((item: any) => ({
+            type: item.type as BillingItemType,
+            amount: Number(item.amount || 0),
+          }))
+          .filter((item: any) => Number.isFinite(item.amount))
+      : [{ type: BillingItemType.ROOM_RENT, amount: Number(bill.amount || 0) }];
+
+    setEditItems(existingItems.length ? existingItems : [{ type: BillingItemType.ROOM_RENT, amount: 0 }]);
     setEditDueDate(bill.due_date ? format(new Date(bill.due_date), "yyyy-MM-dd") : "");
-    setEditStatus((bill.status as BillingStatus) || BillingStatus.UNPAID);
+    const currentStatus = bill.status as BillingStatus;
+    setEditStatus(INVOICE_STATUSES.includes(currentStatus) ? currentStatus : BillingStatus.UNPAID);
   };
 
   const saveEdits = async () => {
     if (!editingBill) return;
+    if (editItems.length === 0) return showFeedback("warning", "Add at least one invoice line item.");
+    if (editItems.some(item => item.amount <= 0)) return showFeedback("warning", "All line items must have an amount greater than 0.");
+
+    console.log('Saving invoice:', editingBill.billing_id, 'Items:', editItems, 'Amount:', editItems.reduce((s, i) => s + i.amount, 0));
+
     setIsSaving(true);
     try {
       await adminUpdateInvoiceAction(
         editingBill.billing_id,
         {
           internal_notes: editNotes,
-          admin_flag: editFlag,
-          amount: editAmount,
           due_date: editDueDate ? new Date(`${editDueDate}T00:00:00`).toISOString() : undefined,
           status: editStatus,
         },
+        editItems,
         adminId,
       );
       setEditingBill(null);
-      window.location.reload();
+      showFeedback("success", "Invoice updated successfully.", { reloadOnClose: true });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to save invoice changes.");
+      showFeedback("warning", error instanceof Error ? error.message : "Failed to save invoice changes.");
     } finally {
       setIsSaving(false);
     }
   };
 
   const sendReminders = async () => {
-    if (selectedBillIds.length === 0) return alert("Select invoices first!");
+    if (selectedBillIds.length === 0) return showFeedback("warning", "Select invoices first!");
 
     for (const id of selectedBillIds) {
       await adminUpdateInvoiceAction(id, { reminded_at: new Date().toISOString() });
     }
-    alert(`Reminders registered for ${selectedBillIds.length} invoices.`);
-    window.location.reload();
+    showFeedback("success", `Reminders registered for ${selectedBillIds.length} invoices.`, { reloadOnClose: true });
   };
 
   const exportSelected = () => {
-    if (selectedBillIds.length === 0) return alert("Select invoices first!");
+    if (selectedBillIds.length === 0) return showFeedback("warning", "Select invoices first!");
     window.print();
   };
 
   const handleCreateBill = async () => {
-    if (!newBillAssignmentId) return alert("Select a tenant!");
-    if (!newBillDueDate) return alert("Select a due date!");
-    if (newBillItems.some(item => item.amount <= 0)) return alert("All items must have an amount greater than 0!");
+    if (!newBillAssignmentId) return showFeedback("warning", "Select a tenant!");
+    if (!newBillDueDate) return showFeedback("warning", "Select a due date!");
+    if (newBillItems.some(item => item.amount <= 0)) return showFeedback("warning", "All items must have an amount greater than 0!");
 
     setIsSubmittingBill(true);
-    const dueDate = new Date(newBillDueDate);
-    const billingPeriodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
+    try {
+      const dueDate = new Date(newBillDueDate);
+      const billingPeriodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
 
-    // Automatically sum amount for the parent status based on the items attached.
-    const totalAmount = newBillItems.reduce((acc, curr) => acc + curr.amount, 0);
+      // Automatically sum amount for the parent status based on the items attached.
+      const totalAmount = newBillItems.reduce((acc, curr) => acc + curr.amount, 0);
 
-    const payload = {
-      assignment_id: newBillAssignmentId,
-      amount: totalAmount,
-      billing_period_date: billingPeriodDate,
-      due_date: dueDate,
-      status: BillingStatus.UNPAID,
-      payment_method: "cash",
-      internal_notes: newBillNotes
-    };
+      const payload = {
+        assignment_id: newBillAssignmentId,
+        amount: totalAmount,
+        billing_period_date: billingPeriodDate,
+        due_date: dueDate,
+        status: BillingStatus.UNPAID,
+        payment_method: "cash",
+        internal_notes: newBillNotes
+      };
 
-    const { error } = await adminCreateBillAction(payload, newBillItems);
+      const result = await adminCreateBillAction(payload, newBillItems);
+      const billingId = (result as any)?.data?.billing_id as string | undefined;
+      const mode = (result as any)?.mode as string | undefined;
 
-    setIsSubmittingBill(false);
-    if (error) {
-      alert("Error: " + (typeof error === 'object' ? JSON.stringify(error, null, 2) : error));
-    } else {
-      alert("Bill created successfully!");
+      if (billingId) {
+        setSearchQuery(billingId);
+      }
+
+      showFeedback("success", mode === "updated" ? "Invoice updated for this assignment." : "Bill created successfully!", { reloadOnClose: true });
       setIsCreatingBill(false);
-      window.location.reload();
+    } catch (error) {
+      showFeedback("warning", error instanceof Error ? error.message : "Failed to create bill.");
+    } finally {
+      setIsSubmittingBill(false);
     }
   };
 
@@ -224,33 +314,33 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     <>
       {/* SUMMARY */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:hidden">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-[#5591AB] text-white p-6 rounded-2xl border border-[#4b839b] shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Total Revenue</h3>
-            <div className="p-2 bg-emerald-50 rounded-lg"><TrendingUp className="w-5 h-5 text-emerald-500" /></div>
+            <h3 className="text-xs font-bold tracking-wide uppercase text-white/90">Total Revenue</h3>
+            <div className="p-2 bg-white/20 rounded-lg"><TrendingUp className="w-5 h-5 text-white" /></div>
           </div>
-          <p className="text-3xl font-bold text-slate-900">₱{summary.totalRevenue.toLocaleString()}</p>
+          <p className="text-4xl font-extrabold text-white">₱{summary.totalRevenue.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-[#F59E0B] text-white p-6 rounded-2xl border border-[#d98a0a] shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Unpaid Balance</h3>
-            <div className="p-2 bg-amber-50 rounded-lg"><Clock className="w-5 h-5 text-amber-500" /></div>
+            <h3 className="text-xs font-bold tracking-wide uppercase text-white/90">Unpaid Balance</h3>
+            <div className="p-2 bg-white/20 rounded-lg"><Clock className="w-5 h-5 text-white" /></div>
           </div>
-          <p className="text-3xl font-bold text-slate-900">₱{summary.unpaidBalance.toLocaleString()}</p>
+          <p className="text-4xl font-extrabold text-white">₱{summary.unpaidBalance.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-[#EF4444] text-white p-6 rounded-2xl border border-[#d63d3d] shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Overdue</h3>
-            <div className="p-2 bg-red-50 rounded-lg"><AlertOctagon className="w-5 h-5 text-red-500" /></div>
+            <h3 className="text-xs font-bold tracking-wide uppercase text-white/90">Overdue</h3>
+            <div className="p-2 bg-white/20 rounded-lg"><AlertOctagon className="w-5 h-5 text-white" /></div>
           </div>
-          <p className="text-3xl font-bold text-red-600">₱{summary.overdueBalance.toLocaleString()}</p>
+          <p className="text-4xl font-extrabold text-white">₱{summary.overdueBalance.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-[#0D2A6B] text-white p-6 rounded-2xl border border-[#0a245c] shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-sm font-medium text-slate-500">Total Transactions</h3>
-            <div className="p-2 bg-indigo-50 rounded-lg"><List className="w-5 h-5 text-indigo-500" /></div>
+            <h3 className="text-xs font-bold tracking-wide uppercase text-white/90">Total Transactions</h3>
+            <div className="p-2 bg-white/20 rounded-lg"><List className="w-5 h-5 text-white" /></div>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{summary.transactionCount}</p>
+          <p className="text-4xl font-extrabold text-white">{summary.transactionCount}</p>
         </div>
       </div>
 
@@ -264,24 +354,36 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             type="text"
             placeholder="Search tenant or invoice #"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setInvoicesPage(1);
+            }}
             className="w-full px-3 py-2 bg-transparent text-sm outline-none"
           />
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
+          <div className="flex items-center gap-2 text-sm">
             <Filter className="w-4 h-4 text-slate-400" />
-            <select
-              className="bg-transparent outline-none text-slate-700 font-medium"
+            <Select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setInvoicesPage(1);
+              }}
             >
-              <option value="ALL">All Statuses</option>
-              {Object.values(BillingStatus).map(s => (
-                <option key={s} value={s}>{s.replace(/_/g, " ").toUpperCase()}</option>
-              ))}
-            </select>
+              <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] focus:ring-2 focus:ring-indigo-400/30">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                <SelectItem value="ALL" className="text-sm font-medium">All Statuses</SelectItem>
+                {INVOICE_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s} className="text-sm font-medium">
+                    {s.replace(/_/g, " ").toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="h-6 w-px bg-slate-200 mx-2"></div>
@@ -326,7 +428,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               </tr>
             </thead>
             <tbody>
-              {filteredBills.map((bill: any) => (
+              {paginatedBills.map((bill: any) => (
                 <tr key={bill.billing_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <input
@@ -357,14 +459,6 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      {bill.status !== BillingStatus.PAID && (
-                        <button
-                          onClick={() => markAsPaid(bill.billing_id)}
-                          className="px-3 py-2 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition"
-                        >
-                          Paid
-                        </button>
-                      )}
                       <button
                         onClick={() => openEditor(bill)}
                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition tooltip-trigger"
@@ -393,13 +487,68 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             </tbody>
           </table>
         </div>
+        {filteredBills.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
+            <p className="text-sm text-slate-500">
+              Showing <span className="font-semibold text-slate-700">{startInvoiceIndex + 1}</span> to{" "}
+              <span className="font-semibold text-slate-700">{Math.min(startInvoiceIndex + invoicesPerPage, filteredBills.length)}</span> of{" "}
+              <span className="font-semibold text-slate-700">{filteredBills.length}</span> results
+            </p>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setInvoicesPage((p) => Math.max(1, p - 1))}
+                disabled={safeInvoicesPage <= 1}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safeInvoicesPage <= 1
+                  ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {getVisibleInvoicePages().map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setInvoicesPage(page)}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${page === safeInvoicesPage
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                    }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setInvoicesPage((p) => Math.min(totalInvoicesPages, p + 1))}
+                disabled={safeInvoicesPage >= totalInvoicesPages}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safeInvoicesPage >= totalInvoicesPages
+                  ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* RECEIPT VIEWER MODAL */}
-      {viewedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
-          <div className="bg-white rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+      <Dialog open={Boolean(viewedReceipt)} onOpenChange={(open) => { if (!open) setViewedReceipt(null); }}>
+        <DialogPortal>
+          <DialogOverlay className="bg-slate-900/40 backdrop-blur-[8px] print:hidden" />
+          {viewedReceipt && (
+            <DialogContent
+              showCloseButton={false}
+              className="z-[60] w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-[#FDFFF4] shadow-[0_20px_60px_rgba(15,23,42,0.25)] flex flex-col max-h-[90vh] p-0 gap-0 text-sm"
+            >
+              <DialogTitle className="sr-only">Receipt Viewer</DialogTitle>
+              <DialogDescription className="sr-only">
+                Preview uploaded receipt for invoice verification and perform approval actions.
+              </DialogDescription>
+            <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-[#FDFFF4]">
               <div>
                 <h3 className="font-bold text-lg text-slate-900">Receipt Viewer</h3>
                 <p className="text-sm text-slate-500">Invoice #{viewedReceipt.billing_id.split("-")[0]}</p>
@@ -407,7 +556,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               <button onClick={() => setViewedReceipt(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
             </div>
 
-            <div className="flex-1 bg-slate-200 overflow-y-auto flex items-center justify-center p-8">
+            <div className="flex-1 bg-[#E7ECF3] overflow-y-auto flex items-center justify-center p-8">
               {receiptUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={receiptUrl} alt="Receipt" className="max-w-full rounded-lg shadow-md border border-slate-300 bg-white" />
@@ -416,7 +565,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               )}
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-white flex justify-between items-center">
+            <div className="p-6 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-slate-500">Target Amount: <span className="font-bold text-slate-900 text-lg">₱{viewedReceipt.amount.toLocaleString()}</span></p>
                 <span className={`mt-1 inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(viewedReceipt.status)}`}>
@@ -434,81 +583,136 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
+            </DialogContent>
+          )}
+        </DialogPortal>
+      </Dialog>
 
       {/* EDITOR MODAL */}
-      {editingBill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
-          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><FileEdit className="w-5 h-5" /> Edit Invoice</h3>
-              <button onClick={() => setEditingBill(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
-            </div>
+      <Dialog open={Boolean(editingBill)} onOpenChange={(open) => { if (!open) setEditingBill(null); }}>
+        <DialogPortal>
+          <DialogOverlay className="bg-slate-900/40 backdrop-blur-[8px] print:hidden" />
+          {editingBill && (
+            <DialogContent
+              showCloseButton={false}
+              className="z-[60] w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col rounded-3xl border border-slate-200 bg-[#FDFFF4] shadow-[0_20px_60px_rgba(15,23,42,0.25)] p-0 gap-0 text-sm"
+            >
+              <DialogTitle className="sr-only">Edit Invoice</DialogTitle>
+              <DialogDescription className="sr-only">
+                Update invoice notes, line items, due date, and status.
+              </DialogDescription>
+              <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-[#FDFFF4]">
+                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><FileEdit className="w-5 h-5" /> Edit Invoice</h3>
+                <button onClick={() => setEditingBill(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
+              </div>
 
-            <div className="p-8 space-y-6">
+              <div className="p-6 space-y-5 overflow-y-auto">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes</label>
+                  <textarea
+                    rows={4}
+                    value={editNotes}
+                    onChange={e => setEditNotes(e.target.value)}
+                    className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
+                    placeholder="Record calls, disputes, or manual actions taken..."
+                  ></textarea>
+                </div>
+
               <div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editFlag}
-                    onChange={e => setEditFlag(e.target.checked)}
-                    className="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500"
-                  />
-                  <span className="font-semibold text-slate-800 flex items-center gap-2">Flag this invoice <Flag className="w-4 h-4 text-amber-500" /></span>
-                </label>
-                <p className="text-xs text-slate-500 ml-8 mt-1">Flagging pinpoints invoices requiring special administrative attention.</p>
+                <div className="flex justify-between items-center mb-3">
+                  <label className="block text-sm font-semibold text-slate-700">Invoice Line Items</label>
+                  <button
+                    onClick={() => setEditItems([...editItems, { type: BillingItemType.OTHER, amount: 0 }])}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition"
+                  >
+                    <Plus className="w-3 h-3" /> Add Item
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {editItems.map((item, index) => (
+                    <div key={index} className="flex gap-2 items-center bg-slate-50/70 p-3 rounded-xl border border-slate-200">
+                      <Select
+                        value={item.type}
+                        onValueChange={(value) => {
+                          const updated = [...editItems];
+                          updated[index].type = value as BillingItemType;
+                          setEditItems(updated);
+                        }}
+                      >
+                        <SelectTrigger className="h-10 flex-1 rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] shadow-sm focus:ring-2 focus:ring-indigo-400/30">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                          {Object.values(BillingItemType).map((type) => (
+                            <SelectItem key={type} value={type} className="text-sm font-medium">
+                              {type.replace(/_/g, " ").toUpperCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <div className="relative w-32">
+                        <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
+                        <input
+                          type="number"
+                          className="h-10 w-full rounded-xl border border-[#cfd6e4] bg-white pl-7 pr-3 text-sm font-semibold text-[#30435f] outline-none shadow-sm focus:ring-2 focus:ring-indigo-400/30"
+                          value={item.amount || ''}
+                          onChange={(e) => {
+                            const updated = [...editItems];
+                            updated[index].amount = Number(e.target.value);
+                            setEditItems(updated);
+                          }}
+                          placeholder="0"
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          if (editItems.length === 1) return;
+                          const updated = [...editItems];
+                          updated.splice(index, 1);
+                          setEditItems(updated);
+                        }}
+                        className={`p-2 rounded-lg transition ${editItems.length > 1 ? 'text-red-500 hover:bg-red-50' : 'text-slate-300'}`}
+                        disabled={editItems.length <= 1}
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-sm font-bold text-slate-800">
+                  <span>Total:</span>
+                  <span className="text-xl">₱{editItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}</span>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes</label>
-                <textarea
-                  rows={4}
-                  value={editNotes}
-                  onChange={e => setEditNotes(e.target.value)}
-                  className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-4 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  placeholder="Record calls, disputes, or manual actions taken..."
-                ></textarea>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Amount</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={Number.isFinite(editAmount) ? editAmount : 0}
-                    onChange={e => setEditAmount(Number(e.target.value || 0))}
-                    className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
-                  <input
-                    type="date"
-                    value={editDueDate}
-                    onChange={e => setEditDueDate(e.target.value)}
-                    className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  />
-                </div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
+                <input
+                  type="date"
+                  value={editDueDate}
+                  onChange={e => setEditDueDate(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] outline-none focus:ring-2 focus:ring-indigo-400/30"
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Status</label>
-                <select
-                  value={editStatus}
-                  onChange={e => setEditStatus(e.target.value as BillingStatus)}
-                  className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                >
-                  {Object.values(BillingStatus).map(status => (
-                    <option key={status} value={status}>
-                      {status.replace(/_/g, " ").toUpperCase()}
-                    </option>
-                  ))}
-                </select>
+                <Select value={editStatus} onValueChange={(value) => setEditStatus(value as BillingStatus)}>
+                  <SelectTrigger className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] focus:ring-2 focus:ring-indigo-400/30">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                    {INVOICE_STATUSES.map((status) => (
+                      <SelectItem key={status} value={status} className="text-sm font-medium">
+                        {status.replace(/_/g, " ").toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {editingBill.reminded_at && (
@@ -518,48 +722,59 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               )}
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-              <button onClick={() => setEditingBill(null)} className="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
-              <button disabled={isSaving} onClick={saveEdits} className="px-5 py-2.5 font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition">
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="p-5 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-end gap-3">
+                <button onClick={() => setEditingBill(null)} className="px-5 py-2.5 font-semibold text-slate-600 bg-transparent rounded-xl hover:bg-white/70 transition">Cancel</button>
+                <button disabled={isSaving} onClick={saveEdits} className="px-5 py-2.5 font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm transition">
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </DialogContent>
+          )}
+        </DialogPortal>
+      </Dialog>
 
       {/* CREATE BILL MODAL */}
-      {isCreatingBill && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
-          <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden flex flex-col shadow-2xl max-h-[90vh]">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><Plus className="w-5 h-5" /> Create New Tenant Invoice</h3>
-              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
+      <Dialog open={isCreatingBill} onOpenChange={(open) => { if (!isSubmittingBill) setIsCreatingBill(open); }}>
+        <DialogPortal>
+          <DialogOverlay className="bg-slate-900/40 backdrop-blur-[8px] print:hidden" />
+          <DialogContent
+            showCloseButton={false}
+            className="z-[60] w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col rounded-3xl border border-slate-200 bg-[#FDFFF4] shadow-[0_20px_60px_rgba(15,23,42,0.25)] p-0 gap-0 text-sm"
+          >
+            <DialogTitle className="sr-only">Create New Tenant Invoice</DialogTitle>
+            <DialogDescription className="sr-only">
+              Create a new invoice for an active tenant assignment by setting due date and line items.
+            </DialogDescription>
+            <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-[#FDFFF4]">
+              <h3 className="font-bold text-[28px] text-slate-900">Create New Tenant Invoice</h3>
+              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="p-2 hover:bg-slate-200/70 rounded-full transition"><X className="w-5 h-5" /></button>
             </div>
 
-            <div className="p-8 space-y-6 overflow-y-auto">
+            <div className="p-6 space-y-5 overflow-y-auto">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Select Target Tenant</label>
-                <select
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  value={newBillAssignmentId}
-                  onChange={e => setNewBillAssignmentId(e.target.value)}
-                >
-                  <option value="">-- Select Active Assigned Tenant --</option>
-                  {(activeTenants || []).map((t: any) => (
-                    <option key={t.assignment_id} value={t.assignment_id}>
-                      {t.users ? `${t.users.first_name} ${t.users.last_name}` : "Unknown"}
-                    </option>
-                  ))}
-                  <option value="48fc2483-6ebf-4d7a-ab9c-822d71504af6">TEST: Dummy Tenant (Overrides DB Empty State)</option>
-                </select>
+                <Select value={newBillAssignmentId || undefined} onValueChange={setNewBillAssignmentId}>
+                  <SelectTrigger className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] focus:ring-2 focus:ring-indigo-400/30">
+                    <SelectValue placeholder="-- Select Active Assigned Tenant --" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                    {(activeTenants || []).map((t: any) => (
+                      <SelectItem key={t.assignment_id} value={t.assignment_id} className="text-sm font-medium">
+                        {t.users ? `${t.users.first_name} ${t.users.last_name}` : "Unknown"}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="48fc2483-6ebf-4d7a-ab9c-822d71504af6" className="text-sm font-medium">
+                      TEST: Dummy Tenant (Overrides DB Empty State)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
                 <input
                   type="date"
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
                   value={newBillDueDate}
                   onChange={e => setNewBillDueDate(e.target.value)}
                 />
@@ -569,7 +784,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Internal Notes <span className="font-normal text-slate-400 text-xs ml-2">(Optional)</span></label>
                 <textarea
                   rows={2}
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
                   value={newBillNotes}
                   onChange={e => setNewBillNotes(e.target.value)}
                   placeholder="Record reasons for specific charges or adjustments..."
@@ -589,25 +804,31 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
                 <div className="space-y-3">
                   {newBillItems.map((item, index) => (
-                    <div key={index} className="flex gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      <select
-                        className="flex-1 text-sm border-0 bg-white rounded-lg p-2 outline-none shadow-sm font-medium text-slate-700"
+                    <div key={index} className="flex gap-2 items-center bg-slate-50/70 p-3 rounded-xl border border-slate-200">
+                      <Select
                         value={item.type}
-                        onChange={(e) => {
+                        onValueChange={(value) => {
                           const updated = [...newBillItems];
-                          updated[index].type = e.target.value as BillingItemType;
+                          updated[index].type = value as BillingItemType;
                           setNewBillItems(updated);
                         }}
                       >
-                        {Object.values(BillingItemType).map(type => (
-                          <option key={type} value={type}>{type.replace(/_/g, " ").toUpperCase()}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="h-10 flex-1 rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] shadow-sm focus:ring-2 focus:ring-indigo-400/30">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                          {Object.values(BillingItemType).map((type) => (
+                            <SelectItem key={type} value={type} className="text-sm font-medium">
+                              {type.replace(/_/g, " ").toUpperCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <div className="relative w-32">
                         <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
                         <input
                           type="number"
-                          className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-white outline-none rounded-lg shadow-sm border-0 text-slate-900"
+                          className="h-10 w-full rounded-xl border border-[#cfd6e4] bg-white pl-7 pr-3 text-sm font-semibold text-[#30435f] outline-none shadow-sm focus:ring-2 focus:ring-indigo-400/30"
                           value={item.amount || ''}
                           onChange={(e) => {
                             const updated = [...newBillItems];
@@ -635,20 +856,58 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
                 <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-sm font-bold text-slate-800">
                   <span>Calculated Total:</span>
-                  <span className="text-xl">₱{newBillItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}</span>
+                  <span className="text-3xl text-slate-900">₱{newBillItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
-              <button disabled={isSubmittingBill} onClick={handleCreateBill} className="px-6 py-2.5 font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm transition flex items-center gap-2">
+            <div className="p-5 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-end gap-3">
+              <button disabled={isSubmittingBill} onClick={() => setIsCreatingBill(false)} className="px-5 py-2.5 font-semibold text-slate-600 bg-transparent rounded-xl hover:bg-white/70 transition">Cancel</button>
+              <button disabled={isSubmittingBill} onClick={handleCreateBill} className="px-6 py-2.5 font-semibold text-white bg-[#1BAA77] rounded-xl hover:bg-[#149565] shadow-sm transition flex items-center gap-2">
                 {isSubmittingBill ? "Sending..." : <><Send className="w-4 h-4" /> Send Invoice</>}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+        </DialogPortal>
+      </Dialog>
+
+      {/* FEEDBACK MODAL */}
+      <Dialog open={feedbackModal.open} onOpenChange={(open) => { if (!open) closeFeedback(); }}>
+        <DialogPortal>
+          <DialogOverlay className="bg-slate-900/35 backdrop-blur-[6px] print:hidden" />
+          <DialogContent
+            showCloseButton={false}
+            className="z-[80] w-full max-w-md rounded-2xl border border-slate-200 bg-[#FDFFF4] p-0 gap-0 overflow-hidden shadow-[0_20px_50px_rgba(15,23,42,0.25)]"
+          >
+            <DialogTitle className="sr-only">{feedbackModal.title}</DialogTitle>
+            <DialogDescription className="sr-only">{feedbackModal.message}</DialogDescription>
+
+            <div className="p-6 border-b border-slate-200/80">
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 flex h-9 w-9 items-center justify-center rounded-full ${feedbackModal.variant === "success" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                  {feedbackModal.variant === "success" ? <Check className="w-5 h-5" /> : <AlertOctagon className="w-5 h-5" />}
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-slate-900">{feedbackModal.title}</h4>
+                  <p className="text-sm text-slate-600 mt-1">{feedbackModal.message}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#F7F8E8] flex justify-end">
+              <button
+                onClick={closeFeedback}
+                className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition ${feedbackModal.variant === "success"
+                  ? "bg-[#1BAA77] text-white hover:bg-[#149565]"
+                  : "bg-[#0D2A6B] text-white hover:bg-[#0b2358]"
+                  }`}
+              >
+                OK
+              </button>
+            </div>
+          </DialogContent>
+        </DialogPortal>
+      </Dialog>
 
       {/* PRINT OUT (PDF) EXPORT SECTION */}
       <div className="hidden print:block absolute inset-0 bg-white p-8 font-sans">
@@ -691,3 +950,4 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     </>
   );
 }
+

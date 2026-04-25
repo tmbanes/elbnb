@@ -40,6 +40,19 @@ export interface AdminApplication {
 
 export type AdminAction = "approve" | "reject" | "pending_payment";
 
+export type ApplicationInvoiceItemKind =
+  | "first_rental"
+  | "security_deposit"
+  | "reservation_fee"
+  | "other";
+
+export interface ApplicationInvoiceItemInput {
+  kind: ApplicationInvoiceItemKind;
+  amount: number;
+  required_to_secure_slot: boolean;
+  note?: string;
+}
+
 export async function fetchAdminApplications(): Promise<{
   applications: AdminApplication[];
 }> {
@@ -85,4 +98,29 @@ export async function getApplicationById(id: string) {
   }
 
   return res.json();
+}
+
+export async function sendApplicationInvoice(
+  application_id: string,
+  payload: {
+    due_date: string;
+    items: ApplicationInvoiceItemInput[];
+    note?: string;
+    unit_id?: string;
+  },
+) {
+  const res = await fetch("/api/admin/applications", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ application_id, ...payload }),
+  });
+
+  const body = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(body?.error ?? "Failed to send invoice.");
+  }
+
+  return body;
 }

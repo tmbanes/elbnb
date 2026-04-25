@@ -29,6 +29,7 @@ const archivoBlack = Archivo_Black({
 });
 
 const archivo = Archivo({
+  weight: ["400", "600"],
   subsets: ["latin"],
   variable: "--font-archivo",
 });

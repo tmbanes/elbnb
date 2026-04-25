@@ -24,6 +24,8 @@ export const getUserWithRole = cache(async (): Promise<User | null> => {
 
     if (error || !data) return null;
 
+  
+
     return data as User;
 });
 
