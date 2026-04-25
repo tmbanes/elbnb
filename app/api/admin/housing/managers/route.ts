@@ -36,7 +36,6 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/admin/housing/managers
-// Body (new user):      { first_name, last_name, email, office_location }
 // Body (existing user): { user_id, office_location }
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -55,7 +54,6 @@ export async function POST(req: NextRequest) {
 }
 
 // PATCH /api/admin/housing/managers?id=123
-// Body: any fields on dormitory_manager or users table
 export async function PATCH(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -71,7 +69,6 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Update users table if name/email is being changed
   if (userFields && user_id && Object.keys(userFields).length > 0) {
     const { error } = await supabaseAdmin
       .from("users")
@@ -98,20 +95,46 @@ export async function DELETE(req: NextRequest) {
 
   if (assigned && assigned.length > 0) {
     return NextResponse.json(
-      {
-        error:
-          "Cannot delete — this manager is assigned to an active property.",
-      },
+      { error: "Cannot delete — this manager is assigned to an active property." },
       { status: 409 },
     );
   }
 
-  const { error } = await supabaseAdmin
+  // Get user_id before deleting
+  const { data: manager, error: fetchError } = await supabaseAdmin
+    .from("dormitory_manager")
+    .select("user_id")
+    .eq("employee_id", id)
+    .single();
+
+  if (fetchError)
+    return NextResponse.json({ error: fetchError.message }, { status: 500 });
+
+  const userId = manager.user_id;
+
+  // 1. Delete from dormitory_manager
+  const { error: deleteManagerError } = await supabaseAdmin
     .from("dormitory_manager")
     .delete()
     .eq("employee_id", id);
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (deleteManagerError)
+    return NextResponse.json({ error: deleteManagerError.message }, { status: 500 });
+
+  // 2. Delete from users table
+  const { error: deleteUserError } = await supabaseAdmin
+    .from("users")
+    .delete()
+    .eq("user_id", userId);
+
+  if (deleteUserError)
+    return NextResponse.json({ error: deleteUserError.message }, { status: 500 });
+
+  // 3. Delete from Supabase Auth — fixes "already used" error on recreate
+  const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+  if (deleteAuthError)
+    return NextResponse.json({ error: deleteAuthError.message }, { status: 500 });
+
   return NextResponse.json({ success: true });
 }

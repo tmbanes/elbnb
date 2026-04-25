@@ -1,32 +1,26 @@
-// app\manager\dashboard\page.tsx
+// app/manager/dashboard/page.tsx
 
-"use client";
+import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { studentProfileService } from "@/services/student_profile";
+import { redirect } from "next/navigation";
+import ManagerDashboardUI from "./manager-dashboard-ui";
 
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { useState } from "react";
+export default async function DormitoryManagerDashboardPage() {
+    const supabase = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
 
-export default function DormitoryManagerDashboardPage() {
-  const supabase = getSupabaseBrowserClient();
-  const [isExiting, setIsExiting] = useState(false);
-  
-  const handleLogout = async () => {
-    setIsExiting(true); 
-    await supabase.auth.signOut();
-    
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 300); 
-  };
-  
-  return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold text-slate-900">Dormitory Manager Dashboard</h1>
-      <button 
-        onClick={handleLogout}
-        className="px-4 py-2 text-xs font-bold text-white bg-red-500/80 hover:bg-red-500 rounded-lg transition-colors"
-      >
-        Log Out
-      </button>
-    </main>
-  );
+    if (!user) {
+        redirect("/");
+    }
+
+    // Fetch manager profile
+    const { data: profile } = await studentProfileService.getProfile(user.id);
+
+    return (
+        <ManagerDashboardUI
+            profile={profile}
+        />
+    );
 }

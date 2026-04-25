@@ -1,3 +1,4 @@
+// components/nav-user.tsx
 "use client"
 
 import {
@@ -8,6 +9,9 @@ import {
   LogOut,
   Sparkles,
 } from "lucide-react"
+import Link from "next/link"
+
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
 
 import {
   Avatar,
@@ -32,14 +36,22 @@ import {
 
 export function NavUser({
   user,
+  role = "student",
 }: {
   user: {
     name: string
     email: string
     avatar: string
   }
+  role?: string
 }) {
   const { isMobile } = useSidebar()
+  const supabase = getSupabaseBrowserClient()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    window.location.href = "/"
+  }
 
   return (
     <SidebarMenu>
@@ -48,17 +60,17 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="h-14 px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center text-white/80 hover:bg-white/10 hover:text-white data-[state=open]:bg-white/20 data-[state=open]:text-white transition-all duration-300 ease-out rounded-lg group cursor-pointer border-none outline-none"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
+              <Avatar className="h-9 w-9 rounded-lg transition-transform duration-300 group-hover:scale-105 border border-white/20 shadow-sm">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg bg-white/20 text-white font-medium">CN</AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+              <div className="grid flex-1 text-left text-sm leading-tight ml-1 group-data-[collapsible=icon]:hidden">
+                <span className="truncate font-semibold text-white tracking-wide">{user.name}</span>
+                <span className="truncate text-xs text-white/70">{user.email}</span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <ChevronsUpDown className="ml-auto size-4 opacity-80 group-hover:opacity-100 transition-all duration-300 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -81,17 +93,19 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+              <DropdownMenuItem asChild>
+                <Link href={`/${role}/user-profile`} className="w-full flex items-center gap-2 cursor-pointer">
+                  <BadgeCheck className="size-4" />
+                  Account
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
                 <Bell />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
               <LogOut />
               Log out
             </DropdownMenuItem>
