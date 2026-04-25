@@ -10,6 +10,13 @@ import {
   CheckCircle2, Clock, ShieldAlert, CalendarArrowDown, CalendarArrowUp,
   RefreshCw, Loader2, ChevronLeft, ChevronRight, MapPin, Mail,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,12 +54,12 @@ const cn = (...classes: (string | boolean | undefined)[]) =>
   classes.filter(Boolean).join(" ");
 
 const STATUS_MAP: Record<AssignmentStatus, { label: string; dot: string; badge: string }> = {
-  active:          { label: "Active",           dot: "bg-[#78A24C]", badge: "bg-[#E7FAD3] text-[#78A24C]" },
-  completed:       { label: "Completed",        dot: "bg-[#0369A1]", badge: "bg-[#E0F2FE] text-[#0369A1]" },
-  cancelled:       { label: "Cancelled",        dot: "bg-gray-400",  badge: "bg-[#F3F4F6] text-[#6B7280]" },
-  terminated:      { label: "Terminated",       dot: "bg-[#B91C1C]", badge: "bg-[#FEF2F2] text-[#B91C1C]" },
-  waiting_payment: { label: "Waiting Payment",  dot: "bg-[#EA580C]", badge: "bg-[#FFF7ED] text-[#EA580C]" },
-  pending:         { label: "Pending Approval", dot: "bg-[#4F46E5]", badge: "bg-[#EEF2FF] text-[#4F46E5]" },
+  active: { label: "Active", dot: "bg-[#78A24C]", badge: "bg-[#E7FAD3] text-[#78A24C]" },
+  completed: { label: "Completed", dot: "bg-[#0369A1]", badge: "bg-[#E0F2FE] text-[#0369A1]" },
+  cancelled: { label: "Cancelled", dot: "bg-gray-400", badge: "bg-[#F3F4F6] text-[#6B7280]" },
+  terminated: { label: "Terminated", dot: "bg-[#B91C1C]", badge: "bg-[#FEF2F2] text-[#B91C1C]" },
+  waiting_payment: { label: "Waiting Payment", dot: "bg-[#EA580C]", badge: "bg-[#FFF7ED] text-[#EA580C]" },
+  pending: { label: "Pending Approval", dot: "bg-[#4F46E5]", badge: "bg-[#EEF2FF] text-[#4F46E5]" },
 };
 
 const PER_PAGE = 5;
@@ -112,9 +119,9 @@ export default function AdminResidentsPage() {
     const matchAccom = accomFilter === "all" || r.unit.accommodation.accommodation_id === accomFilter;
     const matchStatus =
       statusFilter === "all" ? true :
-      statusFilter === "awaiting" ? ["waiting_payment", "pending"].includes(r.assignment_status) :
-      statusFilter === "active" ? r.assignment_status === "active" :
-      ["completed", "terminated", "cancelled"].includes(r.assignment_status);
+        statusFilter === "awaiting" ? ["waiting_payment", "pending"].includes(r.assignment_status) :
+          statusFilter === "active" ? r.assignment_status === "active" :
+            ["completed", "terminated", "cancelled"].includes(r.assignment_status);
     return matchSearch && matchAccom && matchStatus;
   });
 
@@ -145,9 +152,9 @@ export default function AdminResidentsPage() {
       }
       setSuccessMsg(
         confirmAction === "override" ? `Transferred to unit ${targetUnit}` :
-        confirmAction === "terminate" ? "Stay terminated" :
-        confirmAction === "record-move-out" ? "Move-out recorded" :
-        "Move-in recorded"
+          confirmAction === "terminate" ? "Stay terminated" :
+            confirmAction === "record-move-out" ? "Move-out recorded" :
+              "Move-in recorded"
       );
       setConfirmAction(null);
       await fetchResidents();
@@ -199,21 +206,21 @@ export default function AdminResidentsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F6F8D5] flex overflow-hidden font-[family-name:var(--font-archivo)]">
+    <div className="min-h-screen py-8 px-5 md:px-12 lg:px-30 bg-[#F6F8D5] flex overflow-hidden font-[family-name:var(--font-archivo)]">
 
       {/* ── LEFT: List panel ───────────────────────────────────────────────── */}
       <div className={cn(
         "flex-1 min-w-0 overflow-y-auto transition-all duration-300",
         selectedId ? "hidden lg:block" : "block"
       )}>
-        <div className="p-4 md:p-6 space-y-4">
+        <div className="p-4 md:p-6 space-y-6">
 
           {/* Header */}
           <div>
-            <h1 className="text-3xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
-              Admin Resident Management Page
+            <h1 className="text-4xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
+              Resident Management
             </h1>
-            <p className="text-sm text-[#44291B]/60 font-medium mt-2">
+            <p className="text-sm text-[#44291B] font-medium mt-2">
               Manage move-ins, move-outs, and resident stays
             </p>
           </div>
@@ -221,7 +228,7 @@ export default function AdminResidentsPage() {
           {/* Filter bar */}
           <div className="flex flex-col sm:flex-row gap-3 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm">
             {/* Search */}
-            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-white flex-1 max-w-sm">
+            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] flex-1 max-w-sm hover:bg-[#F6F8D5] transition-colors">
               <Search className="w-4 h-4 ml-3 text-[#44291B]/40 shrink-0" />
               <input
                 type="text"
@@ -233,34 +240,38 @@ export default function AdminResidentsPage() {
             </div>
 
             {/* Accommodation filter */}
-            <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
-              <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
-              <select
-                value={accomFilter}
-                onChange={e => { setAccomFilter(e.target.value); setPage(1); }}
-                className="text-sm bg-transparent outline-none text-[#44291B] font-medium cursor-pointer min-w-[130px]"
-              >
-                <option value="all">All Properties</option>
+            <Select value={accomFilter} onValueChange={(val) => { setAccomFilter(val); setPage(1); }}>
+              <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
+                  <SelectValue placeholder="All Properties" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
                 {accommodations.map(a => (
-                  <option key={a.accommodation_id} value={a.accommodation_id}>{a.name}</option>
+                  <SelectItem key={a.accommodation_id} value={a.accommodation_id} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                    {a.name}
+                  </SelectItem>
                 ))}
-              </select>
-            </div>
+              </SelectContent>
+            </Select>
 
             {/* Status filter */}
-            <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
-              <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
-              <select
-                value={statusFilter}
-                onChange={e => { setStatusFilter(e.target.value as FilterStatus); setPage(1); }}
-                className="text-sm bg-transparent outline-none text-[#44291B] font-medium cursor-pointer min-w-[120px]"
-              >
-                <option value="all">All Status</option>
-                <option value="awaiting">Awaiting Move-in</option>
-                <option value="active">Active Stays</option>
-                <option value="checked-out">Stay History</option>
-              </select>
-            </div>
+            <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val as FilterStatus); setPage(1); }}>
+              <SelectTrigger className="h-10 min-w-[160px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
+                  <SelectValue placeholder="All Status" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Status</SelectItem>
+                <SelectItem value="awaiting" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Awaiting Move-in</SelectItem>
+                <SelectItem value="active" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Active Stays</SelectItem>
+                <SelectItem value="checked-out" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Stay History</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Table */}
@@ -268,7 +279,7 @@ export default function AdminResidentsPage() {
             {paginated.length > 0 ? (
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-[#e8e2d6] bg-[#F6F8D5]/80">
+                  <tr className="border-b border-[#e8e2d6] bg-[#FDFFF4]">
                     <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Resident</th>
                     <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Accommodation</th>
                     <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Status</th>
@@ -284,11 +295,11 @@ export default function AdminResidentsPage() {
                         onClick={() => selectResident(r.assignment_id)}
                         className={cn(
                           "border-b border-[#e8e2d6]/60 last:border-0 cursor-pointer transition-colors",
-                          isSelected ? "bg-[#F0F4FF]" : "hover:bg-[#F6F8D5]"
+                          isSelected ? "bg-[#F6F8D5]" : "hover:bg-[#F6F8D5]"
                         )}
                       >
                         <td className="py-4 px-5">
-                          <p className={cn("text-sm font-bold text-[#44291B]", isSelected && "text-[#264384]")}>
+                          <p className="text-sm font-bold text-[#44291B]">
                             {r.users.first_name} {r.users.last_name}
                           </p>
                           <div className="flex items-center gap-1 mt-0.5 text-[#44291B]/50">
@@ -325,22 +336,29 @@ export default function AdminResidentsPage() {
             )}
 
             {/* Pagination */}
-            <div className="flex items-center justify-between px-5 py-3 border-t border-[#e8e2d6]/60 bg-[#FDFFF4]">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-1.5 rounded-lg hover:bg-[#e8e2d6]/50 disabled:opacity-30 transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4 text-[#44291B]" />
-              </button>
-              <span className="text-xs font-bold text-[#44291B]/50">{page} / {totalPages}</span>
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="p-1.5 rounded-lg hover:bg-[#e8e2d6]/50 disabled:opacity-30 transition-colors"
-              >
-                <ChevronRight className="w-4 h-4 text-[#44291B]" />
-              </button>
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-6 py-4 bg-[#FDFFF4] border-t border-[#cfd6e4]">
+              <p className="text-xs font-bold text-slate-500">
+                Showing {paginated.length} of {filtered.length} results
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-700 bg-transparent rounded-lg disabled:opacity-50 hover:bg-[#E3E3E3] transition-colors h-8"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Prev
+                </button>
+                <div className="flex items-center px-3 text-xs font-bold text-slate-700">
+                  {page} / {totalPages || 1}
+                </div>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages || totalPages === 0}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-700 bg-transparent rounded-lg disabled:opacity-50 hover:bg-[#E3E3E3] transition-colors h-8"
+                >
+                  Next <ChevronRight className="w-4 h-4 ml-1" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -348,7 +366,7 @@ export default function AdminResidentsPage() {
 
       {/* ── RIGHT: Detail panel ────────────────────────────────────────────── */}
       <div className={cn(
-        "w-full lg:w-[420px] border-l border-[#e8e2d6] bg-[#F6F8D5] overflow-y-auto flex flex-col transition-all duration-300",
+        "w-full lg:w-[450px] border-l border-[#e8e2d6] bg-[#F6F8D5] overflow-y-auto flex flex-col transition-all duration-300 pt-20",
         selectedId ? "block" : "hidden lg:flex"
       )}>
         {selected ? (
@@ -419,17 +437,17 @@ function ResidentDetailPanel({
 
   const confirmBorderColor =
     confirmAction === "terminate" ? "border-[#DF3538]" :
-    confirmAction === "record-move-in" ? "border-[#78A24C]" :
-    "border-[#264384]";
+      confirmAction === "record-move-in" ? "border-[#78A24C]" :
+        "border-[#264384]";
 
   const confirmBtnColor =
     confirmAction === "override"
       ? (targetUnit ? "bg-[#EB8A0B] hover:bg-[#c97509] text-white" : "bg-[#44291B]/10 text-[#44291B]/30 cursor-not-allowed")
       : confirmAction === "terminate"
-      ? "bg-[#DF3538] hover:bg-[#B52A2D] text-white"
-      : confirmAction === "record-move-in"
-      ? "bg-[#78A24C] hover:bg-[#60833D] text-white"
-      : "bg-[#264384] hover:bg-[#1a2d5a] text-white";
+        ? "bg-[#DF3538] hover:bg-[#B52A2D] text-white"
+        : confirmAction === "record-move-in"
+          ? "bg-[#78A24C] hover:bg-[#60833D] text-white"
+          : "bg-[#264384] hover:bg-[#1a2d5a] text-white";
 
   return (
     <div className="flex flex-col h-full">
@@ -519,21 +537,21 @@ function ResidentDetailPanel({
               <div className={cn(
                 "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
                 confirmAction === "override" ? "bg-amber-100 text-amber-700" :
-                confirmAction === "terminate" ? "bg-red-100 text-[#DF3538]" :
-                confirmAction === "record-move-in" ? "bg-[#E7FAD3] text-[#78A24C]" :
-                "bg-[#264384]/10 text-[#264384]"
+                  confirmAction === "terminate" ? "bg-red-100 text-[#DF3538]" :
+                    confirmAction === "record-move-in" ? "bg-[#E7FAD3] text-[#78A24C]" :
+                      "bg-[#264384]/10 text-[#264384]"
               )}>
                 {confirmAction === "record-move-in" ? <CalendarArrowDown className="w-4 h-4" /> :
-                 confirmAction === "override" ? <RefreshCw className="w-4 h-4" /> :
-                 confirmAction === "terminate" ? <ShieldAlert className="w-4 h-4" /> :
-                 <CalendarArrowUp className="w-4 h-4" />}
+                  confirmAction === "override" ? <RefreshCw className="w-4 h-4" /> :
+                    confirmAction === "terminate" ? <ShieldAlert className="w-4 h-4" /> :
+                      <CalendarArrowUp className="w-4 h-4" />}
               </div>
               <div>
                 <p className="text-sm font-bold text-[#44291B]">
                   {confirmAction === "record-move-in" ? "Confirm Move-In" :
-                   confirmAction === "record-move-out" ? "Confirm Move-Out" :
-                   confirmAction === "override" ? "Admin Override: Transfer Resident" :
-                   "Confirm Early Termination"}
+                    confirmAction === "record-move-out" ? "Confirm Move-Out" :
+                      confirmAction === "override" ? "Admin Override: Transfer Resident" :
+                        "Confirm Early Termination"}
                 </p>
                 <p className="text-xs text-[#44291B]/50">
                   {confirmAction === "override" ? "Move resident to a different unit." : "Set the effective date below."}
@@ -702,10 +720,10 @@ type CardColor = "green" | "blue" | "red" | "gray" | "indigo";
 
 function StatusCard({ color, icon, title, body }: { color: CardColor; icon: React.ReactNode; title: string; body: string }) {
   const styles: Record<CardColor, string> = {
-    green:  "bg-[#E7FAD3] border-[#78A24C]/30 [&_svg]:text-[#78A24C]",
-    blue:   "bg-[#E0F2FE] border-[#0369A1]/30 [&_svg]:text-[#0369A1]",
-    red:    "bg-[#FEF2F2] border-[#B91C1C]/30 [&_svg]:text-[#B91C1C]",
-    gray:   "bg-[#F3F4F6] border-gray-300     [&_svg]:text-gray-500",
+    green: "bg-[#E7FAD3] border-[#78A24C]/30 [&_svg]:text-[#78A24C]",
+    blue: "bg-[#E0F2FE] border-[#0369A1]/30 [&_svg]:text-[#0369A1]",
+    red: "bg-[#FEF2F2] border-[#B91C1C]/30 [&_svg]:text-[#B91C1C]",
+    gray: "bg-[#F3F4F6] border-gray-300     [&_svg]:text-gray-500",
     indigo: "bg-[#EEF2FF] border-[#4F46E5]/30 [&_svg]:text-[#4F46E5]",
   };
   return (
