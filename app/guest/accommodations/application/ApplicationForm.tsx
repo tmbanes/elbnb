@@ -32,6 +32,11 @@ import {
   CheckCircle,
   Calendar as CalendarIcon,
   Loader2,
+  ChevronLeft,
+  Building,
+  User,
+  FileText,
+  Home,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -107,18 +112,23 @@ function SectionCard({
   children,
   highlighted = false,
   onEdit, // New prop to handle the click
+  className,
+  icon,
 }: {
   title: string;
   children: React.ReactNode;
   highlighted?: boolean;
   onEdit?: () => void; // Optional function
+  className?: string;
+  icon?: React.ReactNode;
 }) {
   return (
     <div
       className={`
-        relative rounded-2xl border-2 bg-white p-6 mb-4 transition-all duration-300 ease-in-out
+        relative rounded-2xl border-2 bg-white mb-4 transition-all duration-300 ease-in-out
         hover:scale-[1.01] hover:shadow-xl hover:border-[#78A24C] group
         ${highlighted ? "border-blue-400 shadow-md" : "border-[#78A24C]/30"}
+        ${className || "p-6"}
       `}
     >
       {/* Edit Button - Visible on Hover */}
@@ -132,16 +142,20 @@ function SectionCard({
         </button>
       )}
 
-      <div className="flex items-center gap-2 pb-3 mb-4 border-b border-[#78A24C]/20">
-        <span className="text-[#78A24C] text-sm group-hover:animate-pulse">
-          ★
-        </span>
-        <span className="text-sm font-bold text-[#3d2000] uppercase tracking-wider">
-          {title}
-        </span>
+      <div className="flex items-center mb-6">
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${highlighted ? "bg-[#F2C908]" : "bg-[#78A24C]/25"}`}>
+          {icon && (
+            <span className="text-[#567536] [&>svg]:w-[18px] [&>svg]:h-[18px] group-hover:animate-pulse">
+              {icon}
+            </span>
+          )}
+          <span className={`text-[15px] font-bold tracking-wider ${highlighted ? "text-[#1F2937]" : "text-[#3d2000]"}`}>
+            {title}
+          </span>
+        </div>
       </div>
 
-      <div className="transition-opacity duration-300">{children}</div>
+      <div className="transition-opacity duration-300 flex-grow flex flex-col">{children}</div>
     </div>
   );
 }
@@ -478,7 +492,7 @@ export default function ApplyAccommodationForm() {
         accommodation
       </p>
 
-      <SectionCard title="Accommodation & Unit Details">
+      <SectionCard title="Accommodation & Unit Details" icon={<Home />}>
         <div className="flex flex-col md:flex-row gap-8">
           {accommodation ? (
             <>
@@ -534,38 +548,32 @@ export default function ApplyAccommodationForm() {
 
                 {unit ? (
                   <div className="border-t border-[#78A24C]/20 pt-6">
-                    <div className="grid grid-cols-2 gap-y-4">
+                    <div className="grid grid-cols-2 gap-y-6">
                       <div>
                         <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest mb-1">
-                          Unit Number
-                        </p>
-                        <p className="text-lg font-black text-[#3d2000]">
-                          #{unit.unit_number}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest mb-1">
-                          Monthly Fee
-                        </p>
-                        <p className="text-lg font-black text-[#264384]">
-                          ₱{unit.rental_fee}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-[#6a5a3a] uppercase tracking-tighter">
                           Unit Type
                         </p>
-                        <p className="text-sm text-[#3d2000] capitalize">
-                          {unit.unit_type}
+                        <p className="text-lg font-black text-[#3d2000] capitalize">
+                          {unit.unit_type === "wholeunit" ? "Whole Unit" : unit.unit_type}
                         </p>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-[#6a5a3a] uppercase tracking-tighter">
-                          Stay Limits
-                        </p>
-                        <p className="text-sm text-[#3d2000]">
-                          {unit.min_stay_duration}-{unit.max_stay_duration} mo.
-                        </p>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest mb-1">
+                            Monthly Fee
+                          </p>
+                          <p className="text-lg font-black text-[#264384]">
+                            ₱{unit.rental_fee}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-[#6a5a3a] uppercase tracking-tighter">
+                            Stay Limits
+                          </p>
+                          <p className="text-sm text-[#3d2000]">
+                            {unit.min_stay_duration}-{unit.max_stay_duration} months
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -589,156 +597,165 @@ export default function ApplyAccommodationForm() {
       </SectionCard>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <SectionCard title="Personal Information">
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <Field label="First Name">
-              <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.firstName || "--"} />
-            </Field>
-            <Field label="Last Name">
-              <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.lastName || "--"} />
-            </Field>
-            <Field label="Email Address">
-              <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.email || "--"} />
-            </Field>
-          </div>
-          <div className="grid grid-cols-4 gap-4">
-            <Field label="Student ID" italic="(if applicable)">
-              <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.studentId || "N/A"} />
-            </Field>
-            <Field label="Contact Number">
-              <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.contactNumber || "--"} />
-            </Field>
-            <Field label="Applicant Type">
-              <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.role.replace("_", " ") || "--"} />
-            </Field>
-            <Field label="Gender">
-              <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.sex || "--"} />
-            </Field>
-          </div>
-        </SectionCard>
-
-        <SectionCard title="Dormitory Preference">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* First Row */}
-            <Field
-              label="Selected Accommodation"
-              required
-              error={errors.preferred_accommodation?.message}
-            >
-              <Input
-                readOnly
-                className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`}
-                value={accommodation?.name || "Loading..."}
-                {...register("preferred_accommodation")}
-              />
-            </Field>
-
-            {!unitIdFromQuery && (
-              <Field
-                label="Preferred Unit Type"
-                required
-                error={errors.preferred_unit_type?.message}
-              >
-                <Controller
-                  name="preferred_unit_type"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger
-                        className={
-                          errors.preferred_unit_type
-                            ? triggerErrorClass
-                            : triggerClass
-                        }
-                      >
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {unitTypes.map((type) => (
-                          <SelectItem
-                            key={type}
-                            value={type}
-                            className="capitalize"
-                          >
-                            {type === "wholeunit" ? "Whole Unit" : type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </Field>
-            )}
-
-            <Field
-              label="Duration (Months)"
-              required
-              error={errors.duration_of_stay?.message}
-            >
-              <Input
-                type="number"
-                className={inputClass}
-                placeholder="e.g. 6"
-                {...register("duration_of_stay")}
-              />
-            </Field>
-
-            {/* Second Row */}
-            <Field
-              label="Check-in Date"
-              required
-              error={errors.checkIn?.message}
-            >
-              <Controller
-                name="checkIn"
-                control={control}
-                render={({ field }) => (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className={`flex items-center justify-between w-full h-11 px-4 rounded-xl border-2 text-sm bg-white transition-all ${errors.checkIn ? "border-red-400" : "border-[#78A24C]"
-                          } ${!field.value ? "text-gray-400" : "text-gray-700"}`}
-                      >
-                        {field.value
-                          ? format(field.value, "MMM dd, yyyy")
-                          : "Select date"}
-                        <CalendarIcon className="h-4 w-4 text-[#78A24C]" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date(new Date().setHours(0, 0, 0, 0))
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                )}
-              />
-            </Field>
-
-            <Field label="Check-out Date">
-              <div className="relative">
-                <Input
-                  readOnly
-                  className={`${inputClass} bg-gray-100 font-bold placeholder:font-normal border-dashed cursor-not-allowed text-xs sm:text-sm`}
-                  value={
-                    watch("checkOut")
-                      ? format(watch("checkOut"), "MMM dd, yyyy")
-                      : ""
-                  }
-                  placeholder="Calculated Automatically"
-                />
-                <input type="hidden" {...register("checkOut")} />
+        {/* TOP ROW */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
+          {/* LEFT COLUMN */}
+          <div className="flex flex-col h-full">
+            <SectionCard title="Personal Information" icon={<User />} className="p-6 flex-grow flex flex-col !mb-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
+                <Field label="First Name">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.firstName || "--"} />
+                </Field>
+                <Field label="Last Name">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.lastName || "--"} />
+                </Field>
+                <div className="md:col-span-2">
+                  <Field label="Email Address">
+                    <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.email || "--"} />
+                  </Field>
+                </div>
+                <Field label="Student ID">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.studentId || "N/A"} />
+                </Field>
+                <Field label="Contact Number">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.contactNumber || "--"} />
+                </Field>
+                <Field label="Applicant Type">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.role.replace("_", " ") || "--"} />
+                </Field>
+                <Field label="Sex">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.sex || "--"} />
+                </Field>
               </div>
-            </Field>
+            </SectionCard>
           </div>
-        </SectionCard>
+
+          {/* RIGHT COLUMN */}
+          <div className="flex flex-col h-full">
+            <SectionCard title="Dormitory Preferences" icon={<Building />} className="p-6 flex-grow flex flex-col !mb-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
+                <div className="md:col-span-2">
+                  <Field
+                    label="Selected Accommodation"
+                    required
+                    error={errors.preferred_accommodation?.message}
+                  >
+                    <Input
+                      readOnly
+                      className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`}
+                      value={accommodation?.name || "Loading..."}
+                      {...register("preferred_accommodation")}
+                    />
+                  </Field>
+                </div>
+
+                {!unitIdFromQuery && (
+                  <Field
+                    label="Preferred Unit Type"
+                    required
+                    error={errors.preferred_unit_type?.message}
+                  >
+                    <Controller
+                      name="preferred_unit_type"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger
+                            className={
+                              errors.preferred_unit_type
+                                ? triggerErrorClass
+                                : triggerClass
+                            }
+                          >
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {unitTypes.map((type) => (
+                              <SelectItem
+                                key={type}
+                                value={type}
+                                className="capitalize"
+                              >
+                                {type === "wholeunit" ? "Whole Unit" : type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </Field>
+                )}
+
+                <Field
+                  label="Duration (Months)"
+                  required
+                  error={errors.duration_of_stay?.message}
+                >
+                  <Input
+                    type="number"
+                    className={inputClass}
+                    placeholder="e.g. 6"
+                    {...register("duration_of_stay")}
+                  />
+                </Field>
+
+                <Field
+                  label="Check-in Date"
+                  required
+                  error={errors.checkIn?.message}
+                >
+                  <Controller
+                    name="checkIn"
+                    control={control}
+                    render={({ field }) => (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className={`flex items-center justify-between w-full h-11 px-4 rounded-xl border-2 text-sm bg-white transition-all ${errors.checkIn ? "border-red-400" : "border-[#78A24C]"
+                              } ${!field.value ? "text-gray-400" : "text-gray-700"}`}
+                          >
+                            {field.value
+                              ? format(field.value, "MMM dd, yyyy")
+                              : "mm/dd/yyyy"}
+                            <CalendarIcon className="h-4 w-4 text-[#78A24C]" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date(new Date().setHours(0, 0, 0, 0))
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                </Field>
+
+                <Field label="Check-out Date">
+                  <div className="relative">
+                    <Input
+                      readOnly
+                      className={`${inputClass} bg-gray-100 font-bold placeholder:font-normal border-dashed cursor-not-allowed text-xs sm:text-sm`}
+                      value={
+                        watch("checkOut")
+                          ? format(watch("checkOut"), "MMM dd, yyyy")
+                          : ""
+                      }
+                      placeholder="Calculated Automatically"
+                    />
+                    <input type="hidden" {...register("checkOut")} />
+                  </div>
+                </Field>
+              </div>
+            </SectionCard>
+          </div>
+        </div>
 
         {/* <SectionCard title="Emergency Contact Information">
           <div className="grid grid-cols-4 gap-4">

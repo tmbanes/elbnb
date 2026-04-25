@@ -31,7 +31,7 @@ export function AccommodationCard({
   const isApplicationOpen = deadline ? today <= deadline : false;
 
   return (
-    <div className="flex-shrink-0 w-72 min-h-[420px] rounded-2xl shadow-md hover:shadow-xl transition-shadow overflow-hidden group flex flex-col" style={{ backgroundColor: '#FDFFF4' }}>
+    <div className="flex-shrink-0 w-72 min-h-[420px] rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-out overflow-hidden group flex flex-col transform-gpu will-change-transform" style={{ backgroundColor: '#FDFFF4' }}>
       {/* Image */}
       <div className="h-48 relative overflow-hidden flex-shrink-0 bg-gray-200">
         {accommodation.image ? (

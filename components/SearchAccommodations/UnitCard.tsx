@@ -40,12 +40,12 @@ export function UnitCard({
 
   return (
     <div
-      className="flex-shrink-0 w-72 min-h-[420px] rounded-2xl shadow-md hover:shadow-xl transition-shadow overflow-hidden group flex flex-col"
+      className="flex-shrink-0 w-72 min-h-[420px] rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-out overflow-hidden group flex flex-col transform-gpu will-change-transform"
       style={{ backgroundColor: "#FDFFF4" }}
     >
       {/* Image Placeholder */}
       <div className="h-48 relative overflow-hidden flex-shrink-0 bg-gray-200">
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 group-hover:scale-105 transition-transform duration-300 ease-out">
           <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
             <polyline strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" points="9 22 9 12 15 12 15 22" />
@@ -77,9 +77,11 @@ export function UnitCard({
         <h3
           className="text-lg font-bold mb-1 line-clamp-2 min-h-[3.5rem]"
           style={{ color: "#44291B", lineHeight: "1.75rem" }}
-          title={unit.unit_number}
         >
-          {unit.unit_number.toUpperCase()}
+          {userRole === "guest" 
+            ? (unit.unit_type === "wholeunit" ? "WHOLE UNIT" : String(unit.unit_type || '').toUpperCase())
+            : String(unit.unit_number || '').toUpperCase()
+          }
         </h3>
 
         {/* Accommodation name */}
@@ -95,7 +97,7 @@ export function UnitCard({
 
         {/* Key Details */}
         <div className="flex flex-col gap-1 mb-3 flex-1 text-xs" style={{ color: "#44291B" }}>
-          <p>Type: <span className="font-medium">{unit.unit_type}</span></p>
+          {userRole !== "guest" && <p>Type: <span className="font-medium">{unit.unit_type}</span></p>}
           <p>Furnishing: <span className="font-medium">{unit.furnishing_status}</span></p>
           <p>Vacant Slots: <span className="font-medium">{unit.vacant_slots}</span></p>
         </div>
@@ -120,7 +122,7 @@ export function UnitCard({
               <Link
                 href={
                   userRole === "guest"
-                    ? `/guest/accommodations/application?accommodationId=${unit.accommodation_id}&unitId=${unit.unit_id}`
+                    ? `/guest/accommodations/application?accommodationId=${unit.accommodation_id}`
                     : `/student/accommodations/application?accommodationId=${unit.accommodation_id}&unitId=${unit.unit_id}`
                 }
                 className="w-full px-4 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-center text-white hover:opacity-90 active:scale-[0.98]"

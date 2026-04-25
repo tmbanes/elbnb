@@ -94,7 +94,7 @@ export function Carousel({ children }: CarouselProps) {
           position: 'relative',
         }}
       >
-        <div className={`transition-shadow duration-300 rounded-2xl ${isHovered ? 'shadow-2xl shadow-black/20 ring-1 ring-black/5' : ''}`}>
+        <div className="transition-all duration-300 rounded-2xl">
           {child}
         </div>
       </div>

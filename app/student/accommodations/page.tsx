@@ -353,66 +353,65 @@ export default function SearchAccommodationsPage() {
         {/* Top Controls: Search Bar (Left) + View/Tab Options (Right) */}
         <div className="flex flex-col md:flex-row gap-4 mb-8 items-center justify-between">
           {/* Search Bar - Left Side */}
-          <div className="w-full md:max-w-md">
-            <div className="relative">
+          <div className="w-full md:max-w-lg">
+            <div className="relative group">
+              {/* Search Icon */}
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg 
+                  className="w-5 h-5 text-gray-400 group-focus-within:text-[#264384] transition-colors duration-300" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth="2.5" 
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+                  />
+                </svg>
+              </div>
+
               <input
                 type="text"
-                placeholder="Search by location or name..."
+                placeholder="Search by location, name, or type..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value)
                   applyAccommodationFilters(accommodations, units, accommodationFilters, e.target.value)
                   applyUnitFilters(units, unitFilters, accommodations, e.target.value)
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-gray-900 placeholder-gray-500"
-                style={{
-                  color: '#44291B',
-                  backgroundColor: '#FDFFF4',
-                  '--tw-ring-color': '#264384',
-                } as any}
+                className="w-full pl-12 pr-12 py-4 bg-white border border-gray-100 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus:shadow-[0_8px_30px_rgb(38,67,132,0.08)] focus:border-[#264384]/30 focus:ring-4 focus:ring-[#264384]/5 transition-all duration-300 outline-none text-[#44291B] font-semibold placeholder:text-gray-400 placeholder:font-normal"
+                style={{ backgroundColor: '#FDFFF4' }}
               />
-              <svg
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+
+              {/* Clear Button */}
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('')
+                    applyAccommodationFilters(accommodations, units, accommodationFilters, '')
+                    applyUnitFilters(units, unitFilters, accommodations, '')
+                  }}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#264384] transition-colors duration-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Shortcut hint (optional luxury touch) */}
+              {!searchQuery && (
+                <div className="absolute inset-y-0 right-0 pr-4 hidden sm:flex items-center pointer-events-none">
+                  <span className="px-1.5 py-0.5 border border-gray-200 rounded text-[10px] font-bold text-gray-300 bg-gray-50/50">/</span>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Tab Navigation - Right Side */}
           <div className="flex flex-wrap gap-3 justify-start md:justify-end w-full md:w-auto">
-            <button
-              onClick={() => { setActiveTab('accommodations'); setCurrentPage(1); }}
-              className={`px-6 py-3 rounded-lg font-semibold transition ${activeTab === 'accommodations'
-                ? 'text-white shadow-md'
-                : 'border border-gray-200 hover:border-gray-300'
-                }`}
-              style={{
-                backgroundColor: activeTab === 'accommodations' ? '#264384' : '#FDFFF4',
-                color: activeTab === 'accommodations' ? 'white' : '#44291B',
-              }}
-            >
-              Accommodations
-            </button>
-
-            <button
-              onClick={() => setViewMode(viewMode === 'list' ? 'carousel' : 'list')}
-              className="px-6 py-3 rounded-lg font-semibold border border-gray-200 hover:border-gray-300 transition shadow-sm"
-              style={{
-                backgroundColor: viewMode === 'list' ? '#264384' : '#FDFFF4',
-                color: viewMode === 'list' ? 'white' : '#44291B',
-              }}
-            >
-              {viewMode === 'list' ? 'Carousel View' : 'List View'}
-            </button>
           </div>
         </div>
 
@@ -450,9 +449,35 @@ export default function SearchAccommodationsPage() {
             />
 
             {/* Results Section */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: '#44291B' }}>SEARCH RESULTS</h2>
-              <p style={{ color: '#44291B' }}>Explore available housing options</p>
+            <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold mb-1" style={{ color: '#44291B' }}>SEARCH RESULTS</h2>
+                <p className="text-sm" style={{ color: '#44291B' }}>Explore available accommodations</p>
+              </div>
+
+              {/* View Mode Toggle Switch */}
+              <button
+                onClick={() => setViewMode(viewMode === 'list' ? 'carousel' : 'list')}
+                className="relative inline-flex items-center rounded-full p-1.5 w-52 h-11 focus:outline-none shadow-inner transition-all duration-300 bg-gray-200/80 hover:bg-gray-200"
+                aria-label="Toggle View Mode"
+              >
+                {/* Background labels */}
+                <div className="absolute inset-0 flex justify-between items-center px-2 text-[10px] font-bold text-gray-400 pointer-events-none">
+                  <span className="w-1/2 text-center uppercase tracking-tight">Carousel</span>
+                  <span className="w-1/2 text-center uppercase tracking-tight">List</span>
+                </div>
+                
+                {/* Sliding Thumb */}
+                <div
+                  className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white rounded-full shadow-sm border border-gray-100 transition-transform duration-300 ease-out flex items-center justify-center z-10 ${
+                    viewMode === 'list' ? 'translate-x-full' : 'translate-x-0'
+                  }`}
+                >
+                  <span className="font-black text-[10px] tracking-wider" style={{ color: '#264384' }}>
+                    {viewMode === 'list' ? 'LIST' : 'CAROUSEL'}
+                  </span>
+                </div>
+              </button>
             </div>
 
             {/* Loading State */}
@@ -490,34 +515,37 @@ export default function SearchAccommodationsPage() {
 
             {/* Carousel or List View */}
             {!loading && filteredAccommodations.length > 0 && (
-              viewMode === 'carousel' ? (
-                <div className="mb-12">
-                  <Carousel>
-                    {filteredAccommodations.map((accommodation) => (
-                        <AccommodationCard
-                          key={accommodation.accommodation_id}
-                          accommodation={accommodation}
-                          units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
-                          onDetailsClick={handleAccommodationDetailsClick}
-                          basePath="/student/accommodations"
-                          userRole="student"
-                        />
-                    ))}
-                  </Carousel>
-                </div>
-              ) : (
-                <AccommodationListView
-                  paginatedAccommodations={paginatedAccommodations}
-                  totalPages={totalAccommodationsPages}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  validCurrentPage={validCurrentPage}
-                  basePath="/student/accommodations"
-                  onSeeUnitsClick={handleSeeUnitsClick}
-                  userRole="student"
-                  units={units}
-                />
-              )
+              <div key={`accom-${viewMode}-${JSON.stringify(accommodationFilters)}`}>
+                {viewMode === 'carousel' ? (
+                  <div className="mb-12">
+                    <Carousel>
+                      {filteredAccommodations.map((accommodation, index) => (
+                        <div key={accommodation.accommodation_id} style={{ animation: 'pageSlideIn 0.3s ease-out both', animationDelay: `${index * 0.05}s` }}>
+                          <AccommodationCard
+                            accommodation={accommodation}
+                            units={units.filter((u) => u.accommodation_id === accommodation.accommodation_id)}
+                            onDetailsClick={handleAccommodationDetailsClick}
+                            basePath="/student/accommodations"
+                            userRole="student"
+                          />
+                        </div>
+                      ))}
+                    </Carousel>
+                  </div>
+                ) : (
+                  <AccommodationListView
+                    paginatedAccommodations={paginatedAccommodations}
+                    totalPages={totalAccommodationsPages}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    validCurrentPage={validCurrentPage}
+                    basePath="/student/accommodations"
+                    onSeeUnitsClick={handleSeeUnitsClick}
+                    userRole="student"
+                    units={units}
+                  />
+                )}
+              </div>
             )}
           </div>
         )}
@@ -544,9 +572,35 @@ export default function SearchAccommodationsPage() {
             />
 
             {/* Results Section */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: '#44291B' }}>SEARCH RESULTS</h2>
-              <p style={{ color: '#44291B' }}>Explore available units</p>
+            <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold mb-1" style={{ color: '#44291B' }}>SEARCH RESULTS</h2>
+                <p className="text-sm" style={{ color: '#44291B' }}>Explore available units</p>
+              </div>
+
+              {/* View Mode Toggle Switch */}
+              <button
+                onClick={() => setViewMode(viewMode === 'list' ? 'carousel' : 'list')}
+                className="relative inline-flex items-center rounded-full p-1.5 w-52 h-11 focus:outline-none shadow-inner transition-all duration-300 bg-gray-200/80 hover:bg-gray-200"
+                aria-label="Toggle View Mode"
+              >
+                {/* Background labels */}
+                <div className="absolute inset-0 flex justify-between items-center px-2 text-xs font-bold text-gray-400 pointer-events-none">
+                  <span className="w-1/2 text-center uppercase tracking-wide">Carousel</span>
+                  <span className="w-1/2 text-center uppercase tracking-wide">List</span>
+                </div>
+                
+                {/* Sliding Thumb */}
+                <div
+                  className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white rounded-full shadow-sm border border-gray-100 transition-transform duration-300 ease-out flex items-center justify-center z-10 ${
+                    viewMode === 'list' ? 'translate-x-full' : 'translate-x-0'
+                  }`}
+                >
+                  <span className="font-black text-xs tracking-wider" style={{ color: '#264384' }}>
+                    {viewMode === 'list' ? 'LIST' : 'CAROUSEL'}
+                  </span>
+                </div>
+              </button>
             </div>
 
             {/* Loading State */}
@@ -584,35 +638,38 @@ export default function SearchAccommodationsPage() {
 
             {/* Carousel or List View */}
             {!loading && filteredUnits.length > 0 && (
-              viewMode === 'carousel' ? (
-                <div className="mb-12">
-                  <Carousel>
-                    {filteredUnits.map((unit) => {
-                      const accommodation = accommodations.find(
-                        (a) => a.accommodation_id === unit.accommodation_id
-                      )
-                      return (
-                        <UnitCard
-                          key={unit.unit_id}
-                          unit={unit}
-                          accommodation={accommodation}
-                          onDetailsClick={handleUnitDetailsClick}
-                        />
-                      )
-                    })}
-                  </Carousel>
-                </div>
-              ) : (
-                <UnitsListView
-                  paginatedUnits={paginatedUnits}
-                  accommodations={accommodations}
-                  totalPages={totalUnitsPages}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  validCurrentPage={validCurrentUnitsPage}
-                  basePath="/student/accommodations"
-                />
-              )
+              <div key={`unit-${viewMode}-${JSON.stringify(unitFilters)}`}>
+                {viewMode === 'carousel' ? (
+                  <div className="mb-12">
+                    <Carousel>
+                      {filteredUnits.map((unit, index) => {
+                        const accommodation = accommodations.find(
+                          (a) => a.accommodation_id === unit.accommodation_id
+                        )
+                        return (
+                          <div key={unit.unit_id} style={{ animation: 'pageSlideIn 0.3s ease-out both', animationDelay: `${index * 0.05}s` }}>
+                            <UnitCard
+                              unit={unit}
+                              accommodation={accommodation}
+                              onDetailsClick={handleUnitDetailsClick}
+                            />
+                          </div>
+                        )
+                      })}
+                    </Carousel>
+                  </div>
+                ) : (
+                  <UnitsListView
+                    paginatedUnits={paginatedUnits}
+                    accommodations={accommodations}
+                    totalPages={totalUnitsPages}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    validCurrentPage={validCurrentUnitsPage}
+                    basePath="/student/accommodations"
+                  />
+                )}
+              </div>
             )}
           </div>
         )}
