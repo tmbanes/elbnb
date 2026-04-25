@@ -2,7 +2,7 @@
 import { requireRole } from "@/lib/auth/client-auth";
 
 //ui components
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -13,7 +13,6 @@ export default async function StudentLayout({ children }: { children: React.Reac
             <SidebarProvider>
                 
                 <AppSidebar role="student" />
-                <SidebarTrigger />
 
                 <main className="flex-1">
                     {/* optional trigger button */}
