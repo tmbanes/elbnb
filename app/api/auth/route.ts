@@ -2,27 +2,26 @@ import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 import { User } from '@/types/user.types'
 
-// // Just get the user ID of the currently authenticated user !!DELETE: already have a route for this in @/lib/auth/get-user [DOUBLE CHECK] !!
 export async function GET() {
-	const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
-	const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
-	if (error || !user) {
-		return NextResponse.json({ user: null }, { status: 401 });
-	}
+  if (error || !user) {
+    return NextResponse.json({ user: null }, { status: 401 });
+  }
 
-	const { data: userData, error: userError } = await supabase
-		.from('users')
-		.select('*')
-		.eq('user_id', user.id)
-		.single();
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
 
-	if (userError || !userData) {
-		return NextResponse.json({ user: null }, { status: 404 });
-	}
+  if (userError || !userData) {
+    return NextResponse.json({ user: null }, { status: 404 });
+  }
 
-	return NextResponse.json({
-		user: userData as User,
-	});
+  return NextResponse.json({
+    user: userData as User,
+  });
 }
