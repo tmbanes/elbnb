@@ -12,13 +12,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Eye, Pencil, Trash2, MapPin } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
-
-
 
 export type PropertyColumn = {
   id: string
@@ -156,8 +153,8 @@ export const getPropertyColumns = (
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="h-8 w-8 p-0 hover:bg-transparent"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -168,7 +165,7 @@ export const getPropertyColumns = (
             <DropdownMenuContent align="end" className="bg-[#FDFFF4] text-[#44291B]">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem asChild className="focus:bg-[#F6F8D5] focus:text-[#44291B] focus:**:text-[#44291B] cursor-pointer">
-                <Link 
+                <Link
                   href={`/admin/housing?id=${p.accommodation_id}`}
                   onClick={(e) => e.stopPropagation()}
                 >

@@ -221,6 +221,20 @@ not yet tested
 
     const { data, error } = await client
       .from("documents")
+      .select("*")
+      .eq("user_id", user_id);
+
+    if (error) {
+      if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn("Documents table is missing in Supabase. Returning empty array.");
+        return { data: [], error: null };
+      }
+      console.error("Error fetching documents:", error.message);
+    }
+
+    return { data, error };
+  },
+
   async getCurrentAccommodation(user_id: string) {
     const client = await supabase();
     const { data, error } = await client
@@ -250,7 +264,7 @@ not yet tested
 
   async getDashboardStats(user_id: string) {
     const client = await supabase();
-    
+
     // Get summary of bills
     const { data: billingData } = await client
       .from("billing")
@@ -277,19 +291,9 @@ not yet tested
     };
   },
 
-  async getDocuments(user_id: string) {
-    const client = await supabase();
-    const { data, error } = await client
-      .from("Document")
-      .select("*")
-      .eq("user_id", user_id);
-
-    return { data, error };
-  },
-
   async createExtensionApplication(user_id: string, currentResidency: any) {
     const client = await supabase();
-    
+
     const { data, error } = await client
       .from("accommodation_application")
       .insert({
@@ -315,16 +319,13 @@ not yet tested
       .order("created_at", { ascending: false });
 
     if (error) {
-      // PGRST116 is the error code for 'relation not found' (table missing)
       if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
-        console.warn("Documents table is missing in Supabase. Returning empty array.");
+        console.warn("Notifications table is missing in Supabase. Returning empty array.");
         return { data: [], error: null };
       }
-      console.error("Error fetching documents:", error.message, error.details, error.hint);
+      console.error("Error fetching notifications:", error.message);
     }
 
-    return { data, error };
-  },
     return { data, error };
   }
 };

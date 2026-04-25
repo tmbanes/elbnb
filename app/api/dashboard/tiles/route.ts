@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation/index";
-import { getApiAuthenticatedUser } from "@/lib/auth/server-auth";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       { status: auth.status }
     );
   }
-  
+
   const user = auth.user;
 
   try {

@@ -2,9 +2,9 @@ import { AccommodationAssignment } from '@/types/assignment_workflow';
 
 // BASED ON SUPABASE PROPERTIES
 export type ApplicationStatus = "pending_dorm_manager" | "pending_admin" | "pending_payment" | "approved" | "rejected" | "cancelled";
-export type DocumentType =  "university_id" | "form_5" | "proof_of_payment" | "parent_consent" | "other"
+export type DocumentType = "university_id" | "form_5" | "proof_of_payment" | "parent_consent" | "other"
 export type DocumentStatus = "pending" | "verified" | "rejected"
-export type CancellableStatus = "pending_dorm_manager" | "pending_admin" | "pending_payment" 
+export type CancellableStatus = "pending_dorm_manager" | "pending_admin" | "pending_payment"
 
 
 // BASED ON SUPABASE PROPERTIES + accommodation_assignment 

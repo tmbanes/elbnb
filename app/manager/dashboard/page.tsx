@@ -6,21 +6,21 @@ import { redirect } from "next/navigation";
 import ManagerDashboardUI from "./manager-dashboard-ui";
 
 export default async function DormitoryManagerDashboardPage() {
-    const supabase = await createSupabaseServerClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-        redirect("/");
-    }
+  if (!user) {
+    redirect("/");
+  }
 
-    // Fetch manager profile
-    const { data: profile } = await studentProfileService.getProfile(user.id);
+  // Fetch manager profile
+  const { data: profile } = await studentProfileService.getProfile(user.id);
 
-    return (
-        <ManagerDashboardUI
-            profile={profile}
-        />
-    );
+  return (
+    <ManagerDashboardUI
+      profile={profile}
+    />
+  );
 }

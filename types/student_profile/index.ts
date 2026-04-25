@@ -43,10 +43,10 @@ export interface AccommodationApplication {
   check_in: string | null;
   check_out: string | null;
   number_of_companions: number | null;
-  application_status: string; 
+  application_status: string;
 
-  accommodation_assignment?: AccommodationAssignment | AccommodationAssignment[] | null; 
-  
+  accommodation_assignment?: AccommodationAssignment | AccommodationAssignment[] | null;
+
   accommodation?: {
     name: string;
     accommodation_type: string;

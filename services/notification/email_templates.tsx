@@ -34,6 +34,12 @@ export const templates = {//type of email notif and its content
     message: `Hi ${name},your payment is overdue. Please pay your dues`,
     actionUrl: "http://localhost:3000/billing",//actual link to billing
   }),
+
+  managerAccountCreated: (name: string, tempPass: string) => ({
+    title: "Manager Account Created",
+    message: `Hi ${name}, your manager account has been created. Your temporary password is: ${tempPass}. Please change it upon logging in.`,
+    actionUrl: "http://localhost:3000/login",
+  }),
 };
 //the actual body of email
 //TODO: fix format to match elbnb theme

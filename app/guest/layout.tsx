@@ -1,5 +1,5 @@
 // app\guest\layout.tsx
-import { requireRole } from "@/lib/auth/client-auth";
+import { requireRole } from "@/lib/auth/session";
 
 //ui components
 import { SidebarProvider } from "@/components/ui/sidebar"
@@ -8,20 +8,20 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default async function GuestLayout({ children }: { children: React.ReactNode }) {
     await requireRole(["guest"]);
-    return(
+    return (
         <TooltipProvider>
             <SidebarProvider>
-                
+
                 <AppSidebar role="guest" />
                 <SidebarTrigger />
 
                 <main className="flex-1">
                     {/* optional trigger button */}
-                    
+
 
                     {children}
                 </main>
-                
+
             </SidebarProvider>
         </TooltipProvider>
     );

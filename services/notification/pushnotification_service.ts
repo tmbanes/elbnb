@@ -20,17 +20,17 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
   const supabase = supabaseAdmin
 
   //save notification
-const { data: inserted, error: insertError } = await supabase
-  .from('notifications')
-  .insert({
-    user_id: userId,
-    title: payload.title,
-    message: payload.message,
-    action_url: payload.actionUrl,
-    is_sent_push: false,
-  })
-  .select()
-  .single()
+  const { data: inserted, error: insertError } = await supabase
+    .from('notifications')
+    .insert({
+      user_id: userId,
+      title: payload.title,
+      message: payload.message,
+      action_url: payload.actionUrl,
+      is_sent_push: false,
+    })
+    .select()
+    .single()
   const insertedId = inserted?.notification_id
   // Fetch the stored subscription from users table
   const { data: user, error } = await supabase

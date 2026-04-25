@@ -204,12 +204,15 @@ main>*:not(.page-loader) {
 .backface-hidden {
   backface-visibility: hidden;
 }
+
 /* Hide scrollbar but keep scroll */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }

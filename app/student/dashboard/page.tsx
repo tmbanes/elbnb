@@ -41,7 +41,7 @@ export default async function StudentDashboardPage() {
   ]);
   const handleLogout = async () => {
     setIsExiting(true);
-    
+
     // Log the action for successful sign-out.
     const profile = await getCurrentUserFromApi();
     const userRole = isUserRole(profile?.role) ? profile.role : "guest";
@@ -56,7 +56,7 @@ export default async function StudentDashboardPage() {
         p_user_role: userRole,
       });
     }
-      
+
 
 
     await supabase.auth.signOut();

@@ -108,7 +108,7 @@ export function AppSidebar({
 
         if (userProfile) {
           setUserData({
-            name: `${userProfile.first_name} ${userProfile.last_name}`.trim() || user.email?.split("@")[0] || "User",
+            name: `${userProfile.first_name || ""} ${userProfile.last_name || ""}`.trim() || user.email?.split("@")[0] || "User",
             email: userProfile.email || user.email || "",
             avatar: userProfile.profile_picture_url || "/avatars/shadcn.jpg",
           })

@@ -278,7 +278,7 @@ export default function ApplyAccommodationForm() {
     try {
       const months = Math.round(
         (data.checkOut.getTime() - data.checkIn.getTime()) /
-          (1000 * 60 * 60 * 24 * 30.44)
+        (1000 * 60 * 60 * 24 * 30.44)
       );
 
       // Pack the application JSON as a string field alongside the file
@@ -316,8 +316,8 @@ export default function ApplyAccommodationForm() {
       const userRole = isUserRole(profile?.role) ? profile.role : "guest";
       // accommodationIdFromQuery
 
-      if(profile?.user_id){
-        await createActivityLog( {
+      if (profile?.user_id) {
+        await createActivityLog({
           p_user_id: profile.user_id,
           p_action_type: "submit_application",
           p_log_desc: `${profile.first_name} ${profile.last_name}  submitted application`,
@@ -325,7 +325,7 @@ export default function ApplyAccommodationForm() {
           p_entity_id: accommodationIdFromQuery,
           p_user_role: userRole,
         })
-    }
+      }
 
       setShowSuccess(true);
     } catch (error) {
@@ -484,9 +484,9 @@ export default function ApplyAccommodationForm() {
                   submittedData.preferred_unit_type === "wholeunit"
                     ? "Whole Unit"
                     : submittedData.preferred_unit_type
-                        .charAt(0)
-                        .toUpperCase() +
-                      submittedData.preferred_unit_type.slice(1),
+                      .charAt(0)
+                      .toUpperCase() +
+                    submittedData.preferred_unit_type.slice(1),
               },
               {
                 label: "Check-in Date",

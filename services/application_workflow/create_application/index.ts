@@ -7,7 +7,7 @@ const CANCELLABLE_STATUSES: CancellableStatus[] = ['pending_dorm_manager', 'pend
 const INITIAL_SUBMIT_APPLICATION_STATUS = 'pending_dorm_manager' as ApplicationStatus
 
 export class CreateApplicationService {
-  
+
   // CREATE ACCOMMODATION APPLICATION WITH GUARD CHECKERS
   static async createApplication(data: CreateApplicationInput): Promise<AccommodationApplication> {
     const supabase = await createSupabaseServerClient()
