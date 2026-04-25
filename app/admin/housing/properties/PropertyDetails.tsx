@@ -169,92 +169,89 @@ export default function PropertyDetail({
           <CardContent className="px-5 py-4">
             <div className="flex items-center justify-between gap-8 flex-wrap">
 
-              {/* Property Name & Location */}
-              <div className="flex flex-col gap-2 flex-1 min-w-0">
-                <div>
-                  <h1 className="text-4xl font-[family-name:var(--font-archivo-black)] text-[#44291B] leading-tight break-words">{property.name}</h1>
-                  <div className="flex items-center text-[#6b6a62] text-md mt-0.5 gap-1">
-                    <MapPin className="w-3 h-3 shrink-0" />
-                    <span className="break-words">{property.location}</span>
-                  </div>
+              <div>
+                <h1 className="text-2xl md:text-4xl font-[family-name:var(--font-archivo-black)] text-[#44291B] leading-tight break-words">{property.name}</h1>
+                <div className="flex items-center text-[#6b6a62] text-sm md:text-md mt-0.5 gap-1">
+                  <MapPin className="w-3 h-3 shrink-0" />
+                  <span className="break-words">{property.location}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 md:gap-8 shrink-0 w-full lg:w-auto justify-between lg:justify-end">
+              {/* Tags */}
+              <div className="flex gap-2 flex-wrap">
+                <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider border text-center ${isDorm
+                  ? "bg-[#ebf2f4] text-[#5591AB] border-[#d1e3e8]"
+                  : "bg-[#fbecd7] text-[#EB8A0B] border-[#f5dab8]"
+                  }`}>
+                  {isDorm ? "Dormitory" : "Rental Space"}
+                </span>
+                <div className={cn(
+                  "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                  property.accommodation_status?.toLowerCase() === "active"
+                    ? "bg-[#E7FAD3] text-[#78A24C] border-[#d8e7c8]"
+                    : "bg-gray-100 text-gray-600 border-gray-200"
+                )}>
+                  <span className={cn(
+                    "mr-1.5 h-1.5 w-1.5 rounded-full",
+                    property.accommodation_status?.toLowerCase() === "active" ? "bg-[#78A24C]" : "bg-gray-400"
+                  )} />
+                  {property.accommodation_status || "Unknown"}
                 </div>
               </div>
 
-              <div className="flex items-center gap-8 shrink-0">
-                {/* Tags */}
-                <div className="flex gap-2">
-                  <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider border text-center ${isDorm
-                    ? "bg-[#ebf2f4] text-[#5591AB] border-[#d1e3e8]"
-                    : "bg-[#fbecd7] text-[#EB8A0B] border-[#f5dab8]"
-                    }`}>
-                    {isDorm ? "Dormitory" : "Rental Space"}
-                  </span>
-                  <div className={cn(
-                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
-                    property.accommodation_status?.toLowerCase() === "active"
-                      ? "bg-[#E7FAD3] text-[#78A24C] border-[#d8e7c8]"
-                      : "bg-gray-100 text-gray-600 border-gray-200"
-                  )}>
-                    <span className={cn(
-                      "mr-1.5 h-1.5 w-1.5 rounded-full",
-                      property.accommodation_status?.toLowerCase() === "active" ? "bg-[#78A24C]" : "bg-gray-400"
-                    )} />
-                    {property.accommodation_status || "Unknown"}
-                  </div>
-                </div>
+              {/* Vertical Divider */}
+              <div className="hidden lg:block w-px h-12 bg-[#e2e4c0]" />
 
-                {/* Vertical Divider */}
-                <div className="hidden lg:block w-px h-12 bg-[#e2e4c0]" />
-
-                {/* Assigned Manager (Moved to Header) */}
-                {property.dormitory_manager && (
-                  <div className="hidden xl:flex items-center gap-2.5 bg-transparent">
-                    <Avatar className="h-7 w-7 border shadow-sm shrink-0">
-                      <AvatarFallback className="bg-[#264384] text-white text-[10px] font-black">
-                        {property.dormitory_manager.users.first_name[0]}
-                        {property.dormitory_manager.users.last_name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col leading-tight pr-1">
-                      <span className="text-sm font-bold text-[#44291B] whitespace-nowrap">
-                        {property.dormitory_manager.users.first_name} {property.dormitory_manager.users.last_name}
-                      </span>
-                      <span className="text-xs text-[#8c8b82] font-medium whitespace-nowrap">
-                        Dorm Manager
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Vertical Divider */}
-                <div className="hidden md:block w-px h-12 bg-[#e2e4c0]" />
-
-                {/*Occupancy */}
-                <div className="flex flex-col gap-1.5 shrink-0 w-[240px]">
-                  <div className="flex justify-between items-end">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[11px] font-semibold text-[#44291B] uppercase tracking-wider">
-                        Occupancy
-                      </span>
-                    </div>
-                    <span className="text-xl font-bold text-[#264384] leading-none ml-2 mb-0.5">
-                      {currentOccupancy}
-                      <span className="text-xs font-normal text-[#8c8b82]"> / {totalCapacity}</span>
+              {/* Assigned Manager (Moved to Header) */}
+              {property.dormitory_manager && (
+                <div className="flex items-center gap-2.5 bg-transparent">
+                  <Avatar className="h-7 w-7 border shadow-sm shrink-0">
+                    <AvatarFallback className="bg-[#264384] text-white text-[10px] font-black">
+                      {property.dormitory_manager.users.first_name[0]}
+                      {property.dormitory_manager.users.last_name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col leading-tight pr-1">
+                    <span className="text-sm font-bold text-[#44291B] whitespace-nowrap">
+                      {property.dormitory_manager.users.first_name} {property.dormitory_manager.users.last_name}
+                    </span>
+                    <span className="text-xs text-[#8c8b82] font-medium whitespace-nowrap">
+                      Dorm Manager
                     </span>
                   </div>
-                  <Progress
-                    value={occupancyPercentage}
-                    className="h-2 bg-[#F6F8D5] [&>div]:bg-[#264384]"
-                  />
                 </div>
+              )}
 
-                {/* Details Trigger */}
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 text-[#8c8b82] hover:text-[#44291B] hover:bg-[#F6F8D5] rounded-full">
-                    <ChevronDown className="h-5 w-5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
-                  </Button>
-                </CollapsibleTrigger>
+              {/* Vertical Divider */}
+              <div className="hidden md:block w-px h-12 bg-[#e2e4c0]" />
+
+              {/*Occupancy */}
+              <div className="flex flex-col gap-1.5 shrink-0 w-full md:w-[240px]">
+                <div className="flex justify-between items-end">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[11px] font-semibold text-[#44291B] uppercase tracking-wider">
+                      Occupancy
+                    </span>
+                  </div>
+                  <span className="text-xl font-bold text-[#264384] leading-none ml-2 mb-0.5">
+                    {currentOccupancy}
+                    <span className="text-xs font-normal text-[#8c8b82]"> / {totalCapacity}</span>
+                  </span>
+                </div>
+                <Progress
+                  value={occupancyPercentage}
+                  className="h-2 bg-[#F6F8D5] [&>div]:bg-[#264384]"
+                />
               </div>
+
+              {/* Details Trigger */}
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10 text-[#8c8b82] hover:text-[#44291B] hover:bg-[#F6F8D5] rounded-full shrink-0">
+                  <ChevronDown className="h-5 w-5 transition-transform duration-200 group-state-open:rotate-180" />
+                </Button>
+              </CollapsibleTrigger>
             </div>
           </CardContent>
 
