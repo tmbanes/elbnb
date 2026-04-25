@@ -32,6 +32,11 @@ import {
   CheckCircle,
   Calendar as CalendarIcon,
   Loader2,
+  ChevronLeft,
+  Building,
+  User,
+  FileText,
+  Home,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -45,6 +50,8 @@ import type {
   UnitType,
 } from "@/types/accommodation_units";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+import { getCurrentUserFromApi } from "@/services/activity_log/browser";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -53,35 +60,6 @@ const unitTypes: [UnitType, ...UnitType[]] = ["room", "bedspace", "wholeunit"];
 // Validation Schema
 const formSchema = z
   .object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
-    email: z
-      .string()
-      .min(1, "Email is required")
-      .refine(
-        (val) =>
-          /^[^\s@]+@(gmail\.com|up\.edu\.ph|yahoo\.com|outlook\.com)$/.test(
-            val,
-          ),
-        {
-          message:
-            "Email must end with @gmail.com, @up.edu.ph, @yahoo.com, or @outlook.com",
-        },
-      ),
-    studentId: z
-      .string()
-      .optional()
-      .refine((val) => !val || /^2\d{3}-\d{5}$/.test(val), {
-        message: "Student ID format must be 2XXX-XXXXX (e.g. 2024-12345)",
-      }),
-    contactNumber: z
-      .string()
-      .min(1, "Contact number is required")
-      .refine((val) => /^\d+$/.test(val), {
-        message: "Contact number must contain numbers only",
-      }),
-    applicantType: z.string().min(1, "Applicant type is required"),
-    gender: z.string().min(1, "Gender is required"),
     // streetAddress: z.string().min(1, "Street address is required"),
     // province: z.string().min(1, "Province is required"),
     // city: z.string().min(1, "City is required"),
@@ -93,9 +71,7 @@ const formSchema = z
     //     message: "Zip code must be numbers only",
     //   }),
     preferred_accommodation: z.string().min(1, "Dormitory is required"),
-    preferred_unit_type: z.enum(unitTypes, {
-      errorMap: () => ({ message: "Please select a valid unit type" }),
-    }),
+    preferred_unit_type: z.string().min(1, "Please select a valid unit type"),
     checkIn: z.date().refine((val) => val !== undefined && val !== null, {
       message: "Check-in date is required",
     }),
@@ -134,18 +110,23 @@ function SectionCard({
   children,
   highlighted = false,
   onEdit, // New prop to handle the click
+  className,
+  icon,
 }: {
   title: string;
   children: React.ReactNode;
   highlighted?: boolean;
   onEdit?: () => void; // Optional function
+  className?: string;
+  icon?: React.ReactNode;
 }) {
   return (
     <div
       className={`
-        relative rounded-2xl border-2 bg-white p-6 mb-4 transition-all duration-300 ease-in-out
+        relative rounded-2xl border-2 bg-white mb-4 transition-all duration-300 ease-in-out
         hover:scale-[1.01] hover:shadow-xl hover:border-[#78A24C] group
         ${highlighted ? "border-blue-400 shadow-md" : "border-[#78A24C]/30"}
+        ${className || "p-6"}
       `}
     >
       {/* Edit Button - Visible on Hover */}
@@ -159,16 +140,20 @@ function SectionCard({
         </button>
       )}
 
-      <div className="flex items-center gap-2 pb-3 mb-4 border-b border-[#78A24C]/20">
-        <span className="text-[#78A24C] text-sm group-hover:animate-pulse">
-          ★
-        </span>
-        <span className="text-sm font-bold text-[#3d2000] uppercase tracking-wider">
-          {title}
-        </span>
+      <div className="flex items-center mb-6">
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${highlighted ? "bg-[#F2C908]" : "bg-[#78A24C]/25"}`}>
+          {icon && (
+            <span className="text-[#567536] [&>svg]:w-[18px] [&>svg]:h-[18px] group-hover:animate-pulse">
+              {icon}
+            </span>
+          )}
+          <span className={`text-[15px] font-bold tracking-wider ${highlighted ? "text-[#1F2937]" : "text-[#3d2000]"}`}>
+            {title}
+          </span>
+        </div>
       </div>
 
-      <div className="transition-opacity duration-300">{children}</div>
+      <div className="transition-opacity duration-300 flex-grow flex flex-col">{children}</div>
     </div>
   );
 }
@@ -217,7 +202,7 @@ const triggerErrorClass =
 // main fform
 export default function ApplyAccommodationForm() {
   const searchParams = useSearchParams();
-  // const router = useRouter()
+  const router = useRouter();
   const accommodationIdFromQuery = searchParams.get("accommodationId") ?? "";
   const unitIdFromQuery = searchParams.get("unitId") ?? "";
 
@@ -232,6 +217,17 @@ export default function ApplyAccommodationForm() {
   const [userRole, setUserRole] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormValues | null>(null);
+  const [dynamicUnitTypes, setDynamicUnitTypes] = useState<string[]>([]);
+
+  const [userInfo, setUserInfo] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    contactNumber: "",
+    studentId: "",
+    role: "",
+    sex: "",
+  });
 
   const {
     register,
@@ -307,6 +303,7 @@ export default function ApplyAccommodationForm() {
       if (!response.ok) {
         const errorData = await response.json();
         alert(errorData.error || "Failed to submit.");
+        setShowSuccess(false);
         return;
       }
 
@@ -315,6 +312,7 @@ export default function ApplyAccommodationForm() {
     } catch (error) {
       console.error("Submission error:", error);
       alert("An unexpected error occurred.");
+      setShowSuccess(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -324,19 +322,37 @@ export default function ApplyAccommodationForm() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch("/api/auth");
-        if (!res.ok) throw new Error("Auth failed");
-        const data = await res.json();
-        if (data.user?.user_id) {
-          setUserId(data.user.user_id);
-          setUserRole(data.user.role);
+        const userProfile = await getCurrentUserFromApi();
+        if (userProfile) {
+          setUserId(userProfile.user_id);
+          setUserRole(userProfile.role);
+
+          // Prefill personal information from user data
+          let contactNumber = "";
+          let studentId = "";
+          const supabase = getSupabaseBrowserClient();
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.user_metadata) {
+            contactNumber = user.user_metadata.phone_number || "";
+            studentId = user.user_metadata.student_number || "";
+          }
+
+          setUserInfo({
+            firstName: userProfile.first_name || "",
+            lastName: userProfile.last_name || "",
+            email: userProfile.email || "",
+            contactNumber: contactNumber,
+            studentId: studentId,
+            role: userProfile.role || "",
+            sex: userProfile.sex || "",
+          });
         }
       } catch (err) {
         console.error("Auth error:", err);
       }
     };
     fetchUser();
-  }, []);
+  }, [setValue]);
 
   // FETCH ACCOMMODATION + UNIT details for display
   useEffect(() => {
@@ -353,17 +369,22 @@ export default function ApplyAccommodationForm() {
           null;
         setAccommodation(matched);
 
-        if (unitIdFromQuery) {
           const resUnit = await fetch(
             `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
           );
           if (!resUnit.ok) throw new Error("Failed to fetch units");
 
           const dataUnits: Unit[] = await resUnit.json();
-          const matchedUnit =
-            dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
-          setUnit(matchedUnit);
-        }
+          
+          // Derive available unit types from the fetched units
+          const types = Array.from(new Set(dataUnits.map(u => u.unit_type)));
+          setDynamicUnitTypes(types);
+
+          if (unitIdFromQuery) {
+            const matchedUnit =
+              dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
+            setUnit(matchedUnit);
+          }
       } catch (error) {
         console.error("Failed to fetch accommodation:", error);
       }
@@ -392,13 +413,13 @@ export default function ApplyAccommodationForm() {
         <SectionCard title="Personal Information">
           <div className="grid grid-cols-3 gap-4">
             {[
-              ["First Name", submittedData.firstName],
-              ["Last Name", submittedData.lastName],
-              ["Email Address", submittedData.email],
-              ["Student ID", submittedData.studentId || "N/A"],
-              ["Contact Number", submittedData.contactNumber],
-              ["Applicant Type", submittedData.applicantType],
-              ["Gender", submittedData.gender],
+              ["First Name", userInfo.firstName],
+              ["Last Name", userInfo.lastName],
+              ["Email Address", userInfo.email],
+              ["Student ID", userInfo.studentId || "N/A"],
+              ["Contact Number", userInfo.contactNumber || "N/A"],
+              ["Applicant Type", userInfo.role.replace("_", " ")],
+              ["Gender", userInfo.sex],
             ].map(([label, value]) => (
               <div key={label}>
                 <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">
@@ -414,36 +435,15 @@ export default function ApplyAccommodationForm() {
           </div>
         </SectionCard>
 
-        {/* <SectionCard title="Address Information">
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              ["Street Address", submittedData.streetAddress],
-              ["Province", submittedData.province],
-              ["City", submittedData.city],
-              ["Barangay", submittedData.barangay],
-              ["Zip Code", submittedData.zipCode],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">
-                  {label}
-                </p>
-                <p className="text-sm text-[#3d2000] font-medium">{value}</p>
-              </div>
-            ))}
-          </div>
-        </SectionCard> */}
-
         <SectionCard title="Dormitory & Stay Preference">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               {
                 label: "Selected Dormitory",
-                // Show the actual fetched name if available, otherwise fallback to the form data
                 value: submittedData.preferred_accommodation,
               },
               {
                 label: "Unit Type",
-                // Format "wholeunit" to "Whole Unit" and capitalize others
                 value:
                   submittedData.preferred_unit_type === "wholeunit"
                     ? "Whole Unit"
@@ -473,26 +473,6 @@ export default function ApplyAccommodationForm() {
           </div>
         </SectionCard>
 
-        {/* <SectionCard title="Emergency Contact Information">
-          <div className="grid grid-cols-4 gap-4">
-            {[
-              ["First Name", submittedData.emergencyFirstName],
-              ["Last Name", submittedData.emergencyLastName],
-              ["Contact Number", submittedData.emergencyContact],
-              ["Relationship", submittedData.relationship],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">
-                  {label}
-                </p>
-                <p className="text-sm text-[#3d2000] font-medium capitalize">
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
-        </SectionCard> */}
-
         <SectionCard title="Uploaded Document">
           <div className="flex items-center gap-2">
             <CheckCircle className="h-4 w-4 text-[#78A24C]" />
@@ -516,89 +496,100 @@ export default function ApplyAccommodationForm() {
         accommodation
       </p>
 
-      <SectionCard title="Accommodation & Unit Details">
-        <div className="space-y-6">
+      <SectionCard title="Accommodation & Unit Details" icon={<Home />}>
+        <div className="flex flex-col md:flex-row gap-8">
           {accommodation ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
-              {/* LEFT side: Accommodation Info */}
-              <div className="space-y-4">
-                <div>
-                  <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest mb-1">
-                    Accommodation Name
-                  </p>
-                  <p className="text-base font-bold text-[#3d2000]">
-                    {accommodation.name}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-wider">
-                      Location
-                    </p>
-                    <p className="text-sm text-[#3d2000]">
-                      {accommodation.location}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-wider">
-                      Type
-                    </p>
-                    <p className="text-sm text-[#3d2000] capitalize">
-                      {accommodation.accommodation_type.replace("_", " ")}
-                    </p>
-                  </div>
+            <>
+              {/* IMAGE on the left */}
+              <div className="w-full md:w-1/3 flex-shrink-0">
+                <div className="w-full h-full min-h-[200px] bg-gray-300 flex items-center justify-center text-gray-500 text-xs rounded-xl overflow-hidden shadow-sm border-2 border-[#78A24C]/30 relative">
+                  {accommodation.image ? (
+                    <img 
+                      src={accommodation.image} 
+                      alt={accommodation.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    "[Image Placeholder]"
+                  )}
                 </div>
               </div>
 
-              {/* RIGHT side: Unit Info */}
-              {unit ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2 border-t md:border-t-0 md:border-l border-[#78A24C]/20 pt-4 md:pt-0 md:pl-8">
-                    <div className="grid grid-cols-2 gap-y-4">
-                      <div>
-                        <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest mb-1">
-                          Unit Number
-                        </p>
-                        <p className="text-base font-bold text-[#3d2000]">
-                          #{unit.unit_number}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest mb-1">
-                          Monthly Fee
-                        </p>
-                        <p className="text-base font-bold text-[#264384]">
-                          ₱{unit.rental_fee}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-[#6a5a3a] uppercase tracking-tighter">
-                          Unit Type
-                        </p>
-                        <p className="text-sm text-[#3d2000] capitalize">
-                          {unit.unit_type}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-[#6a5a3a] uppercase tracking-tighter">
-                          Stay Limits
-                        </p>
-                        <p className="text-sm text-[#3d2000]">
-                          {unit.min_stay_duration}-{unit.max_stay_duration} mo.
-                        </p>
-                      </div>
+              {/* ACCOMMODATION & UNIT DETAILS in one column */}
+              <div className="w-full md:w-2/3 flex flex-col space-y-6 justify-center">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest mb-1">
+                      Accommodation Name
+                    </p>
+                    <p className="text-xl font-black text-[#3d2000]">
+                      {accommodation.name}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-wider">
+                        Location
+                      </p>
+                      <p className="text-sm text-[#3d2000]">
+                        {accommodation.location}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-wider">
+                        Type
+                      </p>
+                      <p className="text-sm text-[#3d2000] capitalize">
+                        {accommodation.accommodation_type.replace("_", " ")}
+                      </p>
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-center md:border-l border-[#78A24C]/20 md:pl-8">
-                  <p className="text-xs text-[#6a5a3a] italic">
-                    No specific unit selected
-                  </p>
-                </div>
-              )}
-            </div>
+
+                {unit ? (
+                  <div className="border-t border-[#78A24C]/20 pt-6">
+                    <div className="grid grid-cols-2 gap-y-6">
+                      <div>
+                        <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest mb-1">
+                          Unit Type
+                        </p>
+                        <p className="text-lg font-black text-[#3d2000] capitalize">
+                          {unit.unit_type === "wholeunit" ? "Whole Unit" : unit.unit_type}
+                        </p>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest mb-1">
+                            Monthly Fee
+                          </p>
+                          <p className="text-lg font-black text-[#264384]">
+                            ₱{unit.rental_fee}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-[#6a5a3a] uppercase tracking-tighter">
+                            Stay Limits
+                          </p>
+                          <p className="text-sm text-[#3d2000]">
+                            {unit.min_stay_duration}-{unit.max_stay_duration} months
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-t border-[#78A24C]/20 pt-6">
+                    <p className="text-xs text-[#6a5a3a] italic">
+                      No specific unit selected
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
             /* Simple Loading State */
             <div className="animate-pulse space-y-2">
@@ -610,301 +601,169 @@ export default function ApplyAccommodationForm() {
       </SectionCard>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <SectionCard title="Personal Information">
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <Field
-              label="First Name"
-              required
-              error={errors.firstName?.message}
-            >
-              <Input
-                className={errors.firstName ? inputErrorClass : inputClass}
-                placeholder="Maria"
-                {...register("firstName")}
-              />
-            </Field>
-            <Field label="Last Name" required error={errors.lastName?.message}>
-              <Input
-                className={errors.lastName ? inputErrorClass : inputClass}
-                placeholder="Makiling"
-                {...register("lastName")}
-              />
-            </Field>
-            <Field label="Email Address" required error={errors.email?.message}>
-              <Input
-                className={errors.email ? inputErrorClass : inputClass}
-                type="email"
-                placeholder="maria.makiling@up.edu.ph"
-                {...register("email")}
-              />
-            </Field>
-          </div>
-          <div className="grid grid-cols-4 gap-4">
-            <Field
-              label="Student ID"
-              italic="(if applicable)"
-              error={errors.studentId?.message}
-            >
-              <Input
-                className={errors.studentId ? inputErrorClass : inputClass}
-                placeholder="2XXX-XXXXX"
-                {...register("studentId")}
-              />
-            </Field>
-            <Field
-              label="Contact Number"
-              required
-              error={errors.contactNumber?.message}
-            >
-              <Input
-                className={errors.contactNumber ? inputErrorClass : inputClass}
-                placeholder="09XXXXXXXXX"
-                {...register("contactNumber")}
-                onKeyDown={(e) => {
-                  if (
-                    !/^\d$/.test(e.key) &&
-                    ![
-                      "Backspace",
-                      "Delete",
-                      "ArrowLeft",
-                      "ArrowRight",
-                      "Tab",
-                    ].includes(e.key)
-                  ) {
-                    e.preventDefault();
-                  }
-                }}
-              />
-            </Field>
-            <Field
-              label="Applicant Type"
-              required
-              error={errors.applicantType?.message}
-            >
-              <Controller
-                name="applicantType"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger
-                      className={
-                        errors.applicantType ? triggerErrorClass : triggerClass
-                      }
-                    >
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="guest">Guest</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </Field>
-            <Field label="Gender" required error={errors.gender?.message}>
-              <Controller
-                name="gender"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger
-                      className={
-                        errors.gender ? triggerErrorClass : triggerClass
-                      }
-                    >
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </Field>
-          </div>
-        </SectionCard>
-
-        {/* <SectionCard title="Address Information">
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <Field
-              label="Street Address"
-              required
-              error={errors.streetAddress?.message}
-            >
-              <Input
-                className={errors.streetAddress ? inputErrorClass : inputClass}
-                placeholder="123 Mabini Street"
-                {...register("streetAddress")}
-              />
-            </Field>
-            <Field label="Province" required error={errors.province?.message}>
-              <Input
-                className={errors.province ? inputErrorClass : inputClass}
-                placeholder="Laguna"
-                {...register("province")}
-              />
-            </Field>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <Field label="City" required error={errors.city?.message}>
-              <Input
-                className={errors.city ? inputErrorClass : inputClass}
-                placeholder="Los Banos"
-                {...register("city")}
-              />
-            </Field>
-            <Field label="Barangay" required error={errors.barangay?.message}>
-              <Input
-                className={errors.barangay ? inputErrorClass : inputClass}
-                placeholder="Batong Malake"
-                {...register("barangay")}
-              />
-            </Field>
-            <Field label="Zip Code" required error={errors.zipCode?.message}>
-              <Input
-                className={errors.zipCode ? inputErrorClass : inputClass}
-                placeholder="XXXX"
-                {...register("zipCode")}
-                onKeyDown={(e) => {
-                  if (
-                    !/^\d$/.test(e.key) &&
-                    ![
-                      "Backspace",
-                      "Delete",
-                      "ArrowLeft",
-                      "ArrowRight",
-                      "Tab",
-                    ].includes(e.key)
-                  ) {
-                    e.preventDefault();
-                  }
-                }}
-              />
-            </Field>
-          </div>
-        </SectionCard> */}
-
-        <SectionCard title="Dormitory Preference">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* First Row */}
-            <Field
-              label="Selected Accommodation"
-              required
-              error={errors.preferred_accommodation?.message}
-            >
-              <Input
-                readOnly
-                className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`}
-                value={accommodation?.name || "Loading..."}
-                {...register("preferred_accommodation")}
-              />
-            </Field>
-
-            <Field
-              label="Preferred Unit Type"
-              required
-              error={errors.preferred_unit_type?.message}
-            >
-              <Controller
-                name="preferred_unit_type"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger
-                      className={
-                        errors.preferred_unit_type
-                          ? triggerErrorClass
-                          : triggerClass
-                      }
-                    >
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unitTypes.map((type) => (
-                        <SelectItem
-                          key={type}
-                          value={type}
-                          className="capitalize"
-                        >
-                          {type === "wholeunit" ? "Whole Unit" : type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </Field>
-
-            <Field
-              label="Duration (Months)"
-              required
-              error={errors.duration_of_stay?.message}
-            >
-              <Input
-                type="number"
-                className={inputClass}
-                placeholder="e.g. 6"
-                {...register("duration_of_stay")}
-              />
-            </Field>
-
-            {/* Second Row */}
-            <Field
-              label="Check-in Date"
-              required
-              error={errors.checkIn?.message}
-            >
-              <Controller
-                name="checkIn"
-                control={control}
-                render={({ field }) => (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className={`flex items-center justify-between w-full h-11 px-4 rounded-xl border-2 text-sm bg-white transition-all ${errors.checkIn ? "border-red-400" : "border-[#78A24C]"
-                          } ${!field.value ? "text-gray-400" : "text-gray-700"}`}
-                      >
-                        {field.value
-                          ? format(field.value, "MMM dd, yyyy")
-                          : "Select date"}
-                        <CalendarIcon className="h-4 w-4 text-[#78A24C]" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date(new Date().setHours(0, 0, 0, 0))
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                )}
-              />
-            </Field>
-
-            <Field label="Check-out Date" italic="(Calculated Automatically)">
-              <div className="relative">
-                <Input
-                  readOnly
-                  className={`${inputClass} bg-gray-100 font-bold border-dashed cursor-not-allowed`}
-                  value={
-                    watch("checkOut")
-                      ? format(watch("checkOut"), "MMM dd, yyyy")
-                      : "--"
-                  }
-                />
-                <input type="hidden" {...register("checkOut")} />
+        {/* TOP ROW */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
+          {/* LEFT COLUMN */}
+          <div className="flex flex-col h-full">
+            <SectionCard title="Personal Information" icon={<User />} className="p-6 flex-grow flex flex-col !mb-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
+                <Field label="First Name">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.firstName || "--"} />
+                </Field>
+                <Field label="Last Name">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.lastName || "--"} />
+                </Field>
+                <div className="md:col-span-2">
+                  <Field label="Email Address">
+                    <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.email || "--"} />
+                  </Field>
+                </div>
+                <Field label="Student ID">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.studentId || "N/A"} />
+                </Field>
+                <Field label="Contact Number">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.contactNumber || "--"} />
+                </Field>
+                <Field label="Applicant Type">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.role.replace("_", " ") || "--"} />
+                </Field>
+                <Field label="Sex">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.sex || "--"} />
+                </Field>
               </div>
-            </Field>
+            </SectionCard>
           </div>
-        </SectionCard>
+
+          {/* RIGHT COLUMN */}
+          <div className="flex flex-col h-full">
+            <SectionCard title="Dormitory Preferences" icon={<Building />} className="p-6 flex-grow flex flex-col !mb-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
+                <div className="md:col-span-2">
+                  <Field
+                    label="Selected Accommodation"
+                    required
+                    error={errors.preferred_accommodation?.message}
+                  >
+                    <Input
+                      readOnly
+                      className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`}
+                      value={accommodation?.name || "Loading..."}
+                      {...register("preferred_accommodation")}
+                    />
+                  </Field>
+                </div>
+
+                {!unitIdFromQuery && (
+                  <Field
+                    label="Preferred Unit Type"
+                    required
+                    error={errors.preferred_unit_type?.message}
+                  >
+                    <Controller
+                      name="preferred_unit_type"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger
+                            className={
+                              errors.preferred_unit_type
+                                ? triggerErrorClass
+                                : triggerClass
+                            }
+                          >
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dynamicUnitTypes.length > 0 ? (
+                                dynamicUnitTypes.map((type) => (
+                                    <SelectItem
+                                        key={type}
+                                        value={type}
+                                        className="capitalize"
+                                    >
+                                        {type === "wholeunit" ? "Whole Unit" : type}
+                                    </SelectItem>
+                                ))
+                            ) : (
+                                <SelectItem value="none" disabled>No types available</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </Field>
+                )}
+
+                <Field
+                  label="Duration (Months)"
+                  required
+                  error={errors.duration_of_stay?.message}
+                >
+                  <Input
+                    type="number"
+                    className={inputClass}
+                    placeholder="e.g. 6"
+                    {...register("duration_of_stay")}
+                  />
+                </Field>
+
+                <Field
+                  label="Check-in Date"
+                  required
+                  error={errors.checkIn?.message}
+                >
+                  <Controller
+                    name="checkIn"
+                    control={control}
+                    render={({ field }) => (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className={`flex items-center justify-between w-full h-11 px-4 rounded-xl border-2 text-sm bg-white transition-all ${errors.checkIn ? "border-red-400" : "border-[#78A24C]"
+                              } ${!field.value ? "text-gray-400" : "text-gray-700"}`}
+                          >
+                            {field.value
+                              ? format(field.value, "MMM dd, yyyy")
+                              : "mm/dd/yyyy"}
+                            <CalendarIcon className="h-4 w-4 text-[#78A24C]" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date(new Date().setHours(0, 0, 0, 0))
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                </Field>
+
+                <Field label="Check-out Date">
+                  <div className="relative">
+                    <Input
+                      readOnly
+                      className={`${inputClass} bg-gray-100 font-bold placeholder:font-normal border-dashed cursor-not-allowed text-xs sm:text-sm`}
+                      value={
+                        watch("checkOut")
+                          ? format(watch("checkOut"), "MMM dd, yyyy")
+                          : ""
+                      }
+                      placeholder="Calculated Automatically"
+                    />
+                    <input type="hidden" {...register("checkOut")} />
+                  </div>
+                </Field>
+              </div>
+            </SectionCard>
+          </div>
+        </div>
 
         {/* <SectionCard title="Emergency Contact Information">
           <div className="grid grid-cols-4 gap-4">
@@ -1084,12 +943,21 @@ export default function ApplyAccommodationForm() {
           />
         </SectionCard>
 
-        {/* Submit Button */}
-        <div className="flex justify-end pb-6">
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-4 pb-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isSubmitting}
+            className="border-2 border-[#78A24C] text-[#78A24C] hover:bg-gray-200 hover:text-[#78A24C] px-7 py-3 text-base font-bold rounded-xl transition-all hover:scale-105"
+          >
+            Cancel
+          </Button>
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-[#78A24C] hover:bg-[#5f8a38] text-white px-7 py-3 text-base font-bold rounded-xl"
+            className="bg-[#78A24C] hover:bg-[#5f8a38] text-white px-7 py-3 text-base font-bold rounded-xl transition-all hover:scale-105"
           >
             {isSubmitting ? "Submitting..." : "Submit Application"}
           </Button>
@@ -1133,7 +1001,7 @@ export default function ApplyAccommodationForm() {
               onClick={() => setShowSuccess(false)}
               className="w-full bg-[#78A24C] hover:bg-[#5f8a38] text-white font-bold rounded-xl py-3 mt-2"
             >
-              Confirm
+              View Application Summary
             </Button>
           )}
         </DialogContent>

@@ -10,6 +10,7 @@ interface AccommodationCardProps {
   onSeeUnitsClick?: (accommodation: Accommodation) => void
   basePath?: string
   userRole?: 'student' | 'guest'
+  appliedAccommodationIds?: Set<string>
 }
 
 export function AccommodationCard({
@@ -19,13 +20,20 @@ export function AccommodationCard({
   onSeeUnitsClick,
   basePath = '/student/accommodations',
   userRole = 'student',
+  appliedAccommodationIds = new Set(),
 }: AccommodationCardProps) {
   const vacantUnits = units.filter((unit) => unit.vacant_slots > 0)
   const hasVacant = vacantUnits.length > 0
   const totalVacantSlots = vacantUnits.reduce((acc, curr) => acc + curr.vacant_slots, 0)
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const deadline = accommodation?.allowed_application ? new Date(accommodation.allowed_application) : null;
+  if (deadline) deadline.setHours(23, 59, 59, 999);
+  const isApplicationOpen = deadline ? today <= deadline : false;
+
   return (
-    <div className="flex-shrink-0 w-72 min-h-[420px] rounded-2xl shadow-md hover:shadow-xl transition-shadow overflow-hidden group flex flex-col" style={{ backgroundColor: '#FDFFF4' }}>
+    <div className="flex-shrink-0 w-72 min-h-[420px] rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-out overflow-hidden group flex flex-col transform-gpu will-change-transform" style={{ backgroundColor: '#FDFFF4' }}>
       {/* Image */}
       <div className="h-48 relative overflow-hidden flex-shrink-0 bg-gray-200">
         {accommodation.image ? (
@@ -69,7 +77,7 @@ export function AccommodationCard({
       {/* Content */}
       <div className="p-5 flex-1 flex flex-col">
         {/* Title */}
-        <h3 className="text-lg font-bold mb-2 line-clamp-2 min-h-[3.5rem]" style={{ color: '#44291B', lineHeight: '1.75rem' }} title={accommodation.name}>
+        <h3 className="text-2xl font-black mb-2 line-clamp-2 min-h-[4rem]" style={{ color: '#44291B', lineHeight: '2rem' }} title={accommodation.name}>
           {accommodation.name}
         </h3>
 
@@ -94,20 +102,38 @@ export function AccommodationCard({
         {/* Actions */}
         <div className="flex flex-col gap-2 mt-auto">
           {userRole === 'student' ? (
-            hasVacant ? (
-              <Link
-                href={`${basePath}/application?accommodationId=${accommodation.accommodation_id}`}
-                className="w-full px-4 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] text-center block"
-                style={{ backgroundColor: '#264384' }}
-              >
-                Apply
-              </Link>
+            isApplicationOpen ? (
+              hasVacant ? (
+                appliedAccommodationIds.has(accommodation.accommodation_id) ? (
+                  <button
+                    disabled
+                    className="w-full px-4 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
+                  >
+                    Already Applied
+                  </button>
+                ) : (
+                  <Link
+                    href={`${basePath}/application?accommodationId=${accommodation.accommodation_id}`}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm text-white hover:opacity-90 active:scale-[0.98] text-center block"
+                    style={{ backgroundColor: '#264384' }}
+                  >
+                    Apply
+                  </Link>
+                )
+              ) : (
+                <button
+                  disabled
+                  className="w-full px-4 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
+                >
+                  Apply (Full)
+                </button>
+              )
             ) : (
               <button
                 disabled
-                className="w-full px-4 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed"
+                className="w-full px-4 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed text-center block"
               >
-                Apply
+                Applications Closed
               </button>
             )
           ) : (

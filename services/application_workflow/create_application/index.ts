@@ -94,19 +94,19 @@ export class CreateApplicationService {
     }
 
     // GUARD 4: check if user is already actively assigned
-    const { data: assignment, error: assignmentError } = await supabase
-      .from('accommodation_assignment')
-      .select('assignment_id')
-      .eq('user_id', data.user_id)
-      .eq('assignment_status', 'active')
-      .limit(1)
+    // const { data: assignment, error: assignmentError } = await supabase
+    //   .from('accommodation_assignment')
+    //   .select('assignment_id')
+    //   .eq('user_id', data.user_id)
+    //   .eq('assignment_status', 'active')
+    //   .limit(1)
 
-    if (assignmentError) throw new Error(`Failed to fetch assignment: ${assignmentError.message}`)
+    // if (assignmentError) throw new Error(`Failed to fetch assignment: ${assignmentError.message}`)
 
-    // Only block if they actually have an active assignment
-    if (assignment) {
-      throw new Error('You are already assigned to a unit.')
-    }
+    // // Only block if they actually have an active assignment
+    // if (assignment) {
+    //   throw new Error('You are already assigned to a unit.')
+    // }
 
     // GUARD 5: user cannot apply to more than 3 dormitory-type accommodations
     const { data: accommodationType, error: typeError } = await supabase

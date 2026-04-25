@@ -179,7 +179,7 @@
 @keyframes pageSlideIn {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(30px);
   }
 
   to {
