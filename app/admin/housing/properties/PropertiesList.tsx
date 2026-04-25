@@ -66,13 +66,13 @@ function StatCard({
   label,
   value,
   icon,
-  bgColor,
+  accentColor,
   iconBg,
 }: {
   label: string;
   value: number;
   icon: React.ReactNode;
-  bgColor: string;
+  accentColor: string;
   iconBg: string;
 }) {
   return (
@@ -151,7 +151,6 @@ export default function PropertiesList({
           label="Dormitories"
           value={stats.totalDorms}
           icon={<Building2 className="text-white w-5 h-5" />}
-          description="Active dorm buildings"
           accentColor="#5591AB"
           iconBg="#ebf2f4"
         />
@@ -159,7 +158,6 @@ export default function PropertiesList({
           label="Rental Spaces"
           value={stats.totalRentalSpaces}
           icon={<Home className="text-white w-5 h-5" />}
-          description="Private rental units"
           accentColor="#EB8A0B"
           iconBg="#fbecd7"
         />
@@ -167,7 +165,6 @@ export default function PropertiesList({
           label="Managers"
           value={stats.totalManagers}
           icon={<Users className="text-white w-5 h-5" />}
-          description="Assigned staff"
           accentColor="#F2C908"
           iconBg="#f2c70823"
         />
@@ -175,7 +172,6 @@ export default function PropertiesList({
           label="Total Capacity"
           value={stats.totalUnits}
           icon={<Bed className="text-white w-5 h-5" />}
-          description="Total beds available"
           accentColor="#264384"
           iconBg="#e6e8ef"
         />
