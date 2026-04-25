@@ -6,13 +6,42 @@ import { supabaseAdmin } from "@/lib/supabase/admin-client";
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
 
+  //replace custom function to query
   if (id) {
-    const { data, error } = await supabaseAdmin.rpc("get_dormitory_details", {
-      p_accommodation_id: id,
-    });
+    const { data, error } = await supabaseAdmin
+      .from("accommodation")
+      .select(
+        `
+        accommodation_id, name, location,
+        accommodation_type, accommodation_status, total_capacity,
+        manager_id,
+        dormitory_manager!accommodation_manager_id_fkey (
+          employee_id,
+          users (first_name, last_name, email)
+        ),
+        dormitory (
+          number_of_semestersAllowed,
+          curfew_time,
+          allowed_programs,
+          term_type,
+          separate_by_gender
+        ),
+        unit (
+          unit_id, unit_number, unit_type,
+          max_occupancy, current_occupancy,
+          rental_fee, unit_status
+        )
+      `,
+      )
+      .eq("accommodation_id", id)
+      .single();
+
     if (error)
       return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data);
+
+    // Rename 'unit' to 'units' for consistency
+    const response = data && data.unit ? { ...data, units: data.unit } : data;
+    return NextResponse.json(response);
   }
 
   const { data, error } = await supabaseAdmin

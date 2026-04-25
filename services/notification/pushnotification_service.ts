@@ -4,15 +4,11 @@
 import webpush from "web-push";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
-if (process.env.VAPID_SUBJECT && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT,
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-  );
-} else {
-  console.warn("VAPID details are missing in environment variables. Push notifications will not work.");
-}
+webpush.setVapidDetails(
+  process.env.VAPID_SUBJECT!,
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+  process.env.VAPID_PRIVATE_KEY!
+);
 
 export type PushPayload = {
   title: string
@@ -24,17 +20,17 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
   const supabase = supabaseAdmin
 
   //save notification
-const { data: inserted, error: insertError } = await supabase
-  .from('notifications')
-  .insert({
-    user_id: userId,
-    title: payload.title,
-    message: payload.message,
-    action_url: payload.actionUrl,
-    is_sent_push: false,
-  })
-  .select()
-  .single()
+  const { data: inserted, error: insertError } = await supabase
+    .from('notifications')
+    .insert({
+      user_id: userId,
+      title: payload.title,
+      message: payload.message,
+      action_url: payload.actionUrl,
+      is_sent_push: false,
+    })
+    .select()
+    .single()
   const insertedId = inserted?.notification_id
   // Fetch the stored subscription from users table
   const { data: user, error } = await supabase

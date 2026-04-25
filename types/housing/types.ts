@@ -8,7 +8,10 @@ export interface Unit {
   max_occupancy: number;
   current_occupancy: number;
   rental_fee: number;
-  unit_status: "reserved" | "occupied" | "occupied" | "under_maintenance" | "inactive";
+  unit_status: "active" | "reserved" | "occupied" | "under_maintenance" | "inactive";
+  furnishing_status?: string;
+  min_stay_duration?: number;
+  max_stay_duration?: number;
 }
 
 export interface Property {
@@ -39,18 +42,6 @@ export interface Property {
     security_deposit_required: boolean;
   };
   units?: Unit[];
-}
-
-// Complaint interface
-export interface Complaint {
-  complaint_id: string;
-  complainant_id: string;
-  accommodation_id: string;
-  unit_id: string;
-  complaint_type: 'maintenance' | 'utility' | 'sanitation' | 'behavior' | 'security' | 'billing' | 'other';
-  complaint_desc: string;
-  complaint_status: 'open' | 'under_review' | 'closed' | 'invalid';
-  submit_date: string;
 }
 
 // For manager page

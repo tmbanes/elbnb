@@ -1,5 +1,4 @@
-"use client";
-
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +13,8 @@ import {
 import { X } from "lucide-react";
 
 export interface UnitFormData {
-  unit_number: string;
   unit_type: string;
+  number_of_units: string;
   max_occupancy: string;
   rental_fee: string;
   billing_period: string;
@@ -25,8 +24,8 @@ export interface UnitFormData {
 }
 
 export const EMPTY_UNIT: UnitFormData = {
-  unit_number: "",
   unit_type: "",
+  number_of_units: "1",
   max_occupancy: "",
   rental_fee: "",
   billing_period: "monthly",
@@ -50,6 +49,18 @@ export default function UnitEntryCard({
   onRemove,
   accentColor = "#EB8A0B",
 }: Props) {
+  const [localData, setLocalData] = useState<UnitFormData>(data);
+
+  // Sync local state when prop changes
+  useEffect(() => {
+    setLocalData(data);
+  }, [data]);
+
+  const handleFieldChange = (field: keyof UnitFormData, value: string) => {
+    setLocalData((prev) => ({ ...prev, [field]: value }));
+    onChange(index, field, value);
+  };
+
   return (
     <div
       className="rounded-lg border bg-background/60 p-3 space-y-2"
@@ -61,7 +72,7 @@ export default function UnitEntryCard({
         style={{ borderColor: `${accentColor}30` }}
       >
         <span className="text-xs font-bold" style={{ color: accentColor }}>
-          Unit {index + 1}
+          Unit Type {index + 1}
         </span>
         <Button
           type="button"
@@ -74,28 +85,30 @@ export default function UnitEntryCard({
         </Button>
       </div>
 
-      {/* Unit No. | Unit Type */}
+      {/* Unit Type | Number of Units */}
       <div className="grid grid-cols-2 gap-2">
         <Field>
           <Label className="text-xs font-semibold">
-            Unit No. <span className="text-destructive">*</span>
+            Unit Type <span className="text-destructive">*</span>
           </Label>
           <Input
-            value={data.unit_number}
-            onChange={(e) => onChange(index, "unit_number", e.target.value)}
-            placeholder="e.g. 101"
-            className="h-8 text-xs"
+            value={localData.unit_type}
+            onChange={(e) => handleFieldChange("unit_type", e.target.value)}
+            placeholder="e.g. 1BR, Studio"
+            className="h-8 text-xs bg-[#FDFFF4]"
           />
         </Field>
         <Field>
-          <Label className="text-xs font-semibold text-muted-foreground">
-            Unit Type
+          <Label className="text-xs font-semibold">
+            Number of Units <span className="text-destructive">*</span>
           </Label>
           <Input
-            value={data.unit_type}
-            onChange={(e) => onChange(index, "unit_type", e.target.value)}
-            placeholder="e.g. 1BR, Studio"
-            className="h-8 text-xs"
+            type="number"
+            min="1"
+            value={localData.number_of_units}
+            onChange={(e) => handleFieldChange("number_of_units", e.target.value)}
+            placeholder="1"
+            className="h-8 text-xs bg-[#FDFFF4]"
           />
         </Field>
       </div>
@@ -109,10 +122,10 @@ export default function UnitEntryCard({
           <Input
             type="number"
             min="1"
-            value={data.max_occupancy}
-            onChange={(e) => onChange(index, "max_occupancy", e.target.value)}
+            value={localData.max_occupancy}
+            onChange={(e) => handleFieldChange("max_occupancy", e.target.value)}
             placeholder="1"
-            className="h-8 text-xs"
+            className="h-8 text-xs bg-[#FDFFF4]"
           />
         </Field>
         <Field>
@@ -122,10 +135,10 @@ export default function UnitEntryCard({
           <Input
             type="number"
             min="0"
-            value={data.rental_fee}
-            onChange={(e) => onChange(index, "rental_fee", e.target.value)}
+            value={localData.rental_fee}
+            onChange={(e) => handleFieldChange("rental_fee", e.target.value)}
             placeholder="0"
-            className="h-8 text-xs"
+            className="h-8 text-xs bg-[#FDFFF4]"
           />
         </Field>
       </div>
@@ -137,10 +150,10 @@ export default function UnitEntryCard({
             Billing Period <span className="text-destructive">*</span>
           </Label>
           <Select
-            value={data.billing_period}
-            onValueChange={(val) => onChange(index, "billing_period", val)}
+            value={localData.billing_period}
+            onValueChange={(val) => handleFieldChange("billing_period", val)}
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-8 text-xs bg-[#FDFFF4]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -156,10 +169,10 @@ export default function UnitEntryCard({
             Furnishing <span className="text-destructive">*</span>
           </Label>
           <Select
-            value={data.furnishing_status}
-            onValueChange={(val) => onChange(index, "furnishing_status", val)}
+            value={localData.furnishing_status}
+            onValueChange={(val) => handleFieldChange("furnishing_status", val)}
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-8 text-xs bg-[#FDFFF4]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -180,10 +193,10 @@ export default function UnitEntryCard({
           <Input
             type="number"
             min="1"
-            value={data.min_stay_duration}
-            onChange={(e) => onChange(index, "min_stay_duration", e.target.value)}
+            value={localData.min_stay_duration}
+            onChange={(e) => handleFieldChange("min_stay_duration", e.target.value)}
             placeholder="Optional"
-            className="h-8 text-xs"
+            className="h-8 text-xs bg-[#FDFFF4]"
           />
         </Field>
         <Field>
@@ -193,10 +206,10 @@ export default function UnitEntryCard({
           <Input
             type="number"
             min="1"
-            value={data.max_stay_duration}
-            onChange={(e) => onChange(index, "max_stay_duration", e.target.value)}
+            value={localData.max_stay_duration}
+            onChange={(e) => handleFieldChange("max_stay_duration", e.target.value)}
             placeholder="Optional"
-            className="h-8 text-xs"
+            className="h-8 text-xs bg-[#FDFFF4]"
           />
         </Field>
       </div>

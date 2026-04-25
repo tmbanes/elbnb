@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 ///ui components
@@ -29,13 +29,11 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { User } from "@/types/user.types";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 //style constants
 const label_style = "block text-xs font-semibold uppercase tracking-wider text-slate-300"
 
-const field_style = 
+const field_style =
   "rounded-full border-none bg-[#fcf4d9] px-4 py-1.5 text-base " +
   "text-[#2d1a12] placeholder-[#2d1a12]/30 shadow-sm " +
   "transition-all outline-none";
@@ -100,35 +98,7 @@ export default function RoleSelection() {
   const [roleData, setRoleData] = useState<RoleFormData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-  
-  useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
 
-    const onFocus = async () => {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("users")
-        .select("role")
-        .eq("user_id", user.id)
-        .single<User>();
-
-      if (!data) return;
-
-      if (data.role) {
-        router.push(`/`);
-      }
-    };
-
-    window.addEventListener("focus", onFocus);
-
-    return () => window.removeEventListener("focus", onFocus);
-  }, []);
 
   //parse date for guest occupancy_status if roleData exists and role is guest
   const selectedDateString =
@@ -208,22 +178,19 @@ export default function RoleSelection() {
             {Object.entries(roleLabels).map(([role, label]) => (
               <Card
                 key={role}
-                className={`cursor-pointer rounded-2xl border transition-all duration-200 ${
-                  selectedRole === role ? 
-                  "border-[#fbbc05] bg-[#fcf4d9] shadow-xl scale-[1.02]" 
-                  :  "border-white/10 bg-white/10 hover:border-white/30 hover:bg-white/20"
-                }`}
+                className={`cursor-pointer rounded-2xl border transition-all duration-200 ${selectedRole === role ?
+                    "border-[#fbbc05] bg-[#fcf4d9] shadow-xl scale-[1.02]"
+                    : "border-white/10 bg-white/10 hover:border-white/30 hover:bg-white/20"
+                  }`}
                 onClick={() => handleRoleSelect(role as Role)}
               >
                 <CardHeader>
-                  <CardTitle 
-                    className={`font-bold ${
-                      selectedRole === role ? "text-[#2d1a12]" : "text-white"
+                  <CardTitle
+                    className={`font-bold ${selectedRole === role ? "text-[#2d1a12]" : "text-white"
                       }`}>
                     {label}</CardTitle>
 
-                  <CardDescription className={`mt-3 text-sm leading-6 ${
-                    selectedRole === role ? "text-[#2d1a12]/80" : "text-slate-100"
+                  <CardDescription className={`mt-3 text-sm leading-6 ${selectedRole === role ? "text-[#2d1a12]/80" : "text-slate-100"
                     }`}>
                     {roleDescriptions[role as Role]}
                   </CardDescription>
@@ -274,7 +241,7 @@ export default function RoleSelection() {
                         defaultValue={
                           (roleData as StudentRoleData).enrollment_status
                         }
-                        
+
                       >
                         <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
                           <SelectValue />

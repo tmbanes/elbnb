@@ -2,7 +2,7 @@
 import { requireRole } from "@/lib/auth/session";
 
 //ui components
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -10,9 +10,10 @@ export default async function GuestLayout({ children }: { children: React.ReactN
     await requireRole(["guest"]);
     return (
         <TooltipProvider>
-            <SidebarProvider defaultOpen={false}>
+            <SidebarProvider>
 
                 <AppSidebar role="guest" />
+                <SidebarTrigger />
 
                 <main className="flex-1">
                     {/* optional trigger button */}

@@ -36,6 +36,8 @@ export default async function GuestBillingPage() {
           summary={summary || { total: 0, paid: 0, balance: 0 }}
           bills={bills || []}
           paymentHistory={paymentHistory || []}
+          uploadEndpoint="/api/guest/billing/upload-receipt"
+          cancelEndpoint="/api/guest/billing/cancel-receipt"
         />
       </div>
     </main>
