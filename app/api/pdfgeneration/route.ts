@@ -8,16 +8,16 @@ import { supabaseAdmin } from '@/lib/supabase/admin-client'
 export const runtime = 'nodejs'
 
 export async function POST() {
-    //fetch data
-    const {data, error: fetchError} = await supabaseAdmin
-      .from('billing')
-      .select('*')
-      .limit(1)
-      .single()
-  
+  //fetch data
+  const { data, error: fetchError } = await supabaseAdmin
+    .from('billing')
+    .select('*')
+    .limit(1)
+    .single()
+
   if (fetchError) throw fetchError
   console.log("Fetched data: ", data)
-  
+
   // const billingData = { //dummmy data
   //   first_name: 'ROCHELLE',
   //   last_name: 'LAQUI',

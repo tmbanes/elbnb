@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin-client'
 
 export async function POST(req: NextRequest) {
-  const supabase = supabaseAdmin
+  const supabase = supabaseAdmin;
 
   const { userId, subscription } = await req.json()
 

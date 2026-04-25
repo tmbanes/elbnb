@@ -37,43 +37,42 @@ const sidebarConfig = {
   student: {
     label: "Student",
     nav: [
-      { title: "Dashboard", url: "/student/dashboard", icon: PieChart },
-      { title: "Accommodations", url: "/student/accommodations", icon: MapPinHouse },
-      { title: "Applications", url: "/student/application", icon: Newspaper },
-      { title: "Billing", url: "/student/billing", icon: Banknote },
+      { key: 0, title: "Dashboard", url: "/student/dashboard", icon: PieChart },
+      { key: 1, title: "Accommodations", url: "/student/accommodations", icon: MapPinHouse },
+      { key: 2, title: "Applications", url: "/student/application", icon: Newspaper },
+      { key: 3, title: "Billing", url: "/student/billing", icon: Banknote },
     ],
   },
 
   admin: {
     label: "Admin",
     nav: [
-      { title: "Dashboard", url: "/admin/dashboard", icon: PieChart },
-      { title: "Housing", url: "/admin/housing", icon: Building2 },
-      { title: "Managers", url: "/admin/housing/managers", icon: Users },
-      { title: "Billing", url: "/admin/billing", icon: Banknote },
-      { title: "Residents", url: "/admin/residents", icon: Users },
-      { title: "Applications", url: "/admin/applications", icon: Newspaper },
+      { key: 0, title: "Dashboard", url: "/admin/dashboard", icon: PieChart },
+      { key: 1, title: "Housing", url: "/admin/housing", icon: Building2 },
+      { key: 2, title: "Managers", url: "/admin/housing/managers", icon: Users },
+      { key: 3, title: "Billing", url: "/admin/billing", icon: Banknote },
+      { key: 4, title: "Residents", url: "/admin/residents", icon: Users },
+      { key: 5, title: "Applications", url: "/admin/applications", icon: Newspaper },
     ],
   },
 
   manager: {
     label: "Dorm Manager",
     nav: [
-      { title: "Dashboard", url: "/manager/dashboard", icon: PieChart },
-      { title: "Housing", url: "/manager/housing", icon: Building2 },
-      { title: "Residents", url: "/manager/residents", icon: Users },
-      { title: "Applications", url: "/manager/applications", icon: Newspaper },
-      { title: "Residents", url: "/manager/residents", icon: Users },
+      { key: 0, title: "Dashboard", url: "/manager/dashboard", icon: PieChart },
+      { key: 1, title: "Housing", url: "/manager/housing", icon: Building2 },
+      { key: 2, title: "Residents", url: "/manager/residents", icon: Users },
+      { key: 3, title: "Applications", url: "/manager/applications", icon: Newspaper }
     ],
   },
 
   guest: {
     label: "Guest",
     nav: [
-      { title: "Dashboard", url: "/guest/dashboard", icon: PieChart },
-      { title: "Accommodations", url: "/guest/accommodations", icon: MapPinHouse },
-      { title: "Applications", url: "/guest/application", icon: Newspaper },
-      { title: "Billing", url: "/guest/billing", icon: Banknote },
+      { key: 0, title: "Dashboard", url: "/guest/dashboard", icon: PieChart },
+      { key: 1, title: "Accommodations", url: "/guest/accommodations", icon: MapPinHouse },
+      { key: 2, title: "Applications", url: "/guest/application", icon: Newspaper },
+      { key: 3, title: "Billing", url: "/guest/billing", icon: Banknote },
     ],
   },
 }

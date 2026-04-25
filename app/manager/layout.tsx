@@ -12,7 +12,6 @@ export default async function ManagerLayout({ children }: { children: React.Reac
         <TooltipProvider>
             <SidebarProvider>
                 <AppSidebar role="manager" />
-                <SidebarTrigger />
 
                 <main className="flex-1">
                     {children}

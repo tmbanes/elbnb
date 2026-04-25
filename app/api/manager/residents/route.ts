@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { createSupabaseServiceClient } from "@/lib/supabase/service-client";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 export async function GET(_req: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest) {
     }
 
     // Use service client to bypass RLS — session client already verified auth + role above
-    const serviceSupabase = createSupabaseServiceClient();
+    const serviceSupabase = supabaseAdmin;
 
     // Get ALL accommodations managed by this user (a manager may manage multiple)
     const { data: accommodations, error: accomError } = await serviceSupabase
@@ -38,7 +38,7 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ success: true, data: [], accommodations: [] });
     }
 
-    const accommodationIds = accommodations.map(a => a.accommodation_id);
+    const accommodationIds = accommodations.map((a: any) => a.accommodation_id);
 
     // Get all unit IDs within all of this manager's accommodations
     const { data: units, error: unitsErr } = await serviceSupabase
@@ -50,7 +50,7 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ error: unitsErr.message }, { status: 500 });
     }
 
-    const unitIds = (units ?? []).map(u => u.unit_id);
+    const unitIds = (units ?? []).map((u: any) => u.unit_id);
 
     if (unitIds.length === 0) {
       return NextResponse.json({ success: true, data: [], accommodations });
@@ -133,7 +133,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Use service client to bypass RLS — session client already verified auth + role above
-    const serviceSupabase = createSupabaseServiceClient();
+    const serviceSupabase = supabaseAdmin;
 
     // Scope check: verify the assignment belongs to a unit in any of this manager's accommodations
     const { data: managerAccoms } = await serviceSupabase
@@ -145,7 +145,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "No accommodations found for this manager" }, { status: 403 });
     }
 
-    const managerAccomIds = managerAccoms.map(a => a.accommodation_id);
+    const managerAccomIds = managerAccoms.map((a: any) => a.accommodation_id);
 
     const { data: assignment } = await serviceSupabase
       .from("accommodation_assignment")

@@ -117,7 +117,7 @@ export default function AccommodationsDashboardPage() {
         const accomIdsWithVacancy = new Set(
           units
             .filter(u => u.current_occupancy < u.max_occupancy)
-            .map(u => u.accommodation_id)
+            .map((u: any) => u.accommodation_id)
         )
         filtered = filtered.filter(a => accomIdsWithVacancy.has(a.accommodation_id))
       }

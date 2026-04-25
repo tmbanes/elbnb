@@ -1,7 +1,7 @@
 // app/manager/dashboard/page.tsx
 
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { studentProfileService } from "@/services/student_profile";
+import { userProfileService } from "@/services/user_profile";
 import { redirect } from "next/navigation";
 import ManagerDashboardUI from "./manager-dashboard-ui";
 
@@ -16,7 +16,7 @@ export default async function DormitoryManagerDashboardPage() {
   }
 
   // Fetch manager profile
-  const { data: profile } = await studentProfileService.getProfile(user.id);
+  const { data: profile } = await userProfileService.getProfile(user.id);
 
   return (
     <ManagerDashboardUI

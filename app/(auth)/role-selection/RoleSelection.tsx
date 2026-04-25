@@ -98,6 +98,7 @@ export default function RoleSelection() {
   const [roleData, setRoleData] = useState<RoleFormData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
 
   //parse date for guest occupancy_status if roleData exists and role is guest
@@ -179,8 +180,8 @@ export default function RoleSelection() {
               <Card
                 key={role}
                 className={`cursor-pointer rounded-2xl border transition-all duration-200 ${selectedRole === role ?
-                    "border-[#fbbc05] bg-[#fcf4d9] shadow-xl scale-[1.02]"
-                    : "border-white/10 bg-white/10 hover:border-white/30 hover:bg-white/20"
+                  "border-[#fbbc05] bg-[#fcf4d9] shadow-xl scale-[1.02]"
+                  : "border-white/10 bg-white/10 hover:border-white/30 hover:bg-white/20"
                   }`}
                 onClick={() => handleRoleSelect(role as Role)}
               >
