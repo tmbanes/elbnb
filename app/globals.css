@@ -144,7 +144,6 @@
     @apply w-full bg-[#FDFFF4] text-[#44291B];
     border-collapse: separate !important;
     border-spacing: 0 !important;
-    padding-bottom: 7px !important;
   }
 
   table th:first-child,
@@ -174,6 +173,7 @@
     @apply py-3 px-4 text-[#44291B] text-sm;
   }
 }
+
 
 /* Global Page Transitions */
 @keyframes pageSlideIn {

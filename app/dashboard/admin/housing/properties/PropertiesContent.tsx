@@ -247,6 +247,7 @@ export default function PropertiesContent() {
   ) : (
     <>
       <PropertiesList
+        properties={properties}
         filtered={filtered}
         tableData={tableData}
         typeFilter={typeFilter}

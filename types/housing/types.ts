@@ -2,13 +2,16 @@
 
 // For Property & Unit page
 export interface Unit {
-    unit_id: string;
-    unit_number: string;
-    unit_type: "room" | "bedspace" | "wholeunit";
-    max_occupancy: number;
-    current_occupancy: number;
-    rental_fee: number;
-    unit_status: "reserved" | "occupied" | "occupied" | "under_maintenance" | "inactive";
+  unit_id: string;
+  unit_number: string;
+  unit_type: "room" | "bedspace" | "wholeunit";
+  max_occupancy: number;
+  current_occupancy: number;
+  rental_fee: number;
+  unit_status: "active" | "reserved" | "occupied" | "under_maintenance" | "inactive";
+  furnishing_status?: string;
+  min_stay_duration?: number;
+  max_stay_duration?: number;
 }
 
 export interface Property {

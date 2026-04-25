@@ -5,6 +5,8 @@ import { Manager } from "../../../../types/housing/types";
 import AddManagerModal from "@/app/admin/housing/components/modals/AddManagerModal";
 import ManagersList from "./ManagersList";
 import ManagerDetail from "./ManagerDetail";
+import Modal from "@/app/admin/housing/components/modals/Modal";
+import { Button } from "@/components/ui/button";
 
 export default function ManagersContent() {
   const [managers, setManagers] = useState<Manager[]>([]);
@@ -15,6 +17,8 @@ export default function ManagersContent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingManager, setEditingManager] = useState<any | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [managerToDelete, setManagerToDelete] = useState<Manager | null>(null);
 
   async function fetchManagers() {
     try {
@@ -79,8 +83,14 @@ export default function ManagersContent() {
     setEditingManager(null);
   }
 
-  async function handleDelete(employeeId: string) {
-    if (!confirm("Are you sure you want to delete this manager?")) return;
+  function requestDelete(manager: Manager) {
+    setManagerToDelete(manager);
+    setDeleteModalOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!managerToDelete) return;
+    const employeeId = managerToDelete.employee_id;
 
     const res = await fetch(`/api/admin/housing/managers?id=${employeeId}`, {
       method: "DELETE",
@@ -97,69 +107,98 @@ export default function ManagersContent() {
     );
 
     if (selectedId === employeeId) handleCloseDetail();
+    setDeleteModalOpen(false);
+    setManagerToDelete(null);
   }
 
   function handleBackToHousing() {
     handleCloseDetail();
   }
 
-  if (loading) return <p className="p-6">Loading managers...</p>;
-  if (error) return <p className="p-6 text-red-500">Error: {error}</p>;
+  // Centered Full Page Loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F6F8D5]">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-4 border-[#264384] border-t-transparent rounded-full animate-spin" />
+          <p className="text-[#44291B] font-medium">Loading managers...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F6F8D5]">
+        <p className="p-6 text-red-500 bg-red-50 border border-red-200 rounded-lg">
+          Error: {error}
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex overflow-hidden">
-
-      
+    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden bg-[#F6F8D5]">
       {/* LEFT: Managers List */}
       <div
         className={`
-          ${selectedId ? "w-[65%]" : "w-full"}
+          flex-1
           transition-all duration-300
           overflow-y-auto
-          pt-2
+          ${selectedId ? "hidden lg:block" : "block"}
         `}
       >
-
-        <div className="pt-6 pl-7">
-          <h1 className="text-4xl font-bold text-[#44291B]">Managers Page</h1>
-          <p className="text-sm text-[#44291B] mt-1">View and manage your property managers</p>
-        </div>
-        
         <ManagersList
           managers={managers}
           onBackToHousing={handleBackToHousing}
           onAdd={openAddModal}
           onSelect={handleSelect}
           onEdit={openEditModal}
-          onDelete={handleDelete}
+          onDelete={requestDelete}
+          selectedId={selectedId}
         />
       </div>
 
       {/* RIGHT: Detail Panel */}
-      {selectedId ? (
-        <div
-          className="
-            w-1/2 min-w-[400px]
-            border-l border-[#e8e2d6]
-            bg-[#F6F8D5]
-            transition-all duration-300
-            overflow-y-auto
-          "
-        >
-          {selectedId && selectedManager && !detailLoading ? (
-            <ManagerDetail
-              manager={selectedManager}
-              onBack={handleCloseDetail}
-              onEdit={openEditModal}
-              onDelete={handleDelete}
-            />
-          ) : selectedId && detailLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-[#44291B]">Loading...</p>
+      <div
+        className={`
+          w-full lg:w-[450px]
+          lg:border-l border-[#e8e2d6]
+          bg-[#F6F8D5]
+          transition-all duration-300
+          overflow-y-auto
+          flex flex-col
+          ${selectedId ? "block" : "hidden lg:flex"}
+        `}
+      >
+        {selectedId && selectedManager && !detailLoading ? (
+          <ManagerDetail
+            manager={selectedManager}
+            onEdit={openEditModal}
+            onDelete={requestDelete}
+            onBack={handleCloseDetail}
+          />
+        ) : selectedId && detailLoading ? (
+
+          <div className="flex flex-1 items-center justify-center p-20">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 border-4 border-[#264384] border-t-transparent rounded-full animate-spin" />
+              <p className="text-[#44291B] text-sm">Loading details...</p>
             </div>
-          ) : null}
-        </div>
-      ) : null}
+          </div>
+        ) : (
+
+
+          <div className="hidden lg:flex flex-1 items-center justify-center p-10 text-center">
+            <div className="max-w-[200px] space-y-2">
+              <p className="text-[#44291B] font-bold text-lg">No Manager Selected</p>
+              <p className="text-[#44291B] text-sm">
+                Select a manager from the list to view their full profile and office details.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
       <AddManagerModal
         isOpen={modalOpen}
@@ -170,6 +209,25 @@ export default function ManagersContent() {
         }}
         existingManager={editingManager}
       />
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Manager"
+        description={`Are you sure you want to remove ${managerToDelete?.users.first_name} ${managerToDelete?.users.last_name}? This action will unassign them from any properties they manage.`}
+      >
+        <div className="space-y-4">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              Delete Manager
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
