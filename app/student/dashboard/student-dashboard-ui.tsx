@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { submitExtensionRequest } from "./actions";
+import { createActivityLog } from "@/services/activity_log";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -66,8 +67,24 @@ export default function StudentDashboardUI({
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
+
+        if (user?.user_id) {
+            await createActivityLog({
+                p_user_id: user.user_id,
+                p_action_type: "logout",
+                p_log_desc: `${user.first_name} logged out `,
+                p_entity_type: "auth",
+                p_entity_id: user.user_id,
+                p_user_role: user.role,
+            });
+        }
+
+
+
         await supabase.auth.signOut();
-        window.location.href = "/";
+        setTimeout(() => {
+            window.location.href = "/";
+        }, 300);
     };
 
     // Navigation handlers
@@ -570,7 +587,7 @@ export default function StudentDashboardUI({
                 <div className="flex flex-col md:flex-row gap-0 rounded-[24px] overflow-hidden shadow-sm h-auto md:h-[220px]">
                     <div className="w-full md:w-[45%] bg-slate-800 relative min-h-[220px] md:min-h-full">
                         <div className="absolute inset-0 bg-gradient-to-t from-[#112F40]/90 to-transparent z-10"></div>
-                        <div 
+                        <div
                             className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-80 mix-blend-luminosity"
                             style={{ backgroundImage: "url('https://international.uplb.edu.ph/wp-content/uploads/2022/02/M40A9936-min-scaled.jpg')" }}
                         ></div>

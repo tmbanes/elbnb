@@ -1,1 +1,1 @@
-export { createActivityLog, getCurrentUserFromApi, isUserRole } from "./browser";
+export { createActivityLog, getCurrentUserFromApi, isUserRole, getCurrentUserRole } from "./browser";

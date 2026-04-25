@@ -288,8 +288,10 @@ not yet tested
       .maybeSingle();
 
     return {
-      totalBalance,
-      latestApplicationStatus: latestApp?.application_status || null,
+      data: {
+        totalBalance,
+        latestApplicationStatus: latestApp?.application_status || null,
+      }
     };
   },
 

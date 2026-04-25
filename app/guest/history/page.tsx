@@ -1,7 +1,7 @@
 // app/guest/history/page.tsx
 
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { studentProfileService } from "@/services/student_profile";
+import { userProfileService } from "@/services/user_profile";
 import { redirect } from "next/navigation";
 import HistoryUI from "./HistoryUI";
 
@@ -15,8 +15,8 @@ export default async function GuestHistoryPage() {
         redirect("/");
     }
 
-    const { data: profile } = await studentProfileService.getProfile(user.id);
-    const { data: history } = await studentProfileService.getAccommodationHistory(user.id);
+    const { data: profile } = await userProfileService.getProfile(user.id);
+    const { data: history } = await userProfileService.getAccommodationHistory(user.id);
 
     return (
         <HistoryUI

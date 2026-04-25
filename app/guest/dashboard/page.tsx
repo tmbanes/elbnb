@@ -1,7 +1,7 @@
 // app/guest/dashboard/page.tsx
 
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { studentProfileService } from "@/services/student_profile";
+import { userProfileService } from "@/services/user_profile";
 import { getStudentBillsDetailed } from "@/services/user-services";
 import { redirect } from "next/navigation";
 import GuestDashboardUI from "./guest-dashboard-ui";
@@ -17,7 +17,7 @@ export default async function GuestDashboardPage() {
   }
 
   // 1. Fetch guest profile
-  const { data: profile } = await studentProfileService.getProfile(user.id);
+  const { data: profile } = await userProfileService.getProfile(user.id);
 
   // 2. Fetch Active Residency
   const { data: activeResidency } = await supabase
@@ -39,10 +39,10 @@ export default async function GuestDashboardPage() {
     .order('date_submitted', { ascending: false });
 
   // 4. Fetch History
-  const { data: history } = await studentProfileService.getAccommodationHistory(user.id);
+  const { data: history } = await userProfileService.getAccommodationHistory(user.id);
 
   // 5. Fetch Documents
-  const { data: documents } = await studentProfileService.getDocuments(user.id);
+  const { data: documents } = await userProfileService.getDocuments(user.id);
 
   // 6. Fetch Billing
   const { data: bills } = await getStudentBillsDetailed(user.id);
