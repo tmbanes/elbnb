@@ -2,12 +2,16 @@
 
 import React, { useState, useRef } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+import { useRouter } from "next/navigation";
 
 export function ProfileUpload({
   initialProfileUrl,
+  onUploadSuccess,
 }: {
   initialProfileUrl?: string | null;
+  onUploadSuccess?: (url: string) => void;
 }) {
+  const router = useRouter();
   const [profileUrl, setProfileUrl] = useState<string | null>(
     initialProfileUrl || null
   );
@@ -41,7 +45,8 @@ export function ProfileUpload({
       } = await supabase.auth.getUser();
       if (!user) throw new Error("You must be logged in to upload an image.");
 
-      const filePath = `${user.id}/${file.name}`;
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      const filePath = `${user.id}/${Date.now()}_${sanitizedFileName}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -63,6 +68,8 @@ export function ProfileUpload({
       if (dbError) throw dbError;
 
       setProfileUrl(publicData.publicUrl);
+      router.refresh();
+      if (onUploadSuccess) onUploadSuccess(publicData.publicUrl);
     } catch (err: any) {
       console.error("Upload error:", err);
       setError(err?.message || "An error occurred during upload.");
@@ -74,9 +81,7 @@ export function ProfileUpload({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900">Profile Picture</h2>
-
+    <div className="space-y-4">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -87,10 +92,31 @@ export function ProfileUpload({
         disabled={isUploading}
       />
 
-      {/* Clickable avatar area */}
+      {/* Clickable and Draggable avatar area */}
       <div
         className="flex flex-col items-center space-y-3 cursor-pointer group"
-        onClick={() => !isUploading && fileInputRef.current?.click()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!isUploading) fileInputRef.current?.click();
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (isUploading) return;
+          const file = e.dataTransfer.files?.[0];
+          if (file) {
+            // Create a pseudo-event to reuse handleFileChange logic
+            const pseudoEvent = {
+              target: { files: [file] }
+            } as unknown as React.ChangeEvent<HTMLInputElement>;
+            handleFileChange(pseudoEvent);
+          }
+        }}
       >
         {profileUrl ? (
           <img
@@ -122,20 +148,20 @@ export function ProfileUpload({
           </div>
         )}
 
-        <span className="text-sm text-blue-600 font-medium group-hover:underline">
+        <span className="text-sm text-[#7EB647] font-bold group-hover:underline uppercase tracking-wide">
           {isUploading
             ? "Uploading..."
             : profileUrl
             ? "Change picture"
-            : "Click to add picture"}
+            : "Add picture"}
         </span>
       </div>
 
       {/* Loading indicator */}
       {isUploading && (
         <div className="flex items-center justify-center gap-2">
-          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-500">Uploading your photo...</p>
+          <div className="w-4 h-4 border-2 border-[#7EB647] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[#3E2723]/60 font-bold">Uploading photo...</p>
         </div>
       )}
 
