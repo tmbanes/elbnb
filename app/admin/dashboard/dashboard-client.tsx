@@ -405,7 +405,7 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
           <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Students</h2>
           <div className="flex gap-1">
             {(["housed", "waiting"] as const).map(t => (
-              <button key={t} onClick={() => { setStudentTab(t); setStudentSearch(""); setStudentPage(1); }} className={`${archivo.className} px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-colors ${studentTab === t ? "bg-[#4A5628] text-white" : "bg-slate-100 text-[#6B7280] hover:bg-slate-200"}`}>
+              <button key={t} onClick={() => { setStudentTab(t); setStudentSearch(""); setStudentPage(1); }} className={`${archivo.className} px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-colors ${studentTab === t ? "bg-[#78A24C] text-white" : "bg-slate-100 text-[#6B7280] hover:bg-slate-200"}`}>
                 {t === "housed" ? `Housed (${stats.studentsHoused})` : `Waiting (${stats.waitingListCount})`}
               </button>
             ))}
