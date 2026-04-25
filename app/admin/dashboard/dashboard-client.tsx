@@ -59,37 +59,37 @@ const statusBadge = (s: string) => {
 };
 
 // ── Pagination Helper ──
-const PROP_PER_PAGE = 3;
+const PROP_PER_PAGE = 5;
 const APP_PER_PAGE = 5;
-const STUDENT_PER_PAGE = 4;
+const STUDENT_PER_PAGE = 5;
 
 function PaginationControls({ currentPage, totalPages, onPageChange, className = "" }: { currentPage: number; totalPages: number; onPageChange: (p: number) => void; className?: string }) {
   if (totalPages <= 1) return null;
   return (
-    <div className={`flex items-center justify-center gap-1 pt-3 ${className}`}>
-      <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="h-7 w-7 rounded-lg flex items-center justify-center text-[#6B7280] hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        <ChevronLeft className="w-4 h-4" />
+    <div className={`flex items-center justify-end gap-1 pt-2 ${className}`}>
+      <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="h-6 w-6 rounded-md flex items-center justify-center text-[#6B7280] hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+        <ChevronLeft className="w-3.5 h-3.5" />
       </button>
       {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-        <button key={p} onClick={() => onPageChange(p)} className={`h-7 w-7 rounded-lg text-xs font-semibold transition-colors ${p === currentPage ? "bg-[#4A5628] text-white" : "text-[#6B7280] hover:bg-slate-100"}`}>
+        <button key={p} onClick={() => onPageChange(p)} className={`h-6 w-6 rounded-md text-xs font-semibold transition-colors ${p === currentPage ? "bg-[#78A24C] text-white" : "text-[#6B7280] hover:bg-slate-100"}`}>
           {p}
         </button>
       ))}
-      <button onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} className="h-7 w-7 rounded-lg flex items-center justify-center text-[#6B7280] hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        <ChevronRight className="w-4 h-4" />
+      <button onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} className="h-6 w-6 rounded-md flex items-center justify-center text-[#6B7280] hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+        <ChevronRight className="w-3.5 h-3.5" />
       </button>
     </div>
   );
 }
 
 // ── Donut SVG ──
-function DonutChart({ value, size = 120, label }: { value: number; size?: number; label: string }) {
+function DonutChart({ value, size = 120, label, color = "#78A24C" }: { value: number; size?: number; label: string; color?: string }) {
   const clamped = Math.min(100, Math.max(0, value));
   return (
     <div className="relative flex items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5" style={{ width: size, height: size }}>
       <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
         <path className="text-[#EDEEE5]" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845a15.9155 15.9155 0 010 31.831 15.9155 15.9155 0 010-31.831" />
-        <path className="text-[#4A5628] transition-all duration-1000 ease-out" strokeWidth="3.5" strokeLinecap="round" strokeDasharray={`${clamped}, 100`} stroke="currentColor" fill="none" d="M18 2.0845a15.9155 15.9155 0 010 31.831 15.9155 15.9155 0 010-31.831" />
+        <path className="transition-all duration-1000 ease-out" strokeWidth="3.5" strokeLinecap="round" strokeDasharray={`${clamped}, 100`} stroke={color} fill="none" d="M18 2.0845a15.9155 15.9155 0 010 31.831 15.9155 15.9155 0 010-31.831" />
       </svg>
       <div className="absolute flex flex-col items-center">
         <span className={`${archivoBlack.className} text-2xl text-[#1F2937]`}>{pct(clamped)}</span>
@@ -109,6 +109,13 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
   const [studentTab, setStudentTab] = useState<"housed" | "waiting">("housed");
   const [studentSearch, setStudentSearch] = useState("");
   const [studentPage, setStudentPage] = useState(1);
+
+  const totalInInvoices = Object.values(billingStatusCounts).reduce((s, v) => s + v, 0);
+  const paidLikeInvoices = (billingStatusCounts.paid ?? 0) + (billingStatusCounts.paid_late ?? 0) + (billingStatusCounts.partially_paid ?? 0);
+  const paidInvoiceRate = totalInInvoices > 0 ? (paidLikeInvoices / totalInInvoices) * 100 : 0;
+
+  const collectionGap = Math.max(0, stats.totalBilled - stats.totalCollected);
+  const collectedToBilledRate = stats.totalBilled > 0 ? (stats.totalCollected / stats.totalBilled) * 100 : 0;
 
   const filteredProps = propertyOccupancy.filter(p => {
     if (propFilter === "available") return p.availableSlots > 0;
@@ -213,7 +220,7 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-8 duration-500 delay-300">
 
         {/* Property Occupancy */}
-        <Card className="lg:col-span-2 shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl">
+        <Card className="lg:col-span-2 shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl h-full">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Property Occupancy</h2>
             <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
@@ -269,7 +276,7 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
         </Card>
 
         {/* Summary Donuts */}
-        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-5 overflow-hidden relative rounded-2xl">
+        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-5 overflow-hidden relative rounded-2xl h-full">
           <div className="w-full flex items-center justify-between">
             <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Financial Summary</h2>
             <button className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -277,9 +284,10 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
             </button>
           </div>
           <div className="flex items-center justify-center gap-6">
-            <DonutChart value={stats.occupancyRate} label="Occupancy" />
-            <DonutChart value={stats.collectionRate} label="Collection" />
+            <DonutChart value={stats.occupancyRate} label="Occupancy" color="#E8CD2E" />
+            <DonutChart value={stats.collectionRate} label="Collection" color="#2F90C8" />
           </div>
+
           <div className="grid grid-cols-2 gap-3 w-full pt-3 border-t border-[#E5E7EB] text-center">
             <div className="rounded-xl border border-[#E5E7EB] bg-[#f8fafc] p-4">
               <p className={`${archivoBlack.className} text-[9px] uppercase text-[#6B7280] tracking-wide leading-tight`}>Total<br />Billed</p>
@@ -290,6 +298,52 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
               <p className={`${archivoBlack.className} text-2xl text-[#1f6f4a] mt-1`}>{fmt(stats.totalCollected)}</p>
             </div>
           </div>
+
+          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className={`${archivoBlack.className} text-xs uppercase tracking-wider text-[#6B7280]`}>Collection gap</p>
+                <p className={`${archivoBlack.className} text-xl text-[#1F2937] leading-tight`}>{fmt(collectionGap)}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:block text-right">
+                  <p className={`${archivo.className} text-xs text-[#6B7280]`}>Collected / Billed</p>
+                  <p className={`${archivoBlack.className} text-sm text-[#1F2937]`}>{pct(collectedToBilledRate)}</p>
+                </div>
+                <DonutChart value={paidInvoiceRate} label="Paid invoices" size={96} color="#78A24C" />
+              </div>
+            </div>
+
+            <div className="w-full bg-[#EDEEE5] rounded-full h-2 overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-700 ease-out bg-[#5C9E44]" style={{ width: `${Math.min(100, Math.max(0, collectedToBilledRate))}%` }} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(billingStatusCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 4)
+                .map(([status, count]) => {
+                  const pctVal = totalInInvoices > 0 ? (count / totalInInvoices) * 100 : 0;
+                  const label = status.replace(/_/g, " ");
+                  return (
+                    <div key={status} className="rounded-lg border border-[#F3F4F6] bg-[#f8fafc] px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`${archivo.className} text-xs font-semibold text-[#374151] capitalize truncate`}>{label}</span>
+                        <span className={`${archivoBlack.className} text-xs text-[#1F2937] shrink-0`}>{count}</span>
+                      </div>
+                      <div className="w-full bg-[#EDEEE5] rounded-full h-1.5 overflow-hidden mt-1.5">
+                        <div className="h-full rounded-full bg-[#4A5628] transition-all duration-700" style={{ width: `${pctVal}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-[#6B7280]">
+              <span className={`${archivo.className}`}>Overdue payments</span>
+              <span className={`${archivoBlack.className} ${stats.overdueCount > 0 ? "text-[#8B1A1A]" : "text-[#1F2937]"}`}>{stats.overdueCount}</span>
+            </div>
+          </div>
         </Card>
       </div>
 
@@ -297,7 +351,7 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-10 duration-500 delay-500">
 
         {/* Recent Applications Table */}
-        <Card className="lg:col-span-2 shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl">
+        <Card className="lg:col-span-2 shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl h-full lg:min-h-[26rem]">
           <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Recent Applications</h2>
           <div className="relative">
             <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -309,7 +363,7 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
               className={`${archivo.className} w-full pl-9 pr-3 py-2.5 rounded-lg border border-[#E5E7EB] text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#4A5628]/20 focus:border-[#4A5628] transition-all`}
             />
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto flex-1 min-h-0">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#E5E7EB]">
@@ -347,7 +401,7 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
         </Card>
 
         {/* Student Management */}
-        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl">
+        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl h-full lg:min-h-[26rem]">
           <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Students</h2>
           <div className="flex gap-1">
             {(["housed", "waiting"] as const).map(t => (
@@ -379,8 +433,8 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
             const pagedList = currentList.slice((studentPage - 1) * STUDENT_PER_PAGE, studentPage * STUDENT_PER_PAGE);
 
             return (
-              <>
-                <div className="space-y-2">
+              <div className="flex flex-col flex-1 min-h-0">
+                <div className="space-y-2 flex-1">
                   {studentTab === "housed" ? (
                     (pagedList as typeof housedStudents).map(s => {
                       const u = unwrap(s.users);
@@ -415,16 +469,15 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
                   )}
                 </div>
                 <PaginationControls currentPage={studentPage} totalPages={totalStudentPages} onPageChange={setStudentPage} />
-              </>
+              </div>
             );
           })()}
         </Card>
       </div>
 
-      {/* ── Row: Billing Status + Payment Distribution ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-12 duration-500 delay-700">
-        {/* Quick Reports */}
-        <Card className="lg:col-span-2 shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl">
+      {/* ── Row: Quick Reports ── */}
+      <div className="grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-12 duration-500 delay-700">
+        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl">
           <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Quick Reports</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
@@ -442,43 +495,6 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
                 <span className={`${archivo.className} text-sm text-[#374151] font-medium leading-snug`}>{report.label}</span>
               </div>
             ))}
-          </div>
-        </Card>
-
-        {/* Billing Status Distribution */}
-        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl">
-          <div className="w-full flex items-center justify-between">
-            <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Payment Status Distribution</h2>
-            <button className="text-slate-400 hover:text-slate-600 transition-colors">
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="space-y-4">
-            {Object.entries(billingStatusCounts).sort((a, b) => b[1] - a[1]).map(([status, count]) => {
-              const total = Object.values(billingStatusCounts).reduce((s, v) => s + v, 0);
-              const pctVal = total > 0 ? (count / total) * 100 : 0;
-              const colorMap: Record<string, string> = {
-                paid: "#5C9E44", paid_late: "#A8C060", partially_paid: "#BA7517",
-                unpaid: "#E24B4A", overdue: "#C93C3B", pending: "#6B7280",
-                pending_verification: "#4338CA", failed: "#8B1A1A",
-              };
-              const color = colorMap[status] ?? "#6B7280";
-              return (
-                <div key={status} className="group">
-                  <div className="flex justify-between text-xs mb-1.5 items-center">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
-                      <span className={`${archivo.className} font-medium text-sm text-[#374151] capitalize`}>{status.replace(/_/g, " ")}</span>
-                    </div>
-                    <span className={`${archivoBlack.className} text-[#1F2937] text-sm`}>{count} <span className={`${archivo.className} font-normal text-[#9CA3AF]`}>({pct(pctVal)})</span></span>
-                  </div>
-                  <div className="w-full bg-[#EDEEE5] rounded-full h-1.5 overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pctVal}%`, backgroundColor: color }} />
-                  </div>
-                </div>
-              );
-            })}
-            {Object.keys(billingStatusCounts).length === 0 && <p className="text-sm text-[#9CA3AF] text-center py-6">No billing data available.</p>}
           </div>
         </Card>
       </div>
