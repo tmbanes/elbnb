@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CreateApplicationService } from '@/services/application_workflow/create_application'
 import { AccommodationApplication, ApplicationStatus } from '@/types/application_workflow'
-import { requireApiRole } from '@/lib/auth/session'
+import { requireApiRole } from '@/lib/auth/server-auth'
 
 // CREATE A NEW APPLICATION -- user should be authenticated AND either student or guest to create an application
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireApiRole(['student', 'guest']);
-
+    
     if ("error" in auth) {
       return NextResponse.json(
         { error: auth.error },
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       // accommodation_assignment OMITTED
     }
     const validationErrors = CreateApplicationService.validateApplication(applicationData)
-
+    
     if (validationErrors.length > 0) {
       return NextResponse.json(
         { error: validationErrors.join(', ') },

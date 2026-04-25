@@ -73,24 +73,23 @@ function StatCard({
 }) {
   return (
     <Card
-      className="shadow-sm bg-[#FDFFF4] transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-md cursor-default"
-      style={{ borderTop: `6px solid ${accentColor}` }}
+      className="shadow-sm transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-md cursor-default border-none"
+      style={{ backgroundColor: accentColor }}
     >
-      <CardHeader className="p-3.5">
+      <CardHeader className="p-4">
         <div className="flex items-center justify-between gap-3.5">
-          <div className="flex flex-col gap-0.5 pl-3">
-            <p className="text-[11px] font-medium text-[#44291B] uppercase tracking-widest">
+          <div className="flex flex-col gap-0.5 pl-2">
+            <p className="text-[11px] font-bold text-white/90 uppercase tracking-widest">
               {label}
             </p>
-            <CardTitle className="text-3xl font-bold text-[#44291B] leading-tight">
+            <CardTitle className="text-3xl font-bold text-white leading-tight">
               {value.toLocaleString()}
             </CardTitle>
           </div>
           <div
-            className="h-12 w-12 rounded-md flex items-center justify-center shrink-0"
-            style={{ backgroundColor: iconBg }}
+            className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 bg-white/20"
           >
-            {React.cloneElement(icon as React.ReactElement)}
+            {icon}
           </div>
         </div>
       </CardHeader>
@@ -168,7 +167,7 @@ export default function PropertiesList({
         <StatCard
           label="Dormitories"
           value={stats.totalDorms}
-          icon={<Building2 style={{ color: "#5591AB" }} />}
+          icon={<Building2 className="text-white w-5 h-5" />}
           description="Active dorm buildings"
           accentColor="#5591AB"
           iconBg="#ebf2f4"
@@ -176,7 +175,7 @@ export default function PropertiesList({
         <StatCard
           label="Rental Spaces"
           value={stats.totalRentalSpaces}
-          icon={<Home style={{ color: "#EB8A0B" }} />}
+          icon={<Home className="text-white w-5 h-5" />}
           description="Private rental units"
           accentColor="#EB8A0B"
           iconBg="#fbecd7"
@@ -184,7 +183,7 @@ export default function PropertiesList({
         <StatCard
           label="Managers"
           value={stats.totalManagers}
-          icon={<Users style={{ color: "#F2C908" }} />}
+          icon={<Users className="text-white w-5 h-5" />}
           description="Assigned staff"
           accentColor="#F2C908"
           iconBg="#f2c70823"
@@ -192,7 +191,7 @@ export default function PropertiesList({
         <StatCard
           label="Total Capacity"
           value={stats.totalUnits}
-          icon={<Bed style={{ color: "#264384" }} />}
+          icon={<Bed className="text-white w-5 h-5" />}
           description="Total beds available"
           accentColor="#264384"
           iconBg="#e6e8ef"

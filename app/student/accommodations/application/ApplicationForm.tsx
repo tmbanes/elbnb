@@ -45,6 +45,8 @@ import type {
   UnitType,
 } from "@/types/accommodation_units";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createActivityLog, getCurrentUserFromApi, isUserRole } from "@/services/activity_log/browser";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -277,7 +279,7 @@ export default function ApplyAccommodationForm() {
     // Calculate duration in months for the backend
     const months = Math.round(
       (data.checkOut.getTime() - data.checkIn.getTime()) /
-      (1000 * 60 * 60 * 24 * 30.44),
+        (1000 * 60 * 60 * 24 * 30.44),
     );
 
     const payload = {
@@ -290,7 +292,7 @@ export default function ApplyAccommodationForm() {
       check_out: format(data.checkOut, "yyyy-MM-dd"),
       number_of_companions:
         userRole === "guest" &&
-          accommodation?.accommodation_type === "renting_space"
+        accommodation?.accommodation_type === "renting_space"
           ? 1
           : 0,
       application_status: "pending_dorm_manager" as ApplicationStatus,
@@ -312,6 +314,22 @@ export default function ApplyAccommodationForm() {
       }
 
       setSubmittedData(data);
+      // Log submit application here
+      const profile = await getCurrentUserFromApi();
+      const userRole = isUserRole(profile?.role) ? profile.role : "guest";
+      // accommodationIdFromQuery
+
+      if(profile?.user_id){
+        await createActivityLog( {
+          p_user_id: profile.user_id,
+          p_action_type: "submit_application",
+          p_log_desc: `${profile.first_name} ${profile.last_name}  submitted application`,
+          p_entity_type: "accommodation",
+          p_entity_id: accommodationIdFromQuery,
+          p_user_role: userRole,
+        })
+    }
+
       setShowSuccess(true);
     } catch (error) {
       console.error("Submission error:", error);
@@ -449,9 +467,9 @@ export default function ApplyAccommodationForm() {
                   submittedData.preferred_unit_type === "wholeunit"
                     ? "Whole Unit"
                     : submittedData.preferred_unit_type
-                      .charAt(0)
-                      .toUpperCase() +
-                    submittedData.preferred_unit_type.slice(1),
+                        .charAt(0)
+                        .toUpperCase() +
+                      submittedData.preferred_unit_type.slice(1),
               },
               {
                 label: "Check-in Date",
@@ -865,8 +883,9 @@ export default function ApplyAccommodationForm() {
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        className={`flex items-center justify-between w-full h-11 px-4 rounded-xl border-2 text-sm bg-white transition-all ${errors.checkIn ? "border-red-400" : "border-[#78A24C]"
-                          } ${!field.value ? "text-gray-400" : "text-gray-700"}`}
+                        className={`flex items-center justify-between w-full h-11 px-4 rounded-xl border-2 text-sm bg-white transition-all ${
+                          errors.checkIn ? "border-red-400" : "border-[#78A24C]"
+                        } ${!field.value ? "text-gray-400" : "text-gray-700"}`}
                       >
                         {field.value
                           ? format(field.value, "MMM dd, yyyy")
