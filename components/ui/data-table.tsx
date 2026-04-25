@@ -129,9 +129,9 @@ export function DataTable<TData, TValue>({
             variant="ghost"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="h-8 bg-transparent text-slate-700 hover:bg-[#E3E3E3]"
+            className="h-8 bg-transparent text-slate-700 hover:bg-[#E3E3E3] font-bold text-xs"
           >
-            <ChevronLeft className="w-4 h-4 mr-1" />
+            <ChevronLeft className="w-4 h-4 mr-1" /> Prev
           </Button>
           <div className="flex items-center px-3 text-xs font-bold text-slate-600">
             {table.getState().pagination.pageIndex + 1} / {table.getPageCount() || 1}
@@ -141,9 +141,9 @@ export function DataTable<TData, TValue>({
             variant="ghost"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="h-8 bg-transparent text-slate-700 hover:bg-[#E3E3E3]"
+            className="h-8 bg-transparent text-slate-700 hover:bg-[#E3E3E3] font-bold text-xs"
           >
-            <ChevronRight className="w-4 h-4 ml-1" />
+            Next <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       </div>
