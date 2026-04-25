@@ -7,7 +7,7 @@ const CANCELLABLE_STATUSES: CancellableStatus[] = ['pending_dorm_manager', 'pend
 const INITIAL_SUBMIT_APPLICATION_STATUS = 'pending_dorm_manager' as ApplicationStatus
 
 export class CreateApplicationService {
-  
+
   // CREATE ACCOMMODATION APPLICATION WITH GUARD CHECKERS
   static async createApplication(data: CreateApplicationInput): Promise<AccommodationApplication> {
     const supabase = await createSupabaseServerClient()
@@ -93,18 +93,18 @@ export class CreateApplicationService {
       throw new Error('The application period for this accommodation has ended.')
     }
 
-    // GUARD 4: if user is currently assigned to this unit
+    // GUARD 4: check if user is already actively assigned
     const { data: assignment, error: assignmentError } = await supabase
       .from('accommodation_assignment')
-      .select('*')
+      .select('assignment_id')
       .eq('user_id', data.user_id)
-      .eq('accommodation_id', data.preferred_accommodation_id)
-      .eq('accommodation_status', 'active')
-      .single()
+      .eq('assignment_status', 'active')
+      .limit(1)
 
-    if (assignmentError || !assignment) throw new Error('Failed to fetch assignment.')
+    if (assignmentError) throw new Error(`Failed to fetch assignment: ${assignmentError.message}`)
 
-    if (assignment.unit_id) {
+    // Only block if they actually have an active assignment
+    if (assignment) {
       throw new Error('You are already assigned to a unit.')
     }
 
@@ -119,9 +119,9 @@ export class CreateApplicationService {
 
     const { data: applications, error: applicationsError } = await supabase
       .from('accommodation_application')
-      .select('*')
+      .select('application_id, preferred_accommodation_id, accommodation!inner(accommodation_type)')
       .eq('user_id', data.user_id)
-      .eq('accommodation_type', accommodationType.accommodation_type)
+      .eq('accommodation.accommodation_type', accommodationType.accommodation_type)
       .in('application_status', CANCELLABLE_STATUSES)
 
     if (applicationsError) throw new Error('Failed to fetch applications.')
@@ -132,7 +132,7 @@ export class CreateApplicationService {
 
     // GUARD 6: check if the accomm_sex of the accommodation matches the sex of the user
     const { data: user, error: userError } = await supabase
-      .from('user')
+      .from('users')
       .select('sex')
       .eq('user_id', data.user_id)
       .single()
@@ -156,7 +156,8 @@ export class CreateApplicationService {
       ...data,
       unit_id: unitId,                                // normalised null
       date_submitted: new Date().toISOString(),       // authoritative timestamp
-      application_status: INITIAL_SUBMIT_APPLICATION_STATUS,    
+      application_status: INITIAL_SUBMIT_APPLICATION_STATUS,
+      file: data.file ?? null
     }
 
     const { data: application, error } = await supabase

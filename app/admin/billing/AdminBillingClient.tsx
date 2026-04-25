@@ -215,11 +215,11 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     setEditNotes(looksLikeJson(bill.internal_notes) ? "" : (bill.internal_notes || ""));
     const existingItems = Array.isArray(bill.billing_item) && bill.billing_item.length > 0
       ? bill.billing_item
-          .map((item: any) => ({
-            type: item.type as BillingItemType,
-            amount: Number(item.amount || 0),
-          }))
-          .filter((item: any) => Number.isFinite(item.amount))
+        .map((item: any) => ({
+          type: item.type as BillingItemType,
+          amount: Number(item.amount || 0),
+        }))
+        .filter((item: any) => Number.isFinite(item.amount))
       : [{ type: BillingItemType.ROOM_RENT, amount: Number(bill.amount || 0) }];
 
     setEditItems(existingItems.length ? existingItems : [{ type: BillingItemType.ROOM_RENT, amount: 0 }]);
@@ -548,41 +548,41 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               <DialogDescription className="sr-only">
                 Preview uploaded receipt for invoice verification and perform approval actions.
               </DialogDescription>
-            <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-[#FDFFF4]">
-              <div>
-                <h3 className="font-bold text-lg text-slate-900">Receipt Viewer</h3>
-                <p className="text-sm text-slate-500">Invoice #{viewedReceipt.billing_id.split("-")[0]}</p>
-              </div>
-              <button onClick={() => setViewedReceipt(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
-            </div>
-
-            <div className="flex-1 bg-[#E7ECF3] overflow-y-auto flex items-center justify-center p-8">
-              {receiptUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={receiptUrl} alt="Receipt" className="max-w-full rounded-lg shadow-md border border-slate-300 bg-white" />
-              ) : (
-                <p className="text-slate-500 font-medium tracking-wide animate-pulse">Loading receipt image...</p>
-              )}
-            </div>
-
-            <div className="p-6 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Target Amount: <span className="font-bold text-slate-900 text-lg">₱{viewedReceipt.amount.toLocaleString()}</span></p>
-                <span className={`mt-1 inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(viewedReceipt.status)}`}>
-                  {viewedReceipt.status}
-                </span>
-              </div>
-              {viewedReceipt.status === BillingStatus.PENDING && (
-                <div className="flex gap-3">
-                  <button onClick={handleReject} className="px-6 py-3 font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition flex items-center gap-2">
-                    <X className="w-5 h-5" /> Reject
-                  </button>
-                  <button onClick={handleApprove} className="px-6 py-3 font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-400 hover:text-white border border-emerald-200 hover:border-emerald-500 rounded-xl transition flex items-center gap-2">
-                    <Check className="w-5 h-5" /> Paid
-                  </button>
+              <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-[#FDFFF4]">
+                <div>
+                  <h3 className="font-bold text-lg text-slate-900">Receipt Viewer</h3>
+                  <p className="text-sm text-slate-500">Invoice #{viewedReceipt.billing_id.split("-")[0]}</p>
                 </div>
-              )}
-            </div>
+                <button onClick={() => setViewedReceipt(null)} className="p-2 hover:bg-slate-200 rounded-full transition"><X className="w-5 h-5" /></button>
+              </div>
+
+              <div className="flex-1 bg-[#E7ECF3] overflow-y-auto flex items-center justify-center p-8">
+                {receiptUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={receiptUrl} alt="Receipt" className="max-w-full rounded-lg shadow-md border border-slate-300 bg-white" />
+                ) : (
+                  <p className="text-slate-500 font-medium tracking-wide animate-pulse">Loading receipt image...</p>
+                )}
+              </div>
+
+              <div className="p-6 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Target Amount: <span className="font-bold text-slate-900 text-lg">₱{viewedReceipt.amount.toLocaleString()}</span></p>
+                  <span className={`mt-1 inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(viewedReceipt.status)}`}>
+                    {viewedReceipt.status}
+                  </span>
+                </div>
+                {viewedReceipt.status === BillingStatus.PENDING && (
+                  <div className="flex gap-3">
+                    <button onClick={handleReject} className="px-6 py-3 font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition flex items-center gap-2">
+                      <X className="w-5 h-5" /> Reject
+                    </button>
+                    <button onClick={handleApprove} className="px-6 py-3 font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-400 hover:text-white border border-emerald-200 hover:border-emerald-500 rounded-xl transition flex items-center gap-2">
+                      <Check className="w-5 h-5" /> Paid
+                    </button>
+                  </div>
+                )}
+              </div>
             </DialogContent>
           )}
         </DialogPortal>
@@ -618,109 +618,109 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                   ></textarea>
                 </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <label className="block text-sm font-semibold text-slate-700">Invoice Line Items</label>
-                  <button
-                    onClick={() => setEditItems([...editItems, { type: BillingItemType.OTHER, amount: 0 }])}
-                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition"
-                  >
-                    <Plus className="w-3 h-3" /> Add Item
-                  </button>
-                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="block text-sm font-semibold text-slate-700">Invoice Line Items</label>
+                    <button
+                      onClick={() => setEditItems([...editItems, { type: BillingItemType.OTHER, amount: 0 }])}
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition"
+                    >
+                      <Plus className="w-3 h-3" /> Add Item
+                    </button>
+                  </div>
 
-                <div className="space-y-3">
-                  {editItems.map((item, index) => (
-                    <div key={index} className="flex gap-2 items-center bg-slate-50/70 p-3 rounded-xl border border-slate-200">
-                      <Select
-                        value={item.type}
-                        onValueChange={(value) => {
-                          const updated = [...editItems];
-                          updated[index].type = value as BillingItemType;
-                          setEditItems(updated);
-                        }}
-                      >
-                        <SelectTrigger className="h-10 flex-1 rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] shadow-sm focus:ring-2 focus:ring-indigo-400/30">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
-                          {Object.values(BillingItemType).map((type) => (
-                            <SelectItem key={type} value={type} className="text-sm font-medium">
-                              {type.replace(/_/g, " ").toUpperCase()}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <div className="relative w-32">
-                        <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
-                        <input
-                          type="number"
-                          className="h-10 w-full rounded-xl border border-[#cfd6e4] bg-white pl-7 pr-3 text-sm font-semibold text-[#30435f] outline-none shadow-sm focus:ring-2 focus:ring-indigo-400/30"
-                          value={item.amount || ''}
-                          onChange={(e) => {
+                  <div className="space-y-3">
+                    {editItems.map((item, index) => (
+                      <div key={index} className="flex gap-2 items-center bg-slate-50/70 p-3 rounded-xl border border-slate-200">
+                        <Select
+                          value={item.type}
+                          onValueChange={(value) => {
                             const updated = [...editItems];
-                            updated[index].amount = Number(e.target.value);
+                            updated[index].type = value as BillingItemType;
                             setEditItems(updated);
                           }}
-                          placeholder="0"
-                        />
+                        >
+                          <SelectTrigger className="h-10 flex-1 rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] shadow-sm focus:ring-2 focus:ring-indigo-400/30">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                            {Object.values(BillingItemType).map((type) => (
+                              <SelectItem key={type} value={type} className="text-sm font-medium">
+                                {type.replace(/_/g, " ").toUpperCase()}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <div className="relative w-32">
+                          <span className="absolute left-3 top-2.5 text-slate-400 font-bold text-sm">₱</span>
+                          <input
+                            type="number"
+                            className="h-10 w-full rounded-xl border border-[#cfd6e4] bg-white pl-7 pr-3 text-sm font-semibold text-[#30435f] outline-none shadow-sm focus:ring-2 focus:ring-indigo-400/30"
+                            value={item.amount || ''}
+                            onChange={(e) => {
+                              const updated = [...editItems];
+                              updated[index].amount = Number(e.target.value);
+                              setEditItems(updated);
+                            }}
+                            placeholder="0"
+                          />
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            if (editItems.length === 1) return;
+                            const updated = [...editItems];
+                            updated.splice(index, 1);
+                            setEditItems(updated);
+                          }}
+                          className={`p-2 rounded-lg transition ${editItems.length > 1 ? 'text-red-500 hover:bg-red-50' : 'text-slate-300'}`}
+                          disabled={editItems.length <= 1}
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
                       </div>
-
-                      <button
-                        onClick={() => {
-                          if (editItems.length === 1) return;
-                          const updated = [...editItems];
-                          updated.splice(index, 1);
-                          setEditItems(updated);
-                        }}
-                        className={`p-2 rounded-lg transition ${editItems.length > 1 ? 'text-red-500 hover:bg-red-50' : 'text-slate-300'}`}
-                        disabled={editItems.length <= 1}
-                      >
-                        <Trash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-sm font-bold text-slate-800">
-                  <span>Total:</span>
-                  <span className="text-xl">₱{editItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
-                <input
-                  type="date"
-                  value={editDueDate}
-                  onChange={e => setEditDueDate(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] outline-none focus:ring-2 focus:ring-indigo-400/30"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Status</label>
-                <Select value={editStatus} onValueChange={(value) => setEditStatus(value as BillingStatus)}>
-                  <SelectTrigger className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] focus:ring-2 focus:ring-indigo-400/30">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
-                    {INVOICE_STATUSES.map((status) => (
-                      <SelectItem key={status} value={status} className="text-sm font-medium">
-                        {status.replace(/_/g, " ").toUpperCase()}
-                      </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  </div>
 
-              {editingBill.reminded_at && (
-                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs text-slate-500 flex items-center gap-2">
-                  <Clock className="w-4 h-4" /> Last reminded on: {format(new Date(editingBill.reminded_at), 'MMM dd, yyyy HH:mm')}
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-sm font-bold text-slate-800">
+                    <span>Total:</span>
+                    <span className="text-xl">₱{editItems.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()}</span>
+                  </div>
                 </div>
-              )}
-            </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
+                  <input
+                    type="date"
+                    value={editDueDate}
+                    onChange={e => setEditDueDate(e.target.value)}
+                    className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] outline-none focus:ring-2 focus:ring-indigo-400/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Invoice Status</label>
+                  <Select value={editStatus} onValueChange={(value) => setEditStatus(value as BillingStatus)}>
+                    <SelectTrigger className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] focus:ring-2 focus:ring-indigo-400/30">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
+                      {INVOICE_STATUSES.map((status) => (
+                        <SelectItem key={status} value={status} className="text-sm font-medium">
+                          {status.replace(/_/g, " ").toUpperCase()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {editingBill.reminded_at && (
+                  <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs text-slate-500 flex items-center gap-2">
+                    <Clock className="w-4 h-4" /> Last reminded on: {format(new Date(editingBill.reminded_at), 'MMM dd, yyyy HH:mm')}
+                  </div>
+                )}
+              </div>
 
               <div className="p-5 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-end gap-3">
                 <button onClick={() => setEditingBill(null)} className="px-5 py-2.5 font-semibold text-slate-600 bg-transparent rounded-xl hover:bg-white/70 transition">Cancel</button>

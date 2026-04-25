@@ -144,7 +144,6 @@
     @apply w-full bg-[#FDFFF4] text-[#44291B];
     border-collapse: separate !important;
     border-spacing: 0 !important;
-    padding-bottom: 7px !important;
   }
 
   table th:first-child,
@@ -175,6 +174,7 @@
   }
 }
 
+
 /* Global Page Transitions */
 @keyframes pageSlideIn {
   from {
@@ -204,12 +204,15 @@ main>*:not(.page-loader) {
 .backface-hidden {
   backface-visibility: hidden;
 }
+
 /* Hide scrollbar but keep scroll */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }

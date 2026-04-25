@@ -34,9 +34,12 @@ export async function updateSession(request: NextRequest) {
   // IMPORTANT: Avoid writing any logic between createServerClient and
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with cross-browser cookies.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch {
+    // Ignore invalid/stale refresh token errors in middleware and proceed.
+    // This keeps unauthenticated browsing from spamming logs during dev.
+  }
 
   return supabaseResponse;
 }

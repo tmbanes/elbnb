@@ -570,40 +570,40 @@ export default function BillingClient({
 
                   return (
                     <TableRow key={billId} className="hover:bg-slate-50/60 transition-colors">
-                        <TableCell className="px-4 py-4">
-                          <div className="font-semibold text-slate-900">
-                            {bill?.billing_period_date
-                              ? `Rent - ${safeDateLabel(bill.billing_period_date, "MMM yyyy", "N/A")}`
-                              : "Student Invoice"}
+                      <TableCell className="px-4 py-4">
+                        <div className="font-semibold text-slate-900">
+                          {bill?.billing_period_date
+                            ? `Rent - ${safeDateLabel(bill.billing_period_date, "MMM yyyy", "N/A")}`
+                            : "Student Invoice"}
+                        </div>
+                        <div className="text-xs text-slate-500">{String(billId).split("-")[0]}</div>
+                      </TableCell>
+                      <TableCell className="px-4 py-4 font-bold text-slate-900">
+                        ₱{formatPeso(bill?.amount)}
+                      </TableCell>
+                      <TableCell className="px-4 py-4">{safeDateLabel(bill?.due_date, "MMM dd, yyyy")}</TableCell>
+                      <TableCell className="px-4 py-4">
+                        <Badge
+                          variant="outline"
+                          className={`border ${getStatusColor(bill?.status)} rounded-full px-2.5 py-1 font-bold`}
+                        >
+                          {getStatusFormat(bill?.status).toUpperCase()}
+                        </Badge>
+                        {bill?.reminded_at && (
+                          <div className="mt-2 text-[11px] font-medium text-amber-700">
+                            Reminded by admin
                           </div>
-                          <div className="text-xs text-slate-500">{String(billId).split("-")[0]}</div>
-                        </TableCell>
-                        <TableCell className="px-4 py-4 font-bold text-slate-900">
-                          ₱{formatPeso(bill?.amount)}
-                        </TableCell>
-                        <TableCell className="px-4 py-4">{safeDateLabel(bill?.due_date, "MMM dd, yyyy")}</TableCell>
-                        <TableCell className="px-4 py-4">
-                          <Badge
-                            variant="outline"
-                            className={`border ${getStatusColor(bill?.status)} rounded-full px-2.5 py-1 font-bold`}
-                          >
-                            {getStatusFormat(bill?.status).toUpperCase()}
-                          </Badge>
-                          {bill?.reminded_at && (
-                            <div className="mt-2 text-[11px] font-medium text-amber-700">
-                              Reminded by admin
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="px-4 py-4">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setSelectedBill(bill)} className="bg-white">
-                              <FileText className="size-4" />
-                              View Details
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-4 py-4">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setSelectedBill(bill)} className="bg-white">
+                            <FileText className="size-4" />
+                            View Details
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
               </TableBody>
@@ -859,10 +859,10 @@ export default function BillingClient({
                   <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
                     <span>Payment Receipt</span>
                   </div>
-                  
+
                   {isLoadingReceiptPreview ? (
                     <div className="text-sm text-slate-500 flex items-center gap-2 py-2">
-                      <Clock className="w-4 h-4 animate-spin"/> Loading receipt...
+                      <Clock className="w-4 h-4 animate-spin" /> Loading receipt...
                     </div>
                   ) : receiptPreviewUrl ? (
                     <div className="flex flex-col sm:flex-row gap-3 items-start bg-white border border-slate-200 rounded-xl p-3 shadow-sm">

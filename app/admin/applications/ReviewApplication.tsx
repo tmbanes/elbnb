@@ -4,8 +4,8 @@ import ApplicationPreview from "./ApplicationPreview";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
+  Card,
+  CardContent,
 } from "@/components/ui/card";
 import { ChevronLeft, Mail, MapPin, Pencil, Trash2, Calendar } from "lucide-react"
 
@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/dialog";
 
 import {
-    processApplication,
-    type Unit,
+  processApplication,
+  type Unit,
   type AdminApplication,
   type AdminAction,
   type ApplicationInvoiceItemInput,
@@ -52,13 +52,13 @@ function mapBillingTypeToKind(type?: string): InvoiceKind {
 }
 
 export default function ReviewApplication({
-    applicationId,
-    onAction,
-    onClose,
+  applicationId,
+  onAction,
+  onClose,
 }: {
-    applicationId: string;
-    onAction: (id: string, action: AdminAction, unitId?: string) => Promise<void>;
-    onClose: () => void;
+  applicationId: string;
+  onAction: (id: string, action: AdminAction, unitId?: string) => Promise<void>;
+  onClose: () => void;
 }) {
   const [confirmAction, setConfirmAction] = useState<AdminAction | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string>("");
@@ -290,7 +290,7 @@ export default function ReviewApplication({
 
   return (
     <div className="p-6 space-y-6 bg-[#F6F8D5] h-full overflow-y-auto">
-      
+
       {/* HEADER */}
       <div className="flex items-start justify-between">
 
@@ -335,130 +335,145 @@ export default function ReviewApplication({
 
               {/* EMAIL + DATE SUBMITTED */}
               <div className="flex flex-wrap gap-2 min-w-0">
-                  
-                  <span className="inline-flex items-center gap-1.5 bg-[#ebf2f4] border border-[#d1e3e8] rounded-full px-2.5 py-1 text-xs text-[#264384] max-w-full">
-                    <Mail className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{data.email}</span>
-                  </span>
-                  
-                  <span className="inline-flex items-center gap-1.5 bg-[#ebf2f4] border border-[#d1e3e8] rounded-full px-2.5 py-1 text-xs text-[#264384] max-w-full">
-                    <Calendar className="w-3 h-3 shrink-0" />
-                    <span className="truncate">Submitted: {data.submitted}</span>
-                  </span>
-                  
-                </div>
+
+                <span className="inline-flex items-center gap-1.5 bg-[#ebf2f4] border border-[#d1e3e8] rounded-full px-2.5 py-1 text-xs text-[#264384] max-w-full">
+                  <Mail className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{data.email}</span>
+                </span>
+
+                <span className="inline-flex items-center gap-1.5 bg-[#ebf2f4] border border-[#d1e3e8] rounded-full px-2.5 py-1 text-xs text-[#264384] max-w-full">
+                  <Calendar className="w-3 h-3 shrink-0" />
+                  <span className="truncate">Submitted: {data.submitted}</span>
+                </span>
+
+              </div>
 
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="p-5 space-y-6">
+      {/* <Card className="p-5 space-y-6"> */}
+      <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm">
+        <CardContent className="px-5 py-4 space-y-4">
+          {/* STAY DETAILS */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+              Stay Details
+            </h3>
 
-        {/* STAY DETAILS */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-            Stay Details
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="label font-semibold">Duration:</p>
-              <p>{data.stay.duration}</p>
-            </div>
-
-            <div>
-              <p className="label font-semibold">Companions:</p>
-              <p>{data.stay.companions}</p>
-            </div>
-
-            <div>
-              <p className="label font-semibold">Check-in:</p>
-              <p>{data.stay.checkIn}</p>
-            </div>
-
-            <div>
-              <p className="label font-semibold">Check-out:</p>
-              <p>{data.stay.checkOut}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* ACCOMMODATION */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-            Accommodation Details
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="label font-semibold">Accommodation:</p>
-              <p>{data.stay.dorm}</p>
-            </div>
-
-            <div>
-              <p className="label font-semibold">Room Type:</p>
-              <p>{data.stay.roomType}</p>
-            </div>
-          </div>
-
-          <select
-            className="w-full border rounded-md p-2 text-sm mt-2"
-            value={selectedUnitId}
-            onChange={(e) => setSelectedUnitId(e.target.value)}
-          >
-            <option value="">Assign unit</option>
-            {appData?.availableUnits?.map((unit: any) => (
-              <option key={unit.unit_id} value={unit.unit_id}>
-                {unit.unit_number}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* DOCUMENTS */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-            Uploaded Documents
-          </h3>
-
-          <div className="space-y-2">
-            {data.documents.map((doc, i) => (
-              <div
-                key={i}
-                className="flex justify-between items-center border rounded-md px-3 py-2"
-              >
-                <span>{doc}</span>
-
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowPreview(true)}
-                >
-                  Preview
-                </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="label font-semibold">Duration:</p>
+                <p>{data.stay.duration}</p>
               </div>
-            ))}
+
+              <div>
+                <p className="label font-semibold">Companions:</p>
+                <p>{data.stay.companions}</p>
+              </div>
+
+              <div>
+                <p className="label font-semibold">Check-in:</p>
+                <p>{data.stay.checkIn}</p>
+              </div>
+
+              <div>
+                <p className="label font-semibold">Check-out:</p>
+                <p>{data.stay.checkOut}</p>
+              </div>
+            </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* MODAL (ONLY ONCE) */}
-        {showPreview && (
-          <ApplicationPreview onClose={() => setShowPreview(false)} />
-        )}
+      {/* ACCOMMODATION */}
+      <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm">
+        <CardContent className="px-5 py-4 space-y-4">
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+              Accommodation Details
+            </h3>
 
-        {/* HISTORY */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-            Application History
-          </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="label font-semibold">Accommodation:</p>
+                <p>{data.stay.dorm}</p>
+              </div>
 
-          <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-            {data.history.map((item, i) => (
-              <li key={i}>{item}</li>
-            ))}
-          </ul>
-        </div>
+              <div>
+                <p className="label font-semibold">Room Type:</p>
+                <p>{data.stay.roomType}</p>
+              </div>
+            </div>
+
+            <select
+              className="w-full border rounded-md p-2 text-sm mt-2"
+              value={selectedUnitId}
+              onChange={(e) => setSelectedUnitId(e.target.value)}
+            >
+              <option value="">Assign unit</option>
+              {appData?.availableUnits?.map((unit: any) => (
+                <option key={unit.unit_id} value={unit.unit_id}>
+                  {unit.unit_number}
+                </option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* DOCUMENTS */}
+      <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm">
+        <CardContent className="px-5 py-4 space-y-4">
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+              Uploaded Documents
+            </h3>
+
+            <div className="space-y-2">
+              {data.documents.map((doc, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between items-center border rounded-md px-3 py-2"
+                >
+                  <span>{doc}</span>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowPreview(true)}
+                  >
+                    Preview
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MODAL (ONLY ONCE) */}
+          {showPreview && (
+            <ApplicationPreview onClose={() => setShowPreview(false)} />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* HISTORY */}
+      <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm">
+        <CardContent className="px-5 py-4 space-y-4">
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+              Application History
+            </h3>
+
+            <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+              {data.history.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ACTIONS & CONFIRMATION SECTION */}
       <div className="pt-4 border-t border-gray-300">

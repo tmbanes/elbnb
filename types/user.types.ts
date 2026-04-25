@@ -47,7 +47,7 @@ interface GuestCreationRequest extends UserCreationRequest {
 //---------RESPONSE TYPES---------
 
 export interface User {
-  // Response type for data fetched
+  // Response type for data fetche
   user_id: string;
   first_name: string;
   last_name: string;
@@ -67,5 +67,4 @@ export type {
   GuestCreationRequest,
   DormitoryManagerCreationRequest,
   HousingAdminCreationRequest,
-
 };

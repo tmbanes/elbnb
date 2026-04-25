@@ -2,7 +2,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server-client"
 import { redirect } from "next/navigation"
-import { studentProfileService } from "@/services/student_profile"
+import { userProfileService } from "@/services/user_profile"
 import {
   Card,
   CardContent,
@@ -29,7 +29,7 @@ function formatStatusLabel(status: string) {
 
 // Helper to assign the right badge color based on your specific enum values
 function getBadgeVariant(status: string) {
-  switch(status) {
+  switch (status) {
     case 'approved': return 'default';
     case 'rejected': return 'destructive';
     case 'cancelled': return 'outline';
@@ -40,13 +40,13 @@ function getBadgeVariant(status: string) {
 export default async function AccommodationHistoryPage() {
   // Initialize Supabase server client
   const supabase = await createSupabaseServerClient();
-  
+
   // Fetch the current active user session
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   // Protect the route: If no one is logged in, redirect them to the onboarding page
   if (!user || authError) {
-    redirect("/onboarding"); 
+    redirect("/onboarding");
   }
 
   // NOTE: THIS IS TEMPORARY HARDCODED USER ID FOR TESTING PURPOSES ONLY. REMOVE ONCE EVERTYHING IS GOOD
@@ -56,7 +56,7 @@ export default async function AccommodationHistoryPage() {
 
   const userId = user.id; // uncomment this when you want to use actual logged-in user ID
 
-  const { data: records, error } = await studentProfileService.getAccommodationHistory(userId);
+  const { data: records, error } = await userProfileService.getAccommodationHistory(userId);
 
   if (error) {
     return <div className="p-6 text-red-500">Error loading data: {error.message}</div>;
@@ -65,7 +65,7 @@ export default async function AccommodationHistoryPage() {
   if (!records || records.length === 0) {
     return (
       <div className="container mx-auto p-6 space-y-8 max-w-5xl">
-         <div>
+        <div>
           <h1 className="text-3xl font-bold tracking-tight">Accommodation History & Status</h1>
           <p className="text-muted-foreground mt-2">Track your current application status and view your past assignments.</p>
         </div>
@@ -90,10 +90,14 @@ export default async function AccommodationHistoryPage() {
 
   // Create the history list by excluding the one we picked as "current"
   const historicalRecords = records.filter(record => record.application_id !== currentApplication?.application_id);
-  
+
   // We check if the status includes "pending" to know if we should show the cancel button
   const currentStatus = currentApplication.application_status || 'unknown';
   const isPending = currentStatus.includes('pending');
+
+  const assignment = Array.isArray(currentApplication.accommodation_assignment)
+  ? currentApplication.accommodation_assignment[0]
+  : currentApplication.accommodation_assignment;
 
   return (
     <div className="container mx-auto p-6 space-y-8 max-w-5xl">
@@ -116,23 +120,23 @@ export default async function AccommodationHistoryPage() {
               {isPending ? (
                 <>
                   <p className="font-medium">Date Submitted: <span className="font-normal">{new Date(currentApplication.date_submitted).toLocaleDateString()}</span></p>
-                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.preferred_accommodation}</span></p>
+                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.accommodation?.name}</span></p>
                   <p className="font-medium">Room Type: <span className="font-normal">{currentApplication.preferred_unit_type}</span></p>
                 </>
               ) : (
                 <>
-                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.preferred_accommodation}</span></p>
-                  <p className="font-medium">Move-in Date: <span className="font-normal">{currentApplication.accomodation_assignment?.move_In_Date ? new Date(currentApplication.accomodation_assignment.move_In_Date).toLocaleDateString() : 'TBA'}</span></p>
-                  <p className="font-medium">Expected Move-out: <span className="font-normal">{currentApplication.accomodation_assignment?.expected_Move_Out_Date ? new Date(currentApplication.accomodation_assignment.expected_Move_Out_Date).toLocaleDateString() : 'TBA'}</span></p>
+                  <p className="font-medium">Dormitory: <span className="font-normal">{currentApplication.accommodation?.name}</span></p>
+                  <p className="font-medium">Move-in Date: <span className="font-normal">{assignment?.move_in_date ? new Date(assignment.move_in_date).toLocaleDateString() : 'TBA'}</span></p>
+                  <p className="font-medium">Expected Move-out: <span className="font-normal">{assignment?.expected_move_out_date ? new Date(assignment.expected_move_out_date).toLocaleDateString() : 'TBA'}</span></p>
                 </>
               )}
             </div>
-            
+
             <div className="flex flex-col items-end gap-3">
               <Badge variant={getBadgeVariant(currentStatus)} className="text-sm px-3 py-1">
                 Status: {formatStatusLabel(currentStatus)}
               </Badge>
-              
+
               {/* Cancel Button - Only visible if it's in any 'pending' state */}
               {isPending && (
                 <CancelApplicationModal applicationId={currentApplication.application_id} />
@@ -164,20 +168,23 @@ export default async function AccommodationHistoryPage() {
               {historicalRecords.length > 0 ? (
                 historicalRecords.map((record) => {
                   const status = record.application_status || 'unknown';
+                  const histAssignment = Array.isArray(record.accommodation_assignment)
+                    ? record.accommodation_assignment[0]
+                    : record.accommodation_assignment;
                   return (
                     <TableRow key={record.application_id}>
                       <TableCell className="font-medium text-xs">{record.application_id}</TableCell>
                       <TableCell>{new Date(record.date_submitted).toLocaleDateString()}</TableCell>
-                      <TableCell>{record.preferred_accommodation}</TableCell>
+                      <TableCell>{record.accommodation?.name || 'Unknown'}</TableCell>
                       <TableCell>{record.preferred_unit_type}</TableCell>
                       <TableCell>
-                         <Badge variant={getBadgeVariant(status)}>
-                           {formatStatusLabel(status)}
-                         </Badge>
+                        <Badge variant={getBadgeVariant(status)}>
+                          {formatStatusLabel(status)}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        {record.accomodation_assignment?.actual_Move_Out_Date 
-                          ? new Date(record.accomodation_assignment.actual_Move_Out_Date).toLocaleDateString() 
+                        {histAssignment?.actual_move_out_date
+                          ? new Date(histAssignment?.actual_move_out_date).toLocaleDateString()
                           : "—"}
                       </TableCell>
                     </TableRow>

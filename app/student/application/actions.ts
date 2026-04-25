@@ -1,19 +1,19 @@
 // app/student/application/actions.ts
 "use server"
 
-import { studentProfileService } from "@/services/student_profile"
+import { userProfileService } from "@/services/user_profile"
 import { revalidatePath } from "next/cache"
 
 export async function cancelApplicationAction(applicationId: string) {
   // Call existing service securely on the server
-  const result = await studentProfileService.cancelAccommodationApplication(applicationId);
-  
+  const result = await userProfileService.cancelAccommodationApplication(applicationId);
+
   // This automatically clears the cache so the page immediately shows the updated data
   revalidatePath("/student/application"); 
   
   if (result.error) {
-    return { error: "Failed to cancel application." }; 
+    return { error: "Failed to cancel application." };
   }
-  
+
   return { error: null };
 }

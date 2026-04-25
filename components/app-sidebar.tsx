@@ -18,6 +18,7 @@ import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
 import { useSidebar } from "@/components/ui/sidebar"
+import { UserProfile } from "@/types/user_profile"
 import Link from "next/link"
 import {
   Sidebar,
@@ -59,6 +60,8 @@ const sidebarConfig = {
     label: "Dorm Manager",
     nav: [
       { title: "Dashboard", url: "/manager/dashboard", icon: PieChart },
+      { title: "Housing", url: "/manager/housing", icon: Building2 },
+      { title: "Residents", url: "/manager/residents", icon: Users },
       { title: "Applications", url: "/manager/applications", icon: Newspaper },
       { title: "Residents", url: "/manager/residents", icon: Users },
     ],
@@ -107,7 +110,7 @@ export function AppSidebar({
 
         if (userProfile) {
           setUserData({
-            name: `${userProfile.first_name} ${userProfile.last_name}`.trim() || user.email?.split("@")[0] || "User",
+            name: `${userProfile.first_name || ""} ${userProfile.last_name || ""}`.trim() || user.email?.split("@")[0] || "User",
             email: userProfile.email || user.email || "",
             avatar: userProfile.profile_picture_url || "/avatars/shadcn.jpg",
           })

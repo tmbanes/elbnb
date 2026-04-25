@@ -38,9 +38,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-<<<<<<< HEAD
-.env*.local
-=======
 .env*
->>>>>>> develop
 config.bat
