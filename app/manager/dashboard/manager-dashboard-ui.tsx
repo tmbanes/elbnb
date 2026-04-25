@@ -26,6 +26,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import Image from "next/image";
 import Link from "next/link";
 import { Archivo } from "next/font/google";
+import Link from "next/link";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -766,7 +767,11 @@ export default function ManagerDashboardUI({ profile, onLogout, isLoggingOut }: 
                                                     )}
                                                     <td className="py-5 px-8">
                                                         <div className="flex justify-end">
-                                                            <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-[#0B3A64] hover:bg-slate-100 transition-all"><User className="w-4 h-4" /></button>
+                                                            <Link href={`/manager/student-history/${student.id}`}>
+                                                                <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-[#0B3A64] hover:bg-slate-100 transition-all" title="View History">
+                                                                    <History className="w-4 h-4" />
+                                                                </button>
+                                                            </Link>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -807,9 +812,11 @@ export default function ManagerDashboardUI({ profile, onLogout, isLoggingOut }: 
                                         <table className="w-full text-left border-collapse">
                                             <thead>
                                                 <tr className="bg-[#F9F7EF] border-b border-slate-100">
-                                                    <th className="py-3 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.1em]">Student / Property</th>
-                                                    <th className="py-3 px-2 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.1em]">Date Applied</th>
-                                                    <th className="py-3 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.1em] text-right">Status</th>
+                                                    <th className="py-5 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Student / Property</th>
+                                                    <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Student Number</th>
+                                                    <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Date Applied</th>
+                                                    <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em] text-right">Status</th>
+                                                    <th className="py-5 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em] text-right">History</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -836,18 +843,34 @@ export default function ManagerDashboardUI({ profile, onLogout, isLoggingOut }: 
                                                                         <p className="text-[10px] text-slate-400 font-medium mt-0.5">{app.preferred_unit_type || dormName}</p>
                                                                     </div>
                                                                 </div>
-                                                            </td>
-                                                            <td className="py-4 px-2">
-                                                                <span className="text-[12px] font-bold text-slate-600">
-                                                                    {app.date_submitted ? new Date(app.date_submitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-                                                                </span>
-                                                            </td>
-                                                            <td className="py-4 px-6 text-right">
-                                                                <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${statusColor}`}>{statusLabel}</span>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                }) : (
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 px-4">
+                                                            <span className="text-[12px] font-bold text-slate-600">{app.student_number}</span>
+                                                        </td>
+                                                        <td className="py-4 px-4">
+                                                            <span className="text-[11px] text-slate-400 font-bold">
+                                                                {new Date(app.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-4 px-6 text-right">
+                                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
+                                                                app.status?.toLowerCase() === 'approved' ? 'bg-[#EEF4E7] text-[#4A7A2A]' : 
+                                                                app.status?.toLowerCase() === 'rejected' ? 'bg-[#FDECEB] text-[#DE7A6A]' : 
+                                                                'bg-[#FFF9E6] text-[#B08E2E]'
+                                                            }`}>
+                                                                {app.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-4 px-6 text-right">
+                                                            <Link href={`/manager/student-history/${app.user_id}`}>
+                                                                <button className="text-slate-300 hover:text-[#5591AB] transition-colors">
+                                                                    <History className="w-4 h-4" />
+                                                                </button>
+                                                            </Link>
+                                                        </td>
+                                                    </tr>
+                                                )) : (
                                                     <tr>
                                                         <td colSpan={3} className="py-10 text-center text-slate-300 text-[11px] font-bold uppercase tracking-widest">No recent applications</td>
                                                     </tr>

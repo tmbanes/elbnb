@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 import { AccommodationAssignment, AssignmentStatus } from '@/types/assignment_workflow'
+import { AccommodationHistory } from '@/types/accomodation/accomodationHistory'
 
 // Statuses that can be terminated by the user (active → terminated)
 const TERMINATABLE_STATUSES: AssignmentStatus[] = ['active']
@@ -13,7 +14,26 @@ export class AssignmentService {
   // ─── READ ────────────────────────────────────────────────────────────────────
 
   /** Fetch all assignments for a given user, joined with unit + accommodation data. */
-  async getAssignmentsByUser(userId: string) {
+  static async getAssignmentsByUser(userId: string): Promise<AccommodationAssignment[]> {
+    const supabase = await createSupabaseServerClient()
+
+    const { data, error } = await supabase
+      .from('accommodation_assignment')
+      .select('*')
+      .eq('user_id', userId)
+      .order('move_in_date', { ascending: false })
+
+    if (error) {
+      throw new Error(`Failed to fetch assignments: ${error.message}`)
+    }
+    console.log("Fetched Assignments from Service: " + data)
+    return data || []
+  }
+
+  /** Fetch the Accommodation History of a User including all complete details of the Assignment, Accommodation, and Unit */
+  static async getAccommodationHistoryByUser(
+    userId: string
+  ): Promise<AccommodationHistory[]> {
     const supabase = await createSupabaseServerClient();
 
     const { data, error } = await supabase
@@ -21,27 +41,22 @@ export class AssignmentService {
       .select(`
         *,
         accommodation:accommodation_id (
-          accommodation_id,
-          name,
-          location,
-          accommodation_type
+          *
         ),
         unit:unit_id (
-          unit_id,
-          unit_number,
-          unit_type,
-          rental_fee,
-          billing_period
+          *
         )
       `)
       .eq("user_id", userId)
       .order("move_in_date", { ascending: false });
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error(`Failed to fetch accommodation history: ${error.message}`);
     }
 
-    return data ?? [];
+    console.log("Fetched Accommodation History from Service:", data);
+
+    return (data || []) as AccommodationHistory[];
   }
 
   /** Fetch a single assignment by ID. */

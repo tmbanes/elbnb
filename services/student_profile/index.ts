@@ -126,7 +126,7 @@ not yet tested
 
     // added document successfully
     const { data: dbData, error: dbError } = await client
-      .from("Document")
+      .from("documents")
       .insert({
         user_id: user_id,
         application_id: application_id,
@@ -216,6 +216,11 @@ not yet tested
     return { data, error: null };
   },
 
+  async getDocuments(user_id: string) {
+    const client = await supabase();
+
+    const { data, error } = await client
+      .from("documents")
   async getCurrentAccommodation(user_id: string) {
     const client = await supabase();
     const { data, error } = await client
@@ -309,6 +314,17 @@ not yet tested
       .eq("user_id", user_id)
       .order("created_at", { ascending: false });
 
+    if (error) {
+      // PGRST116 is the error code for 'relation not found' (table missing)
+      if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn("Documents table is missing in Supabase. Returning empty array.");
+        return { data: [], error: null };
+      }
+      console.error("Error fetching documents:", error.message, error.details, error.hint);
+    }
+
+    return { data, error };
+  },
     return { data, error };
   }
 };
