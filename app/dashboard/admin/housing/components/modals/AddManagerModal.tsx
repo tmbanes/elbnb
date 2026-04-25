@@ -66,16 +66,16 @@ export default function AddManagerModal({
 
   // Tab 2 — create new
   const [createForm, setCreateForm] = useState(EMPTY_CREATE);
-  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(
+    null
+  );
+  const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
 
   // ── Reset on open ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isOpen) return;
     setError(null);
     setSubmitState("idle");
-    setGeneratedPassword(null);
-    setCopied(false);
     setActiveTab("existing");
 
     if (isEditing && existingManager) {
@@ -85,6 +85,8 @@ export default function AddManagerModal({
       setSelectedUserId("");
       setOfficeLocation("");
       setCreateForm(EMPTY_CREATE);
+      setGeneratedPassword(null);
+      setCopyState("idle");
     }
   }, [isOpen, existingManager, isEditing]);
 
@@ -101,13 +103,6 @@ export default function AddManagerModal({
   function handleCreateFormChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     setCreateForm((prev) => ({ ...prev, [name]: value }));
-  }
-
-  async function handleCopy() {
-    if (!generatedPassword) return;
-    await navigator.clipboard.writeText(generatedPassword);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
   }
 
   // ── Submit — Edit ──────────────────────────────────────────────────────────
@@ -179,12 +174,18 @@ export default function AddManagerModal({
       const res = await fetch("/api/admin/housing/managers/create-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ first_name, last_name, email, office_location }),
+        body: JSON.stringify({
+          first_name,
+          last_name,
+          email,
+          office_location,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Account creation failed");
 
-      setGeneratedPassword(data.generated_password);
+      setGeneratedPassword(data.temporary_password ?? null);
+      setCopyState("idle");
       setSubmitState("success");
       onSuccess(); // refresh the list in background
     } catch (err: any) {
@@ -211,47 +212,39 @@ export default function AddManagerModal({
       }
     >
       {/* ── SUCCESS STATE (Tab 2 only) ───────────────────────────────────── */}
-      {submitState === "success" && generatedPassword && (
+      {submitState === "success" && (
         <div className="space-y-4">
           <div className="rounded-lg bg-green-50 border border-green-200 p-4">
             <p className="text-sm font-semibold text-green-800 mb-1">
               ✅ Account created successfully
             </p>
             <p className="text-xs text-green-700">
-              Share this password securely with the manager. It will not be
-              shown again.
+              A temporary password was generated. Copy it and share it securely
+              with the manager.
             </p>
           </div>
 
-          <div>
-            <Label className="text-sm font-semibold mb-1 block">
-              Generated Password
-            </Label>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-lg border border-border bg-muted px-3 py-2 text-sm font-mono tracking-widest text-foreground">
-                {generatedPassword}
-              </code>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCopy}
-                className={
-                  copied
-                    ? "border-green-400 text-green-700"
-                    : ""
-                }
-              >
-                {copied ? "✓ Copied" : "Copy"}
-              </Button>
+          {generatedPassword && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 space-y-2">
+              <p className="text-xs font-semibold text-amber-800">
+                Temporary Password (showing once)
+              </p>
+              <div className="flex gap-2">
+                <Input value={generatedPassword} readOnly />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(generatedPassword);
+                    setCopyState("copied");
+                    setTimeout(() => setCopyState("idle"), 1500);
+                  }}
+                >
+                  {copyState === "copied" ? "Copied" : "Copy"}
+                </Button>
+              </div>
             </div>
-          </div>
-
-          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
-            <p className="text-xs text-amber-700">
-              ⚠️ Remind the manager to change their password on first login.
-            </p>
-          </div>
+          )}
 
           <DialogFooter>
             <Button
@@ -416,8 +409,8 @@ export default function AddManagerModal({
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div className="rounded-lg bg-blue-50 border border-blue-100 p-3">
                 <p className="text-xs text-blue-700">
-                  A login account will be created. A temporary password will be
-                  shown once — share it securely with the manager.
+                  A login account will be created with a temporary password.
+                  After creation, you will see the password once and can copy it.
                 </p>
               </div>
 

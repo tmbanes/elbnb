@@ -20,12 +20,10 @@ export const getSupabaseAdmin = () => {
 // Deprecated: directly exporting the instance can cause issues in Next.js Turbopack 
 // when the module is evaluated in environments without the secret key.
 // But we'll keep a lazy-initialized version for backward compatibility if needed.
-let adminInstance: ReturnType<typeof createClient> | null = null;
+let adminInstance: any = null;
 
 export const supabaseAdmin = (() => {
-  // We return a proxy or a lazy getter if possible, but for simplicity:
-  // In most cases, you should switch to using getSupabaseAdmin() directly.
-  return new Proxy({} as ReturnType<typeof createClient>, {
+  return new Proxy({} as any, {
     get(_, prop) {
       if (!adminInstance) {
         adminInstance = getSupabaseAdmin();
@@ -33,4 +31,4 @@ export const supabaseAdmin = (() => {
       return (adminInstance as any)[prop];
     },
   });
-})() as unknown as ReturnType<typeof createClient>;
+})() as any;

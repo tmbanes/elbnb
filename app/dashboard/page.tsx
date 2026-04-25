@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
 import { ProfileComponent } from '@/components/ui/profile-component'
+import Link from 'next/link'
+import { ProfileUpload } from './ProfileUpload'
 import { getApiAuthenticatedUser } from '@/lib/auth/session'
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 

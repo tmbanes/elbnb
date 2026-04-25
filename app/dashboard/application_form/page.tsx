@@ -52,31 +52,31 @@ function ApplicationFormContent() {
   const checkOut = derivedCheckOut()
 
   // AUTH CHECK — must be logged in to access this page
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch('/api/auth')
-        if (!res.ok) throw new Error('Auth failed')
-        const data = await res.json()
-        const user = data.user
+  // useEffect(() => {
+  //   const fetchUser = async () => {
+  //     try {
+  //       const res = await fetch('/api/auth')
+  //       if (!res.ok) throw new Error('Auth failed')
+  //       const data = await res.json()
+  //       const user = data.user
 
-        if (!user?.user_id) {
-          router.push('/login')
-          return
-        }
+  //       if (!user?.user_id) {
+  //         router.push('/login')
+  //         return
+  //       }
 
-        setUserId(user.user_id)
-        setUserRole(user.role)
-      } catch (err) {
-        console.error(err)
-        router.push('/login')
-      } finally {
-        setIsLoading(false)
-      }
-    }
+  //       setUserId(user.user_id)
+  //       setUserRole(user.role)
+  //     } catch (err) {
+  //       console.error(err)
+  //       router.push('/login')
+  //     } finally {
+  //       setIsLoading(false)
+  //     }
+  //   }
 
-    fetchUser()
-  }, [router])
+  //   fetchUser()
+  // }, [router])
 
   // FETCH ACCOMMODATION + UNIT details for display
   useEffect(() => {
