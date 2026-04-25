@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CancelApplicationModal } from "./CancelModal";
-import { AccommodationApplication } from "@/types/student_profile";
+import { AccommodationApplication } from "@/types/user_profile";
 import { Check, Clock, X, ChevronLeft, ChevronRight} from "lucide-react";
 import { cn } from "@/lib/utils/ui-utils";
 import { PaymentModal } from "./PaymentModal";
@@ -102,7 +102,7 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
             <div className="w-1.5 h-8 bg-[#264384] rounded-full" />
             <h2 className="text-2xl font-bold text-[#44291B]">Active Applications</h2>
           </div>
-          
+
           {activeApplications.length > 0 ? (
             <>
               {displayedApps.length === 1 ? (

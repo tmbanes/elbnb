@@ -18,6 +18,7 @@ import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
 import { useSidebar } from "@/components/ui/sidebar"
+import { UserProfile } from "@/types/user_profile"
 import Link from "next/link"
 import {
   Sidebar,

@@ -135,7 +135,7 @@ function ApplicationRow({
             confirmAction === "forward"
               ? "bg-green-50 border border-green-200 text-green-800"
               : "bg-red-50 border border-red-200 text-red-800"
-          }`}
+            }`}
         >
           <div className="text-sm font-medium text-gray-700 text-center">
             <span>
@@ -158,11 +158,10 @@ function ApplicationRow({
               <button
                 onClick={handleConfirm}
                 disabled={loading}
-                className={`px-2 py-1 rounded text-white cursor-pointer disabled:opacity-50 ${
-                  confirmAction === "forward"
+                className={`px-2 py-1 rounded text-white cursor-pointer disabled:opacity-50 ${confirmAction === "forward"
                     ? "bg-green-600 hover:bg-green-700"
                     : "bg-red-600 hover:bg-red-700"
-                }`}
+                  }`}
               >
                 {loading ? "..." : "Confirm"}
               </button>
@@ -243,6 +242,7 @@ export default function ManagerApplicationsPage() {
     try {
       const { accommodation, applications: apps, units: fetchedUnits } =
         await fetchManagerApplications();
+
         
       setAccommodationName(accommodation.name);
       setApplications(apps);
