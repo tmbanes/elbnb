@@ -3,25 +3,25 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { User } from "@supabase/supabase-js";
+import { User } from "@/types/user.types";
 
 //ui components
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
+import {
+  Card,
   CardContent,
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 
 //style constants
 const label_style = "block text-xs font-semibold uppercase tracking-wider text-slate-300"
 
-const field_style = 
+const field_style =
   "rounded-full border-none bg-[#fcf4d9] px-4 py-1.5 text-base " +
   "text-[#2d1a12] placeholder-[#2d1a12]/30 shadow-sm " +
   "transition-all outline-none";
@@ -56,7 +56,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user ?? null);
+      setCurrentUser((session?.user as unknown as User) ?? null);
     });
     return () => listener?.subscription.unsubscribe();
   }, [supabase]);
@@ -67,7 +67,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
     }
   }, [currentUser, router]);
 
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -125,7 +125,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
   return (
 
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#8dbd59] p-4 font-sans selection:bg-emerald-500/30">
-      
+
       {/* Main Auth Card */}
       <Card className="bg-[#5591AB] shadow-sm w-fit">
         <CardHeader>
@@ -138,88 +138,88 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
 
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="first_name" className={label_style}>First Name</Label>
-                  <Input
-                    className={field_style}
-                    id="first_name"
-                    name="first_name"
-                    type="text"
-                    value={formData.first_name}
-                    onChange={handleChange}
-                    placeholder="First name"
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="middle_name" className={label_style}>Middle Name</Label>
-                  <Input
-                    className={field_style}
-                    id="middle_name"
-                    name="middle_name"
-                    type="text"
-                    value={formData.middle_name}
-                    onChange={handleChange}
-                    placeholder="Middle name"
-                  />
-                </div>
-              </div>
-
+            <div className="grid gap-2 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="last_name" className={label_style}>Last Name</Label>
+                <Label htmlFor="first_name" className={label_style}>First Name</Label>
                 <Input
                   className={field_style}
-                  id="last_name"
-                  name="last_name"
+                  id="first_name"
+                  name="first_name"
                   type="text"
-                  value={formData.last_name}
+                  value={formData.first_name}
                   onChange={handleChange}
-                  placeholder="Last name"
+                  placeholder="First name"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="middle_name" className={label_style}>Middle Name</Label>
+                <Input
+                  className={field_style}
+                  id="middle_name"
+                  name="middle_name"
+                  type="text"
+                  value={formData.middle_name}
+                  onChange={handleChange}
+                  placeholder="Middle name"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="last_name" className={label_style}>Last Name</Label>
+              <Input
+                className={field_style}
+                id="last_name"
+                name="last_name"
+                type="text"
+                value={formData.last_name}
+                onChange={handleChange}
+                placeholder="Last name"
+                required
+              />
+            </div>
+
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email" className={label_style}>Email</Label>
+                <Input
+                  className={field_style}
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="name@up.edu.ph"
                   required
                 />
               </div>
 
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email" className={label_style}>Email</Label>
-                  <Input
-                    className={field_style}
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="name@up.edu.ph"
-                    required
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="password" className={label_style}>Password</Label>
-                  <Input
-                    className={field_style}
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Choose a secure password"
-                    required
-                  />
-                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password" className={label_style}>Password</Label>
+                <Input
+                  className={field_style}
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Choose a secure password"
+                  required
+                />
               </div>
+            </div>
 
             {status && (
               <p className="rounded-full bg-red-500/20 px-4 py-3 text-center text-sm text-red-700">
                 {status}
               </p>
             )}
-            
+
             <Button type="submit" disabled={loading} className={button_style}>
               {loading ? "Signing up..." : "Create account"}
             </Button>
-            
+
           </form>
         </CardContent>
       </Card>

@@ -1,20 +1,16 @@
 import { redirect } from 'next/navigation'
-import { ProfileComponent } from '@/components/ui/profile-component'
-import Link from 'next/link'
-import { ProfileUpload } from './ProfileUpload'
 import { getApiAuthenticatedUser } from '@/lib/auth/session'
-import { createSupabaseServerClient } from '@/lib/supabase/server-client'
+import { User } from '@/types/user.types'
 
 export default async function DashboardPage() {
   const user = await getApiAuthenticatedUser()
   if (!user) {
-    redirect("/");
+    redirect("/onboarding");
   }
 
-  // Fetch metadata from supabase auth
-  const supabase = await createSupabaseServerClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
+  if (!user.role) redirect("/role-selection");
 
+  // Fetch metadata from supabase auth
   if (user.role === "student") redirect("/student/dashboard");
   if (user.role === "guest") redirect("/guest/dashboard");
   if (user.role === "dormitory_manager") redirect("/manager/dashboard");

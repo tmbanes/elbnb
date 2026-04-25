@@ -324,7 +324,7 @@ export default function ApplyAccommodationForm() {
       try {
         const userProfile = await getCurrentUserFromApi();
 
-        if (userProfile) {
+        if (userProfile && userProfile.role) {
           setUserId(userProfile.user_id);
           setUserRole(userProfile.role);
 
@@ -372,22 +372,22 @@ export default function ApplyAccommodationForm() {
           null;
         setAccommodation(matched);
 
-          const resUnit = await fetch(
-            `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
-          );
-          if (!resUnit.ok) throw new Error("Failed to fetch units");
+        const resUnit = await fetch(
+          `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
+        );
+        if (!resUnit.ok) throw new Error("Failed to fetch units");
 
-          const dataUnits: Unit[] = await resUnit.json();
-          
-          // Derive available unit types from the fetched units
-          const types = Array.from(new Set(dataUnits.map(u => u.unit_type)));
-          setDynamicUnitTypes(types);
+        const dataUnits: Unit[] = await resUnit.json();
 
-          if (unitIdFromQuery) {
-            const matchedUnit =
-              dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
-            setUnit(matchedUnit);
-          }
+        // Derive available unit types from the fetched units
+        const types = Array.from(new Set(dataUnits.map(u => u.unit_type)));
+        setDynamicUnitTypes(types);
+
+        if (unitIdFromQuery) {
+          const matchedUnit =
+            dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
+          setUnit(matchedUnit);
+        }
       } catch (error) {
         console.error("Failed to fetch accommodation:", error);
       } finally {
@@ -534,8 +534,8 @@ export default function ApplyAccommodationForm() {
               <div className="w-full md:w-1/3 flex-shrink-0">
                 <div className="w-full h-full min-h-[200px] bg-gray-300 flex items-center justify-center text-gray-500 text-xs rounded-xl overflow-hidden shadow-sm border-2 border-[#78A24C]/30 relative">
                   {accommodation.image ? (
-                    <img 
-                      src={accommodation.image} 
+                    <img
+                      src={accommodation.image}
                       alt={accommodation.name}
                       className="absolute inset-0 w-full h-full object-cover"
                       onError={(e) => {
@@ -716,17 +716,17 @@ export default function ApplyAccommodationForm() {
                           </SelectTrigger>
                           <SelectContent>
                             {dynamicUnitTypes.length > 0 ? (
-                                dynamicUnitTypes.map((type) => (
-                                    <SelectItem
-                                        key={type}
-                                        value={type}
-                                        className="capitalize"
-                                    >
-                                        {type === "wholeunit" ? "Whole Unit" : type}
-                                    </SelectItem>
-                                ))
+                              dynamicUnitTypes.map((type) => (
+                                <SelectItem
+                                  key={type}
+                                  value={type}
+                                  className="capitalize"
+                                >
+                                  {type === "wholeunit" ? "Whole Unit" : type}
+                                </SelectItem>
+                              ))
                             ) : (
-                                <SelectItem value="none" disabled>No types available</SelectItem>
+                              <SelectItem value="none" disabled>No types available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>

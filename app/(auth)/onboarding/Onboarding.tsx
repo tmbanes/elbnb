@@ -41,7 +41,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-[#8dbd59] flex items-center justify-center p-4" style={{ margin: 0, fontFamily: 'var(--font-archivo), sans-serif' }}>
       <div className="w-full max-w-4xl flex flex-col items-center">
-        
+
         <div
           className="w-[140%] h-40 bg-[#3e2319] border-b-4 border-[#2d1a12] mb-[-4px] relative z-20"
           style={{
@@ -55,7 +55,7 @@ export default function Auth() {
           style={{ backgroundImage: STYLES.gradients.wall }}
         >
           <div className="w-[45%] h-[100%] grid grid-cols-2 gap-1 relative">
-            
+
             <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] border-[#44291B] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${upperOpen ? '-translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${upperOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
@@ -102,7 +102,7 @@ export default function Auth() {
           style={{ backgroundImage: STYLES.gradients.lowerWall }}
         >
           <div className="w-[45%] h-[100%] grid grid-cols-2 gap-1 relative">
-            
+
             <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${lowerOpen ? '-translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${lowerOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />

@@ -53,7 +53,7 @@ export interface User {
   last_name: string;
   middle_name?: string; // Optional middle name
   email: string;
-  role: UserRole;
+  role: UserRole | null;
   user_status: UserStatus;
   created_at: string; // ISO date string
   sex: string;
