@@ -13,6 +13,7 @@ import {
 import { X } from "lucide-react";
 
 export interface UnitFormData {
+  unit_number: string;
   unit_type: string;
   number_of_units: string;
   max_occupancy: string;
@@ -24,6 +25,7 @@ export interface UnitFormData {
 }
 
 export const EMPTY_UNIT: UnitFormData = {
+  unit_number: "",
   unit_type: "",
   number_of_units: "1",
   max_occupancy: "",

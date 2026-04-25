@@ -4,17 +4,14 @@ import { getApiAuthenticatedUser } from '@/lib/auth/session'
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 
 export default async function StudentProfilePage() {
-  const auth = await getApiAuthenticatedUser()
+  const user = await getApiAuthenticatedUser()
 
-  if ("error" in auth) {
+  if (!user) {
     redirect("/");
   }
 
-  const user = auth.user;
-
   // Fetch data from database and auth metadata
   const supabase = await createSupabaseServerClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
   const { data: dbMetadata } = await supabase
     .from('student')
     .select('*')
@@ -23,7 +20,7 @@ export default async function StudentProfilePage() {
 
   // Merge: Database values take priority over auth metadata
   const mergedMetadata = {
-    ...(authUser?.user_metadata || {}),
+    ...(user || {}),
     ...(dbMetadata || {})
   };
 

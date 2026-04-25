@@ -6,12 +6,10 @@ import { getApiAuthenticatedUser } from '@/lib/auth/session'
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 
 export default async function DashboardPage() {
-  const auth = await getApiAuthenticatedUser()
-  if ("error" in auth) {
+  const user = await getApiAuthenticatedUser()
+  if (!user) {
     redirect("/");
   }
-
-  const user = auth.user;
 
   // Fetch metadata from supabase auth
   const supabase = await createSupabaseServerClient();

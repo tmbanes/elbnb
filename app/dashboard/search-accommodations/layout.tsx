@@ -7,7 +7,6 @@ export default function SearchAccommodationsLayout({ children }: { children: Rea
     <TooltipProvider>
       <SidebarProvider>
         <AppSidebar role="student" />
-        <SidebarTrigger />
         <main className="flex-1">
           {children}
         </main>

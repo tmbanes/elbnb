@@ -294,7 +294,7 @@ export default function ApplyAccommodationForm() {
     };
 
     try {
-      const response = await fetch("/api/applications/create_application", {
+      const response = await fetch("/api/student/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -360,7 +360,7 @@ export default function ApplyAccommodationForm() {
 
     const fetchAccommodation = async () => {
       try {
-        const res = await fetch("/api/dashboard/tiles?type=accommodations");
+        const res = await fetch("/api/shared/dashboard/tiles?type=accommodations");
         if (!res.ok) throw new Error("Failed to fetch accommodations");
 
         const data: Accommodation[] = await res.json();
@@ -370,7 +370,7 @@ export default function ApplyAccommodationForm() {
         setAccommodation(matched);
 
           const resUnit = await fetch(
-            `/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
+            `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
           );
           if (!resUnit.ok) throw new Error("Failed to fetch units");
 
