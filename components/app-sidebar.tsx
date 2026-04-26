@@ -131,7 +131,7 @@ export function AppSidebar({
     fetchUser()
   }, [supabase])
 
-  const { toggleSidebar, state, setOpen } = useSidebar()
+  const { toggleSidebar, state, setOpen, isMobile } = useSidebar()
 
   if (!hasMounted) {
     return <div className="w-[var(--sidebar-width)] bg-[#8ba665] h-screen" />;
@@ -140,9 +140,9 @@ export function AppSidebar({
   return (
     <>
       {/* Click-away overlay for explicitly closing the sidebar when it is expanded */}
-      {state === "expanded" && (
+      {state === "expanded" && isMobile && (
         <div
-          className="fixed inset-0 z-30 bg-black/5 backdrop-blur-sm cursor-pointer"
+          className="fixed inset-0 z-30 bg-black/5 backdrop-blur-sm cursor-pointer md:hidden"
           onClick={() => setOpen ? setOpen(false) : toggleSidebar()}
         />
       )}
