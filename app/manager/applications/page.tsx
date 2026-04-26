@@ -58,7 +58,7 @@ export default async function ManagerApplicationsPage() {
         )
       `)
       .eq("preferred_accommodation_id", accommodationId)
-      .eq("application_status", "pending_dorm_manager")
+      .in("application_status", ["pending_dorm_manager", "rejected"])
       .order("date_submitted", { ascending: false }),
     supabase
       .from("unit")

@@ -296,21 +296,38 @@ export default function ReviewApplication({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            className="bg-[#264384] hover:bg-[#1e3569] text-white font-bold rounded-xl h-12 shadow-lg transition-all"
-            onClick={() => setConfirmAction("forward")}
-          >
-            Forward to Admin
-          </Button>
-          <Button
-            variant="outline"
-            className="bg-[#FEE2E2] hover:bg-[#FCA5A5] text-rose-600 border-none font-bold rounded-xl h-12 transition-all"
-            onClick={() => setConfirmAction("reject")}
-          >
-            Reject
-          </Button>
-        </div>
+        {application.application_status === "pending_dorm_manager" ? (
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              className="bg-[#264384] hover:bg-[#1e3569] text-white font-bold rounded-xl h-12 shadow-lg transition-all"
+              onClick={() => setConfirmAction("forward")}
+            >
+              Forward to Admin
+            </Button>
+            <Button
+              variant="outline"
+              className="bg-[#FEE2E2] hover:bg-[#FCA5A5] text-rose-600 border-none font-bold rounded-xl h-12 transition-all"
+              onClick={() => setConfirmAction("reject")}
+            >
+              Reject
+            </Button>
+          </div>
+        ) : (
+          <div className={cn(
+            "p-4 rounded-2xl border text-center transition-all animate-in zoom-in-95 duration-300",
+            application.application_status === "rejected" 
+              ? "bg-rose-50 border-rose-100 text-rose-600" 
+              : "bg-emerald-50 border-emerald-100 text-emerald-600"
+          )}>
+            <p className="text-xs font-extrabold uppercase tracking-widest">
+              {application.application_status === "rejected" 
+                ? "Application Rejected" 
+                : application.application_status === "pending_admin" 
+                  ? "Forwarded to Admin" 
+                  : `Application ${application.application_status.replace(/_/g, ' ')}`}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* FORWARD CONFIRMATION MODAL */}
@@ -353,8 +370,8 @@ export default function ReviewApplication({
               </Button>
               <Button
                 onClick={handleConfirm}
-                className="flex-1 rounded-xl font-bold text-white h-11 shadow-lg transition-all bg-[#264384] hover:bg-[#1e3569]"
-                disabled={loading}
+                className="flex-1 rounded-xl font-bold text-white h-11 shadow-lg transition-all bg-[#264384] hover:bg-[#1e3569] disabled:bg-gray-300 disabled:shadow-none"
+                disabled={loading || !selectedUnitId}
               >
                 {loading ? "Processing..." : "Forward Application"}
               </Button>
