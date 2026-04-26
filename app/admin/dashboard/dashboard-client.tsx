@@ -141,14 +141,14 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
   });
 
   const kpiCards = [
+    { label: "Revenue (MTD)", value: fmt(stats.revenueThisMonth), color: "#78A24C", desc: "This month", isString: true, icon: Wallet },
+    { label: "Overdue Payments", value: stats.overdueCount, color: stats.overdueCount > 0 ? "#DF3538" : "#78A24C", desc: stats.overdueCount > 0 ? "Action required" : "All clear", icon: AlertTriangle },
+    { label: "Waiting List", value: stats.waitingListCount, color: "#F2C908", desc: "Pending review", icon: Clock3 },
+    { label: "Students Housed", value: stats.studentsHoused, color: "#EB8A0B", desc: "Currently active", icon: Scissors },
+    { label: "Occupied Units", value: stats.occupiedUnits, color: "#EB8A0B", desc: pct(stats.occupancyRate) + " occupancy", icon: Users },
+    { label: "Available Units", value: stats.availableUnits, color: "#78A24C", desc: "Ready to assign", icon: KeyRound },
     { label: "Total Properties", value: stats.totalProperties, color: "#5591AB", desc: `${stats.totalProperties} registered`, icon: Building2 },
-    { label: "Total Units", value: stats.totalUnits, color: "#1BB586", desc: `Across all properties`, icon: Home },
-    { label: "Occupied Units", value: stats.occupiedUnits, color: "#F59E0B", desc: pct(stats.occupancyRate) + " occupancy", icon: Users },
-    { label: "Available Units", value: stats.availableUnits, color: "#5C9E44", desc: "Ready to assign", icon: KeyRound },
-    { label: "Students Housed", value: stats.studentsHoused, color: "#0D2A6B", desc: "Currently active", icon: Scissors },
-    { label: "Waiting List", value: stats.waitingListCount, color: stats.waitingListCount > 5 ? "#EF4444" : "#F59E0B", desc: "Pending review", icon: Clock3 },
-    { label: "Revenue (MTD)", value: fmt(stats.revenueThisMonth), color: "#1BB586", desc: "This month", isString: true, icon: Wallet },
-    { label: "Overdue Payments", value: stats.overdueCount, color: stats.overdueCount > 0 ? "#EF4444" : "#5C9E44", desc: stats.overdueCount > 0 ? "Action required" : "All clear", icon: AlertTriangle },
+    { label: "Total Units", value: stats.totalUnits, color: "#264384", desc: `Across all properties`, icon: Home },
   ];
 
   return (
@@ -170,50 +170,84 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
         </div>
       </header>
 
-      {/* ── Overdue Alert Banner ── */}
-      {stats.overdueCount > 0 && (
-        <div className={`${archivo.className} w-full flex items-center gap-2.5 rounded-xl border border-[#f8c5c5] bg-[#FDEAEA] px-5 py-3 text-sm font-semibold text-[#8B1A1A] shadow-sm animate-in fade-in duration-500 delay-100`}>
-          <AlertCircle className="w-4 h-4 shrink-0 animate-pulse" />
-          {stats.overdueCount} overdue payment{stats.overdueCount > 1 ? "s" : ""} need immediate attention.
+      {/* ── Waiting List Banner ── */}
+      {stats.waitingListCount > 0 && (
+        <div className={`${archivo.className} w-full flex items-center gap-2.5 rounded-xl border border-[#f5df96] bg-[#FFFBEB] px-5 py-3 text-sm font-semibold text-[#92400E] shadow-sm animate-in fade-in duration-500 delay-100`}>
+          <span className="h-2 w-2 rounded-full bg-[#F2C908] animate-pulse" />
+          {stats.waitingListCount} student{stats.waitingListCount > 1 ? "s" : ""} on waiting list
         </div>
       )}
 
-      {/* ── Other Alerts ── */}
-      {alerts.length > 0 && alerts.filter((a) => !a.message.toLowerCase().includes("overdue payment")).length > 0 && (
-        <div className="flex flex-wrap gap-2 animate-in fade-in duration-500 delay-100">
-          {alerts
-            .filter((a) => !a.message.toLowerCase().includes("overdue payment"))
-            .map((a, i) => (
-            <div key={i} className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 ${a.type === "danger" ? "bg-[#FDEAEA] text-[#8B1A1A]" : a.type === "warning" ? "bg-[#FFF3CD] text-[#BA7517]" : "bg-[#E0E7FF] text-[#4338CA]"}`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${a.type === "danger" ? "bg-[#E24B4A]" : a.type === "warning" ? "bg-[#BA7517]" : "bg-[#4338CA]"}`} />
-              {a.message}
-            </div>
-          ))}
-        </div>
-      )}
+      {/* ── KPI Cards Sections ── */}
+      <div className="space-y-3 animate-in fade-in slide-in-from-bottom-6 duration-500 delay-150">
 
-      {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-6 duration-500 delay-150">
-        {kpiCards.map((card, i) => (
-          <Card
-            key={i}
-            className="shadow-sm border border-black/5 hover:shadow-md transition-all duration-300 ring-0 py-4 group cursor-default bg-white rounded-2xl"
-            style={{ borderBottom: `3px solid ${card.color}` }}
-          >
-            <CardContent className="p-0 px-4 flex flex-col gap-1.5 relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className={`${archivo.className} text-[11px] font-semibold tracking-wide text-[#64748b]`}>{card.label}</span>
-                <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                  <card.icon className="w-4 h-4" style={{ color: card.color }} />
-                </div>
-              </div>
-              <span className={`${archivoBlack.className} text-[42px] leading-tight text-[#1f2937]`}>
-                {card.isString ? card.value : card.value.toLocaleString()}
-              </span>
-              <span className={`${archivo.className} text-[11px] text-[#64748b] font-medium`}>{card.desc}</span>
-            </CardContent>
-          </Card>
-        ))}
+        {/* Financials */}
+        <div className="space-y-2">
+          <h3 className={`${archivo.className} text-[11px] font-bold uppercase tracking-[0.12em] text-[#6B7280] ml-1`}>Financials</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { label: "Revenue (MTD)", value: fmt(stats.revenueThisMonth), color: "#78A24C", desc: "This month", icon: Wallet },
+              { label: "Overdue Payments", value: stats.overdueCount, color: stats.overdueCount > 0 ? "#DF3538" : "#78A24C", desc: stats.overdueCount > 0 ? "Action required" : "All clear", icon: AlertTriangle },
+            ].map((card, i) => (
+              <Card key={i} className="shadow-sm border-none hover:shadow-md transition-all duration-300 ring-0 py-5 group cursor-default rounded-2xl" style={{ backgroundColor: card.color }}>
+                <CardContent className="p-0 px-5 flex flex-col gap-1 relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className={`${archivo.className} text-[11px] font-bold uppercase tracking-wider text-white/90`}>{card.label}</span>
+                    <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm"><card.icon className="w-5 h-5 text-white" /></div>
+                  </div>
+                  <span className={`${archivoBlack.className} text-[38px] leading-tight text-white`}>{typeof card.value === "string" ? card.value : card.value.toLocaleString()}</span>
+                  <span className={`${archivo.className} text-[11px] text-white/80 font-medium`}>{card.desc}</span>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Occupancy & Units */}
+        <div className="space-y-2">
+          <h3 className={`${archivo.className} text-[11px] font-bold uppercase tracking-[0.12em] text-[#6B7280] ml-1`}>Occupancy & Units</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: "Occupied Units", value: stats.occupiedUnits, color: "#EB8A0B", desc: pct(stats.occupancyRate) + " occupancy", icon: Users },
+              { label: "Available Units", value: stats.availableUnits, color: "#78A24C", desc: "Ready to assign", icon: KeyRound },
+              { label: "Total Properties", value: stats.totalProperties, color: "#5591AB", desc: `${stats.totalProperties} registered`, icon: Building2 },
+              { label: "Total Units", value: stats.totalUnits, color: "#264384", desc: `Across all properties`, icon: Home },
+            ].map((card, i) => (
+              <Card key={i} className="shadow-sm border-none hover:shadow-md transition-all duration-300 ring-0 py-5 group cursor-default rounded-2xl" style={{ backgroundColor: card.color }}>
+                <CardContent className="p-0 px-5 flex flex-col gap-1 relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className={`${archivo.className} text-[11px] font-bold uppercase tracking-wider text-white/90`}>{card.label}</span>
+                    <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm"><card.icon className="w-5 h-5 text-white" /></div>
+                  </div>
+                  <span className={`${archivoBlack.className} text-[38px] leading-tight text-white`}>{typeof card.value === "string" ? card.value : card.value.toLocaleString()}</span>
+                  <span className={`${archivo.className} text-[11px] text-white/80 font-medium`}>{card.desc}</span>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Students */}
+        <div className="space-y-2">
+          <h3 className={`${archivo.className} text-[11px] font-bold uppercase tracking-[0.12em] text-[#6B7280] ml-1`}>Students</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { label: "Waiting List", value: stats.waitingListCount, color: "#F2C908", desc: "Pending review", icon: Clock3 },
+              { label: "Students Housed", value: stats.studentsHoused, color: "#EB8A0B", desc: "Currently active", icon: Scissors },
+            ].map((card, i) => (
+              <Card key={i} className="shadow-sm border-none hover:shadow-md transition-all duration-300 ring-0 py-5 group cursor-default rounded-2xl" style={{ backgroundColor: card.color }}>
+                <CardContent className="p-0 px-5 flex flex-col gap-1 relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className={`${archivo.className} text-[11px] font-bold uppercase tracking-wider text-white/90`}>{card.label}</span>
+                    <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm"><card.icon className="w-5 h-5 text-white" /></div>
+                  </div>
+                  <span className={`${archivoBlack.className} text-[38px] leading-tight text-white`}>{typeof card.value === "string" ? card.value : card.value.toLocaleString()}</span>
+                  <span className={`${archivo.className} text-[11px] text-white/80 font-medium`}>{card.desc}</span>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ── Row: Occupancy + Donut Charts ── */}
