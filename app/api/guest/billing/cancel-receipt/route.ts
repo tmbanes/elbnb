@@ -1,8 +1,9 @@
+import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
-export async function POST(req: NextRequest) {
+export const POST = withRole(['guest'], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
     const {
@@ -69,4 +70,4 @@ export async function POST(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Failed to cancel receipt.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});

@@ -1,10 +1,11 @@
+import { withRole } from "@/lib/auth/api-guard";
 // app/api/admin/residents/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
-export async function GET(_req: NextRequest) {
+export const GET = withRole(['housing_admin'], async (_req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 
@@ -79,9 +80,9 @@ export async function GET(_req: NextRequest) {
     const msg = e instanceof Error ? e.message : "Unexpected error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 
@@ -160,4 +161,4 @@ export async function PATCH(req: NextRequest) {
     const msg = e instanceof Error ? e.message : "Unexpected error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

@@ -61,40 +61,9 @@ const unitTypes: [UnitType, ...UnitType[]] = ["room", "bedspace", "wholeunit"];
 // Validation Schema
 const formSchema = z
   .object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
-    email: z
-      .string()
-      .min(1, "Email is required")
-      .refine(
-        (val) =>
-          /^[^\s@]+@(gmail\.com|up\.edu\.ph|yahoo\.com|outlook\.com)$/.test(
-            val,
-          ),
-        {
-          message:
-            "Email must end with @gmail.com, @up.edu.ph, @yahoo.com, or @outlook.com",
-        },
-      ),
-    studentId: z
-      .string()
-      .optional()
-      .refine((val) => !val || /^2\d{3}-\d{5}$/.test(val), {
-        message: "Student ID format must be 2XXX-XXXXX (e.g. 2024-12345)",
-      }),
-    contactNumber: z
-      .string()
-      .min(1, "Contact number is required")
-      .refine((val) => /^\d+$/.test(val), {
-        message: "Contact number must contain numbers only",
-      }),
-    applicantType: z.string().min(1, "Applicant type is required"),
-    sex: z.string().min(1, "Sex is required"),
     notes: z.string().optional(),
     preferred_accommodation_id: z.string().min(1, "Dormitory is required"),
-    preferred_unit_type: z.enum(unitTypes, {
-      errorMap: () => ({ message: "Please select a valid unit type" }),
-    }),
+    preferred_unit_type: z.string().min(1, "Please select a valid unit type"),
     checkIn: z.date().refine((val) => val !== undefined && val !== null, {
       message: "Check-in date is required",
     }),
@@ -233,6 +202,17 @@ export default function ApplyAccommodationForm() {
   const [userRole, setUserRole] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormValues | null>(null);
+  const [dynamicUnitTypes, setDynamicUnitTypes] = useState<string[]>([]);
+
+  const [userInfo, setUserInfo] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    contactNumber: "",
+    studentId: "",
+    role: "",
+    sex: "",
+  });
 
   const {
     register,
@@ -299,7 +279,7 @@ export default function ApplyAccommodationForm() {
       }));
 
       // Single request — no Content-Type header, browser sets multipart boundary
-      const response = await fetch("/api/applications/create_application", {
+      const response = await fetch("/api/student/applications", {
         method: "POST",
         body: formData,
       });
@@ -307,6 +287,7 @@ export default function ApplyAccommodationForm() {
       if (!response.ok) {
         const errorData = await response.json();
         alert(errorData.error || "Failed to submit.");
+        setShowSuccess(false);
         return;
       }
 
@@ -331,6 +312,7 @@ export default function ApplyAccommodationForm() {
     } catch (error) {
       console.error("Submission error:", error);
       alert("An unexpected error occurred.");
+      setShowSuccess(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -340,23 +322,30 @@ export default function ApplyAccommodationForm() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const supabase = getSupabaseBrowserClient();
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const userProfile = await getCurrentUserFromApi();
 
-        if (error) throw error;
+        if (userProfile && userProfile.role) {
+          setUserId(userProfile.user_id);
+          setUserRole(userProfile.role);
 
-        if (user) {
-          setUserId(user.id);
-          setUserRole(user.user_metadata?.role || "student");
-
-          // Prefill personal information from user data
-          setValue("email", user.email || "");
-          if (user.user_metadata) {
-            const firstName = user.user_metadata.first_name || user.user_metadata.full_name?.split(" ")[0] || "";
-            const lastName = user.user_metadata.last_name || user.user_metadata.full_name?.split(" ").slice(1).join(" ") || "";
-            if (firstName) setValue("firstName", firstName);
-            if (lastName) setValue("lastName", lastName);
+          let studentId = "";
+          let contactNumber = "";
+          const supabase = getSupabaseBrowserClient();
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.user_metadata) {
+            studentId = user.user_metadata.student_number || "";
+            contactNumber = user.user_metadata.phone_number || "";
           }
+
+          setUserInfo({
+            firstName: userProfile.first_name || "",
+            lastName: userProfile.last_name || "",
+            email: userProfile.email || "",
+            contactNumber: contactNumber,
+            studentId: studentId,
+            role: userProfile.role || "",
+            sex: userProfile.sex || "",
+          });
         }
       } catch (err) {
         console.error("Auth error:", err);
@@ -374,7 +363,7 @@ export default function ApplyAccommodationForm() {
 
     const fetchAccommodation = async () => {
       try {
-        const res = await fetch("/api/dashboard/tiles?type=accommodations");
+        const res = await fetch("/api/shared/dashboard/tiles?type=accommodations");
         if (!res.ok) throw new Error("Failed to fetch accommodations");
 
         const data: Accommodation[] = await res.json();
@@ -383,13 +372,18 @@ export default function ApplyAccommodationForm() {
           null;
         setAccommodation(matched);
 
-        if (unitIdFromQuery) {
-          const resUnit = await fetch(
-            `/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
-          );
-          if (!resUnit.ok) throw new Error("Failed to fetch units");
+        const resUnit = await fetch(
+          `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
+        );
+        if (!resUnit.ok) throw new Error("Failed to fetch units");
 
-          const dataUnits: Unit[] = await resUnit.json();
+        const dataUnits: Unit[] = await resUnit.json();
+
+        // Derive available unit types from the fetched units
+        const types = Array.from(new Set(dataUnits.map(u => u.unit_type)));
+        setDynamicUnitTypes(types);
+
+        if (unitIdFromQuery) {
           const matchedUnit =
             dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
           setUnit(matchedUnit);
@@ -426,48 +420,39 @@ export default function ApplyAccommodationForm() {
         </p>
 
         <SectionCard title="Personal Information" icon={<User />}>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              ["First Name", submittedData.firstName],
-              ["Last Name", submittedData.lastName],
-              ["Email Address", submittedData.email],
-              ["Student ID", submittedData.studentId || "N/A"],
-              ["Contact Number", submittedData.contactNumber],
-              ["Applicant Type", submittedData.applicantType],
-              ["Sex", submittedData.sex],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">
-                  {label}
-                </p>
-                <p
-                  className={`text-sm text-[#3d2000] font-medium ${label === "Email Address" ? "" : "capitalize"}`}
-                >
-                  {value}
-                </p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+            <div>
+              <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">First Name</p>
+              <p className="text-base text-[#3d2000] font-bold capitalize">{userInfo.firstName || "--"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">Last Name</p>
+              <p className="text-base text-[#3d2000] font-bold capitalize">{userInfo.lastName || "--"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">Email Address</p>
+              <p className="text-base text-[#3d2000] font-bold">{userInfo.email || "--"}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">Student ID</p>
+              <p className="text-base text-[#3d2000] font-bold">{userInfo.studentId || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">Contact Number</p>
+              <p className="text-base text-[#3d2000] font-bold">{userInfo.contactNumber || "--"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">Applicant Type</p>
+              <p className="text-base text-[#3d2000] font-bold capitalize">{userInfo.role.replace("_", " ") || "--"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">Sex</p>
+              <p className="text-base text-[#3d2000] font-bold capitalize">{userInfo.sex || "--"}</p>
+            </div>
           </div>
         </SectionCard>
-
-        {/* <SectionCard title="Address Information">
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              ["Street Address", submittedData.streetAddress],
-              ["Province", submittedData.province],
-              ["City", submittedData.city],
-              ["Barangay", submittedData.barangay],
-              ["Zip Code", submittedData.zipCode],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">
-                  {label}
-                </p>
-                <p className="text-sm text-[#3d2000] font-medium">{value}</p>
-              </div>
-            ))}
-          </div>
-        </SectionCard> */}
 
         <SectionCard title="Dormitory & Stay Preference">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -475,7 +460,7 @@ export default function ApplyAccommodationForm() {
               {
                 label: "Selected Dormitory",
                 // Show the actual fetched name if available, otherwise fallback to the form data
-                value: submittedData.preferred_accommodation_id,
+                value: accommodation?.name || submittedData.preferred_accommodation_id,
               },
               {
                 label: "Unit Type",
@@ -515,6 +500,15 @@ export default function ApplyAccommodationForm() {
             <p className="text-sm text-[#3d2000] font-medium">{file?.name}</p>
           </div>
         </SectionCard>
+
+        <div className="flex justify-end mt-8">
+          <Button
+            onClick={() => router.push("/student/dashboard")}
+            className="bg-[#78A24C] hover:bg-[#5f8a38] text-white px-7 py-3 text-base font-bold rounded-xl transition-all hover:scale-105"
+          >
+            Back to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
@@ -539,7 +533,18 @@ export default function ApplyAccommodationForm() {
               {/* IMAGE on the left */}
               <div className="w-full md:w-1/3 flex-shrink-0">
                 <div className="w-full h-full min-h-[200px] bg-gray-300 flex items-center justify-center text-gray-500 text-xs rounded-xl overflow-hidden shadow-sm border-2 border-[#78A24C]/30 relative">
-                  [Image Placeholder]
+                  {accommodation.image ? (
+                    <img
+                      src={accommodation.image}
+                      alt={accommodation.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    "[Image Placeholder]"
+                  )}
                 </div>
               </div>
 
@@ -641,116 +646,30 @@ export default function ApplyAccommodationForm() {
           <div className="flex flex-col h-full">
             <SectionCard title="Personal Information" icon={<User />} className="p-6 flex-grow flex flex-col !mb-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
-                <Field label="First Name" required error={errors.firstName?.message}>
-                  <Input
-                    className={errors.firstName ? inputErrorClass : inputClass}
-                    placeholder="Maria"
-                    {...register("firstName")}
-                  />
+                <Field label="First Name">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.firstName || "--"} />
                 </Field>
-                <Field label="Last Name" required error={errors.lastName?.message}>
-                  <Input
-                    className={errors.lastName ? inputErrorClass : inputClass}
-                    placeholder="Makiling"
-                    {...register("lastName")}
-                  />
+                <Field label="Last Name">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.lastName || "--"} />
                 </Field>
                 <div className="md:col-span-2">
-                  <Field label="Email Address" required error={errors.email?.message}>
-                    <Input
-                      className={errors.email ? inputErrorClass : inputClass}
-                      type="email"
-                      placeholder="maria.makiling@up.edu.ph"
-                      {...register("email")}
-                    />
+                  <Field label="Email Address">
+                    <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.email || "--"} />
                   </Field>
                 </div>
-                <Field
-                  label="Student ID"
-                  italic="(if applicable)"
-                  error={errors.studentId?.message}
-                >
-                  <Input
-                    className={errors.studentId ? inputErrorClass : inputClass}
-                    placeholder="2XXX-XXXXX"
-                    {...register("studentId")}
-                  />
+                <Field label="Student ID">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.studentId || "N/A"} />
                 </Field>
-                <Field
-                  label="Contact Number"
-                  required
-                  error={errors.contactNumber?.message}
-                >
-                  <Input
-                    className={errors.contactNumber ? inputErrorClass : inputClass}
-                    placeholder="09XXXXXXXXX"
-                    {...register("contactNumber")}
-                    onKeyDown={(e) => {
-                      if (
-                        !/^\d$/.test(e.key) &&
-                        ![
-                          "Backspace",
-                          "Delete",
-                          "ArrowLeft",
-                          "ArrowRight",
-                          "Tab",
-                        ].includes(e.key)
-                      ) {
-                        e.preventDefault();
-                      }
-                    }}
-                  />
+                <Field label="Contact Number">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.contactNumber || "--"} />
                 </Field>
-                <Field
-                  label="Applicant Type"
-                  required
-                  error={errors.applicantType?.message}
-                >
-                  <Controller
-                    name="applicantType"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger
-                          className={
-                            errors.applicantType ? triggerErrorClass : triggerClass
-                          }
-                        >
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="student">Student</SelectItem>
-                          <SelectItem value="guest">Guest</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
+                <Field label="Applicant Type">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.role.replace("_", " ") || "--"} />
                 </Field>
-                <Field label="Sex" required error={errors.sex?.message}>
-                  <Controller
-                    name="sex"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger
-                          className={
-                            errors.sex ? triggerErrorClass : triggerClass
-                          }
-                        >
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
+                <Field label="Sex">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.sex || "--"} />
                 </Field>
               </div>
-
-
             </SectionCard>
           </div>
 
@@ -775,40 +694,46 @@ export default function ApplyAccommodationForm() {
                   </Field>
                 </div>
 
-                <Field
-                  label="Preferred Unit Type"
-                  required
-                  error={errors.preferred_unit_type?.message}
-                >
-                  <Controller
-                    name="preferred_unit_type"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger
-                          className={
-                            errors.preferred_unit_type
-                              ? triggerErrorClass
-                              : triggerClass
-                          }
-                        >
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unitTypes.map((type) => (
-                            <SelectItem
-                              key={type}
-                              value={type}
-                              className="capitalize"
-                            >
-                              {type === "wholeunit" ? "Whole Unit" : type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </Field>
+                {!unitIdFromQuery && (
+                  <Field
+                    label="Preferred Unit Type"
+                    required
+                    error={errors.preferred_unit_type?.message}
+                  >
+                    <Controller
+                      name="preferred_unit_type"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger
+                            className={
+                              errors.preferred_unit_type
+                                ? triggerErrorClass
+                                : triggerClass
+                            }
+                          >
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dynamicUnitTypes.length > 0 ? (
+                              dynamicUnitTypes.map((type) => (
+                                <SelectItem
+                                  key={type}
+                                  value={type}
+                                  className="capitalize"
+                                >
+                                  {type === "wholeunit" ? "Whole Unit" : type}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="none" disabled>No types available</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </Field>
+                )}
 
                 <Field
                   label="Duration (Months)"
@@ -861,16 +786,17 @@ export default function ApplyAccommodationForm() {
                   />
                 </Field>
 
-                <Field label="Check-out Date" italic="(Calculated Automatically)">
+                <Field label="Check-out Date">
                   <div className="relative">
                     <Input
                       readOnly
-                      className={`${inputClass} bg-gray-100 font-bold border-dashed cursor-not-allowed`}
+                      className={`${inputClass} bg-gray-100 font-bold placeholder:font-normal border-dashed cursor-not-allowed text-xs sm:text-sm`}
                       value={
                         watch("checkOut")
                           ? format(watch("checkOut"), "MMM dd, yyyy")
-                          : "--"
+                          : ""
                       }
+                      placeholder="Calculated Automatically"
                     />
                     <input type="hidden" {...register("checkOut")} />
                   </div>
@@ -986,12 +912,21 @@ export default function ApplyAccommodationForm() {
           </SectionCard>
         </div>
 
-        {/* Submit Button */}
-        <div className="flex justify-end pb-6">
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-4 pb-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isSubmitting}
+            className="border-2 border-[#78A24C] text-[#78A24C] hover:bg-gray-200 hover:text-[#78A24C] px-7 py-3 text-base font-bold rounded-xl transition-all hover:scale-105"
+          >
+            Cancel
+          </Button>
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-[#78A24C] hover:bg-[#5f8a38] text-white px-7 py-3 text-base font-bold rounded-xl"
+            className="bg-[#78A24C] hover:bg-[#5f8a38] text-white px-7 py-3 text-base font-bold rounded-xl transition-all hover:scale-105"
           >
             {isSubmitting ? "Submitting..." : "Submit Application"}
           </Button>

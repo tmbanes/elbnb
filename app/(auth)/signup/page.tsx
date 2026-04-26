@@ -1,13 +1,12 @@
 import SignUpWithEmailSetup from "./SignUpWithEmailSetup";
-import { getUserWithRole } from "@/lib/auth/session";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
-import { User } from "@/types/user.types";
 
 export default async function SignUpPage() {
-  const user: User | null = await getUserWithRole();
+  const user = await getApiAuthenticatedUser();
 
-  if (user) {
-    redirect(`/`);
+  if (user && (!user.role || !user.first_name || user.first_name === "TBD")) {
+    redirect(`/complete-profile`);
   }
 
   return <SignUpWithEmailSetup user={user} />;

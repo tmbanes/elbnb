@@ -109,7 +109,7 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                 // 1 ACTIVE APP: Horizontal Card
                 <div className="flex flex-col gap-6">
                   {displayedApps.map((app) => (
-                    <Card key={app.application_id} className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                    <Card key={app.application_id} className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm overflow-hidden hover:shadow-lg hover:scale-[1.02] transform transition-all duration-300">
                       <CardContent className="p-0 h-full">
                         <div className="flex flex-col md:flex-row items-stretch h-full">
                           <div className={cn("w-2 hidden md:block", statusConfig[app.application_status]?.class.split(' ')[0] || "bg-gray-300")} />
@@ -181,7 +181,7 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                   displayedApps.length === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
                 )}>
                   {displayedApps.map((app) => (
-                    <Card key={app.application_id} className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm hover:shadow-md transition-all flex flex-col h-full relative overflow-hidden">
+                    <Card key={app.application_id} className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm hover:shadow-lg hover:scale-[1.02] transform transition-all duration-300 flex flex-col h-full relative overflow-hidden">
                       <div className={cn("absolute top-0 left-0 w-full h-1.5", statusConfig[app.application_status]?.class.split(' ')[0] || "bg-gray-300")} />
                       
                       <CardContent className="p-6 pt-7 flex flex-col flex-1 gap-5">

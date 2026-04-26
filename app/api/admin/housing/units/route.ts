@@ -1,7 +1,8 @@
+import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
-export async function GET(req: NextRequest) {
+export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   const accommodationId = req.nextUrl.searchParams.get("accommodation_id");
 
@@ -30,9 +31,9 @@ export async function GET(req: NextRequest) {
     { error: "Provide id or accommodation_id" },
     { status: 400 }
   );
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withRole(['housing_admin'], async (req: NextRequest) => {
   const body = await req.json();
 
   // Fetch the last unit created for this accommodation to get the starting number
@@ -86,9 +87,9 @@ export async function POST(req: NextRequest) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
-}
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id)
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -102,9 +103,9 @@ export async function PATCH(req: NextRequest) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
-}
+});
 
-export async function DELETE(req: NextRequest) {
+export const DELETE = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id)
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -130,4 +131,4 @@ export async function DELETE(req: NextRequest) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
-}
+});

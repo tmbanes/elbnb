@@ -182,7 +182,7 @@ export default function MyApplicationsPage() {
 
     try {
       // 1. applications
-      const appRes = await fetch('/api/applications/get_applications')
+      const appRes = await fetch('/api/student/applications')
       if (!appRes.ok) {
         if (appRes.status === 401) { router.push('/login'); return }
         throw new Error('Failed to fetch applications')
@@ -191,7 +191,7 @@ export default function MyApplicationsPage() {
       const applications: AccommodationApplication[] = appJson.data ?? []
 
       // 2. accommodations lookup
-      const accomRes = await fetch('/api/dashboard/tiles?type=accommodations')
+      const accomRes = await fetch('/api/shared/dashboard/tiles?type=accommodations')
       const accomData: Accommodation[] = accomRes.ok ? await accomRes.json() : []
       const accomMap = new Map(accomData.map(a => [a.accommodation_id, a]))
 
@@ -201,7 +201,7 @@ export default function MyApplicationsPage() {
 
       await Promise.all(
         uniqueAccomIds.map(async (id) => {
-          const res = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${id}`)
+          const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${id}`)
           if (!res.ok) return
           const units: Unit[] = await res.json()
           units.forEach(u => unitMap.set(u.unit_id, u))
@@ -268,7 +268,7 @@ export default function MyApplicationsPage() {
     setCancellingId(applicationId)
     setConfirmId(null)
     try {
-      const res = await fetch('/api/applications/cancel_application', {
+      const res = await fetch('/api/student/applications/cancel', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

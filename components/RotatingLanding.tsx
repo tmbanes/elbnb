@@ -1,457 +1,586 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { 
-  Home, Building2, ShieldCheck, MapPin, Search, Calendar, 
-  History, ArrowRight, UserCircle, ChevronLeft, ChevronRight,
-  Sparkles, Shield, Zap, Users, GraduationCap, LayoutDashboard
+import { Icon } from '@iconify/react';
+import {
+  Building2, ShieldCheck, ArrowRight, UserCircle, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import {
-  HeaderLg,
-  HeaderMd,
-  HeaderSm,
-  SubheaderLg,
-  SubheaderMd,
-  SubheaderSm,
-  BodyLg,
-  BodyMd,
-  BodySm
+  HeaderLg, HeaderMd, HeaderSm, SubheaderLg, SubheaderMd, BodyLg, BodyMd
 } from '@/app/typography';
 
-export function RotatingLanding({ initialUser }: { initialUser: any }) {
-  const [rotation, setRotation] = useState(0);
-  const [activeFace, setActiveFace] = useState(0); // 0: Student, 1: Manager, 2: Admin
+// ─── STATIC DATA ───
+const FACES = [
+  {
+    role: "Students",
+    icon: <UserCircle className="w-10 h-10" />,
+    title: "Find Your Perfect Space",
+    desc: "Browse available units, check real-time occupancy, and book your move-in with just a few clicks.",
+    accent: "#7EB647",
+    bg: "bg-[#F1F8E9]",
+  },
+  {
+    role: "Managers",
+    icon: <Building2 className="w-10 h-10" />,
+    title: "Streamline Operations",
+    desc: "Manage resident lists, track maintenance, and oversee multiple dormitory buildings from one dashboard.",
+    accent: "#D48806",
+    bg: "bg-[#FFF8E1]",
+  },
+  {
+    role: "Admins",
+    icon: <ShieldCheck className="w-10 h-10" />,
+    title: "Complete Control",
+    desc: "Configure dormitory inventory, manage user roles, and generate comprehensive campus housing reports.",
+    accent: "#C62828",
+    bg: "bg-[#FFEBEE]",
+  }
+];
 
+const FEATURES = [
+  { icon: "mdi:map-marker", title: "Proximity to Campus", desc: "Filter by distance from your college or the nearest jeepney route." },
+  { icon: "mdi:shield-check", title: "Verified & Secure", desc: "We vet our listings to ensure your safety and peace of mind." },
+  { icon: "mdi:wifi", title: "Study-Ready Spaces", desc: "Dedicated tags for high-speed Wi-Fi, quiet zones, and well-lit desks." },
+  { icon: "mdi:handshake", title: "Community First", desc: "Connect with potential roommates who share your vibe and your degree program." }
+];
+
+const CATEGORIES = [
+  { title: "Solo Sanctuary", desc: "Studios & solo rooms for the focused student.", icon: "mdi:home" },
+  { title: "The Study Squad", desc: "Shared housing for groups and barkadas (2–4 bedrooms).", icon: "mdi:account-group" },
+  { title: "Budget-Friendly", desc: "Quality living that fits the student allowance.", icon: "mdi:creation" }
+];
+
+const FOOTER_COLS = [
+  { label: 'Product', links: [['Find a Home', '/onboarding'], ['List Property', '/onboarding'], ['Student Portal', '/onboarding']] },
+  { label: 'Company', links: [['About Us', '#'], ['Contact Support', '#'], ['Partners', '#']] },
+  { label: 'Legal', links: [['Privacy Policy', '#'], ['Terms of Service', '#']] }
+];
+
+// ─── HELPER HOOK: Scroll Reveal ───
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          // Stop observing once it has revealed
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, isVisible };
+}
+
+// ─── STAGGERED REVEAL COMPONENT ───
+const Reveal = ({ children, className = "", id = "", delay = 0 }: { children: React.ReactNode, className?: string, id?: string, delay?: number }) => {
+  const { ref, isVisible } = useScrollReveal();
+  return (
+    <div
+      id={id}
+      ref={ref}
+      className={`transition-all duration-[1000ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'} ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+};
+
+export function RotatingLanding({ initialUser }: { initialUser: any }) {
+  const router = useRouter();
+
+  // States
+  const [activeFace, setActiveFace] = useState(0);
+  const [rotation, setRotation] = useState(0);
+  const [ripple, setRipple] = useState<{ active: boolean; x: number; y: number } | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+  const [logoTilt, setLogoTilt] = useState({ rotateX: 0, rotateY: 0 });
+  const logoRef = useRef<HTMLImageElement>(null);
+
+  // Effects
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 40);
+          setScrollY(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Handlers
   const rotate = (direction: 'left' | 'right') => {
     const newFace = direction === 'right' ? (activeFace + 1) % 3 : (activeFace + 2) % 3;
     setActiveFace(newFace);
     setRotation(prev => direction === 'right' ? prev - 120 : prev + 120);
   };
 
-  const faces = [
-    {
-      role: "Students",
-      icon: <UserCircle className="w-12 h-12" />,
-      title: "Find Your Perfect Space",
-      desc: "Browse available units, check real-time occupancy, and book your move-in with just a few clicks.",
-      color: "#7EB647",
-      bg: "bg-[#F1F8E9]",
-      accent: "#7EB647",
-      link: "/onboarding"
-    },
-    {
-      role: "Managers",
-      icon: <Building2 className="w-12 h-12" />,
-      title: "Streamline Operations",
-      desc: "Manage resident lists, track maintenance, and oversee multiple dormitory buildings from one dashboard.",
-      color: "#D48806",
-      bg: "bg-[#FFF8E1]",
-      accent: "#FFB300",
-      link: "/onboarding"
-    },
-    {
-      role: "Admins",
-      icon: <ShieldCheck className="w-12 h-12" />,
-      title: "Complete Control",
-      desc: "Configure dormitory inventory, manage user roles, and generate comprehensive campus housing reports.",
-      color: "#C62828",
-      bg: "bg-[#FFEBEE]",
-      accent: "#E53935",
-      link: "/onboarding"
-    }
-  ];
+  const handleCTAClick = (e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRipple({ active: true, x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    setTimeout(() => router.push('/onboarding'), 800);
+  };
+
+  const handleHeroMouseMove = (e: React.MouseEvent) => {
+    if (!logoRef.current) return;
+    window.requestAnimationFrame(() => {
+      if (!logoRef.current) return;
+      const rect = logoRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const rotateY = ((e.clientX - centerX) / (window.innerWidth / 2)) * 15;
+      const rotateX = -((e.clientY - centerY) / (window.innerHeight / 2)) * 10;
+      setLogoTilt({ rotateX, rotateY });
+    });
+  };
+
+  const handleHeroMouseLeave = () => {
+    setLogoTilt({ rotateX: 0, rotateY: 0 });
+  };
 
   return (
-    <div className="min-h-screen bg-[#F4F5E1] text-[#3E2723] overflow-x-hidden font-[family-name:var(--font-archivo)] selection:bg-[#7EB647] selection:text-white scroll-smooth">
-      {/* SVG Grain Filter */}
+    <div className="bg-[#F4F5E1] text-[#3E2723] overflow-x-hidden font-[family-name:var(--font-archivo)]">
+
+      {/* ─── GLOBAL SVG FILTERS ─── */}
       <svg className="hidden">
-        <filter id="hill-noise">
+        <filter id="grain">
           <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
           <feComposite operator="in" in2="SourceGraphic" />
-          <feColorMatrix type="matrix" values="1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 0.15 0" />
+          <feColorMatrix type="matrix" values="1 0 0 0 0,0 1 0 0 0,0 0 1 0 0,0 0 0 0.08 0" />
           <feBlend mode="multiply" in2="SourceGraphic" />
         </filter>
       </svg>
 
-      {/* Navigation */}
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[92%] max-w-6xl z-[100] px-10 py-4 flex justify-between items-center bg-white/70 backdrop-blur-2xl border border-white/40 shadow-[0_25px_60px_rgba(0,0,0,0.1)] rounded-[3rem] md:rounded-[100px] transition-all duration-500 hover:w-[94%]">
-        <div className="flex items-center gap-3">
-          <img src="/logo/logo_house.png" alt="ELBNB Logo" className="h-9 w-auto" />
-          <span className={`${HeaderSm} tracking-tighter text-2xl text-[#3E2723]`}>ELBNB</span>
+      {/* ─── EXPANDING RIPPLE EFFECT ─── */}
+      {ripple?.active && (
+        <div className="fixed inset-0 z-[999] pointer-events-none overflow-hidden">
+          <div
+            className="absolute bg-[#7EB647] rounded-full"
+            style={{
+              left: ripple.x, top: ripple.y,
+              width: '300vw', height: '300vw',
+              transform: 'translate(-50%, -50%) scale(0)',
+              animation: 'rippleExpand 0.8s cubic-bezier(0.4,0,0.2,1) forwards',
+            }}
+          />
         </div>
-        
-        <div className="hidden md:flex items-center gap-12">
-          <Link href="#features" className={`${SubheaderMd} text-[#3E2723]/70 hover:text-[#7EB647] transition-all font-bold uppercase tracking-widest text-xs`}>Features</Link>
-          <Link href="#roles" className={`${SubheaderMd} text-[#3E2723]/70 hover:text-[#7EB647] transition-all font-bold uppercase tracking-widest text-xs`}>Who is it for?</Link>
-          <Link href="#get-started" className={`${SubheaderMd} text-[#3E2723]/70 hover:text-[#7EB647] transition-all font-bold uppercase tracking-widest text-xs`}>Get Started</Link>
+      )}
+
+      {/* ─── NAVIGATION ─── */}
+      <header
+        className={`fixed top-5 left-1/2 -translate-x-1/2 z-[100] transition-all duration-500 rounded-full px-8 py-3.5 flex justify-between items-center backdrop-blur-2xl border ${scrolled ? 'w-[88%] max-w-5xl bg-white/90 shadow-xl border-white/80' : 'w-[94%] max-w-6xl bg-white/60 border-white/50'
+          }`}
+      >
+        <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <img src="/logo/logo_house.png" alt="ELBNB" className="h-7 w-auto group-hover:rotate-12 transition-transform" />
+          <span className={`${HeaderSm} text-lg tracking-tighter text-[#3E2723] font-black`}>ELBNB</span>
         </div>
 
-        <Link href="/onboarding">
-          <Button className="bg-[#7EB647] hover:bg-[#6da13d] text-white rounded-full px-8 h-12 font-bold shadow-lg shadow-[#7EB647]/20 transition-all active:scale-95">
-            Sign Up
-          </Button>
-        </Link>
-      </nav>
+        <nav className="hidden md:flex items-center gap-10">
+          {[['#features', 'Features'], ['#roles', 'For Who?'], ['#get-started', 'Get Started']].map(([href, label]) => (
+            <Link key={href} href={href} className="text-[#3E2723]/60 hover:text-[#7EB647] transition-colors font-semibold uppercase tracking-widest text-[11px]">
+              {label}
+            </Link>
+          ))}
+        </nav>
 
-      {/* Hero Section (Spacer) */}
-      <section className="relative h-[100vh] flex flex-col items-center justify-center pt-20 px-6 text-center overflow-hidden">
-        {/* Full-screen entry space leading to the centered horizon and logo */}
-      </section>
+        <Button
+          onClick={handleCTAClick}
+          className="bg-[#7EB647] hover:bg-[#6da13d] text-white rounded-full px-6 h-10 text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95"
+        >
+          Sign Up
+        </Button>
+      </header>
 
-      {/* GREEN CONTENT AREA - CAROUSEL MOVED HERE */}
-      <section id="roles" className="bg-[#7EB647] pt-0 pb-40 px-6 relative z-30" style={{ filter: 'url(#hill-noise)' }}>
-        {/* The Hill Cap - Peak at 50vh */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[50vh] w-[150%] h-[100vh] bg-[#7EB647] rounded-[100%] pointer-events-none">
-          {/* House Silhouettes on Horizon */}
-          <div className="absolute top-0 left-[40%] -translate-y-[80%] opacity-40">
-            <Home className="w-16 h-16 text-[#1D4ED8] rotate-[-5deg]" />
+      <main>
+        {/* ─── HERO SECTION ─── */}
+        <section
+          className="relative min-h-screen flex flex-col items-center justify-center px-6 text-center pt-24 pb-0 overflow-hidden bg-[#87CEEB]"
+          onMouseMove={handleHeroMouseMove}
+          onMouseLeave={handleHeroMouseLeave}
+        >
+          {/* ─── PARALLAX CLOUDS (SKY SECTION) ─── */}
+          <div className="absolute top-[12%] left-[-2%] pointer-events-none z-[5]" style={{ transform: `translateY(${scrollY * 0.3}px)` }}>
+            <img src="/logo/clouds/cloud-element-23.png" alt="Cloud" className="w-56 md:w-80 opacity-90 float-animation" />
           </div>
-          <div className="absolute top-0 left-[46%] -translate-y-[95%] opacity-60">
-            <Building2 className="w-12 h-12 text-[#1D4ED8] rotate-[-2deg]" />
+          <div className="absolute top-[25%] left-[-5%] pointer-events-none z-[3]" style={{ transform: `translateY(${scrollY * 0.05}px)` }}>
+            <img src="/logo/clouds/cloud-element-23.png" alt="Cloud" className="w-48 md:w-64 opacity-40 float-animation-reverse" />
           </div>
-          <div className="absolute top-0 right-[46%] -translate-y-[90%] opacity-50">
-            <Home className="w-10 h-10 text-[#1D4ED8] rotate-[3deg]" />
+          <div className="absolute top-[5%] left-[30%] pointer-events-none z-[4]" style={{ transform: `translateY(${scrollY * 0.1}px)` }}>
+            <img src="/logo/clouds/cloud-element-25.png" alt="Cloud" className="w-40 md:w-56 opacity-60 float-animation-slow" />
           </div>
-          <div className="absolute top-0 right-[42%] -translate-y-[85%] opacity-30">
-            <Building2 className="w-20 h-20 text-[#1D4ED8] rotate-[6deg]" />
+          <div className="absolute top-[35%] left-[8%] pointer-events-none z-[5]" style={{ transform: `translateY(${scrollY * 0.2}px)` }}>
+            <img src="/logo/clouds/cloud-element-25.png" alt="Cloud" className="w-24 md:w-32 opacity-80 float-animation-slow" />
           </div>
-          <div className="absolute top-0 left-[35%] -translate-y-[70%] opacity-20">
-            <Home className="w-24 h-24 text-[#1D4ED8] rotate-[-10deg]" />
+          <div className="absolute top-[10%] right-[-2%] pointer-events-none z-[5]" style={{ transform: `translateY(${scrollY * 0.15}px)` }}>
+            <img src="/logo/clouds/cloud-element-24.png" alt="Cloud" className="w-64 md:w-96 opacity-85 float-animation-reverse" />
           </div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto relative">
-          
-          {/* Logo Centered on the Tip of the Hill (50vh) */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(50vh+50%)] flex justify-center z-50 pointer-events-none w-full px-6">
-            <img 
-              src="/assets/logo/logo-header.png" 
-              alt="ELBNB Logo" 
-              className="h-40 md:h-[28rem] w-auto object-contain max-w-[85vw] drop-shadow-[0_40px_80px_rgba(0,0,0,0.4)]" 
-            />
+          <div className="absolute top-[18%] right-[25%] pointer-events-none z-[4]" style={{ transform: `translateY(${scrollY * 0.18}px)` }}>
+            <img src="/logo/clouds/cloud-element-24.png" alt="Cloud" className="w-32 md:w-48 opacity-70 float-animation" />
+          </div>
+          <div className="absolute top-[38%] right-[12%] pointer-events-none z-[5]" style={{ transform: `translateY(${scrollY * 0.25}px)` }}>
+            <img src="/logo/clouds/cloud-element-23.png" alt="Cloud" className="w-32 md:w-48 opacity-75 float-animation" />
+          </div>
+          <div className="absolute top-[42%] left-[48%] pointer-events-none z-[6]" style={{ transform: `translateY(${scrollY * 0.28}px)` }}>
+            <img src="/logo/clouds/cloud-element-25.png" alt="Cloud" className="w-20 md:w-28 opacity-80 float-animation" />
           </div>
 
-          {/* Hero Content (Now in the Green Part) */}
-          <div className="space-y-8 max-w-4xl mx-auto -mt-16 md:-mt-24 mb-40 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-            <h1 className={`${HeaderLg} text-5xl md:text-8xl leading-[0.95] tracking-tighter text-white`}>
-              Pahingahan para <br />
-              <span className="text-white opacity-60 italic font-light">sa Pangarap.</span>
-            </h1>
-            
-            <p className={`${BodyLg} text-white/80 max-w-2xl mx-auto text-xl md:text-2xl leading-relaxed`}>
-              Finding a home in Los Baños shouldn't be another hurdle to your degree. 
-              ELBNB connects students with safe, comfortable, and study-ready spaces designed to fuel your journey.
-            </p>
-
-            <div className="flex flex-col md:flex-row justify-center gap-6 pt-6">
-               <Link href="/onboarding">
-                  <Button className="bg-white text-[#7EB647] hover:bg-white/90 rounded-2xl px-12 py-8 text-xl font-bold shadow-2xl flex gap-3 mx-auto md:mx-0 transition-all active:scale-95">
-                    Find Your Home in Elbi <ArrowRight />
-                  </Button>
-               </Link>
-               <Link href="/onboarding">
-                  <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white/10 rounded-2xl px-12 py-8 text-xl flex gap-3 mx-auto md:mx-0 transition-all active:scale-95">
-                    List Your Property
-                  </Button>
-               </Link>
+          {/* ─── HERO CONTENT ─── */}
+          <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center gap-6">
+            <div className="flex flex-col items-center gap-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
+              <h1 className="sr-only">ELBNB: Pahingahan para sa Pangarap.</h1>
+              <img
+                ref={logoRef}
+                src="/logo/logo-header-original.png"
+                alt="ELBNB - Pahingahan para sa Pangarap"
+                className="w-[350px] md:w-[450px] lg:w-[550px] h-auto object-contain drop-shadow-xl mt-0"
+                style={{
+                  transform: `perspective(800px) rotateX(${logoTilt.rotateX}deg) rotateY(${logoTilt.rotateY}deg)`,
+                  transition: 'transform 0.15s ease-out',
+                }}
+              />
             </div>
           </div>
 
-          {/* Section 2: Why ELBNB (The Problem & Solution) */}
-          <div className="relative pt-20 mb-40">
-            <div className="text-center space-y-10 max-w-4xl mx-auto">
-              <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-2 rounded-full border border-white/10 mx-auto">
-                <Home className="w-5 h-5 text-white" />
-                <span className={`${SubheaderSm} uppercase tracking-wider text-white`}>The ELBNB Story</span>
-              </div>
-              <h2 className={`${HeaderMd} text-white text-4xl md:text-6xl leading-tight`}>
-                Dahil ang bawat pangarap, <br />
-                <span className="opacity-70 italic font-light leading-relaxed text-3xl md:text-5xl">kailangan ng sapat na pahinga.</span>
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-left pt-10">
-                <div className="space-y-6 p-8 bg-black/10 backdrop-blur-sm rounded-3xl border border-white/5">
-                  <h3 className={`${SubheaderLg} text-white text-3xl font-bold`}>The Struggle</h3>
-                  <p className={`${BodyLg} text-white/80 leading-relaxed text-xl`}>
-                    We know the Elbi life—the "hell weeks," the long walks from the Upper Campus, and the late-night org meetings. 
-                    You give your 100% to your studies; you deserve a place that gives 100% back to you.
-                  </p>
-                </div>
-                <div className="space-y-6 p-8 bg-white/10 backdrop-blur-sm rounded-3xl border border-white/10 shadow-2xl">
-                  <h3 className={`${SubheaderLg} text-white text-3xl font-bold`}>The Solution</h3>
-                  <p className={`${BodyLg} text-white/90 leading-relaxed text-xl`}>
-                    ELBNB isn't just a housing directory. It’s a curated ecosystem of dorms and apartments that prioritize security, 
-                    proximity, and a conducive environment for the modern Isko and Iska.
-                  </p>
-                </div>
-              </div>
+          {/* ─── BACKGROUND HILLS (DEPTH EFFECT) ─── */}
+
+          {/* 1. Farthest Hill (Lightest color, slowest scroll for high depth) */}
+          <div
+            className="absolute bottom-0 left-[30%] -translate-x-1/2 w-[280vw] md:w-[180vw] h-[85vh] md:h-[50vh] z-[1] pointer-events-none"
+            style={{
+              background: '#98C965',
+              borderTopLeftRadius: '50% 100%',
+              borderTopRightRadius: '50% 100%',
+              filter: 'url(#grain)',
+              transform: `translateY(${-120 + scrollY * 0.25}px)`,
+            }}
+          />
+
+          {/* 2. Middle Hill (Midtone color, medium scroll speed) */}
+          <div
+            className="absolute bottom-0 left-[75%] -translate-x-1/2 w-[260vw] md:w-[160vw] h-[82vh] md:h-[45vh] z-[2] pointer-events-none"
+            style={{
+              background: '#8ABF55',
+              borderTopLeftRadius: '50% 100%',
+              borderTopRightRadius: '50% 100%',
+              filter: 'url(#grain)',
+              transform: `translateY(${-90 + scrollY * 0.12}px)`,
+            }}
+          />
+
+          {/* 3. Foreground Hill (Original, rich color, scrolls naturally with the page) */}
+          <div
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[250vw] md:w-[150vw] h-[80vh] md:h-[35vh] z-[3] pointer-events-none"
+            style={{
+              background: '#7EB647',
+              borderTopLeftRadius: '50% 100%',
+              borderTopRightRadius: '50% 100%',
+              filter: 'url(#grain)',
+              transform: `translateY(-60px)`,
+            }}
+          />
+        </section>
+
+        {/* ─── CONTENT SECTION (TEXTURED GREEN WITH HERO TEXT & BUTTONS) ─── */}
+        <div className="relative text-white pt-32 -mt-[120px] pb-10">
+
+          {/* Global Layer 1: Textured green contiguous background */}
+          <div className="absolute inset-0 z-0 bg-[#7EB647]" style={{ filter: 'url(#grain)' }} />
+
+          {/* Layer 2: Parallax Clouds overlapping the hill */}
+          <div className="absolute inset-0 z-[5] pointer-events-none overflow-hidden">
+            <div className="absolute top-[-10%] right-[-5%]" style={{ transform: `translateY(${scrollY * 0.12}px)` }}>
+              <img src="/logo/clouds/cloud-element-24.png" className="w-80 md:w-[450px] opacity-[0.9] float-animation-reverse" />
+            </div>
+            <div className="absolute top-[15%] right-[10%]" style={{ transform: `translateY(${scrollY * 0.15}px)` }}>
+              <img src="/logo/clouds/cloud-element-23.png" className="w-32 md:w-48 opacity-[0.7] float-animation" />
+            </div>
+            <div className="absolute top-[20%] left-[20%]" style={{ transform: `translateY(${scrollY * 0.08}px)` }}>
+              <img src="/logo/clouds/cloud-element-25.png" className="w-32 md:w-40 opacity-[0.6] float-animation-reverse" />
             </div>
           </div>
 
-          {/* Role Carousel (Moved down slightly or repurposed) */}
-          <div className="relative mb-60">
-            <div className="text-center mb-24 space-y-4">
-              <h2 className={`${HeaderMd} text-white text-5xl md:text-7xl`}>Built for your role.</h2>
-              <p className={`${BodyLg} text-white/70 max-w-xl mx-auto text-xl`}>
-                Choose your perspective and discover the features tailored to your unique campus housing workflow.
+          {/* Content Layer */}
+          <div className="relative z-20">
+
+            {/* Hero Text */}
+            <div className="relative z-20 text-center space-y-3 max-w-2xl mx-auto font-medium">
+              <p className={`${BodyLg} text-white/90 max-w-2xl mx-auto text-lg md:text-xl leading-relaxed mt-6 md:mt-1`}>
+                Finding a home in Los Baños shouldn't be another hurdle to your degree.
+                ELBNB connects students with safe, comfortable, study-ready spaces.
               </p>
             </div>
 
-            {/* THE ROTATING CAROUSEL */}
-            <div className="relative h-[600px] flex items-center justify-center perspective-[2000px] z-10">
-              <div 
-                className="relative w-full h-full preserve-3d transition-transform duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)]"
-                style={{ transform: `rotateY(${rotation}deg)` }}
+            {/* Buttons */}
+            <div className="relative z-20 flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 mb-16 px-6">
+              <button
+                onClick={handleCTAClick}
+                className="bg-[#7EB647] hover:bg-[#6da13d] text-white rounded-2xl px-8 py-4 text-base font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center gap-2 transition-all duration-300 active:scale-95"
               >
-                {faces.map((face, i) => (
-                  <div 
-                    key={i}
-                    className={`absolute inset-0 backface-hidden flex items-center justify-center transition-opacity duration-1000 ${activeFace === i ? 'opacity-100 scale-110' : 'opacity-40 blur-sm scale-90'}`}
-                    style={{ transform: `rotateY(${i * 120}deg) translateZ(450px)` }}
-                  >
-                    {/* House Shaped Card with More Colors */}
-                    <div 
-                      className={`w-full max-w-[420px] aspect-[4/5] ${face.bg} shadow-2xl overflow-hidden p-12 flex flex-col justify-between group transition-all duration-500`}
-                      style={{ 
-                        clipPath: 'polygon(50% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%)',
-                        borderTop: `12px solid ${face.accent}`,
-                        boxShadow: `0 30px 60px -12px ${face.accent}40`
-                      }}
+                Find Your Home <ArrowRight size={18} className="opacity-80" />
+              </button>
+              <button
+                onClick={handleCTAClick}
+                className="bg-white/80 hover:bg-white text-[#3E2723] rounded-2xl px-8 py-4 text-base font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 border border-black/5 flex items-center gap-2 transition-all duration-300 active:scale-95 backdrop-blur-sm"
+              >
+                List Your Property
+              </button>
+            </div>
+
+            {/* Sections */}
+            <div className="relative z-20">
+
+              {/* ─── THE STORY ─── */}
+              <section className="py-28 px-6 max-w-5xl mx-auto space-y-14">
+                <Reveal delay={0}>
+                  <div className="text-center space-y-3 max-w-2xl mx-auto">
+                    <p className="text-white/50 uppercase tracking-[0.2em] text-xs font-bold">The ELBNB Story</p>
+                    <h2 className={`${HeaderMd} text-3xl md:text-5xl leading-tight`}>
+                      Dahil ang bawat pangarap,{' '}
+                      <em className="not-italic opacity-60 font-light">kailangan ng sapat na pahinga.</em>
+                    </h2>
+                  </div>
+                </Reveal>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[
+                    { title: "The Struggle", desc: "We know the Elbi life — the 'hell weeks,' long walks from the Upper Campus, and late-night org meetings. You give your 100% to your studies; you deserve a place that gives 100% back.", bg: "bg-black/10 border-white/5" },
+                    { title: "The Solution", desc: "ELBNB isn't just a housing directory. It's a curated ecosystem of dorms and apartments that prioritize security, proximity, and a conducive environment for the modern Isko and Iska.", bg: "bg-white/10 border-white/15 shadow-xl" }
+                  ].map((card, i) => (
+                    <Reveal key={i} delay={150 + (i * 150)}>
+                      <div className={`${card.bg} h-full rounded-3xl p-10 space-y-4 border hover:-translate-y-2 transition-transform duration-300 backdrop-blur-sm`}>
+                        <p className="text-white/50 uppercase tracking-widest text-xs font-bold">{card.title}</p>
+                        <p className={`${BodyLg} text-white/90 leading-relaxed text-lg`}>{card.desc}</p>
+                      </div>
+                    </Reveal>
+                  ))}
+                </div>
+              </section>
+
+              <div className="h-px bg-white/10 mx-8 md:mx-20" />
+
+              {/* ─── FEATURES ─── */}
+              <section id="features" className="py-28 px-6 max-w-5xl mx-auto space-y-14">
+                <Reveal delay={0}>
+                  <div className="text-center space-y-3 max-w-xl mx-auto">
+                    <p className="text-white/50 uppercase tracking-[0.2em] text-xs font-bold">Smart Living Ecosystem</p>
+                    <h2 className={`${HeaderMd} text-3xl md:text-5xl`}>Housing, <span className="opacity-50 font-light">simplified.</span></h2>
+                  </div>
+                </Reveal>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {FEATURES.map((f, i) => (
+                    <Reveal key={i} delay={150 + (i * 100)}>
+                      <div className="group h-full bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 rounded-2xl p-8 border border-white/10 hover:border-white/30 space-y-4">
+                        <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                          <Icon icon={f.icon} />
+                        </div>
+                        <h4 className={`${SubheaderMd} text-lg font-bold`}>{f.title}</h4>
+                        <p className={`${BodyMd} text-white/60 leading-relaxed`}>{f.desc}</p>
+                      </div>
+                    </Reveal>
+                  ))}
+                </div>
+              </section>
+
+              <div className="h-px bg-white/10 mx-8 md:mx-20" />
+
+              {/* ─── 3D ROLE CAROUSEL ─── */}
+              <section id="roles" className="py-28 px-6 max-w-5xl mx-auto space-y-14">
+                <Reveal delay={0}>
+                  <div className="text-center space-y-3 max-w-xl mx-auto mb-10">
+                    <p className="text-white/50 uppercase tracking-[0.2em] text-xs font-bold">Built For Everyone</p>
+                    <h2 className={`${HeaderMd} text-3xl md:text-5xl`}>Your role, your tools.</h2>
+                  </div>
+                </Reveal>
+
+                <Reveal delay={200}>
+                  <div className="relative h-[500px] flex items-center justify-center" style={{ perspective: '2000px' }}>
+                    <div
+                      className="relative w-full h-full transition-transform duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)]"
+                      style={{ transformStyle: 'preserve-3d', transform: `rotateY(${rotation}deg)` }}
                     >
-                       <div className="space-y-6 pt-10">
-                        <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-inner" style={{ backgroundColor: `${face.accent}15`, color: face.accent }}>
-                          {face.icon}
-                        </div>
-                        <div>
-                          <h4 className={`${SubheaderSm} uppercase tracking-[0.2em] font-black mb-2`} style={{ color: face.accent }}>{face.role}</h4>
-                          <h3 className={`${HeaderMd} text-4xl leading-tight text-[#3E2723]`}>{face.title}</h3>
-                        </div>
-                        <p className={`${BodyLg} text-[#3E2723]/70 text-base leading-relaxed`}>{face.desc}</p>
-                       </div>
-                       
-                       <Link href={face.link}>
-                        <Button 
-                          className="w-full text-white rounded-xl py-8 text-lg flex gap-2 shadow-xl hover:scale-105 transition-transform"
-                          style={{ backgroundColor: face.accent }}
+                      {FACES.map((face, i) => (
+                        <div
+                          key={i}
+                          className={`absolute inset-0 flex items-center justify-center transition-all duration-700 ${activeFace === i ? 'opacity-100' : 'opacity-30 blur-sm scale-90 pointer-events-none'}`}
+                          style={{ transform: `rotateY(${i * 120}deg) translateZ(350px)`, backfaceVisibility: 'hidden' }}
                         >
-                          Enter as {face.role} <ArrowRight size={20} />
-                        </Button>
-                       </Link>
+                          <div
+                            className={`w-full max-w-sm ${face.bg} rounded-3xl p-10 flex flex-col gap-6 border-4 border-white/50`}
+                            style={{ boxShadow: `0 30px 60px -15px ${face.accent}60` }}
+                          >
+                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner" style={{ backgroundColor: `${face.accent}20`, color: face.accent }}>
+                              {face.icon}
+                            </div>
+                            <div className="space-y-2">
+                              <p className="uppercase tracking-widest text-[11px] font-black" style={{ color: face.accent }}>{face.role}</p>
+                              <h3 className={`${HeaderSm} text-2xl text-[#3E2723] leading-tight`}>{face.title}</h3>
+                              <p className={`${BodyMd} text-[#3E2723]/70 text-sm leading-relaxed`}>{face.desc}</p>
+                            </div>
+                            <div onClick={handleCTAClick} className="mt-4 cursor-pointer">
+                              <Button className="w-full text-white rounded-xl py-6 text-sm font-bold flex justify-between px-6 transition-all hover:scale-[1.02] active:scale-95 shadow-md" style={{ backgroundColor: face.accent }}>
+                                <span>Enter as {face.role}</span> <ArrowRight size={16} />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Carousel Controls */}
+                    <div className="absolute -bottom-6 flex gap-4 z-50">
+                      <Button onClick={() => rotate('left')} className="bg-white/20 hover:bg-white/40 text-white rounded-full w-14 h-14 shadow-xl border border-white/10 backdrop-blur-md transition-all active:scale-90">
+                        <ChevronLeft size={24} />
+                      </Button>
+                      <Button onClick={() => rotate('right')} className="bg-white/20 hover:bg-white/40 text-white rounded-full w-14 h-14 shadow-xl border border-white/10 backdrop-blur-md transition-all active:scale-90">
+                        <ChevronRight size={24} />
+                      </Button>
                     </div>
                   </div>
-                ))}
-              </div>
+                </Reveal>
+              </section>
 
-              {/* Controls inside the carousel area */}
-              <div className="absolute bottom-[-100px] flex gap-8 z-50">
-                <Button 
-                  onClick={() => rotate('left')}
-                  className="bg-white hover:bg-[#F4F5E1] text-[#3E2723] rounded-full w-16 h-16 shadow-2xl border-none active:scale-90 transition-all group"
-                >
-                  <ChevronLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
-                </Button>
-                <Button 
-                  onClick={() => rotate('right')}
-                  className="bg-white hover:bg-[#F4F5E1] text-[#3E2723] rounded-full w-16 h-16 shadow-2xl border-none active:scale-90 transition-all group"
-                >
-                  <ChevronRight size={32} className="group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </div>
-            </div>
-          </div>
+              <div className="h-px bg-white/10 mx-8 md:mx-20" />
 
-          {/* Stats Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-40 text-center">
-            {[
-              { label: "Available Units", val: "1,200+", color: "#FFF" },
-              { label: "University Partners", val: "15+", color: "#FFF" },
-              { label: "Active Students", val: "8,500+", color: "#FFF" },
-              { label: "Average Rating", val: "4.9/5", color: "#FFF" }
-            ].map((s, i) => (
-              <div key={i} className="space-y-1 group cursor-default">
-                <p className={`${HeaderLg} text-3xl md:text-5xl group-hover:scale-105 transition-transform`} style={{ color: s.color }}>{s.val}</p>
-                <p className={`${SubheaderSm} opacity-60 uppercase tracking-widest text-white text-xs`}>{s.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Section 3: Key Features (The Icons/Grid) */}
-          <div id="features" className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center mb-40 pt-20">
-            <div className="space-y-10">
-              <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-2 rounded-full border border-white/10">
-                <Sparkles className="w-5 h-5 text-yellow-300" />
-                <span className={`${SubheaderSm} uppercase tracking-wider text-white`}>Smart Living Ecosystem</span>
-              </div>
-              <h2 className={`${HeaderLg} text-4xl md:text-6xl leading-tight text-white`}>
-                Housing management, <br />
-                <span className="opacity-50">simplified for everyone.</span>
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {[
-                  { icon: <MapPin />, title: "📍 Proximity to Campus", desc: "Filter by distance from your college or the nearest jeepney route.", accent: "#FFEBEE" },
-                  { icon: <ShieldCheck />, title: "🛡️ Verified & Secure", desc: "We vet our listings to ensure your safety and peace of mind.", accent: "#FFF8E1" },
-                  { icon: <Zap />, title: "📶 Study-Ready Spaces", desc: "Dedicated tags for high-speed Wi-Fi, quiet zones, and well-lit desks.", accent: "#F1F8E9" },
-                  { icon: <Users />, title: "🤝 Community First", desc: "Connect with potential roommates who share your vibe and your degree program.", accent: "#E3F2FD" }
-                ].map((item, i) => (
-                  <div key={i} className="space-y-3 bg-white/5 p-6 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors cursor-default">
-                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white">
-                      {item.icon}
-                    </div>
-                    <h4 className={`${SubheaderMd} text-xl text-white`}>{item.title}</h4>
-                    <p className={`${BodyMd} opacity-70 text-white`}>{item.desc}</p>
+              {/* ─── PROPERTY CATEGORIES ─── */}
+              <section className="py-28 px-6 max-w-5xl mx-auto space-y-14">
+                <Reveal delay={0}>
+                  <div className="text-center space-y-3 max-w-xl mx-auto">
+                    <p className="text-white/50 uppercase tracking-[0.2em] text-xs font-bold">Browse By Type</p>
+                    <h2 className={`${HeaderMd} text-3xl md:text-5xl`}>Find your fit.</h2>
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="relative">
-              <div className="aspect-square bg-white/5 rounded-[80px] border border-white/10 flex items-center justify-center overflow-hidden relative">
-                 <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-                 <div className="relative z-10 text-center p-12 space-y-8">
-                    <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-2xl mx-auto mb-6 rotate-6">
-                      <img src="/logo/logo_house.png" className="w-10 h-10 object-contain" alt="Testimonial" />
-                    </div>
-                    <p className={`${BodyLg} text-2xl italic font-light leading-relaxed text-white`}>
-                      "Dati, nahihirapan ako mag-ikot sa Grove para maghanap ng lilipatan. Sa ELBNB, isang click lang, napanagtag ko na yung 'pahingahan' ko. Super convenient!"
-                    </p>
-                    <div className="space-y-1">
-                      <p className={`${SubheaderLg} text-white text-xl`}>Maya</p>
-                      <p className={`${SubheaderMd} opacity-60 text-white uppercase tracking-widest text-sm`}>BS Forestry Student</p>
-                    </div>
-                 </div>
-              </div>
-            </div>
-          </div>
+                </Reveal>
 
-          {/* Workflow Section */}
-          <div className="text-center space-y-20">
-            <h3 className={`${HeaderMd} text-4xl md:text-6xl text-white`}>How it works</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
-               {/* Connector Line */}
-               <div className="hidden md:block absolute top-12 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-               
-               {[
-                 { step: "01", title: "Verify Account", desc: "Sign up using your university credentials.", color: "#FFEBEE" },
-                 { step: "02", title: "Browse & Select", desc: "Filter by location, unit type, and price.", color: "#FFF8E1" },
-                 { step: "03", title: "Move In", desc: "Complete the digital inventory and start your stay.", color: "#F1F8E9" }
-               ].map((step, i) => (
-                 <div key={i} className="relative z-10 space-y-6 group">
-                    <div className="w-24 h-24 bg-white text-[#7EB647] rounded-full mx-auto flex items-center justify-center text-3xl font-black shadow-2xl group-hover:scale-110 transition-transform">
-                      {step.step}
-                    </div>
-                    <h4 className={`${HeaderSm} text-2xl text-white`}>{step.title}</h4>
-                    <p className={`${BodyMd} opacity-70 max-w-[250px] mx-auto text-white`}>{step.desc}</p>
-                 </div>
-               ))}
-            </div>
-          </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {CATEGORIES.map((cat, i) => (
+                    <Reveal key={i} delay={150 + (i * 150)}>
+                      <div className="group h-full bg-white/5 backdrop-blur-sm hover:bg-white/15 transition-all duration-300 hover:-translate-y-2 rounded-3xl p-8 border border-white/10 cursor-pointer space-y-4">
+                        <span className="text-4xl block mb-6 transform group-hover:scale-110 transition-transform origin-left">
+                          <Icon icon={cat.icon} />
+                        </span>
+                        <h3 className={`${SubheaderLg} text-xl font-bold`}>{cat.title}</h3>
+                        <p className={`${BodyMd} text-white/60 leading-relaxed`}>{cat.desc}</p>
+                        <div className="pt-4 flex items-center gap-2 text-white/50 group-hover:text-white font-bold text-sm transition-colors">
+                          Browse Listings <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
+                        </div>
+                      </div>
+                    </Reveal>
+                  ))}
+                </div>
+              </section>
 
-          {/* Property Categories */}
-          <div className="mb-40 space-y-20">
-             <div className="text-center space-y-4">
-               <h2 className={`${HeaderMd} text-white text-4xl md:text-6xl`}>Property Categories</h2>
-               <p className={`${BodyLg} text-white/70 max-w-xl mx-auto text-lg`}>Make navigation easy. Find the stay that fits your lifestyle and budget.</p>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                {[
-                  { title: "Solo Sanctuary", desc: "For the focused student who needs their own space (Studios & Solo Rooms).", icon: <UserCircle />, accent: "#FFEBEE" },
-                  { title: "The Study Squad", desc: "Shared housing for groups and barkadas (2-4 Bedroom units).", icon: <Users />, accent: "#FFF8E1" },
-                  { title: "Budget-Friendly Stays", desc: "Quality living that fits the student allowance.", icon: <Sparkles />, accent: "#F1F8E9" }
-                ].map((cat, i) => (
-                  <div key={i} className="group relative bg-white/10 backdrop-blur-xl p-8 rounded-[40px] border border-white/10 hover:bg-white/20 transition-all cursor-pointer">
-                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform">
-                      {React.cloneElement(cat.icon as React.ReactElement, { size: 32 })}
+              <div className="h-px bg-white/10 mx-8 md:mx-20" />
+
+              {/* ─── BIG CTA ─── */}
+              <section id="get-started" className="py-28 px-6 max-w-5xl mx-auto space-y-14">
+                <Reveal delay={0}>
+                  <div className="max-w-4xl mx-auto text-center space-y-10 bg-white/10 backdrop-blur-md rounded-[3rem] p-12 md:p-20 border border-white/10 shadow-2xl">
+                    <div className="space-y-5">
+                      <p className="text-white/50 uppercase tracking-[0.2em] text-sm font-bold">Get Started</p>
+                      <h2 className={`${HeaderMd} text-4xl md:text-6xl leading-tight`}>
+                        Handa ka na bang mahanap<br />ang bago mong tahanan?
+                      </h2>
                     </div>
-                    <h3 className={`${SubheaderLg} text-white text-2xl mb-3`}>{cat.title}</h3>
-                    <p className={`${BodyMd} text-white/60 text-base leading-relaxed mb-6`}>{cat.desc}</p>
-                    <div className="flex items-center gap-2 text-white font-bold text-sm">
-                      Browse Category <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
-                    </div>
+                    <button
+                      onClick={handleCTAClick}
+                      className="bg-white text-[#7EB647] hover:bg-[#f4f5e1] rounded-full px-10 py-5 text-lg font-black shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.5)] inline-flex gap-3 mx-auto items-center transition-all hover:-translate-y-1 active:scale-95"
+                    >
+                      Browse Listings Now <ArrowRight size={20} />
+                    </button>
                   </div>
-                ))}
-             </div>
-          </div>
-
-          {/* Call to Action Closer */}
-          <div id="get-started" className="mb-40 text-center py-40 px-12 bg-white/10 backdrop-blur-2xl rounded-[60px] border border-white/10 relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-             <div className="relative z-10 space-y-8">
-               <h2 className={`${HeaderMd} text-white text-4xl md:text-6xl`}>Handa ka na bang mahanap ang bago mong tahanan?</h2>
-               <p className={`${BodyLg} text-white/80 max-w-2xl mx-auto text-xl leading-relaxed`}>
-                 Huwag hayaang mapagod ang iyong pangarap dahil lang sa maling tuluyan.
-               </p>
-               <Link href="/onboarding">
-                 <Button className="bg-white text-[#7EB647] hover:bg-white/90 rounded-2xl px-12 py-6 text-xl font-black shadow-2xl flex gap-3 mx-auto transition-all active:scale-95">
-                   Browse Listings Now <ArrowRight size={24} />
-                 </Button>
-               </Link>
-             </div>
-          </div>
-
-          {/* Footer Area */}
-          <div className="mt-20 pt-16 border-t border-white/10 flex flex-col md:flex-row justify-between items-start gap-12">
-             <div className="space-y-6">
-               <div className="flex items-center gap-3">
-                  <img src="/logo/logo_house.png" alt="ELBNB" className="h-12 w-auto brightness-0 invert" />
-                  <span className={`${HeaderSm} text-3xl text-white tracking-tighter`}>ELBNB</span>
-               </div>
-               <p className={`${BodyMd} text-white/50 max-w-sm text-xl`}>
-                 Pahingahan para sa Pangarap.
-               </p>
-             </div>
-             
-             <div className="grid grid-cols-2 md:grid-cols-3 gap-20">
-               <div className="space-y-6 text-white">
-                  <p className={`${SubheaderSm} uppercase tracking-widest opacity-30`}>Product</p>
-                  <ul className="space-y-4 opacity-60 text-lg">
-                    <li><Link href="/onboarding" className="hover:opacity-100 transition-opacity">Find a Home</Link></li>
-                    <li><Link href="/onboarding" className="hover:opacity-100 transition-opacity">List Property</Link></li>
-                    <li><Link href="/onboarding" className="hover:opacity-100 transition-opacity">Student Portal</Link></li>
-                  </ul>
-               </div>
-               <div className="space-y-6 text-white">
-                  <p className={`${SubheaderSm} uppercase tracking-widest opacity-30`}>Company</p>
-                  <ul className="space-y-4 opacity-60 text-lg">
-                    <li><Link href="#" className="hover:opacity-100 transition-opacity">About Us</Link></li>
-                    <li><Link href="#" className="hover:opacity-100 transition-opacity">Contact Support</Link></li>
-                    <li><Link href="#" className="hover:opacity-100 transition-opacity">Partners</Link></li>
-                  </ul>
-               </div>
-               <div className="space-y-6 text-white">
-                  <p className={`${SubheaderSm} uppercase tracking-widest opacity-30`}>Legal</p>
-                  <ul className="space-y-4 opacity-60 text-lg">
-                    <li><Link href="#" className="hover:opacity-100 transition-opacity">Privacy Policy</Link></li>
-                    <li><Link href="#" className="hover:opacity-100 transition-opacity">Terms of Service</Link></li>
-                  </ul>
-               </div>
-             </div>
-          </div>
-          
-          <div className="mt-32 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 opacity-30 text-white">
-             <p className={BodySm}>© 2024 ELBNB. From Elbi, For Elbi.</p>
-             <div className="flex gap-10">
-                <Link href="#" className="hover:opacity-100 transition-opacity">Facebook</Link>
-                <Link href="#" className="hover:opacity-100 transition-opacity">Instagram</Link>
-                <Link href="#" className="hover:opacity-100 transition-opacity">TikTok</Link>
-             </div>
+                </Reveal>
+              </section>
+            </div>
           </div>
         </div>
-      </section>
+      </main>
 
+      {/* ─── FOOTER ─── */}
+      <footer className="bg-[#7EB647] py-16 px-6 pb-32 text-white relative z-10" style={{ filter: 'url(#grain)' }}>
+        <div className="max-w-5xl mx-auto space-y-12 relative z-10">
+          <div className="flex flex-col lg:flex-row justify-between gap-12">
+            <div className="space-y-4 max-w-xs">
+              <div className="flex items-center gap-3">
+                <img src="/logo/logo_house.png" alt="ELBNB" className="h-8 w-auto brightness-0 invert" />
+                <span className={`${HeaderSm} text-2xl tracking-tighter font-black`}>ELBNB</span>
+              </div>
+              <p className="text-white/60 text-sm leading-relaxed">Pahingahan para sa Pangarap. Connecting students with safe, study-ready spaces.</p>
+              <p className="text-white/40 text-xs italic font-bold">"From Elbi, For Elbi."</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-10 md:gap-16">
+              {FOOTER_COLS.map((col, i) => (
+                <div key={i} className="space-y-4">
+                  <p className="text-white/40 uppercase tracking-[0.15em] text-xs font-bold">{col.label}</p>
+                  <ul className="space-y-3">
+                    {col.links.map(([label, href], j) => (
+                      <li key={j}>
+                        <Link href={href} className="text-white/70 hover:text-white hover:underline underline-offset-4 transition-all text-sm">
+                          {label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-white/20 flex flex-col md:flex-row justify-between items-center gap-6">
+            <p className="text-white/40 text-xs font-semibold">© 2024 ELBNB. All rights reserved.</p>
+            <div className="flex items-center gap-6">
+              {['Facebook', 'Instagram', 'TikTok'].map((s) => (
+                <Link key={s} href="#" className="text-white/50 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">
+                  {s}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* ─── GLOBAL STYLES ─── */}
       <style jsx global>{`
-        .perspective-2000 {
-          perspective: 2000px;
+        body { background-color: #F4F5E1; scroll-behavior: smooth; }
+        
+        @keyframes rippleExpand {
+          0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
-        .preserve-3d {
-          transform-style: preserve-3d;
+
+        /* Natural Cloud Drifting Keyframes */
+        @keyframes cloudFloat {
+          0%, 100% { transform: translateX(0px); }
+          50% { transform: translateX(25px); }
         }
-        .backface-hidden {
-          backface-visibility: hidden;
+        @keyframes cloudFloatReverse {
+          0%, 100% { transform: translateX(0px); }
+          50% { transform: translateX(-20px); }
         }
-        body {
-          background-color: #F4F5E1;
-        }
+        
+        /* Cloud Animation Classes */
+        .float-animation { animation: cloudFloat 12s ease-in-out infinite; }
+        .float-animation-reverse { animation: cloudFloatReverse 15s ease-in-out infinite; }
+        .float-animation-slow { animation: cloudFloat 18s ease-in-out infinite; }
       `}</style>
     </div>
   );

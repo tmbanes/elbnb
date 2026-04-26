@@ -77,7 +77,7 @@ export default function AddDormModal({
     fetch("/api/admin/housing/managers")
       .then((r) => r.json())
       .then(setManagers)
-      .catch(() => {});
+      .catch(() => { });
   }, [isOpen]);
 
   useEffect(() => {
@@ -205,11 +205,11 @@ export default function AddDormModal({
           isEditing
             ? payload
             : {
-                ...payload.accommodationFields,
-                ...payload.dormitoryFields,
-                number_of_semesters_allowed:
-                  payload.dormitoryFields.number_of_semestersAllowed,
-              }
+              ...payload.accommodationFields,
+              ...payload.dormitoryFields,
+              number_of_semesters_allowed:
+                payload.dormitoryFields.number_of_semestersAllowed,
+            }
         ),
       });
 
@@ -276,21 +276,19 @@ export default function AddDormModal({
             <div key={i} className="flex items-center gap-2">
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors
-                ${
-                  step === i + 1
+                ${step === i + 1
                     ? "bg-[#5591AB] text-white"
                     : step > i + 1
-                    ? "bg-[#5591AB] text-white opacity-80"
-                    : "bg-muted text-muted-foreground"
-                }`}
+                      ? "bg-[#5591AB] text-white opacity-80"
+                      : "bg-muted text-muted-foreground"
+                  }`}
               >
                 {step > i + 1 ? "✓" : i + 1}
               </div>
               {i < totalSteps - 1 && (
                 <div
-                  className={`h-[2px] w-6 ${
-                    step > i + 1 ? "bg-[#5591AB]" : "bg-muted"
-                  }`}
+                  className={`h-[2px] w-6 ${step > i + 1 ? "bg-[#5591AB]" : "bg-muted"
+                    }`}
                 />
               )}
             </div>
@@ -409,175 +407,175 @@ export default function AddDormModal({
 
         {!isEditing && (
           <>
-        {/* Step 1 — Add Units */}
-        {step === 1 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-[#44291B]">
-                  Add Units <span className="text-[#DF3538]">*</span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Total capacity is auto-calculated from all unit capacities.
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addUnit}
-                className="gap-1 border-[#5591AB] text-[#5591AB] hover:bg-[#5591AB] hover:text-white text-xs"
-              >
-                <Plus className="h-3 w-3" />
-                Add Unit
-              </Button>
-            </div>
+            {/* Step 1 — Add Units */}
+            {step === 1 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-[#44291B]">
+                      Add Units <span className="text-[#DF3538]">*</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Total capacity is auto-calculated from all unit capacities.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addUnit}
+                    className="gap-1 border-[#5591AB] text-[#5591AB] hover:bg-[#5591AB] hover:text-white text-xs"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add Unit
+                  </Button>
+                </div>
 
-            {units.length === 0 && (
-              <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-                Add at least one unit to continue.
+                {units.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+                    Add at least one unit to continue.
+                  </div>
+                )}
+
+                {units.length > 0 && (
+                  <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
+                    {units.map((unit, i) => (
+                      <UnitEntryCard
+                        key={i}
+                        index={i}
+                        data={unit}
+                        onChange={updateUnit}
+                        onRemove={removeUnit}
+                        accentColor="#5591AB"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            {units.length > 0 && (
-              <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
-                {units.map((unit, i) => (
-                  <UnitEntryCard
-                    key={i}
-                    index={i}
-                    data={unit}
-                    onChange={updateUnit}
-                    onRemove={removeUnit}
-                    accentColor="#5591AB"
+            {/* Step 2 — Dorm Details */}
+            {step === 2 && (
+              <>
+                <Field>
+                  <Label htmlFor="name" className="font-semibold">
+                    Dorm Name <span className="text-[#DF3538]">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    value={form.name}
+                    onChange={(e) => handleChange("name", e.target.value)}
+                    placeholder="e.g. Sampaguita Dormitory"
+                    required
                   />
-                ))}
-              </div>
+                </Field>
+                <Field>
+                  <Label htmlFor="location" className="font-semibold">
+                    Location <span className="text-[#DF3538]">*</span>
+                  </Label>
+                  <Input
+                    id="location"
+                    value={form.location}
+                    onChange={(e) => handleChange("location", e.target.value)}
+                    placeholder="e.g. Main Campus"
+                    required
+                  />
+                </Field>
+              </>
             )}
-          </div>
-        )}
 
-        {/* Step 2 — Dorm Details */}
-        {step === 2 && (
-          <>
-            <Field>
-              <Label htmlFor="name" className="font-semibold">
-                Dorm Name <span className="text-[#DF3538]">*</span>
-              </Label>
-              <Input
-                id="name"
-                value={form.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-                placeholder="e.g. Sampaguita Dormitory"
-                required
-              />
-            </Field>
-            <Field>
-              <Label htmlFor="location" className="font-semibold">
-                Location <span className="text-[#DF3538]">*</span>
-              </Label>
-              <Input
-                id="location"
-                value={form.location}
-                onChange={(e) => handleChange("location", e.target.value)}
-                placeholder="e.g. Main Campus"
-                required
-              />
-            </Field>
-          </>
-        )}
+            {/* Step 3 — Dorm Policies */}
+            {step === 3 && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field>
+                    <Label className="font-semibold">Semesters Allowed</Label>
+                    <Input
+                      type="number"
+                      value={form.number_of_semesters_allowed}
+                      onChange={(e) =>
+                        handleChange(
+                          "number_of_semesters_allowed",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </Field>
+                  <Field>
+                    <Label className="font-semibold">Term Type</Label>
+                    <Select
+                      value={form.term_type}
+                      onValueChange={(val) => handleChange("term_type", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="semestral">Semestral</SelectItem>
+                        <SelectItem value="annual">Annual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+                <Field>
+                  <Label className="font-semibold">Curfew Time</Label>
+                  <Input
+                    type="time"
+                    value={form.curfew_time}
+                    onChange={(e) => handleChange("curfew_time", e.target.value)}
+                  />
+                </Field>
+                <Field>
+                  <Label className="font-semibold">Allowed Programs</Label>
+                  <Textarea
+                    value={form.allowed_programs}
+                    onChange={(e) =>
+                      handleChange("allowed_programs", e.target.value)
+                    }
+                    placeholder="All programs..."
+                  />
+                </Field>
+                <div className="flex items-center space-x-2 pt-2">
+                  <Checkbox
+                    id="gender"
+                    className="data-[state=checked]:bg-[#5591AB] data-[state=checked]:border-[#5591AB]"
+                    checked={form.separate_by_gender}
+                    onCheckedChange={(checked) =>
+                      handleChange("separate_by_gender", checked)
+                    }
+                  />
+                  <Label htmlFor="gender" className="text-sm font-semibold">
+                    Separate by Gender
+                  </Label>
+                </div>
+              </>
+            )}
 
-        {/* Step 3 — Dorm Policies */}
-        {step === 3 && (
-          <>
-            <div className="grid grid-cols-2 gap-4">
+            {/* Step 4 — Assign Manager */}
+            {step === 4 && (
               <Field>
-                <Label className="font-semibold">Semesters Allowed</Label>
-                <Input
-                  type="number"
-                  value={form.number_of_semesters_allowed}
-                  onChange={(e) =>
-                    handleChange(
-                      "number_of_semesters_allowed",
-                      e.target.value
-                    )
-                  }
-                />
-              </Field>
-              <Field>
-                <Label className="font-semibold">Term Type</Label>
+                <Label className="font-semibold">Property Manager</Label>
                 <Select
-                  value={form.term_type}
-                  onValueChange={(val) => handleChange("term_type", val)}
+                  value={form.manager_id}
+                  onValueChange={(val) => handleChange("manager_id", val)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Select a manager" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="semestral">Semestral</SelectItem>
-                    <SelectItem value="annual">Annual</SelectItem>
+                    {managers.map((m) => (
+                      <SelectItem key={m.employee_id} value={m.users.user_id}>
+                        {m.users.first_name} {m.users.last_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </Field>
-            </div>
-            <Field>
-              <Label className="font-semibold">Curfew Time</Label>
-              <Input
-                type="time"
-                value={form.curfew_time}
-                onChange={(e) => handleChange("curfew_time", e.target.value)}
-              />
-            </Field>
-            <Field>
-              <Label className="font-semibold">Allowed Programs</Label>
-              <Textarea
-                value={form.allowed_programs}
-                onChange={(e) =>
-                  handleChange("allowed_programs", e.target.value)
-                }
-                placeholder="All programs..."
-              />
-            </Field>
-            <div className="flex items-center space-x-2 pt-2">
-              <Checkbox
-                id="gender"
-                className="data-[state=checked]:bg-[#5591AB] data-[state=checked]:border-[#5591AB]"
-                checked={form.separate_by_gender}
-                onCheckedChange={(checked) =>
-                  handleChange("separate_by_gender", checked)
-                }
-              />
-              <Label htmlFor="gender" className="text-sm font-semibold">
-                Separate by Gender
-              </Label>
-            </div>
-          </>
-        )}
+            )}
 
-        {/* Step 4 — Assign Manager */}
-        {step === 4 && (
-          <Field>
-            <Label className="font-semibold">Property Manager</Label>
-            <Select
-              value={form.manager_id}
-              onValueChange={(val) => handleChange("manager_id", val)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a manager" />
-              </SelectTrigger>
-              <SelectContent>
-                {managers.map((m) => (
-                  <SelectItem key={m.employee_id} value={m.users.user_id}>
-                    {m.users.first_name} {m.users.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-        )}
-
-        {error && (
-          <p className="text-xs font-medium text-destructive">{error}</p>
-        )}
+            {error && (
+              <p className="text-xs font-medium text-destructive">{error}</p>
+            )}
           </>
         )}
         {isEditing && error && (
@@ -607,27 +605,27 @@ export default function AddDormModal({
             {step === 1 ? "Cancel" : "Back"}
           </Button>
           {step < totalSteps ? (
-          <Button
-            disabled={!canProceed()}
-            onClick={() => setStep((s) => s + 1)}
-            className="bg-[#5591AB] hover:bg-[#467a8f] text-white"
-          >
-            Next
-          </Button>
-        ) : (
-          <Button
-            disabled={loading || !canProceed()}
-            onClick={handleSubmit}
-            className={
-              isEditing
-                ? "bg-[#5591AB] hover:bg-[#467a8f]"
-                : "bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
-            }
-          >
-            {loading
-              ? "Saving..."
-              : "Create Dormitory"}
-          </Button>
+            <Button
+              disabled={!canProceed()}
+              onClick={() => setStep((s) => s + 1)}
+              className="bg-[#5591AB] hover:bg-[#467a8f] text-white"
+            >
+              Next
+            </Button>
+          ) : (
+            <Button
+              disabled={loading || !canProceed()}
+              onClick={handleSubmit}
+              className={
+                isEditing
+                  ? "bg-[#5591AB] hover:bg-[#467a8f]"
+                  : "bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
+              }
+            >
+              {loading
+                ? "Saving..."
+                : "Create Dormitory"}
+            </Button>
           )}
         </div>
       )}

@@ -1,9 +1,10 @@
+import { withRole } from "@/lib/auth/api-guard";
 // app/api/manager/dashboard/residents/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 
-export async function GET(_req: NextRequest) {
+export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 
@@ -234,4 +235,4 @@ export async function GET(_req: NextRequest) {
       e instanceof Error ? e.message : "Failed to fetch residents data.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});

@@ -1,8 +1,9 @@
+import { withRole } from "@/lib/auth/api-guard";
 // /app/api/guest/profile/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 
-export async function GET(req: NextRequest) {
+export const GET = withRole(['guest'], async (req: NextRequest) => {
   const supabase = await createSupabaseServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(data);
-}
+});
 
 
 
