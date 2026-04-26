@@ -7,21 +7,20 @@ import BillingClient from "./BillingClient";
 const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
+
 export default async function StudentBillingPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiAuthenticatedUser();
 
   if (!user) {
-    redirect("/");
+    redirect("/onboarding");
   }
 
-  await ensureInitialInvoicesForUser(user.id);
+  await ensureInitialInvoicesForUser(user.user_id);
 
-  const { data: summary } = await getUserPaymentSummary(user.id, "student");
-  const { data: bills, error: billsError } = await getStudentBillsDetailed(user.id);
-  const { data: paymentHistory } = await getStudentPaymentHistory(user.id);
+  const { data: summary } = await getUserPaymentSummary(user.user_id, "student");
+  const { data: bills, error: billsError } = await getStudentBillsDetailed(user.user_id);
+  const { data: paymentHistory } = await getStudentPaymentHistory(user.user_id);
 
   if (billsError) {
     return <div className="p-8 text-red-500 font-mono">SUPABASE ERROR: {JSON.stringify(billsError)}</div>;
@@ -36,7 +35,7 @@ export default async function StudentBillingPage() {
         </div>
 
         <BillingClient
-          userId={user.id}
+          userId={user.user_id}
           summary={summary || { total: 0, paid: 0, balance: 0 }}
           bills={bills || []}
           paymentHistory={paymentHistory || []}

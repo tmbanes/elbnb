@@ -2,53 +2,38 @@ import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { redirect } from "next/navigation";
 import { DashboardClient } from "./dashboard-client";
 import { userProfileService } from "@/services/user_profile";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
 export default async function AdminDashboardPage() {
   const supabase = await createSupabaseServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect("/auth/sign-in");
+  const session = await getApiAuthenticatedUser();
 
-  // 1. All accommodations
-  const { data: accommodations } = await supabase
-    .from("accommodation")
-    .select("accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity");
+  if (!session) {
+    redirect("/onboarding");
+  }
 
-  // 2. All units with occupancy info
-  const { data: units } = await supabase
-    .from("unit")
-    .select("unit_id, accommodation_id, unit_number, unit_type, max_occupancy, current_occupancy, unit_status, rental_fee");
-
-  // 3. Active assignments (students currently housed)
-  const { data: activeAssignments } = await supabase
-    .from("accommodation_assignment")
-    .select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status")
-    .eq("assignment_status", "active");
-
-  // 4. Pending applications (waiting list)
-  const { data: pendingApplications } = await supabase
-    .from("accommodation_application")
-    .select("application_id, user_id, application_status, date_submitted, preferred_accommodation_id, preferred_unit_type, users(first_name, last_name, email), accommodation(name)")
-    .in("application_status", ["pending_admin", "pending_dorm_manager"])
-    .order("date_submitted", { ascending: false });
-
-  // 5. Recent applications (all statuses, latest 8)
-  const { data: recentApplications } = await supabase
-    .from("accommodation_application")
-    .select("application_id, user_id, application_status, date_submitted, preferred_unit_type, users(first_name, last_name, email), accommodation(name)")
-    .order("date_submitted", { ascending: false })
-    .limit(8);
-
-  // 6. Billing data
-  const { data: allBilling } = await supabase
-    .from("billing")
-    .select("billing_id, amount, status, due_date, created_at, assignment_id");
-
-  // 7. Students currently housed with details
-  const { data: housedStudents } = await supabase
-    .from("accommodation_assignment")
-    .select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status, users(first_name, last_name, email), unit(unit_number, accommodation(name))")
-    .eq("assignment_status", "active")
-    .limit(20);
+  // Fetch all data in parallel to significantly reduce loading time
+  const [
+    { data: accommodations },
+    { data: units },
+    { data: activeAssignments },
+    { data: pendingApplications },
+    { data: recentApplications },
+    { data: allBilling },
+    { data: housedStudents },
+    profile,
+    { data: notifications }
+  ] = await Promise.all([
+    supabase.from("accommodation").select("accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity"),
+    supabase.from("unit").select("unit_id, accommodation_id, unit_number, unit_type, max_occupancy, current_occupancy, unit_status, rental_fee"),
+    supabase.from("accommodation_assignment").select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status").eq("assignment_status", "active"),
+    supabase.from("accommodation_application").select("application_id, user_id, application_status, date_submitted, preferred_accommodation_id, preferred_unit_type, users(first_name, last_name, email), accommodation(name)").in("application_status", ["pending_admin", "pending_dorm_manager"]).order("date_submitted", { ascending: false }),
+    supabase.from("accommodation_application").select("application_id, user_id, application_status, date_submitted, preferred_unit_type, users(first_name, last_name, email), accommodation(name)").order("date_submitted", { ascending: false }).limit(8),
+    supabase.from("billing").select("billing_id, amount, status, due_date, created_at, assignment_id"),
+    supabase.from("accommodation_assignment").select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status, users(first_name, last_name, email), unit(unit_number, accommodation(name))").eq("assignment_status", "active").limit(20),
+    userProfileService.getProfile(session.user_id),
+    userProfileService.getNotifications(session.user_id)
+  ]);
 
   // Compute derived data
   const totalProperties = accommodations?.length ?? 0;
@@ -115,14 +100,35 @@ export default async function AdminDashboardPage() {
   if (waitingListCount > 5) alerts.push({ type: "info", message: `${waitingListCount} students on waiting list` });
   if (overdueCount > 0) alerts.push({ type: "danger", message: `${overdueCount} overdue payment${overdueCount > 1 ? "s" : ""} totaling ₱${overdueTotal.toLocaleString()}` });
 
-  // 8. User Profile & Notifications
-  const profile = await userProfileService.getProfile(session.user.id);
-  const { data: notifications } = await userProfileService.getNotifications(session.user.id);
+  // Flatten applications and assignments data
+  const flattenedRecent = (recentApplications || []).map((app: any) => ({
+    ...app,
+    users: Array.isArray(app.users) ? app.users[0] : app.users,
+    accommodation: Array.isArray(app.accommodation) ? app.accommodation[0] : app.accommodation,
+  }));
+
+  const flattenedPending = (pendingApplications || []).map((app: any) => ({
+    ...app,
+    users: Array.isArray(app.users) ? app.users[0] : app.users,
+    accommodation: Array.isArray(app.accommodation) ? app.accommodation[0] : app.accommodation,
+  }));
+
+  const flattenedHoused = (housedStudents || []).map((entry: any) => ({
+    ...entry,
+    users: Array.isArray(entry.users) ? entry.users[0] : entry.users,
+    unit: Array.isArray(entry.unit) ? {
+      ...entry.unit[0],
+      accommodation: Array.isArray(entry.unit[0]?.accommodation) ? entry.unit[0].accommodation[0] : entry.unit[0]?.accommodation
+    } : {
+      ...entry.unit,
+      accommodation: Array.isArray(entry.unit?.accommodation) ? entry.unit.accommodation[0] : entry.unit?.accommodation
+    }
+  }));
 
   return (
     <DashboardClient
-      user={session.user}
-      profile={profile}
+      user={session}
+      profile={profile.data}
       notifications={notifications || []}
       stats={{
         totalProperties,
@@ -139,9 +145,9 @@ export default async function AdminDashboardPage() {
         totalBilled,
       }}
       propertyOccupancy={propertyOccupancy}
-      recentApplications={(recentApplications as any) ?? []}
-      pendingApplications={(pendingApplications as any) ?? []}
-      housedStudents={(housedStudents as any) ?? []}
+      recentApplications={flattenedRecent}
+      pendingApplications={flattenedPending}
+      housedStudents={flattenedHoused}
       billingStatusCounts={statusCounts}
       alerts={alerts}
     />

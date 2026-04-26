@@ -39,19 +39,28 @@ type Application = {
     };
 };
 
+import { useRealtimeSync } from "@/lib/realtime-sync";
+
 export default function ApplicationList({
     onSelect,
     selectedId,
+    initialData,
 }: {
     onSelect: (id: string) => void;
     selectedId: string | null;
+    initialData: any;
 }) {
     const supabase = getSupabaseBrowserClient();
+    
+    // Sync applications in real-time
+    useRealtimeSync('accommodation_application', undefined, '*', () => {
+        fetchApplications();
+    });
 
     // Data State
-    const [applications, setApplications] = useState<Application[]>([]);
-    const [accommodations, setAccommodations] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [applications, setApplications] = useState<Application[]>(initialData.applications);
+    const [accommodations, setAccommodations] = useState<any[]>(initialData.accommodations);
+    const [loading, setLoading] = useState(false);
 
     // Filter States
     const [status, setStatus] = useState("all");
@@ -63,20 +72,14 @@ export default function ApplicationList({
 
     const rowsPerPage = 5;
 
-    // Fetch Accommodations for Filter
-    useEffect(() => {
-        async function fetchAccommodations() {
-            const { data, error } = await supabase
-                .from("accommodation")
-                .select("accommodation_id, name, accommodation_type");
 
-            if (!error && data) setAccommodations(data);
+    // Fetch Applications based on filters (skip initial)
+    const [isInitial, setIsInitial] = useState(true);
+    useEffect(() => {
+        if (isInitial) {
+            setIsInitial(false);
+            return;
         }
-        fetchAccommodations();
-    }, []);
-
-    // Fetch Applications based on filters
-    useEffect(() => {
         fetchApplications();
         setPage(1);
     }, [status, accommodation, period, search]);

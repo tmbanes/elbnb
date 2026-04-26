@@ -1,9 +1,17 @@
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
 import ApplyAccommodationForm from "./ApplicationForm";
 
-export default function Page() {
+export default async function Page() {
+  const user = await getApiAuthenticatedUser();
+
+  if (!user) {
+    redirect("/onboarding");
+  }
+
   return (
     <main className="min-h-screen">
-      <ApplyAccommodationForm />
+      <ApplyAccommodationForm authUser={user} />
     </main>
   );
 }

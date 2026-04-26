@@ -60,7 +60,12 @@ function formatDate(dateString: string | undefined | null, fallback = "—") {
   return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
 }
 
+import { useRealtimeSync } from "@/lib/realtime-sync";
+
 export default function ApplicationsPage({ records }: ApplicationsPageProps) {
+  // Sync applications in real-time
+  useRealtimeSync('accommodation_application', undefined, '*');
+
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const ITEMS_PER_PAGE = 5;

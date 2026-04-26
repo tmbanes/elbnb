@@ -3,44 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { createActivityLog, getCurrentUserRole } from "@/services/activity_log/server";
 
-export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req: NextRequest) => {
+export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req, { user }) => {
   try {
     const supabase = await createSupabaseServerClient();
-
-    // Verify session
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Verify role
-    const { data: profile } = await supabase
-      .from("users")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
-
-    if (
-      !profile ||
-      !["dormitory_manager", "housing_admin"].includes(profile.role)
-    ) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     // Get the accommodation assigned to this manager
     const { data: accommodationData, error: managerError } = await supabase
       .from("accommodation")
       .select("accommodation_id, name")
-      .eq("manager_id", user.id)
+      .eq("manager_id", user.user_id) // user object from withRole has user_id
       .single();
-
-     
-    if (managerError) {
-      console.error("REAL SUPABASE ERROR:", managerError);
-    }
 
     if (managerError || !accommodationData) {
       return NextResponse.json(
@@ -49,52 +21,48 @@ export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req:
       );
     }
 
-    const accommodation = accommodationData?.accommodation_id;
-    console.log(`accom id : ${accommodation}`);
+    const accommodationId = accommodationData.accommodation_id;
 
-    // Fetch all applications for this accommodation that are pending dorm manager review
-    const { data: applications, error: appError } = await supabase
-      .from("accommodation_application")
-      .select(
-        `
-        application_id,
-        preferred_accommodation_id,
-        preferred_unit_type,
-        date_submitted,
-        duration_of_stay,
-        check_in,
-        check_out,
-        number_of_companions,
-        application_status,
-        user_id,
-        users (
-          first_name,
-          last_name,
-          email
-        )
-      `,
-      )
-      .eq("preferred_accommodation_id", accommodation)
-      .eq("application_status", "pending_dorm_manager")
-      .order("date_submitted", { ascending: false });
+    // Parallelize applications and units fetching
+    const [appsRes, unitsRes] = await Promise.all([
+      supabase
+        .from("accommodation_application")
+        .select(`
+          application_id,
+          preferred_accommodation_id,
+          preferred_unit_type,
+          date_submitted,
+          duration_of_stay,
+          check_in,
+          check_out,
+          number_of_companions,
+          application_status,
+          user_id,
+          users (
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq("preferred_accommodation_id", accommodationId)
+        .eq("application_status", "pending_dorm_manager")
+        .order("date_submitted", { ascending: false }),
+      supabase
+        .from("unit")
+        .select("unit_id, unit_number")
+        .eq("accommodation_id", accommodationId)
+    ]);
 
-    if (appError) throw new Error(appError.message);
+    if (appsRes.error) throw new Error(appsRes.error.message);
+    if (unitsRes.error) throw new Error(unitsRes.error.message);
 
-    const { data: units, error: unitsError } = await supabase
-      .from("unit") 
-      .select("unit_id, unit_number") //
-      .eq("accommodation_id", accommodation);
-
-    if (unitsError) throw new Error(unitsError.message);
-      console.log(applications)
     return NextResponse.json({
       accommodation: accommodationData,
-      applications: applications ?? [],
-      units: units ?? [],
+      applications: appsRes.data ?? [],
+      units: unitsRes.data ?? [],
     });
   } catch (e) {
-    const message =
-      e instanceof Error ? e.message : "Failed to fetch applications.";
+    const message = e instanceof Error ? e.message : "Failed to fetch applications.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 });
@@ -148,10 +116,10 @@ export const PATCH = withRole(['dormitory_manager', 'housing_admin'], async (req
     }
 
     if (action === "forward" && !unit_id) {
-        return NextResponse.json(
-          { error: "A unit_id is required to forward the application." },
-          { status: 400 },
-        );
+      return NextResponse.json(
+        { error: "A unit_id is required to forward the application." },
+        { status: 400 },
+      );
     }
 
     // Map manager action to the correct enum status
@@ -160,7 +128,7 @@ export const PATCH = withRole(['dormitory_manager', 'housing_admin'], async (req
     const updateData: any = { application_status: newStatus };
 
     if (action === "forward" && unit_id) {
-      updateData.unit_id = unit_id; 
+      updateData.unit_id = unit_id;
     }
     const { error } = await supabase
       .from("accommodation_application")
@@ -178,8 +146,8 @@ export const PATCH = withRole(['dormitory_manager', 'housing_admin'], async (req
         .select("user_id, users(first_name, last_name)")
         .eq("application_id", application_id)
         .single();
-      
-      const applicantName = appData?.users 
+
+      const applicantName = appData?.users
         ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
         : "Unknown Applicant";
 

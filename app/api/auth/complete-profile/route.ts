@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 // import { getSupabaseAdmin } from "@/lib/supabase/admin-client";
 import { College, UserRole } from "@/types/user.types";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
 const validRoles: UserRole[] = ["student", "guest"];
 
@@ -65,9 +66,9 @@ export async function POST(req: NextRequest) {
 
     // 2. AUTHENTICATE USER
     const supabase = await createSupabaseServerClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const user = await getApiAuthenticatedUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated." }, { status: 401 });
     }
 
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
         middle_name: middle_name,
         role: role
       })
-      .eq("user_id", user.id);
+      .eq("user_id", user.user_id);
 
     if (profileUpdate.error) {
       return NextResponse.json({ success: false, error: profileUpdate.error.message }, { status: 500 });
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
     const roleInsert = await supabase
       .from(role)
       .update(subtableData)
-      .eq("user_id", user.id);
+      .eq("user_id", user.user_id);
 
     if (roleInsert.error) {
       // If insertion fails, it might be because it already exists, or the column doe snot exist in the schema. 

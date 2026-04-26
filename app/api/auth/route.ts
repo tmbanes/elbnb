@@ -2,19 +2,21 @@ import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 import { User } from '@/types/user.types'
 
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
+
 export async function GET() {
-  const supabase = await createSupabaseServerClient();
+  const user = await getApiAuthenticatedUser();
 
-  const { data: { user }, error } = await supabase.auth.getUser();
-
-  if (error || !user) {
+  if (!user) {
     return NextResponse.json({ user: null }, { status: 401 });
   }
+
+  const supabase = await createSupabaseServerClient();
 
   const { data: userData, error: userError } = await supabase
     .from('users')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', user.user_id)
     .single();
 
   if (userError || !userData) {

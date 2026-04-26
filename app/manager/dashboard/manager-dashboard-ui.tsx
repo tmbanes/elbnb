@@ -34,6 +34,15 @@ const archivo = Archivo({ subsets: ["latin"] });
 interface ManagerDashboardUIProps {
     profile: any;
     notifications: any[];
+    initialData: {
+        accom: any;
+        units: any[];
+        assignments: any[];
+        waitlist: any[];
+        activityLog: any[];
+        recentApplications: any[];
+        moveOutAlerts: any[];
+    };
     onLogout?: () => void;
     isLoggingOut?: boolean;
 }
@@ -42,7 +51,13 @@ function formatPHP(amount: number) {
     return `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function ManagerDashboardUI({ profile, notifications: initialNotifications, onLogout, isLoggingOut }: ManagerDashboardUIProps) {
+export default function ManagerDashboardUI({
+    profile,
+    notifications: initialNotifications,
+    initialData,
+    onLogout,
+    isLoggingOut
+}: ManagerDashboardUIProps) {
     const [dashboardView, setDashboardView] = useState<'operations' | 'financials'>('operations');
     const [showLogout, setShowLogout] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
@@ -69,34 +84,81 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
     const [roomView, setRoomView] = useState<'grid' | 'list'>('grid');
 
     // --- Manager / Dorm Info ---
-    const [managerName, setManagerName] = useState(profile ? `${profile.first_name} ${profile.last_name}` : "Manager");
-    const [managerInitials, setManagerInitials] = useState(profile ? `${profile.first_name?.[0]}${profile.last_name?.[0]}`.toUpperCase() : "M");
-    const [managerAvatar, setManagerAvatar] = useState(profile?.profile_picture_url || null);
-    const [dormName, setDormName] = useState("Loading...");
-    const [dormLocation, setDormLocation] = useState("");
+    const [managerName] = useState(profile ? `${profile.first_name} ${profile.last_name}` : "Manager");
+    const [managerInitials] = useState(profile ? `${profile.first_name?.[0]}${profile.last_name?.[0]}`.toUpperCase() : "M");
+    const [managerAvatar] = useState(profile?.profile_picture_url || null);
+    const [dormName] = useState(initialData.accom?.name || "No Dorm Assigned");
+    const [dormLocation] = useState(initialData.accom?.location || "");
 
     // --- Operations Metrics ---
-    const [totalRooms, setTotalRooms] = useState(0);
-    const [occupiedRate, setOccupiedRate] = useState("0.0");
-    const [occupiedCount, setOccupiedCount] = useState(0);
-    const [availableCount, setAvailableCount] = useState(0);
-    const [waitlistCount, setWaitlistCount] = useState(0);
+    const [totalRooms] = useState(initialData.units.length);
+    const [occupiedCount] = useState(initialData.assignments.length);
+    const [availableCount] = useState(() => {
+        const totalCap = initialData.units.reduce((acc, u) => acc + (u.max_occupancy || 0), 0);
+        return Math.max(0, totalCap - initialData.assignments.length);
+    });
+    const [occupiedRate] = useState(() => {
+        const totalCap = initialData.units.reduce((acc, u) => acc + (u.max_occupancy || 0), 0);
+        const count = initialData.assignments.length;
+        return totalCap > 0 ? ((count / totalCap) * 100).toFixed(1) : "0.0";
+    });
+    const [waitlistCount] = useState(initialData.waitlist.length);
 
     // --- Room Grid ---
-    const [dbRooms, setDbRooms] = useState<{
-        id: string;
-        unit_id: string;
-        status: string;
-        current: number;
-        max: number;
-        occupants: any[];
-    }[]>([]);
+    const [dbRooms] = useState(() => {
+        const occupantsMap = new Map<string, any[]>();
+        initialData.assignments.forEach((asg: any) => {
+            if (!occupantsMap.has(asg.unit_id)) occupantsMap.set(asg.unit_id, []);
+            occupantsMap.get(asg.unit_id)!.push({
+                id: asg.user_id,
+                assignment_id: asg.assignment_id,
+                name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
+                student_number: 'N/A', // Would need additional student fetch if needed
+                move_in_date: asg.move_in_date,
+                payment_status: 'Unknown',
+                avatar: asg.users?.profile_picture_url || null,
+            });
+        });
+
+        return initialData.units.map((u: any) => {
+            const occupants = occupantsMap.get(u.unit_id) ?? [];
+            const count = occupants.length;
+            let status = 'vacant';
+            if (u.unit_status === 'inactive' || u.unit_status === 'maintenance') status = 'maintenance';
+            else if (count >= u.max_occupancy) status = 'full';
+            else if (count > 0) status = 'partial';
+            return { id: u.unit_number, unit_id: u.unit_id, status, current: count, max: u.max_occupancy, occupants };
+        });
+    });
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
     const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
 
     // --- Residents / Waitlist Table ---
-    const [allStudents, setAllStudents] = useState<any[]>([]);
-    const [waitlistStudents, setWaitlistStudents] = useState<any[]>([]);
+    const [allStudents] = useState(() => {
+        return initialData.assignments.map((asg: any) => ({
+            type: 'resident' as const,
+            id: asg.user_id,
+            assignment_id: asg.assignment_id,
+            name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
+            student_number: 'N/A',
+            college: 'N/A',
+            room_number: asg.unit?.unit_number || 'N/A',
+            move_in_date: asg.move_in_date,
+            payment_status: 'Unknown',
+        }));
+    });
+    const [waitlistStudents] = useState(() => {
+        return initialData.waitlist.map((app: any) => ({
+            type: 'waitlist' as const,
+            id: app.user_id,
+            application_id: app.application_id,
+            name: `${app.users?.first_name || ''} ${app.users?.last_name || ''}`.trim(),
+            student_number: 'N/A',
+            college: 'N/A',
+            date_submitted: app.date_submitted,
+            preferred_unit_type: app.preferred_unit_type,
+        }));
+    });
     const [activeTab, setActiveTab] = useState<'residents' | 'waitlist'>('residents');
     const [tableSearch, setTableSearch] = useState("");
     const [tablePage, setTablePage] = useState(1);
@@ -122,13 +184,13 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
     const [delinquencySortDays, setDelinquencySortDays] = useState(true);
 
     // --- Activity Log ---
-    const [activityLog, setActivityLog] = useState<any[]>([]);
+    const [activityLog] = useState(initialData.activityLog);
 
     // --- Recent Applications ---
-    const [recentApplications, setRecentApplications] = useState<any[]>([]);
+    const [recentApplications] = useState(initialData.recentApplications);
 
     // --- Move-out Alerts ---
-    const [moveOutAlerts, setMoveOutAlerts] = useState<any[]>([]);
+    const [moveOutAlerts] = useState(initialData.moveOutAlerts);
 
     const handleResetFilters = () => {
         setTableSearch("");
@@ -136,252 +198,6 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
         setTablePage(1);
     };
 
-    // ─── Fetch operations data ───────────────────────────────────────────────
-    useEffect(() => {
-        async function fetchOperationsData() {
-            try {
-                const supabase = getSupabaseBrowserClient();
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
-
-                // Profile (Already passed via props, but can refresh if needed)
-                if (!profile) {
-                    const { data: userData } = await supabase
-                        .from('users')
-                        .select('first_name, last_name, profile_picture_url')
-                        .eq('user_id', user.id)
-                        .single() as any;
-
-                    if (userData) {
-                        const initials = `${userData.first_name?.[0] ?? ""}${userData.last_name?.[0] ?? ""}`.toUpperCase();
-                        setManagerInitials(initials || "M");
-                        setManagerName(`${userData.first_name} ${userData.last_name}`);
-                        setManagerAvatar(userData.profile_picture_url);
-                    }
-                }
-
-                // Accommodation
-                const { data: accom } = await supabase
-                    .from('accommodation')
-                    .select('*')
-                    .eq('manager_id', user.id)
-                    .single() as any;
-
-                if (!accom) return;
-                setDormName(accom.name);
-                setDormLocation(accom.location);
-
-                // Units
-                const { data: units } = await supabase
-                    .from('unit')
-                    .select('*')
-                    .eq('accommodation_id', accom.accommodation_id) as any;
-
-                if (!units || units.length === 0) { setTotalRooms(0); return; }
-                setTotalRooms(units.length);
-
-                // Active Assignments with occupant info
-                const { data: assignments } = await supabase
-                    .from('accommodation_assignment')
-                    .select(`
-                        assignment_id,
-                        unit_id,
-                        user_id,
-                        move_in_date,
-                        users:user_id (
-                            first_name,
-                            last_name,
-                            profile_picture_url
-                        )
-                    `)
-                    .eq('assignment_status', 'active')
-                    .in('unit_id', units.map((u: any) => u.unit_id)) as any;
-
-                // Student numbers
-                const assignedUserIds = [...new Set((assignments ?? []).map((a: any) => a.user_id))] as string[];
-                const { data: studentRows } = await supabase
-                    .from('student')
-                    .select('user_id, student_num, college, degree_program')
-                    .in('user_id', assignedUserIds.length > 0 ? assignedUserIds : ['00000000-0000-0000-0000-000000000000']) as any;
-                const studentMap = new Map((studentRows ?? []).map((s: any) => [s.user_id, s]));
-
-                // Billing statuses
-                const assignmentIds = (assignments ?? []).map((a: any) => a.assignment_id);
-                const { data: billings } = await supabase
-                    .from('billing')
-                    .select('assignment_id, status, due_date')
-                    .in('assignment_id', assignmentIds.length > 0 ? assignmentIds : ['00000000-0000-0000-0000-000000000000'])
-                    .order('due_date', { ascending: false }) as any;
-
-                const latestBillingMap = new Map<string, string>();
-                (billings ?? []).forEach((b: any) => {
-                    if (!latestBillingMap.has(b.assignment_id)) {
-                        latestBillingMap.set(b.assignment_id, b.status);
-                    }
-                });
-
-                // Build occupant map
-                const occupantsMap = new Map<string, any[]>();
-                (assignments ?? []).forEach((asg: any) => {
-                    if (!occupantsMap.has(asg.unit_id)) occupantsMap.set(asg.unit_id, []);
-                    const u = asg.users ?? {};
-                    const s = studentMap.get(asg.user_id) as any;
-                    const billingStatus = latestBillingMap.get(asg.assignment_id) ?? 'unknown';
-                    const paymentStatus = billingStatus === 'paid' ? 'Cleared' : billingStatus === 'overdue' ? 'Overdue' : billingStatus === 'unpaid' ? 'Pending' : 'Unknown';
-                    occupantsMap.get(asg.unit_id)!.push({
-                        id: asg.user_id,
-                        assignment_id: asg.assignment_id,
-                        name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || 'Unknown',
-                        student_number: s?.student_num ?? 'N/A',
-                        college: s?.college ?? 'N/A',
-                        move_in_date: asg.move_in_date,
-                        payment_status: paymentStatus,
-                        avatar: u.profile_picture_url ?? null,
-                    });
-                });
-
-                let occ = 0; let vac = 0;
-                const parsedRooms = units.map((u: any) => {
-                    const occupants = occupantsMap.get(u.unit_id) ?? [];
-                    const count = occupants.length;
-                    let st = 'vacant';
-                    if (u.unit_status === 'inactive' || u.unit_status === 'maintenance') st = 'maintenance';
-                    else if (count >= u.max_occupancy) st = 'full';
-                    else if (count > 0) st = 'partial';
-                    occ += count;
-                    vac += Math.max(0, u.max_occupancy - count);
-                    return { id: u.unit_number, unit_id: u.unit_id, status: st, current: count, max: u.max_occupancy, occupants };
-                });
-
-                setDbRooms(parsedRooms);
-                setOccupiedCount(occ);
-                setAvailableCount(vac);
-                setOccupiedRate(occ + vac > 0 ? ((occ / (occ + vac)) * 100).toFixed(1) : '0.0');
-
-                // Residents table list (flat from assignments)
-                const residentRows = (assignments ?? []).map((asg: any) => {
-                    const u = asg.users ?? {};
-                    const s = studentMap.get(asg.user_id) as any;
-                    const room = parsedRooms.find((r: any) => r.unit_id === asg.unit_id);
-                    const billingStatus = latestBillingMap.get(asg.assignment_id) ?? 'unknown';
-                    const paymentStatus = billingStatus === 'paid' ? 'Cleared' : billingStatus === 'overdue' ? 'Overdue' : billingStatus === 'unpaid' ? 'Pending' : 'Unknown';
-                    return {
-                        id: asg.user_id,
-                        assignment_id: asg.assignment_id,
-                        name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || 'Unknown',
-                        student_number: s?.student_num ?? 'N/A',
-                        college: s?.college ?? 'N/A',
-                        degree_program: s?.degree_program ?? '',
-                        room_number: room?.id ?? 'N/A',
-                        move_in_date: asg.move_in_date,
-                        payment_status: paymentStatus,
-                        gender: 'N/A',
-                        year_level: 'N/A',
-                    };
-                });
-                setAllStudents(residentRows);
-
-                // Waitlist
-                const { data: waitlistApps } = await supabase
-                    .from('accommodation_application')
-                    .select(`
-                        application_id, user_id, date_submitted, preferred_unit_type,
-                        users:user_id ( first_name, last_name, profile_picture_url )
-                    `)
-                    .eq('preferred_accommodation_id', accom.accommodation_id)
-                    .eq('application_status', 'approved')
-                    .order('date_submitted', { ascending: true }) as any;
-
-                const waitlistUserIds = (waitlistApps ?? []).map((a: any) => a.user_id);
-                const { data: wlStudentRows } = await supabase
-                    .from('student')
-                    .select('user_id, student_num, college, degree_program')
-                    .in('user_id', waitlistUserIds.length > 0 ? waitlistUserIds : ['00000000-0000-0000-0000-000000000000']) as any;
-                const wlStudentMap = new Map((wlStudentRows ?? []).map((s: any) => [s.user_id, s]));
-
-                const waitlist = (waitlistApps ?? []).map((app: any) => {
-                    const u = app.users ?? {};
-                    const s = wlStudentMap.get(app.user_id) as any;
-                    return {
-                        id: app.user_id,
-                        application_id: app.application_id,
-                        name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || 'Unknown',
-                        student_number: s?.student_num ?? 'N/A',
-                        college: s?.college ?? 'N/A',
-                        date_submitted: app.date_submitted,
-                        preferred_unit_type: app.preferred_unit_type,
-                        year_level: 'N/A',
-                        gender: 'N/A',
-                        payment_status: 'N/A',
-                        room_number: 'N/A',
-                    };
-                });
-                setWaitlistStudents(waitlist);
-                setWaitlistCount(waitlist.length);
-
-                // Activity log
-                const { data: logs } = await supabase
-                    .from('activity_log')
-                    .select('log_id, action_type, log_desc, timestamp, entity_type, user_role')
-                    .order('timestamp', { ascending: false })
-                    .limit(10) as any;
-                setActivityLog(logs ?? []);
-
-                // Recent Applications (latest 5 across all statuses for this accommodation)
-                const { data: recentApps } = await supabase
-                    .from('accommodation_application')
-                    .select(`
-                        application_id, date_submitted, application_status, preferred_unit_type,
-                        users:user_id ( first_name, last_name, profile_picture_url )
-                    `)
-                    .eq('preferred_accommodation_id', accom.accommodation_id)
-                    .order('date_submitted', { ascending: false })
-                    .limit(5) as any;
-                setRecentApplications(recentApps ?? []);
-
-                // Move-out Alerts: active assignments whose expected_move_out_date is within 30 days
-                const today = new Date();
-                const in30Days = new Date(today);
-                in30Days.setDate(today.getDate() + 30);
-                const todayStr = today.toISOString().split('T')[0];
-                const in30DaysStr = in30Days.toISOString().split('T')[0];
-
-                const { data: upcomingMoveOuts } = await supabase
-                    .from('accommodation_assignment')
-                    .select(`
-                        assignment_id, unit_id, expected_move_out_date,
-                        users:user_id ( first_name, last_name, profile_picture_url )
-                    `)
-                    .eq('assignment_status', 'active')
-                    .in('unit_id', units.map((u: any) => u.unit_id))
-                    .gte('expected_move_out_date', todayStr)
-                    .lte('expected_move_out_date', in30DaysStr)
-                    .order('expected_move_out_date', { ascending: true })
-                    .limit(5) as any;
-
-                const moveOuts = (upcomingMoveOuts ?? []).map((a: any) => {
-                    const u = a.users ?? {};
-                    const unit = units.find((un: any) => un.unit_id === a.unit_id);
-                    const moveOutDate = new Date(a.expected_move_out_date);
-                    const daysLeft = Math.ceil((moveOutDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                    return {
-                        assignment_id: a.assignment_id,
-                        name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || 'Unknown',
-                        initials: `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase(),
-                        avatar: u.profile_picture_url ?? null,
-                        unit_number: unit?.unit_number ?? 'N/A',
-                        expected_move_out_date: a.expected_move_out_date,
-                        days_left: daysLeft,
-                    };
-                });
-                setMoveOutAlerts(moveOuts);
-
-            } catch (err) {
-                console.error("Failed to load dashboard operations data:", err);
-            }
-        }
-        fetchOperationsData();
-    }, []);
 
     // ─── Fetch financials when tab is active ─────────────────────────────────
     useEffect(() => {
@@ -418,7 +234,7 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
         const matchesSearch = (student.name || "").toLowerCase().includes(tableSearch.toLowerCase()) ||
             (student.student_number || "").toLowerCase().includes(tableSearch.toLowerCase());
         const matchesCollege = tableFilters.college === "all" || student.college === tableFilters.college;
-        const matchesPayment = activeTab === 'waitlist' ? true : (tableFilters.paymentStatus === "all" || student.payment_status === tableFilters.paymentStatus);
+        const matchesPayment = activeTab === 'waitlist' ? true : (tableFilters.paymentStatus === "all" || (student as any).payment_status === tableFilters.paymentStatus);
         return matchesSearch && matchesCollege && matchesPayment;
     });
 
@@ -464,7 +280,7 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
                         </div>
                         <div className="flex items-center gap-6">
                             <div className="relative">
-                                <button 
+                                <button
                                     className={`relative text-slate-600 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-100 ${showNotifications ? 'bg-slate-100 text-[#5D6BDE]' : ''}`}
                                     onClick={() => setShowNotifications(!showNotifications)}
                                 >
@@ -478,9 +294,9 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
                                     <div className="absolute right-0 top-full mt-4 w-80 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[60] overflow-hidden">
                                         <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
                                             <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
-                                            <button 
+                                            <button
                                                 className="text-[10px] font-bold text-[#5D6BDE] uppercase tracking-wider hover:underline"
-                                                onClick={() => setNotifications(prev => prev.map(n => ({...n, is_read: true})))}
+                                                onClick={() => setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))}
                                             >
                                                 Mark all as read
                                             </button>
@@ -488,8 +304,8 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
                                         <div className="max-h-[350px] overflow-y-auto">
                                             {notifications.length > 0 ? (
                                                 notifications.map((n, i) => (
-                                                    <div 
-                                                        key={i} 
+                                                    <div
+                                                        key={i}
                                                         className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer group"
                                                         onClick={() => {
                                                             const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
@@ -497,7 +313,7 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
                                                                 readIds.push(n.id);
                                                                 localStorage.setItem('read_notifications', JSON.stringify(readIds));
                                                             }
-                                                            setNotifications(prev => prev.map((notif, idx) => 
+                                                            setNotifications(prev => prev.map((notif, idx) =>
                                                                 idx === i ? { ...notif, is_read: true } : notif
                                                             ));
                                                             if (n.link) router.push(n.link);
@@ -815,7 +631,7 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {paginatedStudents.length > 0 ? paginatedStudents.map((student, idx) => {
+                                                {paginatedStudents.length > 0 ? paginatedStudents.map((student: any, idx: number) => {
                                                     return (
                                                         <tr key={student.assignment_id ?? `student-${idx}`} className="border-b border-slate-50 last:border-0 group hover:bg-[#F9FBFD] transition-colors">
                                                             <td className="py-5 px-8">
@@ -834,7 +650,7 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
                                                                 <>
                                                                     <td className="py-5 px-2">
                                                                         <div className="flex flex-col">
-                                                                            <span className="text-[14px] font-black text-[#0B3A64]">Room {student.room_number}</span>
+                                                                            <span className="text-[14px] font-black text-[#0B3A64]">Room {student.unit_number}</span>
                                                                             <span className="text-[10px] font-bold text-slate-400 uppercase">{student.college}</span>
                                                                         </div>
                                                                     </td>

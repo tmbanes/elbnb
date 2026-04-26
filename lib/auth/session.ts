@@ -53,7 +53,9 @@ export const getApiAuthenticatedUser = cache(async (): Promise<User | null> => {
         sex: metadata.sex || "",
         birthdate: metadata.birthdate || "",
         profile_picture_url: metadata.profile_picture_url,
-    } as User;
+        student_number: metadata.student_number,
+        phone_number: metadata.phone_number,
+    } as any;
 });
 
 // FUNCTION: Requires user and user role for route protection in Server Components

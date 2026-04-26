@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useRealtimeSync } from "@/lib/realtime-sync";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Building2, Home, Users, KeyRound, Scissors, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, Filter, MoreHorizontal, Download, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { Building2, Home, Users, KeyRound, Scissors, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, Filter, MoreHorizontal, Download, ChevronLeft, ChevronRight, Eye, Bell } from "lucide-react";
 import { Archivo, Archivo_Black } from "next/font/google";
 
 const archivo = Archivo({ subsets: ["latin"] });
