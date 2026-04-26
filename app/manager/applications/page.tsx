@@ -62,7 +62,7 @@ export default async function ManagerApplicationsPage() {
       .order("date_submitted", { ascending: false }),
     supabase
       .from("unit")
-      .select("unit_id, unit_number")
+      .select("unit_id, unit_number, unit_type")
       .eq("accommodation_id", accommodationId)
   ]);
 

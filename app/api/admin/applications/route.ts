@@ -174,13 +174,21 @@ export const PATCH = withRole(["housing_admin", "admin"], async (req: NextReques
 
     if (action === "reject") {
       // Simply reject — no assignment created
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("accommodation_application")
         .update({ application_status: "rejected" })
         .eq("application_id", application_id)
-        .eq("application_status", "pending_admin");
+        .in("application_status", ["pending_dorm_manager", "pending_admin", "pending_payment", "waitlisted"])
+        .select();
 
       if (error) throw new Error(error.message);
+      
+      if (!data || data.length === 0) {
+        return NextResponse.json(
+          { error: "Application could not be rejected. It may have already been processed or is in a final state." },
+          { status: 400 }
+        );
+      }
 
       const actor = await getCurrentUserRole();
       if (actor) {

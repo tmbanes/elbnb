@@ -54,7 +54,7 @@ export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req,
         .order("date_submitted", { ascending: false }),
       supabase
         .from("unit")
-        .select("unit_id, unit_number")
+        .select("unit_id, unit_number, unit_type")
         .eq("accommodation_id", accommodationId)
     ]);
 

@@ -237,7 +237,7 @@ export default function ReviewApplication({
                 <option value="">Select a unit...</option>
                 {units.map((unit) => (
                   <option key={unit.unit_id} value={unit.unit_id}>
-                    Unit {unit.unit_number}
+                    Unit {unit.unit_number} ({unit.unit_type})
                   </option>
                 ))}
               </select>
