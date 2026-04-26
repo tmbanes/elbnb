@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { redirect } from "next/navigation";
 import { DashboardClient } from "./dashboard-client";
+import { userProfileService } from "@/services/user_profile";
 
 export default async function AdminDashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -114,8 +115,15 @@ export default async function AdminDashboardPage() {
   if (waitingListCount > 5) alerts.push({ type: "info", message: `${waitingListCount} students on waiting list` });
   if (overdueCount > 0) alerts.push({ type: "danger", message: `${overdueCount} overdue payment${overdueCount > 1 ? "s" : ""} totaling ₱${overdueTotal.toLocaleString()}` });
 
+  // 8. User Profile & Notifications
+  const profile = await userProfileService.getProfile(session.user.id);
+  const { data: notifications } = await userProfileService.getNotifications(session.user.id);
+
   return (
     <DashboardClient
+      user={session.user}
+      profile={profile}
+      notifications={notifications || []}
       stats={{
         totalProperties,
         totalUnits,

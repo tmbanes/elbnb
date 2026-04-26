@@ -27,6 +27,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import Image from "next/image";
 import Link from "next/link";
 import { Archivo } from "next/font/google";
+import { useRouter } from "next/navigation";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -47,9 +48,16 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState(initialNotifications);
     const [hasMounted, setHasMounted] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
-        setNotifications(initialNotifications);
+        if (typeof window !== 'undefined') {
+            const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+            setNotifications(initialNotifications.map(n => ({
+                ...n,
+                is_read: n.is_read || readIds.includes(n.id)
+            })));
+        }
     }, [initialNotifications]);
 
     useEffect(() => { setHasMounted(true); }, []);
@@ -480,7 +488,21 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
                                         <div className="max-h-[350px] overflow-y-auto">
                                             {notifications.length > 0 ? (
                                                 notifications.map((n, i) => (
-                                                    <div key={i} className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer group">
+                                                    <div 
+                                                        key={i} 
+                                                        className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer group"
+                                                        onClick={() => {
+                                                            const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+                                                            if (!readIds.includes(n.id)) {
+                                                                readIds.push(n.id);
+                                                                localStorage.setItem('read_notifications', JSON.stringify(readIds));
+                                                            }
+                                                            setNotifications(prev => prev.map((notif, idx) => 
+                                                                idx === i ? { ...notif, is_read: true } : notif
+                                                            ));
+                                                            if (n.link) router.push(n.link);
+                                                        }}
+                                                    >
                                                         <div className="flex gap-3">
                                                             <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-[#5D6BDE]' : 'bg-transparent'}`}></div>
                                                             <div>

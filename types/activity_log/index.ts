@@ -27,6 +27,8 @@ type ActivityLogType = "login"
     | "update_billing"
     | "cancel_billing"
     | "mark_billing_paid"
+    | "submit_payment"
+    | "update_assignment"
     | "upload_doc"
     | "update_doc_status"
     | "generate_report";

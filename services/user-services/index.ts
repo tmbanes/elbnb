@@ -544,6 +544,18 @@ export async function submitPayment(
     },
   ]);
 
+  const actor = await getCurrentUserRole();
+  if (actor) {
+    await createActivityLog({
+      p_user_id: actor.userId,
+      p_action_type: "submit_payment",
+      p_log_desc: `${actor.first_name} submitted a payment proof for billing ID ${billing_id}`,
+      p_entity_type: "billing",
+      p_entity_id: billing_id,
+      p_user_role: actor.role,
+    });
+  }
+
   return { data, error };
 }
 
@@ -798,7 +810,7 @@ export async function getActiveTenants() {
 */
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
-import { AccomodationHistory } from "@/types/accomodation/accomodationHistory";
+import { AccommodationHistory } from "@/types/accomodation/accomodationHistory";
 import { BillingCreation, BillingInformation } from "@/types/billing";
 import { BillingStatus } from "@/types/billing/enums";
 import { BillingItemType } from "@/types/billing/enums";
@@ -1073,7 +1085,7 @@ export async function getAccomodationHistory(user_id: string) {
     ...(accommodation_assignment ?? {}),
   }));
 
-  return { data: flattened as AccomodationHistory[] | null, error };
+  return { data: flattened as AccommodationHistory[] | null, error };
 }
 
 //======================================================//
@@ -1381,6 +1393,18 @@ export async function submitPayment(
     },
   ]);
 
+  const actor = await getCurrentUserRole();
+  if (actor) {
+    await createActivityLog({
+      p_user_id: actor.userId,
+      p_action_type: "submit_payment",
+      p_log_desc: `${actor.first_name} submitted a payment proof for billing ID ${billing_id}`,
+      p_entity_type: "billing",
+      p_entity_id: billing_id,
+      p_user_role: actor.role,
+    });
+  }
+
   return { data, error };
 }
 
@@ -1420,38 +1444,44 @@ export async function approveReceipt(
 
   const assignmentId = assignmentRecord?.assignment_id;
   const applicationId = assignmentRecord?.application_id;
-
-  if (assignmentId) {
-    await supabase
-      .from("accommodation_assignment")
-      .update({ assignment_status: "active" })
-      .eq("assignment_id", assignmentId);
-  }
-
-  if (applicationId) {
-    await supabase
+  const actor = await getCurrentUserRole();
+  if (actor) {
+    // 1. Fetch applicant name for better logs
+    const { data: appData } = await supabase
       .from("accommodation_application")
-      .update({ application_status: "approved" })
-      .eq("application_id", applicationId);
+      .select("users(first_name, last_name)")
+      .eq("application_id", applicationId)
+      .single();
+    
+    const applicantName = appData?.users 
+      ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
+      : "Unknown Student";
+
+    await createActivityLog({
+      p_user_id: actor.userId,
+      p_action_type: "mark_billing_paid",
+      p_log_desc: `${actor.first_name} approved payment for ${applicantName} (Billing ID: ${billing_id})`,
+      p_entity_type: "billing",
+      p_entity_id: billing_id,
+      p_user_role: actor.role,
+    });
+
+    // // Also log the assignment activation so it shows up in the feed
+    // if (assignmentId) {
+    //   await createActivityLog({
+    //     p_user_id: actor.userId,
+    //     p_action_type: "update_assignment",
+    //     p_log_desc: `${actor.first_name} activated assignment for ${applicantName}`,
+    //     p_entity_type: "assignment",
+    //     p_entity_id: assignmentId,
+    //     p_user_role: actor.role,
+    //   });
+    // }
   }
 
   await supabase.from("payment_logs").insert([
     { billing_id, status: BillingStatus.PAID, changed_by: admin_id },
   ]);
-
-  // Log the payment approval
-  const actor = await getCurrentUserRole();
-  if (actor) {
-    await createActivityLog({
-      p_user_id: actor.userId,
-      p_action_type: "mark_billing_paid",
-      p_log_desc: `${actor.first_name} approved payment for billing ID ${billing_id}`,
-      p_entity_type: "billing",
-      p_entity_id: billing_id,
-      p_user_role: actor.role,
-    });
-  }
-
 
   return result;
 }

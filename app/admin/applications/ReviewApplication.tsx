@@ -507,7 +507,7 @@ export default function ReviewApplication({
 
               <Button
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
-                disabled={loading || appData?.invoiceDraft?.status !== "paid"}
+                disabled={loading || !["paid", "paid_late"].includes(appData?.invoiceDraft?.status?.toLowerCase() || "")}
                 onClick={async () => {
                   setLoading(true);
                   setError(null);
@@ -523,7 +523,7 @@ export default function ReviewApplication({
                 {loading ? "Approving..." : "Approve"}
               </Button>
 
-              {appData?.invoiceDraft?.status !== "paid" && (
+              {!["paid", "paid_late"].includes(appData?.invoiceDraft?.status?.toLowerCase() || "") && (
                 <p className="text-[11px] text-blue-700 text-center">
                   Approve is enabled after the latest invoice is marked as paid.
                 </p>
