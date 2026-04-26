@@ -185,6 +185,16 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
     document.body.removeChild(link);
   };
 
+  const handleMarkAllAsRead = () => {
+    if (typeof window !== 'undefined') {
+      const existingReadIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+      const currentIds = notifications.map(n => n.id);
+      const allIds = Array.from(new Set([...existingReadIds, ...currentIds]));
+      localStorage.setItem('read_notifications', JSON.stringify(allIds));
+    }
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
@@ -268,7 +278,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                 <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                   <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
                   <button 
-                    onClick={() => setNotifications(prev => prev.map(n => ({...n, is_read: true})))}
+                    onClick={handleMarkAllAsRead}
                     className="text-[10px] font-bold text-[#78A24C] uppercase tracking-wider hover:text-[#5C7E3A] transition-colors"
                   >
                     Mark all as read
