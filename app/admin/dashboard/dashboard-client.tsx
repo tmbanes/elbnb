@@ -58,11 +58,14 @@ const initials = (f: string, l: string) => `${f?.[0] ?? ""}${l?.[0] ?? ""}`.toUp
 
 const statusBadge = (s: string) => {
   const map: Record<string, string> = {
-    pending_admin: "bg-[#FFF3CD] text-[#BA7517]", pending_dorm_manager: "bg-[#FFF3CD] text-[#BA7517]",
-    pending_payment: "bg-[#E0E7FF] text-[#4338CA]", approved: "bg-[#DFF2E8] text-[#1A6B3A]",
-    rejected: "bg-[#FDEAEA] text-[#8B1A1A]", cancelled: "bg-gray-100 text-gray-600",
+    pending_admin: "bg-[#FEF9C3] text-[#F2C908] border-[#FDE68A]", 
+    pending_dorm_manager: "bg-[#FEF9C3] text-[#F2C908] border-[#FDE68A]",
+    pending_payment: "bg-[#fbecd7] text-[#EB8A0B] border-[#f5d0a1]", 
+    approved: "bg-[#DFF2E8] text-[#78A24C] border-[#b8e2cb]",
+    rejected: "bg-red-50 text-[#DF3538] border-red-100", 
+    cancelled: "bg-gray-50 text-gray-400 border-gray-100",
   };
-  return map[s] ?? "bg-gray-100 text-gray-700";
+  return map[s] ?? "bg-gray-50 text-gray-500 border-gray-100";
 };
 
 // ── Pagination Helper ──
@@ -98,15 +101,19 @@ function PaginationControls({ currentPage, totalPages, onPageChange, className =
 // ── Donut SVG ──
 function DonutChart({ value, size = 120, label, color = "#78A24C" }: { value: number; size?: number; label: string; color?: string }) {
   const clamped = Math.min(100, Math.max(0, value));
+  // Dynamic font sizing based on the chart size
+  const pctSize = size >= 120 ? "text-xl" : size >= 100 ? "text-lg" : "text-sm";
+  const labelSize = size >= 120 ? "text-[8px]" : "text-[7px]";
+  
   return (
-    <div className="relative flex items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5" style={{ width: size, height: size }}>
+    <div className="relative flex items-center justify-center rounded-full bg-white/50 shadow-sm ring-1 ring-[#cfd6e4]/50" style={{ width: size, height: size }}>
       <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-        <path className="text-[#EDEEE5]" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845a15.9155 15.9155 0 010 31.831 15.9155 15.9155 0 010-31.831" />
-        <path className="transition-all duration-1000 ease-out" strokeWidth="3.5" strokeLinecap="round" strokeDasharray={`${clamped}, 100`} stroke={color} fill="none" d="M18 2.0845a15.9155 15.9155 0 010 31.831 15.9155 15.9155 0 010-31.831" />
+        <path className="text-[#EDEEE5]" strokeWidth="3.2" stroke="currentColor" fill="none" d="M18 2.0845a15.9155 15.9155 0 010 31.831 15.9155 15.9155 0 010-31.831" />
+        <path className="transition-all duration-1000 ease-out" strokeWidth="3.2" strokeLinecap="round" strokeDasharray={`${clamped}, 100`} stroke={color} fill="none" d="M18 2.0845a15.9155 15.9155 0 010 31.831 15.9155 15.9155 0 010-31.831" />
       </svg>
-      <div className="absolute flex flex-col items-center">
-        <span className={`${archivoBlack.className} text-2xl text-[#1F2937]`}>{pct(clamped)}</span>
-        <span className={`${archivoBlack.className} text-[8px] uppercase text-[#6B7280] tracking-wider`}>{label}</span>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-1">
+        <span className={`${archivoBlack.className} ${pctSize} text-[#44291B] leading-none`}>{pct(clamped)}</span>
+        <span className={`${archivoBlack.className} ${labelSize} uppercase text-[#44291B]/50 tracking-tighter mt-0.5 leading-none`}>{label}</span>
       </div>
     </div>
   );
@@ -340,73 +347,74 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
           <PaginationControls currentPage={propPage} totalPages={Math.ceil(filteredProps.length / PROP_PER_PAGE)} onPageChange={setPropPage} />
         </Card>
 
-        {/* Summary Donuts */}
-        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-5 overflow-hidden relative rounded-2xl h-full">
+        {/* Summary Donuts / Financial Summary */}
+        <Card className="shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-6 overflow-hidden relative rounded-2xl h-full">
           <div className="w-full flex items-center justify-between">
-            <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Financial Summary</h2>
-            <button className="text-slate-400 hover:text-slate-600 transition-colors">
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
+            <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Financial Summary</h2>
           </div>
-          <div className="flex items-center justify-center gap-6">
-            <DonutChart value={stats.occupancyRate} label="Occupancy" color="#E8CD2E" />
-            <DonutChart value={stats.collectionRate} label="Collection" color="#2F90C8" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 w-full pt-3 border-t border-[#E5E7EB] text-center">
-            <div className="rounded-xl border border-[#E5E7EB] bg-[#f8fafc] p-4">
-              <p className={`${archivoBlack.className} text-[9px] uppercase text-[#6B7280] tracking-wide leading-tight`}>Total<br />Billed</p>
-              <p className={`${archivoBlack.className} text-2xl text-[#1F2937] mt-1`}>{fmt(stats.totalBilled)}</p>
+          
+          <div className="flex-1 flex flex-col gap-6 justify-between">
+            <div className="flex items-center justify-center gap-8 py-2">
+              <DonutChart value={stats.occupancyRate} label="Occupancy" size={130} color="#F2C908" />
+              <DonutChart value={stats.collectionRate} label="Collection" size={130} color="#78A24C" />
             </div>
-            <div className="rounded-xl border border-[#cfe9dc] bg-[#ebf8f1] p-4">
-              <p className={`${archivoBlack.className} text-[9px] uppercase text-[#2f7b54] tracking-wide leading-tight`}>Total<br />Collected</p>
-              <p className={`${archivoBlack.className} text-2xl text-[#1f6f4a] mt-1`}>{fmt(stats.totalCollected)}</p>
-            </div>
-          </div>
 
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div className="min-w-0">
-                <p className={`${archivoBlack.className} text-xs uppercase tracking-wider text-[#6B7280]`}>Collection gap</p>
-                <p className={`${archivoBlack.className} text-xl text-[#1F2937] leading-tight`}>{fmt(collectionGap)}</p>
+            <div className="grid grid-cols-2 gap-3 w-full pt-4 border-t border-[#cfd6e4]">
+              <div className="rounded-xl border border-[#cfd6e4]/50 bg-white/60 p-4 text-center">
+                <p className={`${archivoBlack.className} text-[9px] uppercase text-[#44291B]/60 tracking-wide leading-tight`}>Total<br />Billed</p>
+                <p className={`${archivoBlack.className} text-2xl text-[#44291B] mt-1`}>{fmt(stats.totalBilled)}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:block text-right">
-                  <p className={`${archivo.className} text-xs text-[#6B7280]`}>Collected / Billed</p>
-                  <p className={`${archivoBlack.className} text-sm text-[#1F2937]`}>{pct(collectedToBilledRate)}</p>
+              <div className="rounded-xl border border-[#78A24C]/20 bg-[#DFF2E8] p-4 text-center">
+                <p className={`${archivoBlack.className} text-[9px] uppercase text-[#78A24C] tracking-wide leading-tight`}>Total<br />Collected</p>
+                <p className={`${archivoBlack.className} text-2xl text-[#78A24C] mt-1`}>{fmt(stats.totalCollected)}</p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-[#cfd6e4] bg-white/50 p-4 flex flex-col gap-4 flex-1">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className={`${archivoBlack.className} text-xs uppercase tracking-wider text-[#44291B]/40`}>Collection gap</p>
+                  <p className={`${archivoBlack.className} text-xl text-[#44291B] leading-tight`}>{fmt(collectionGap)}</p>
                 </div>
-                <DonutChart value={paidInvoiceRate} label="Paid invoices" size={96} color="#78A24C" />
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:block text-right">
+                    <p className={`${archivo.className} text-[10px] font-bold text-[#44291B]/40 uppercase`}>Paid inv.</p>
+                    <p className={`${archivoBlack.className} text-sm text-[#44291B]`}>{pct(paidInvoiceRate)}</p>
+                  </div>
+                  <DonutChart value={paidInvoiceRate} label="Paid" size={84} color="#264384" />
+                </div>
               </div>
-            </div>
 
-            <div className="w-full bg-[#EDEEE5] rounded-full h-2 overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-700 ease-out bg-[#5C9E44]" style={{ width: `${Math.min(100, Math.max(0, collectedToBilledRate))}%` }} />
-            </div>
+              <div className="grid grid-cols-2 gap-2 flex-1">
+                {Object.entries(billingStatusCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 4)
+                  .map(([status, count]) => {
+                    const pctVal = totalInInvoices > 0 ? (count / totalInInvoices) * 100 : 0;
+                    const label = status.replace(/_/g, " ");
+                    
+                    // Color Mapping based on brand palette
+                    let colorClass = "bg-[#cfd6e4]/20 text-[#44291B] border-[#cfd6e4]/40"; 
+                    
+                    if (status === "paid" || status === "paid_late") {
+                      colorClass = status === "paid" ? "bg-[#DFF2E8] text-[#78A24C] border-[#b8e2cb]" : "bg-[#fbecd7] text-[#EB8A0B] border-[#f5d0a1]";
+                    } else if (status === "unpaid" || status === "overdue" || status === "voided") {
+                      colorClass = "bg-red-50 text-[#DF3538] border-red-100";
+                    }
 
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(billingStatusCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 4)
-                .map(([status, count]) => {
-                  const pctVal = totalInInvoices > 0 ? (count / totalInInvoices) * 100 : 0;
-                  const label = status.replace(/_/g, " ");
-                  return (
-                    <div key={status} className="rounded-lg border border-[#F3F4F6] bg-[#f8fafc] px-3 py-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className={`${archivo.className} text-xs font-semibold text-[#374151] capitalize truncate`}>{label}</span>
-                        <span className={`${archivoBlack.className} text-xs text-[#1F2937] shrink-0`}>{count}</span>
+                    return (
+                      <div key={status} className={`rounded-xl border px-3 py-2.5 transition-all shadow-sm ${colorClass} flex flex-col justify-center`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-[10px] font-extrabold uppercase tracking-widest truncate opacity-70`}>{label}</span>
+                          <span className={`${archivoBlack.className} text-sm shrink-0`}>{count}</span>
+                        </div>
+                        <div className="w-full bg-black/5 rounded-full h-1.5 overflow-hidden mt-2">
+                          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pctVal}%`, backgroundColor: "currentColor" }} />
+                        </div>
                       </div>
-                      <div className="w-full bg-[#EDEEE5] rounded-full h-1.5 overflow-hidden mt-1.5">
-                        <div className="h-full rounded-full bg-[#4A5628] transition-all duration-700" style={{ width: `${pctVal}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-
-            <div className="flex items-center justify-between text-xs text-[#6B7280]">
-              <span className={`${archivo.className}`}>Overdue payments</span>
-              <span className={`${archivoBlack.className} ${stats.overdueCount > 0 ? "text-[#8B1A1A]" : "text-[#1F2937]"}`}>{stats.overdueCount}</span>
+                    );
+                  })}
+              </div>
             </div>
           </div>
         </Card>
