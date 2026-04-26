@@ -79,8 +79,8 @@ const response = data?.map((item: any) => ({
   units: item.unit || []
 }));
 
-return NextResponse.json(response);
-}
+  return NextResponse.json(response);
+});
 
 // POST /api/admin/housing/rental-spaces
 export const POST = withRole(['housing_admin'], async (req: NextRequest) => {

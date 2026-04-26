@@ -79,7 +79,7 @@ export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
   }));
 
   return NextResponse.json(response);
-}
+});
 
 // POST /api/admin/housing/dorms
 export const POST = withRole(['housing_admin'], async (req: NextRequest) => {
