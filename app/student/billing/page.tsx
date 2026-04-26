@@ -16,11 +16,17 @@ export default async function StudentBillingPage() {
     redirect("/onboarding");
   }
 
-  await ensureInitialInvoicesForUser(user.user_id);
+  const [_, summaryRes, billsRes, historyRes] = await Promise.all([
+    ensureInitialInvoicesForUser(user.user_id),
+    getUserPaymentSummary(user.user_id, "student"),
+    getStudentBillsDetailed(user.user_id),
+    getStudentPaymentHistory(user.user_id)
+  ]);
 
-  const { data: summary } = await getUserPaymentSummary(user.user_id, "student");
-  const { data: bills, error: billsError } = await getStudentBillsDetailed(user.user_id);
-  const { data: paymentHistory } = await getStudentPaymentHistory(user.user_id);
+  const summary = summaryRes.data;
+  const bills = billsRes.data;
+  const billsError = billsRes.error;
+  const paymentHistory = historyRes.data;
 
   if (billsError) {
     return <div className="p-8 text-red-500 font-mono">SUPABASE ERROR: {JSON.stringify(billsError)}</div>;

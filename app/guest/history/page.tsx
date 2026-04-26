@@ -14,13 +14,15 @@ export default async function GuestHistoryPage() {
         redirect("/onboarding");
     }
 
-    const { data: profile } = await userProfileService.getProfile(user.user_id);
-    const { data: history } = await userProfileService.getAccommodationHistory(user.user_id);
+    const [profileRes, historyRes] = await Promise.all([
+        userProfileService.getProfile(user.user_id),
+        userProfileService.getAccommodationHistory(user.user_id)
+    ]);
 
     return (
         <HistoryUI
-            profile={profile}
-            initialHistory={history || []}
+            profile={profileRes.data}
+            initialHistory={historyRes.data || []}
         />
     );
 }

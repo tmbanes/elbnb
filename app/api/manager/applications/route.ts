@@ -42,6 +42,7 @@ export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req,
           number_of_companions,
           application_status,
           user_id,
+          file,
           users (
             first_name,
             last_name,
@@ -62,7 +63,10 @@ export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req,
 
     return NextResponse.json({
       accommodation: accommodationData,
-      applications: appsRes.data ?? [],
+      applications: (appsRes.data ?? []).map((app: any) => ({
+        ...app,
+        users: Array.isArray(app.users) ? app.users[0] : app.users
+      })),
       units: unitsRes.data ?? [],
     });
   } catch (e) {

@@ -7,6 +7,7 @@ import {
   updateApplicationStatus,
   type Application,
   type ManagerAction,
+  type ManagerApplicationsResponse,
 } from "@/lib/actions/manager-application-actions";
 import { Unit } from "@/types/accommodation_units";
 import { useRealtimeSync } from "@/lib/realtime-sync";
@@ -223,33 +224,32 @@ function ApplicationRow({
 
 interface ManagerApplicationsClientProps {
   user: any;
+  initialData: ManagerApplicationsResponse;
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────────
-export default function ManagerApplicationsClient({ user }: ManagerApplicationsClientProps) {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [accommodationName, setAccommodationName] = useState("");
-  const [loading, setLoading] = useState(true);
+export default function ManagerApplicationsClient({ user, initialData }: ManagerApplicationsClientProps) {
+  const [applications, setApplications] = useState<Application[]>(initialData.applications);
+  const [accommodationName, setAccommodationName] = useState(initialData.accommodation.name);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [units, setUnits] = useState<Unit[]>([]);
+  const [units, setUnits] = useState<Unit[]>(initialData.units);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    // We only show loading state on manual refreshes or realtime syncs
+    // to avoid flickering the whole page
     setError(null);
 
     try {
       const { accommodation, applications: apps, units: fetchedUnits } =
         await fetchManagerApplications();
 
-
       setAccommodationName(accommodation.name);
       setApplications(apps);
       setUnits(fetchedUnits);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load applications.");
-    } finally {
-      setLoading(false);
     }
   }, []);
 
