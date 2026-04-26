@@ -139,6 +139,52 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
   const [notifications, setNotifications] = useState(initialNotifications);
   const router = useRouter();
 
+  const handleExportCSV = () => {
+    const csvRows = [];
+    
+    // Section 1: Dashboard Stats
+    csvRows.push(["--- DASHBOARD SUMMARY ---"]);
+    csvRows.push(["Metric", "Value"]);
+    Object.entries(stats).forEach(([key, value]) => {
+      const label = key.replace(/([A-Z])/g, ' $1').trim();
+      const formattedValue = typeof value === 'number' && key.toLowerCase().includes('rate') ? `${value.toFixed(1)}%` : value;
+      csvRows.push([label, formattedValue]);
+    });
+    csvRows.push([]);
+
+    // Section 2: Property Occupancy
+    csvRows.push(["--- PROPERTY OCCUPANCY ---"]);
+    csvRows.push(["Name", "Type", "Status", "Total Units", "Capacity", "Current Occupancy", "Available Slots", "Occupancy Rate (%)"]);
+    propertyOccupancy.forEach(p => {
+      csvRows.push([p.name, p.type, p.status, p.totalUnits, p.totalCapacity, p.currentOccupancy, p.availableSlots, p.rate.toFixed(1)]);
+    });
+    csvRows.push([]);
+
+    // Section 3: Pending Applications
+    csvRows.push(["--- PENDING APPLICATIONS ---"]);
+    csvRows.push(["Applicant", "Unit Type", "Date Submitted", "Status"]);
+    pendingApplications.forEach(a => {
+      const user = unwrap(a.users);
+      csvRows.push([
+        user ? `${user.first_name} ${user.last_name}` : "Unknown", 
+        a.preferred_unit_type || "N/A", 
+        new Date(a.date_submitted).toLocaleDateString(), 
+        a.application_status
+      ]);
+    });
+
+    const csvContent = csvRows.map(e => e.map(String).map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `dashboard_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
@@ -270,7 +316,11 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
             )}
           </div>
 
-          <Button variant="outline" className={`${archivo.className} text-xs font-semibold rounded-xl bg-white shadow-sm h-10 px-4`}>
+          <Button 
+            variant="outline" 
+            className={`${archivo.className} text-xs font-semibold rounded-xl bg-white shadow-sm h-10 px-4`}
+            onClick={handleExportCSV}
+          >
             <Download className="w-4 h-4 mr-1.5" /> Export CSV
           </Button>
         </div>
