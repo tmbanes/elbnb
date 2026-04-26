@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 export default async function SignUpPage() {
   const user = await getApiAuthenticatedUser();
 
-  if (user) {
-    redirect(`/`);
+  if (user && !user.role) {
+    redirect(`/role-selection`);
   }
 
   return <SignUpWithEmailSetup user={user} />;

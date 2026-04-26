@@ -6,8 +6,10 @@ import { User } from "@/types/user.types";
 export default async function RoleSelectionPage() {
   const user: User | null = await getApiAuthenticatedUser();
 
-  if (!user) {
-    redirect(`/onboarding`);
+  console.log(user);
+
+  if (user && user.role) {
+    redirect(`/`);
   }
 
   return <RoleSelection />;

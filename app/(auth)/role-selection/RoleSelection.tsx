@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { College, COLLEGES } from "@/types/user.types";
 
 //style constants
 const label_style = "block text-xs font-semibold uppercase tracking-wider text-slate-300"
@@ -38,36 +39,44 @@ const field_style =
   "text-[#2d1a12] placeholder-[#2d1a12]/30 shadow-sm " +
   "transition-all outline-none";
 
+const full_width = field_style + "w-full"
+
 const button_style = "w-full h-11 rounded-full bg-[#fbbc05] text-[#2d1a12] font-semibold hover:bg-[#f9d776]";
 
 type Role = "guest" | "student";
 
 type StudentRoleData = {
+  role: Role | "";
   student_number: string;
   degree_program: string;
+  college: College;
   enrollment_status: "enrolled" | "loa" | "awol";
-  residency_status: "resident" | "non-resident" | "evicted";
+  emergency_person: string,
+  emergency_contact: string;
+  home_address: string;
 };
 
 type GuestRoleData = {
   valid_id: string;
   purpose_visit: string;
-  occupancy_status: string;
 };
 
 type RoleFormData = StudentRoleData | GuestRoleData;
 
 const initialStudentData: StudentRoleData = {
+  role: "",
   student_number: "",
   degree_program: "",
+  college: "CAS",
   enrollment_status: "enrolled",
-  residency_status: "resident",
+  emergency_person: "",
+  emergency_contact: "",
+  home_address: ""
 };
 
 const initialGuestData: GuestRoleData = {
   valid_id: "",
   purpose_visit: "",
-  occupancy_status: "",
 };
 
 const roleLabels: Record<Role, string> = {
@@ -86,12 +95,6 @@ const enrollmentOptions = [
   { value: "awol", label: "AWOL" },
 ];
 
-const residencyOptions = [
-  { value: "resident", label: "Resident" },
-  { value: "non-resident", label: "Non-Resident" },
-  { value: "evicted", label: "Evicted" },
-];
-
 
 export default function RoleSelection() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
@@ -102,19 +105,19 @@ export default function RoleSelection() {
 
 
   //parse date for guest occupancy_status if roleData exists and role is guest
-  const selectedDateString =
-    selectedRole === "guest" && roleData
-      ? (roleData as GuestRoleData).occupancy_status
-      : "";
+  // const selectedDateString =
+  //   selectedRole === "guest" && roleData
+  //     ? (roleData as GuestRoleData).occupancy_status
+  //     : "";
 
-  const parsedSelectedDate = selectedDateString
-    ? new Date(selectedDateString)
-    : undefined;
+  // const parsedSelectedDate = selectedDateString
+  //   ? new Date(selectedDateString)
+  //   : undefined;
 
-  const selectedDate =
-    parsedSelectedDate && !Number.isNaN(parsedSelectedDate.valueOf())
-      ? parsedSelectedDate
-      : undefined;
+  // const selectedDate =
+  //   parsedSelectedDate && !Number.isNaN(parsedSelectedDate.valueOf())
+  //     ? parsedSelectedDate
+  //     : undefined;
 
   const targetRoute: Record<Role, string> = {
     student: "/student/dashboard",
@@ -129,6 +132,7 @@ export default function RoleSelection() {
 
   const handleFieldChange = (name: string, value: string) => {
     setRoleData((prev) => (prev ? { ...prev, [name]: value } : prev));
+    console.log(roleData);
   };
 
   const handleContinue = async () => {
@@ -145,6 +149,7 @@ export default function RoleSelection() {
         },
         body: JSON.stringify({ role: selectedRole, ...roleData }),
       });
+
 
       const data = await response.json();
 
@@ -218,6 +223,8 @@ export default function RoleSelection() {
                       onChange={(e) =>
                         handleFieldChange("student_number", e.target.value)
                       }
+                      placeholder="20XX-XXXXX"
+                      required
                     />
                   </div>
 
@@ -229,6 +236,8 @@ export default function RoleSelection() {
                       onChange={(e) =>
                         handleFieldChange("degree_program", e.target.value)
                       }
+                      placeholder="e.g. BS Computer Science"
+                      required
                     />
                   </div>
 
@@ -242,6 +251,7 @@ export default function RoleSelection() {
                         defaultValue={
                           (roleData as StudentRoleData).enrollment_status
                         }
+                        required
 
                       >
                         <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
@@ -258,26 +268,63 @@ export default function RoleSelection() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className={label_style}>Residency Status</Label>
+                      <Label className={label_style}>College</Label>
                       <Select
                         onValueChange={(value) =>
-                          handleFieldChange("residency_status", value)
+                          handleFieldChange("college", value)
                         }
                         defaultValue={
-                          (roleData as StudentRoleData).residency_status
+                          (roleData as StudentRoleData).college
                         }
+                        required
                       >
                         <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
-                          {residencyOptions.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                              {opt.label}
+                          {COLLEGES.map((college) => (
+                            <SelectItem key={college} value={college}>
+                              {college}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="space-y-2 min-w-[100%]">
+                      <Label className={label_style}>Home Address</Label>
+                      <Input
+                        className={full_width}
+                        value={(roleData as StudentRoleData).home_address}
+                        onChange={(e) =>
+                          handleFieldChange("home_address", e.target.value)
+                        }
+                        placeholder="Full Address"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className={label_style}>Emergency Person</Label>
+                      <Input
+                        className={field_style}
+                        value={(roleData as StudentRoleData).emergency_person}
+                        onChange={(e) =>
+                          handleFieldChange("emergency_person", e.target.value)
+                        }
+                        placeholder="Name of emergency contact"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2 w-[100%]">
+                      <Label className={label_style}>Emergency Contact #</Label>
+                      <Input
+                        className={field_style}
+                        value={(roleData as StudentRoleData).emergency_contact}
+                        onChange={(e) =>
+                          handleFieldChange("emergency_contact", e.target.value)
+                        }
+                        placeholder="09XXXXXXXXX"
+                        required
+                      />
                     </div>
                   </div>
                 </>
@@ -305,7 +352,7 @@ export default function RoleSelection() {
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label className={label_style}>Occupancy Date</Label>
 
                     <Popover>
@@ -333,7 +380,7 @@ export default function RoleSelection() {
                         />
                       </PopoverContent>
                     </Popover>
-                  </div>
+                  </div> */}
                 </>
               )}
             </div>

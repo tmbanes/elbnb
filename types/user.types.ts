@@ -3,7 +3,8 @@ export type UserStatus = "active" | "inactive" | "deactivated";
 export type EnrollmentStatus = "enrolled" | "loa" | "awol";
 export type ResidencyStatus = "resident" | "non-resident" | "evicted";
 export type OccupancyStatus = ""
-export type College = "CAS" | "CEAT" | "CAFS" | "CVM" | "CDC" | "CEM" | "CHE" | "CFNR" | "SESAM" | "CPAf";
+export const COLLEGES = ["CAS", "CEAT", "CAFS", "CVM", "CDC", "CEM", "CHE", "CFNR", "SESAM", "CPAf"] as const;
+export type College = typeof COLLEGES[number];
 export type DegreePrograms = "";
 
 interface UserCreationRequest {
@@ -25,7 +26,7 @@ interface StudentCreationRequest extends UserCreationRequest {
   student_number: string;
   degree_program: string;
   enrollment_status: "enrolled" | "loa" | "awol";
-  residency_status: "resident" | "non-resident" | "evicted";
+  residency_status: ResidencyStatus;
   violation_count: number;
 }
 

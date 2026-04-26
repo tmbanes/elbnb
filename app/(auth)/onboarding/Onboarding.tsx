@@ -1,7 +1,9 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { getSupabaseBrowserClient } from '@/lib/supabase/browser-client'
+import { User } from '@/types/user.types'
 
 const STYLES = {
   colors: {
@@ -21,7 +23,24 @@ const STYLES = {
 
 export default function Auth() {
   const [openPanel, setOpenPanel] = useState<"upper" | "lower" | null>(null)
-  const router = useRouter()
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const router = useRouter();
+  const supabase = getSupabaseBrowserClient();
+
+
+
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser((session?.user as unknown as User) ?? null);
+    });
+    return () => listener?.subscription.unsubscribe();
+  }, [supabase]);
+
+  useEffect(() => {
+    if (currentUser != null) {
+      router.push("/");
+    }
+  }, [currentUser, router]);
 
   const toggleUpper = () => {
     setOpenPanel((prev) => (prev === "upper" ? null : "upper"))

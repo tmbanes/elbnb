@@ -8,8 +8,8 @@ import { redirect } from "next/navigation";
 export default async function GoogleLoginPage() {
   const user: User | null = await getApiAuthenticatedUser();
 
-  if (user) {
-    redirect(`/`);
+  if (user && !user.role) {
+    redirect(`/role-selection`);
   }
 
   return <GoogleLoginSetup user={user} />;

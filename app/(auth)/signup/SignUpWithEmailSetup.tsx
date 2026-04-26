@@ -81,7 +81,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
       last_name: formData.last_name,
       email: formData.email,
       password: formData.password,
-      user_status: "inactive",
+      user_status: "active",
     };
   };
 
@@ -93,7 +93,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
     const payload = getPayload();
 
     try {
-      const response = await fetch("/api/auth/signUp", {
+      const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -103,7 +103,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
       const data = await response.json();
 
       //troubleshooting: check response
-      console.log("Response:", data);
+      // console.log("Response:", data);
 
       if (!response.ok || !data.success) {
         setStatus(data.error ?? "Signup failed. Please try again.");

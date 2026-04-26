@@ -281,9 +281,8 @@ export default function ApplyAccommodationForm() {
     );
 
     const payload = {
-      preferred_accommodation: accommodationIdFromQuery,
+      preferred_accommodation_id: accommodationIdFromQuery,
       preferred_unit_type: unitIdFromQuery ? "" : data.preferred_unit_type,
-      date_submitted: new Date().toISOString(),
       duration_of_stay: months || 1,
       check_in: format(data.checkIn, "yyyy-MM-dd"),
       check_out: format(data.checkOut, "yyyy-MM-dd"),
@@ -292,16 +291,23 @@ export default function ApplyAccommodationForm() {
           accommodation?.accommodation_type === "renting_space"
           ? 1
           : 0,
-      application_status: "pending_dorm_manager" as ApplicationStatus,
-      user_id: userId,
       unit_id: unitIdFromQuery,
     };
 
+    if (!file) {
+      setFileError("Please upload the required document.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("data", JSON.stringify(payload));
+
     try {
-      const response = await fetch("/api/student/applications", {
+      const response = await fetch("/api/guest/applications", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       if (!response.ok) {
