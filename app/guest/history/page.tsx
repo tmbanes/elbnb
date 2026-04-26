@@ -5,23 +5,24 @@ import { userProfileService } from "@/services/user_profile";
 import { redirect } from "next/navigation";
 import HistoryUI from "./HistoryUI";
 
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
+
 export default async function GuestHistoryPage() {
-    const supabase = await createSupabaseServerClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiAuthenticatedUser();
 
     if (!user) {
-        redirect("/");
+        redirect("/onboarding");
     }
 
-    const { data: profile } = await userProfileService.getProfile(user.id);
-    const { data: history } = await userProfileService.getAccommodationHistory(user.id);
+    const [profileRes, historyRes] = await Promise.all([
+        userProfileService.getProfile(user.user_id),
+        userProfileService.getAccommodationHistory(user.user_id)
+    ]);
 
     return (
         <HistoryUI
-            profile={profile}
-            initialHistory={history || []}
+            profile={profileRes.data}
+            initialHistory={historyRes.data || []}
         />
     );
 }

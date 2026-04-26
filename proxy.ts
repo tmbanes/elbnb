@@ -4,13 +4,27 @@ import { createServerClient } from "@supabase/ssr";
 
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
+
+  // 1. Quick bypass for public/auth routes BEFORE expensive Auth logic
+  if (
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/signup") ||
+    pathname === "/"
+  ) {
+    return NextResponse.next();
+  }
+
+  // 2. Optimization: Check for session cookie existence before calling getUser()
+  // This avoids a network trip to Supabase for truly unauthenticated requests on protected routes
+  const hasSession = req.cookies.get("sb-access-token") || req.cookies.get("supabase-auth-token");
+  
   let res = NextResponse.next({
     request: {
       headers: req.headers,
     },
   });
 
-  // Create supabase client to handle auth cookies
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_KEY!,
@@ -21,11 +35,6 @@ export async function proxy(req: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             req.cookies.set(name, value)
           );
-          res = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          });
           cookiesToSet.forEach(({ name, value, options }) =>
             res.cookies.set(name, value, options)
           );
@@ -34,19 +43,11 @@ export async function proxy(req: NextRequest) {
     }
   );
 
-  // Refresh session and get user early
+  // 3. Refresh session and get user
+  // This is only called for routes that aren't public
   const { data: { user } } = await supabase.auth.getUser();
 
-  // 1. Unauthenticated API and Auth Routes (bypass protection)
-  if (
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/signup")
-  ) {
-    return res;
-  }
-
-  // 2. Protected UI Routes
+  // 4. Protected UI Routes
   const isProtectedUIRoute =
     pathname.startsWith("/manage") ||
     pathname.startsWith("/accommodations") ||
@@ -58,41 +59,38 @@ export async function proxy(req: NextRequest) {
 
   if (isProtectedUIRoute) {
     if (!user) {
-      // Redirect to login, preserving the intended destination
-      const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("next", pathname);
-      return NextResponse.redirect(loginUrl);
+      const onboardingUrl = new URL("/onboarding", req.url);
+      onboardingUrl.searchParams.set("next", pathname);
+      const redirectRes = NextResponse.redirect(onboardingUrl);
+      req.cookies.getAll().forEach((cookie) => {
+        redirectRes.cookies.set(cookie.name, cookie.value);
+      });
+      return redirectRes;
     }
 
     const role = user.user_metadata?.role;
 
-    // Fast path-to-role enforcement using user metadata to avoid waiting for UI Layout checks
     if (pathname.startsWith("/admin") && role !== "housing_admin") {
-      return NextResponse.redirect(new URL("/role-selection", req.url));
+      return NextResponse.redirect(new URL("/onboarding", req.url));
     }
     if (pathname.startsWith("/manager") && role !== "dormitory_manager") {
-      return NextResponse.redirect(new URL("/role-selection", req.url));
+      return NextResponse.redirect(new URL("/onboarding", req.url));
     }
     if (pathname.startsWith("/student") && role !== "student") {
-      return NextResponse.redirect(new URL("/role-selection", req.url));
+      return NextResponse.redirect(new URL("/onboarding", req.url));
     }
     if (pathname.startsWith("/guest") && role !== "guest") {
-      return NextResponse.redirect(new URL("/role-selection", req.url));
+      return NextResponse.redirect(new URL("/onboarding", req.url));
     }
   }
 
-  // 3. Admin API Routes
-  if (pathname.startsWith("/api/admin")) {
-    if (process.env.NODE_ENV === "development") {
-      return res; // Dev bypass
-    }
-
+  // 5. Protected API Routes
+  if (pathname.startsWith("/api/admin") || pathname.startsWith("/api/manager") || pathname.startsWith("/api/student")) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Role check without DB query (relying on JWT)
-    if (user.user_metadata?.role !== "housing_admin") {
+    if (pathname.startsWith("/api/admin") && user.user_metadata?.role !== "housing_admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
@@ -102,7 +100,6 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Apply middleware to all routes except Next.js static files and images
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

@@ -1,18 +1,15 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { userProfileService } from "@/services/user_profile";
 import { getStudentBillsDetailed, getUserPaymentSummary } from "@/services/user-services";
 import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation";
 import { redirect } from "next/navigation";
 import StudentDashboardUI from "./student-dashboard-ui";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
 export default async function StudentDashboardPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiAuthenticatedUser();
 
   if (!user) {
-    redirect("/");
+    redirect("/onboarding");
   }
 
   // Fetch all necessary data for the student dashboard
@@ -26,14 +23,14 @@ export default async function StudentDashboardPage() {
     { data: documents },
     { data: notifications }
   ] = await Promise.all([
-    userProfileService.getCurrentAccommodation(user.id),
-    userProfileService.getAccommodationHistory(user.id),
-    getUserPaymentSummary(user.id, "student"),
-    getStudentBillsDetailed(user.id),
-    userProfileService.getDashboardStats(user.id),
+    userProfileService.getCurrentAccommodation(user.user_id),
+    userProfileService.getAccommodationHistory(user.user_id),
+    getUserPaymentSummary(user.user_id, "student"),
+    getStudentBillsDetailed(user.user_id),
+    userProfileService.getDashboardStats(user.user_id),
     UnitAccomodationsDisplayService.listAccomodations("student"),
-    userProfileService.getDocuments(user.id),
-    userProfileService.getNotifications(user.id)
+    userProfileService.getDocuments(user.user_id),
+    userProfileService.getNotifications(user.user_id)
   ]);
 
   return (

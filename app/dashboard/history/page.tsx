@@ -37,15 +37,12 @@ function getBadgeVariant(status: string) {
   }
 }
 
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
+
 export default async function AccommodationHistoryPage() {
-  // Initialize Supabase server client
-  const supabase = await createSupabaseServerClient();
+  const user = await getApiAuthenticatedUser();
 
-  // Fetch the current active user session
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-  // Protect the route: If no one is logged in, redirect them to the onboarding page
-  if (!user || authError) {
+  if (!user) {
     redirect("/onboarding");
   }
 
@@ -54,7 +51,7 @@ export default async function AccommodationHistoryPage() {
   // const tempUserId = "4bc89946-5a5c-4810-8839-afca74efdadb"; // my test account
   // const userId = tempUserId; 
 
-  const userId = user.id; // uncomment this when you want to use actual logged-in user ID
+  const userId = user.user_id; // uncomment this when you want to use actual logged-in user ID
 
   const { data: records, error } = await userProfileService.getAccommodationHistory(userId);
 
@@ -96,8 +93,8 @@ export default async function AccommodationHistoryPage() {
   const isPending = currentStatus.includes('pending');
 
   const assignment = Array.isArray(currentApplication.accommodation_assignment)
-  ? currentApplication.accommodation_assignment[0]
-  : currentApplication.accommodation_assignment;
+    ? currentApplication.accommodation_assignment[0]
+    : currentApplication.accommodation_assignment;
 
   return (
     <div className="container mx-auto p-6 space-y-8 max-w-5xl">

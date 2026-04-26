@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
 import CompleteProfile from "./CompleteProfile";
 import { getApiAuthenticatedUser } from "@/lib/auth/session";
-import { User } from "@/types/user.types";
 
 export default async function CompleteProfilePage() {
-  const user: User | null = await getApiAuthenticatedUser();
+  const user = await getApiAuthenticatedUser();
 
-  console.log(user);
+  // console.log(user);
 
   // If the user already has names and a role, they are done.
   // Since we set names to "TBD" in signup, we check for that or empty.

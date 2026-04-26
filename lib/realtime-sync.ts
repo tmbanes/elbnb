@@ -15,7 +15,8 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/browser-client';
 export function useRealtimeSync(
     table: string,
     filter?: string,
-    event: 'INSERT' | 'UPDATE' | 'DELETE' | '*' = '*'
+    event: 'INSERT' | 'UPDATE' | 'DELETE' | '*' = '*',
+    onRefresh?: () => void
 ) {
     const supabase = getSupabaseBrowserClient();
     const router = useRouter();
@@ -36,6 +37,7 @@ export function useRealtimeSync(
                 (payload) => {
                     console.log(`[RealtimeSync] Change detected in ${table}:`, payload);
                     router.refresh();
+                    if (onRefresh) onRefresh();
                 }
             )
             .subscribe();
@@ -43,5 +45,5 @@ export function useRealtimeSync(
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [table, filter, event, supabase, router]);
+    }, [table, filter, event, supabase, router, onRefresh]);
 }

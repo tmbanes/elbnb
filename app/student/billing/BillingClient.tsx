@@ -25,6 +25,8 @@ import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+import { useRealtimeSync } from "@/lib/realtime-sync";
+
 export default function BillingClient({
   userId,
   summary,
@@ -34,6 +36,10 @@ export default function BillingClient({
   cancelEndpoint = "/api/student/billing/cancel-receipt",
 }: any) {
   const supabase = getSupabaseBrowserClient();
+  const router = useRouter();
+
+  // Sync billing data in real-time
+  useRealtimeSync('billing', undefined, '*');
 
   const [selectedBill, setSelectedBill] = useState<any>(null);
   const [printMode, setPrintMode] = useState<"bill" | "statement" | null>(null);
@@ -43,22 +49,8 @@ export default function BillingClient({
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null);
   const [isLoadingReceiptPreview, setIsLoadingReceiptPreview] = useState(false);
-  const router = useRouter();
 
   const USE_DUMMY_BILLING_DATA = false;
-
-  useEffect(() => {
-    const channel = supabase
-      .channel('realtime_student_billing')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, () => {
-        router.refresh();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [supabase, router]);
 
   const dummyBills = useMemo(
     () => [

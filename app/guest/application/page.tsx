@@ -4,20 +4,21 @@ import { userProfileService } from "@/services/user_profile"
 import { ensureInitialInvoicesForUser } from "@/services/user-services"
 import ApplicationsPage from "./ApplicationsPage";
 
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
+
 export default async function AccommodationHistoryPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const user = await getApiAuthenticatedUser();
 
   // Redirect if not authenticated
-  if (!user || authError) {
+  if (!user) {
     redirect("/onboarding");
   }
 
   // Keep billing invoices in sync for pending_payment applications.
-  await ensureInitialInvoicesForUser(user.id);
+  await ensureInitialInvoicesForUser(user.user_id);
 
   // Fetch data from service layer
-  const { data: records, error } = await userProfileService.getAccommodationHistory(user.id);
+  const { data: records, error } = await userProfileService.getAccommodationHistory(user.user_id);
 
   if (error) {
     return (

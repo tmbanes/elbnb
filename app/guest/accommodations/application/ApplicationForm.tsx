@@ -200,7 +200,7 @@ const triggerErrorClass =
   "w-full bg-white border-2 border-red-400 rounded-xl px-4 h-11 text-sm text-gray-700 focus:ring-2 focus:ring-red-300";
 
 // main fform
-export default function ApplyAccommodationForm() {
+export default function ApplyAccommodationForm({ authUser }: { authUser: any }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const accommodationIdFromQuery = searchParams.get("accommodationId") ?? "";
@@ -315,7 +315,7 @@ export default function ApplyAccommodationForm() {
       }
 
       setSubmittedData(data);
-      
+
       const profile = await getCurrentUserFromApi();
       const role = isUserRole(profile?.role) ? profile.role : "guest";
 
@@ -349,15 +349,8 @@ export default function ApplyAccommodationForm() {
           setUserId(userProfile.user_id);
           setUserRole(userProfile.role || "");
 
-          // Prefill personal information from user data
-          let contactNumber = "";
-          let studentId = "";
-          const supabase = getSupabaseBrowserClient();
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user?.user_metadata) {
-            contactNumber = user.user_metadata.phone_number || "";
-            studentId = user.user_metadata.student_number || "";
-          }
+          const contactNumber = authUser?.phone_number || "";
+          const studentId = authUser?.student_number || "";
 
           setUserInfo({
             firstName: userProfile.first_name || "",
@@ -374,7 +367,7 @@ export default function ApplyAccommodationForm() {
       }
     };
     fetchUser();
-  }, [setValue]);
+  }, [setValue, authUser]);
 
   // FETCH ACCOMMODATION + UNIT details for display
   useEffect(() => {

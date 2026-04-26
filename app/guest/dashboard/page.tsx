@@ -5,57 +5,54 @@ import { userProfileService } from "@/services/user_profile";
 import { getStudentBillsDetailed } from "@/services/user-services";
 import { redirect } from "next/navigation";
 import GuestDashboardUI from "./guest-dashboard-ui";
-import { createActivityLog, isUserRole } from "@/services/activity_log";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
 export default async function GuestDashboardPage() {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiAuthenticatedUser();
 
   if (!user) {
-    redirect("/");
+    redirect("/onboarding");
   }
 
-  // 1. Fetch guest profile
-  const { data: profile } = await userProfileService.getProfile(user.id);
-
-  // 2. Fetch Active Residency
-  const { data: activeResidency } = await supabase
-    .from('accommodation_assignment')
-    .select(`
-            *,
-            accommodation:accommodation_id (*),
-            unit:unit_id (*)
-        `)
-    .eq('user_id', user.id)
-    .eq('assignment_status', 'active')
-    .single();
-
-  // 3. Fetch Applications
-  const { data: applications } = await supabase
-    .from('accommodation_application')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('date_submitted', { ascending: false });
-
-  // 4. Fetch History
-  const { data: history } = await userProfileService.getAccommodationHistory(user.id);
-
-  // 5. Fetch Documents
-  const { data: documents } = await userProfileService.getDocuments(user.id);
-
-  // 6. Fetch Billing
-  const { data: bills } = await getStudentBillsDetailed(user.id);
+  // Fetch all guest dashboard data in parallel
+  const [
+    profileRes,
+    activeResidencyRes,
+    applicationsRes,
+    historyRes,
+    documentsRes,
+    billsRes
+  ] = await Promise.all([
+    userProfileService.getProfile(user.user_id),
+    supabase
+      .from('accommodation_assignment')
+      .select(`
+              *,
+              accommodation:accommodation_id (*),
+              unit:unit_id (*)
+          `)
+      .eq('user_id', user.user_id)
+      .eq('assignment_status', 'active')
+      .single(),
+    supabase
+      .from('accommodation_application')
+      .select('*')
+      .eq('user_id', user.user_id)
+      .order('date_submitted', { ascending: false }),
+    userProfileService.getAccommodationHistory(user.user_id),
+    userProfileService.getDocuments(user.user_id),
+    getStudentBillsDetailed(user.user_id)
+  ]);
 
   return (
     <GuestDashboardUI
-      profile={profile}
-      initialActiveResidency={activeResidency}
-      initialApplications={applications || []}
-      initialHistory={history || []}
-      initialDocuments={documents || []}
-      initialBills={bills || []}
+      profile={profileRes.data}
+      initialActiveResidency={activeResidencyRes.data}
+      initialApplications={applicationsRes.data || []}
+      initialHistory={historyRes.data || []}
+      initialDocuments={documentsRes.data || []}
+      initialBills={billsRes.data || []}
     />
   );
 }

@@ -8,6 +8,17 @@ import {
   AccommodationApplication,
 } from "@/types/user_profile";
 
+interface ActivityLog {
+  log_id: string;
+  user_id: string;
+  action_type: string;
+  log_desc: string;
+  entity_type: string;
+  entity_id: string;
+  timestamp: string;
+  user_role: string;
+}
+
 export const userProfileService = {
   async getProfile(user_id: string) {
     const client = await supabase();
@@ -41,6 +52,7 @@ export const userProfileService = {
     return { data: data as UserProfile | null, error };
   },
 
+  // di ko alam if need pa itu
   // export interface AccommodationAssignment {
   //     assignment_id: string;
   //     move_In_Date: string;
@@ -318,7 +330,7 @@ not yet tested
   async getNotifications(user_id: string) {
     const client = await supabase();
     const adminClient = supabaseAdmin;
-    
+
     // 1. Get user role
     const { data: profile } = await client
       .from("users")
@@ -340,11 +352,14 @@ not yet tested
 
     try {
       if (role === "student" || role === "guest") {
-        // Students/Guests care about their own applications and bills
-        const { data: apps } = await client
-          .from("accommodation_application")
-          .select("application_id, accommodation:preferred_accommodation_id(name)")
-          .eq("user_id", user_id);
+        // Parallelize initial lookups for student/guest
+        const [appsRes, assignmentsRes, docsRes] = await Promise.all([
+          client.from("accommodation_application").select("application_id, accommodation:preferred_accommodation_id(name)").eq("user_id", user_id),
+          client.from("accommodation_assignment").select("assignment_id").eq("user_id", user_id),
+          client.from("application_document").select("document_id").eq("user_id", user_id)
+        ]);
+
+        const apps = appsRes.data;
         const appIds = apps?.map(a => a.application_id) || [];
         apps?.forEach(a => {
           appLookup[a.application_id] = {
@@ -352,16 +367,17 @@ not yet tested
           };
         });
 
-        const { data: assignments } = await client
-          .from("accommodation_assignment")
-          .select("assignment_id")
-          .eq("user_id", user_id);
-        const assignmentIds = assignments?.map(a => a.assignment_id) || [];
+        const assignmentIds = (assignmentsRes.data || []).map(a => a.assignment_id);
+        const docIds = (docsRes.data || []).map(d => d.document_id);
 
-        const { data: bills } = assignmentIds.length > 0 
-          ? await client.from("billing").select("billing_id").in("assignment_id", assignmentIds)
-          : { data: [] };
-        const billIds = (bills as any[])?.map(b => b.billing_id) || [];
+        // Nested dependency: Bills need assignments
+        if (assignmentIds.length > 0) {
+          const { data: bills } = await client.from("billing").select("billing_id").in("assignment_id", assignmentIds);
+          const billIds = (bills as any[])?.map(b => b.billing_id) || [];
+          if (billIds.length > 0) {
+            conditions.push(`and(entity_type.eq.billing,entity_id.in.(${billIds.join(',')}),action_type.not.in.(mark_billing_paid))`);
+          }
+        }
 
         if (appIds.length > 0) {
           conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}),action_type.not.in.(submit_application,cancel_application,update_user))`);
@@ -369,15 +385,10 @@ not yet tested
         if (assignmentIds.length > 0) {
           conditions.push(`and(entity_type.eq.assignment,entity_id.in.(${assignmentIds.join(',')}),action_type.not.in.(submit_application,cancel_application,update_user,create_assignment))`);
         }
-        if (billIds.length > 0) {
-          conditions.push(`and(entity_type.eq.billing,entity_id.in.(${billIds.join(',')}),action_type.not.in.(mark_billing_paid))`);
-        }
-
-        const { data: docs } = await client.from("application_document").select("document_id").eq("user_id", user_id);
-        const docIds = docs?.map(d => d.document_id) || [];
         if (docIds.length > 0) {
           conditions.push(`and(entity_type.eq.document,entity_id.in.(${docIds.join(',')}))`);
         }
+
       } else if (role === "dormitory_manager") {
         // Managers care about applications for their accommodations
         const { data: accoms } = await client
@@ -404,8 +415,6 @@ not yet tested
           }
         }
       } else if (role === "housing_admin" || role === "admin") {
-        // Admins care about screenings, payments, cancellations, and new submissions
-        // We explicitly exclude 'approve_application' and 'generate_billing' as requested
         conditions.push(`action_type.in.(screen_application,mark_billing_paid,cancel_application,submit_application,submit_payment)`);
       }
 
@@ -422,24 +431,24 @@ not yet tested
 
       // --- LOOKUP PHASE ---
       // Fetch details for logs that haven't been looked up yet (critical for Admin)
-      const appIdsToLookup = (logs || [])
-        .filter(l => l.entity_type === 'application' && !appLookup[l.entity_id])
-        .map(l => l.entity_id);
-      
-      const billIdsToLookup = (logs || [])
-        .filter(l => l.entity_type === 'billing' && !appLookup[l.entity_id])
-        .map(l => l.entity_id);
+      const appIdsToLookup = (logs as ActivityLog[] || [])
+        .filter((log) => log.entity_type === 'application' && !appLookup[log.entity_id])
+        .map((log) => log.entity_id);
+
+      const billIdsToLookup = (logs as ActivityLog[] || [])
+        .filter((log) => log.entity_type === 'billing' && !appLookup[log.entity_id])
+        .map((log) => log.entity_id);
 
       if (appIdsToLookup.length > 0) {
         const { data: extraApps } = await adminClient
           .from("accommodation_application")
           .select("application_id, preferred_accommodation_id(name), users(first_name, last_name)")
           .in("application_id", appIdsToLookup);
-        
-        extraApps?.forEach(a => {
-          appLookup[a.application_id] = {
-            accomName: (a.preferred_accommodation_id as any)?.name || "Accommodation",
-            applicantName: (a.users as any) ? `${(a.users as any).first_name} ${(a.users as any).last_name}` : "A student"
+
+        extraApps?.forEach((app: any) => {
+          appLookup[app.application_id] = {
+            accomName: (app.preferred_accommodation_id as any)?.name || "Accommodation",
+            applicantName: (app.users as any) ? `${(app.users as any).first_name} ${(app.users as any).last_name}` : "A student"
           };
         });
       }
@@ -449,10 +458,10 @@ not yet tested
           .from("billing")
           .select("billing_id, accommodation_assignment(users(first_name, last_name))")
           .in("billing_id", billIdsToLookup);
-        
-        extraBills?.forEach(b => {
-          const user = (b.accommodation_assignment as any)?.users;
-          appLookup[b.billing_id] = {
+
+        extraBills?.forEach((bill: any) => {
+          const user = (bill.accommodation_assignment as any)?.users;
+          appLookup[bill.billing_id] = {
             applicantName: user ? `${user.first_name} ${user.last_name}` : "A student"
           };
         });
@@ -476,7 +485,7 @@ not yet tested
               break;
             case 'approve_application':
               title = "Application Approved";
-              message = log.log_desc.includes("Final Approval") 
+              message = log.log_desc.includes("Final Approval")
                 ? `Congratulations! Your application to ${accomName} has received final approval.`
                 : `Congratulations! Your application to ${accomName} has been approved by Admin and is now awaiting payment.`;
               link = `/${role}/application`;

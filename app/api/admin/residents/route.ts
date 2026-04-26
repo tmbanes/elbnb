@@ -77,7 +77,13 @@ export const GET = withRole(['housing_admin', 'admin'], async (_req: NextRequest
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, data: assignments ?? [] });
+    const mappedAssignments = (assignments || []).map((r: any) => ({
+      ...r,
+      users: Array.isArray(r.users) ? r.users[0] : r.users,
+      unit: Array.isArray(r.unit) ? r.unit[0] : r.unit,
+    }));
+
+    return NextResponse.json({ success: true, data: mappedAssignments });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unexpected error";
     return NextResponse.json({ error: msg }, { status: 500 });

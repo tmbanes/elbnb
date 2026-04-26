@@ -4,23 +4,22 @@ import { redirect } from "next/navigation";
 import BillingClient from "./BillingClient";
 import LogoutButton from "@/components/logout-button";
 
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
+
 export default async function GuestBillingPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiAuthenticatedUser();
 
   if (!user) {
-    redirect("/");
+    redirect("/onboarding");
   }
 
   // Backfill safety net for applications that reached pending payment
   // before auto-invoice creation was introduced.
-  await ensureInitialInvoicesForUser(user.id);
+  await ensureInitialInvoicesForUser(user.user_id);
 
-  const { data: summary } = await getUserPaymentSummary(user.id, "guest");
-  const { data: bills } = await getStudentBillsDetailed(user.id);
-  const { data: paymentHistory } = await getStudentPaymentHistory(user.id);
+  const { data: summary } = await getUserPaymentSummary(user.user_id, "guest");
+  const { data: bills } = await getStudentBillsDetailed(user.user_id);
+  const { data: paymentHistory } = await getStudentPaymentHistory(user.user_id);
 
   return (
     <main className="min-h-screen p-8 bg-slate-50/50">
@@ -32,7 +31,7 @@ export default async function GuestBillingPage() {
         </div>
 
         <BillingClient
-          userId={user.id}
+          userId={user.user_id}
           summary={summary || { total: 0, paid: 0, balance: 0 }}
           bills={bills || []}
           paymentHistory={paymentHistory || []}
