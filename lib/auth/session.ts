@@ -37,7 +37,10 @@ export async function requireRole(allowedRoles: string[]) {
 
     if (!user) redirect("/onboarding");
 
-    if (!user.role) redirect("/role-selection");
+    // If role is missing OR profile is incomplete (indicated by "TBD" or empty name)
+    if (!user.role || !user.first_name || user.first_name === "TBD") {
+        redirect("/complete-profile");
+    }
 
     if (!allowedRoles.includes(user.role)) {
         redirect("/auth/auth-code-error");
@@ -52,8 +55,9 @@ export async function redirectByRole() {
 
     if (!user) redirect("/onboarding");
 
-    if (!user.role) {
-        redirect("/role-selection");
+    // If role is missing OR profile is incomplete
+    if (!user.role || !user.first_name || user.first_name === "TBD") {
+        redirect("/complete-profile");
         return; // Ensure execution stops
     }
 
