@@ -31,7 +31,7 @@ function PropertyCard({
 }) {
   return (
     <Card
-      onClick={() => router.push(`/admin/housing?id=${property.accommodation_id}`)}
+      onClick={() => router.push(`/admin/housing?id=${property.accommodation_id}&from=managers`)}
       className="shadow-sm bg-[#FDFFF4] transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-md cursor-default overflow-hidden" // Added overflow-hidden
       style={{ borderTop: `6px solid ${isDorm ? "#5591AB" : "#EB8A0B"}` }}
     >

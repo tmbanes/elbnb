@@ -19,16 +19,21 @@ import {
   FileEdit,
   Image as ImageIcon,
   Plus,
-  Trash
-  ,
+  Trash,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Calendar as CalendarIcon,
+  Receipt
 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 const INVOICE_STATUSES: BillingStatus[] = [
   BillingStatus.PAID,
@@ -345,10 +350,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       </div>
 
       {/* FILTER & ACTIONS */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm print:hidden">
-        <div className="flex bg-slate-50 border border-slate-200 rounded-xl overflow-hidden flex-1 max-w-md">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4  bg-[#FDFFF4] p-4 rounded-2xl border border-slate-200 shadow-sm print:hidden">
+        <div className="flex  bg-[#FDFFF4] border border-slate-200 rounded-xl overflow-hidden flex-1 max-w-md">
           <div className="pl-3 flex items-center justify-center text-slate-400">
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4  bg-[#FDFFF4]" />
           </div>
           <input
             type="text"
@@ -358,53 +363,52 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               setSearchQuery(e.target.value);
               setInvoicesPage(1);
             }}
-            className="w-full px-3 py-2 bg-transparent text-sm outline-none"
+            className="w-full px-3 py-2  bg-[#FDFFF4] text-sm outline-none"
           />
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Filter className="w-4 h-4 text-slate-400" />
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value);
-                setInvoicesPage(1);
-              }}
-            >
-              <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] focus:ring-2 focus:ring-indigo-400/30">
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => {
+              setStatusFilter(value);
+              setInvoicesPage(1);
+            }}
+          >
+            <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] px-3 text-sm font-medium text-[#30435f] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors">
+              <div className="flex items-center gap-2">
+                <Filter className="w-3.5 h-3.5 text-slate-400" />
                 <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-white text-[#30435f]">
-                <SelectItem value="ALL" className="text-sm font-medium">All Statuses</SelectItem>
-                {INVOICE_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s} className="text-sm font-medium">
-                    {s.replace(/_/g, " ").toUpperCase()}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
+              </div>
+            </SelectTrigger>
+            <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] text-[#44291B]">
+              <SelectItem value="ALL" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Statuses</SelectItem>
+              {INVOICE_STATUSES.map((s) => (
+                <SelectItem key={s} value={s} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                  {s.replace(/_/g, " ").toUpperCase()}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="h-6 w-px bg-slate-200 mx-2"></div>
 
           <button
             onClick={sendReminders}
-            className="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition"
+            className="flex items-center gap-2 text-sm font-medium text-[#44291B]  bg-[#FDFFF4] border border-slate-200 px-4 py-2 rounded-xl hover:bg-[#F6F8D5] transition"
           >
             <Send className="w-4 h-4" /> Remind
           </button>
 
           <button
             onClick={exportSelected}
-            className="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition"
+            className="flex items-center gap-2 text-sm font-medium text-[#44291B]  bg-[#FDFFF4] border border-slate-200 px-4 py-2 rounded-xl hover:bg-[#F6F8D5] transition"
           >
             <Download className="w-4 h-4" /> PDF
           </button>
 
           <button
             onClick={() => setIsCreatingBill(true)}
-            className="flex items-center gap-2 text-sm font-medium text-white bg-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-700 transition"
+            className="flex items-center gap-2 text-sm font-medium text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" /> Create
           </button>
@@ -412,11 +416,11 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       </div>
 
       {/* DATA TABLE */}
-      <div className="bg-white border text-sm border-slate-200 rounded-2xl shadow-sm overflow-hidden print:hidden">
-        <div className="overflow-x-auto text-slate-700">
+      <div className="bg-[#FDFFF4] border text-sm  border-[#cfd6e4] rounded-2xl shadow-sm overflow-hidden print:hidden">
+        <div className="overflow-x-auto text-[#44291B]">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
+              <tr className="bg-[#FDFFF4] border-b border-[#cfd6e4]">
                 <th className="px-6 py-4 font-semibold w-12 pt-[18px]">
                   <input type="checkbox" checked={selectedBillIds.length === filteredBills.length && filteredBills.length > 0} onChange={handleSelectAll} className="rounded border-slate-300" />
                 </th>
@@ -429,7 +433,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
             </thead>
             <tbody>
               {paginatedBills.map((bill: any) => (
-                <tr key={bill.billing_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                <tr key={bill.billing_id} className="border-b border-[#e2e4c0] last:border-0 hover:bg-[#F6F8D5] transition-colors">
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
@@ -439,17 +443,17 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                     />
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-bold text-slate-900 flex items-center gap-2">
+                    <p className="font-bold text-[#44291B] flex items-center gap-2">
                       {bill.accommodation_assignment?.users ? `${bill.accommodation_assignment.users.first_name} ${bill.accommodation_assignment.users.last_name}` : "Unknown Tenant"}
                     </p>
-                    <p className="text-xs text-slate-500">Prop: {bill.accommodation_assignment?.accommodation_application?.preferred_accommodation_id || "N/A"}</p>
+                    <p className="text-xs text-[#44291B]/70">Prop: {bill.accommodation_assignment?.accommodation_application?.preferred_accommodation_id || "N/A"}</p>
                   </td>
                   <td className="px-6 py-4 font-mono text-xs">
                     {bill.billing_id.split("-")[0]}
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-bold text-slate-900">₱{bill.amount.toLocaleString()}</p>
-                    <p className="text-xs text-slate-500 text-nowrap">Due: {format(new Date(bill.due_date), 'MMM dd, yyyy')}</p>
+                    <p className="font-bold text-[#44291B]">₱{bill.amount.toLocaleString()}</p>
+                    <p className="text-xs text-[#44291B]/70 text-nowrap">Due: {format(new Date(bill.due_date), 'MMM dd, yyyy')}</p>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${getStatusColor(bill.status)}`}>
@@ -469,9 +473,9 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                       <button
                         disabled={!bill.transaction_reference}
                         onClick={() => openReceiptViewer(bill)}
-                        className={`p-2 rounded-lg transition ${bill.transaction_reference ? 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-700' : 'text-slate-300 bg-slate-50 cursor-not-allowed'}`}
+                        className={`p-2 rounded-lg transition ${bill.transaction_reference ? 'text-[#264384] bg-[#AFBFE1] hover:bg-[#5273BC] hover:text-white' : 'text-slate-300 bg-slate-50 cursor-not-allowed'}`}
                       >
-                        {bill.status === BillingStatus.PENDING ? <Eye className="w-4 h-4 animate-pulse" /> : <ImageIcon className="w-4 h-4" />}
+                        {bill.status === BillingStatus.PENDING ? <Eye className="w-4 h-4 animate-pulse" /> : <Receipt className="w-4 h-4" />}
                       </button>
                     </div>
                   </td>
@@ -488,47 +492,27 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
           </table>
         </div>
         {filteredBills.length > 0 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
-            <p className="text-sm text-slate-500">
-              Showing <span className="font-semibold text-slate-700">{startInvoiceIndex + 1}</span> to{" "}
-              <span className="font-semibold text-slate-700">{Math.min(startInvoiceIndex + invoicesPerPage, filteredBills.length)}</span> of{" "}
-              <span className="font-semibold text-slate-700">{filteredBills.length}</span> results
+          <div className="px-6 py-4 bg-[#FDFFF4] border-t border-[#cfd6e4] flex items-center justify-between">
+            <p className="text-xs text-slate-500 font-medium">
+              Showing {paginatedBills.length} of {filteredBills.length} results
             </p>
-
-            <div className="flex items-center gap-1">
+            <div className="flex gap-2">
               <button
-                onClick={() => setInvoicesPage((p) => Math.max(1, p - 1))}
-                disabled={safeInvoicesPage <= 1}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safeInvoicesPage <= 1
-                  ? "border-slate-200 text-slate-300 cursor-not-allowed"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-                  }`}
+                onClick={() => setInvoicesPage(p => Math.max(1, p - 1))}
+                disabled={safeInvoicesPage === 1}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-700 bg-transparent rounded-lg disabled:opacity-50 hover:bg-[#E3E3E3] transition-colors h-8"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4 mr-1" /> Prev
               </button>
-
-              {getVisibleInvoicePages().map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setInvoicesPage(page)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${page === safeInvoicesPage
-                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-                    }`}
-                >
-                  {page}
-                </button>
-              ))}
-
+              <div className="flex items-center px-3 text-xs font-bold text-slate-700">
+                {safeInvoicesPage} / {totalInvoicesPages || 1}
+              </div>
               <button
-                onClick={() => setInvoicesPage((p) => Math.min(totalInvoicesPages, p + 1))}
-                disabled={safeInvoicesPage >= totalInvoicesPages}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safeInvoicesPage >= totalInvoicesPages
-                  ? "border-slate-200 text-slate-300 cursor-not-allowed"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-                  }`}
+                onClick={() => setInvoicesPage(p => Math.min(totalInvoicesPages, p + 1))}
+                disabled={safeInvoicesPage === totalInvoicesPages || totalInvoicesPages === 0}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-700 bg-transparent rounded-lg disabled:opacity-50 hover:bg-[#E3E3E3] transition-colors h-8"
               >
-                <ChevronRight className="w-4 h-4" />
+                Next <ChevronRight className="w-4 h-4 ml-1" />
               </button>
             </div>
           </div>
@@ -621,12 +605,12 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <label className="block text-sm font-semibold text-slate-700">Invoice Line Items</label>
-                    <button
+                    <Button
                       onClick={() => setEditItems([...editItems, { type: BillingItemType.OTHER, amount: 0 }])}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition"
+                      className="text-xs font-bold text-[#264384] hover:bg-[#5273BC] bg-[#AFBFE1] hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1 transition"
                     >
                       <Plus className="w-3 h-3" /> Add Item
-                    </button>
+                    </Button>
                   </div>
 
                   <div className="space-y-3">
@@ -691,12 +675,29 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
-                  <input
-                    type="date"
-                    value={editDueDate}
-                    onChange={e => setEditDueDate(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-[#cfd6e4] bg-white px-3 text-sm font-medium text-[#30435f] outline-none focus:ring-2 focus:ring-indigo-400/30"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "h-11 w-full justify-start text-left font-medium rounded-xl border-[#cfd6e4]",
+                          !editDueDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {editDueDate ? format(new Date(editDueDate), "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-[80]" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={editDueDate ? new Date(editDueDate) : undefined}
+                        onSelect={(date) => setEditDueDate(date ? format(date, "yyyy-MM-dd") : "")}
+                        initialFocus
+                        className="bg-white rounded-xl"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div>
@@ -724,7 +725,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
               <div className="p-5 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-end gap-3">
                 <button onClick={() => setEditingBill(null)} className="px-5 py-2.5 font-semibold text-slate-600 bg-transparent rounded-xl hover:bg-white/70 transition">Cancel</button>
-                <button disabled={isSaving} onClick={saveEdits} className="px-5 py-2.5 font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm transition">
+                <button disabled={isSaving} onClick={saveEdits} className="px-5 py-2.5 font-semibold text-white bg-[#78A24C] rounded-xl hover:bg-[#AED39E] shadow-sm transition">
                   {isSaving ? "Saving..." : "Save Changes"}
                 </button>
               </div>
@@ -772,12 +773,29 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Due Date</label>
-                <input
-                  type="date"
-                  className="w-full text-sm border border-slate-200 rounded-xl bg-white p-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
-                  value={newBillDueDate}
-                  onChange={e => setNewBillDueDate(e.target.value)}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "h-11 w-full justify-start text-left font-medium rounded-xl border-[#cfd6e4]",
+                        !newBillDueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {newBillDueDate ? format(new Date(newBillDueDate), "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-[80]" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newBillDueDate ? new Date(newBillDueDate) : undefined}
+                      onSelect={(date) => setNewBillDueDate(date ? format(date, "yyyy-MM-dd") : "")}
+                      initialFocus
+                      className="bg-white rounded-xl"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div>

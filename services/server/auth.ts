@@ -3,19 +3,21 @@ import {
   DormitoryManagerCreationRequest,
   StudentCreationRequest,
   UserCreationRequest,
+  ResidencyStatus,
+  GuestCreationRequest
 } from "@/types/user.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { createActivityLog, getCurrentUserRole } from "../activity_log/server";
 
 // FUNCTION: Sign up with email and password [To-Do: Test]
-export async function createUserProfile(userData: UserCreationRequest) {
+export async function createUserProfile<T extends UserCreationRequest>(userData: T) {
   const supabase = await createSupabaseServerClient();
   const { email, password, ...userMetadata } = userData;
 
   //test: set to inactive
   const metadata = {
     ...userMetadata,
-    user_status: userData.user_status ?? "inactive",
+    user_status: userData.user_status ?? "active",
   };
 
   try {
@@ -72,6 +74,20 @@ export async function createStudentProfile(
   return createUserProfile({
     ...studentData,
     role: "student",
+    // residency_status: "non-resident",
+    // violation_count: 0
+
+  });
+}
+
+// FUNCTION: Sign Up as guest
+export async function createGuestProfile(
+  guestData: GuestCreationRequest,
+) {
+  return createUserProfile({
+    ...guestData,
+    role: "guest"
+
   });
 }
 

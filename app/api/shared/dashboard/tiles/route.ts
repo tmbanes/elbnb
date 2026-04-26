@@ -12,10 +12,12 @@ export const GET = withRole([...ALL_ROLES], async (req, { user }) => {
     const accommodationId = searchParams.get('accommodationId');
 
     let result;
-
+    if (user.role === null) {
+      return NextResponse.json({ error: 'User role is required' }, { status: 400 });
+    }
     switch (type) {
       case 'accommodations':
-        result = await UnitAccomodationsDisplayService.listAccomodations(user.role);
+        result = await UnitAccomodationsDisplayService.listAccomodations(user.role || undefined);
         break;
       case 'units':
         result = await UnitAccomodationsDisplayService.listUnits('');

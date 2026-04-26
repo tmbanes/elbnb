@@ -81,46 +81,6 @@ export default function PropertyDetail({
   ]);
   const isDorm = property.accommodation_type === "dormitory";
 
-  // DUMMY COMPLAINTS FOR DEMO PURPOSES ONLY
-  // const [complaints, setComplaints] = useState<Complaint[]>([
-  //   {
-  //     complaint_id: "c1",
-  //     complainant_id: "user123",
-  //     accommodation_id: property.accommodation_id,
-  //     unit_id: "u1",
-  //     complaint_type: "maintenance",
-  //     complaint_desc: "The light in the room is not working.",
-  //     complaint_status: "open",
-  //     submit_date: "2024-04-15T10:00:00Z",
-  //   },
-  //   {
-  //     complaint_id: "c2",
-  //     complainant_id: "user456",
-  //     accommodation_id: property.accommodation_id,
-  //     unit_id: "u2",
-  //     complaint_type: "utility",
-  //     complaint_desc: "Water heater is broken.",
-  //     complaint_status: "under_review",
-  //     submit_date: "2024-04-10T14:30:00Z",
-  //   },
-  //   {
-  //     complaint_id: "c3",
-  //     complainant_id: "user789",
-  //     accommodation_id: property.accommodation_id,
-  //     unit_id: "u3",
-  //     complaint_type: "sanitation",
-  //     complaint_desc: "Bathroom needs cleaning.",
-  //     complaint_status: "closed",
-  //     submit_date: "2024-04-05T09:15:00Z",
-  //   },
-  // ]);
-
-  // const handleStatusChange = async (id: string, status: Complaint["complaint_status"]) => {
-  //   setComplaints(prev =>
-  //     prev.map(c => c.complaint_id === id ? { ...c, complaint_status: status } : c)
-  //   );
-  // };
-
   const totalCapacity = property.total_capacity ?? 0;
   const currentOccupancy = property.units?.reduce(
     (acc, unit) => acc + (unit.current_occupancy ?? 0), 0
@@ -167,22 +127,25 @@ export default function PropertyDetail({
       <Collapsible className="group/collapsible">
         <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm overflow-hidden">
           <CardContent className="px-5 py-4">
-            <div className="flex items-center justify-between gap-8 flex-wrap">
 
-              {/* Property Name & Location */}
-              <div className="flex flex-col gap-2 flex-1 min-w-0">
-                <div>
-                  <h1 className="text-4xl font-[family-name:var(--font-archivo-black)] text-[#44291B] leading-tight break-words">{property.name}</h1>
-                  <div className="flex items-center text-[#6b6a62] text-md mt-0.5 gap-1">
-                    <MapPin className="w-3 h-3 shrink-0" />
-                    <span className="break-words">{property.location}</span>
-                  </div>
+            <div className="flex items-center justify-between gap-6 flex-wrap">
+
+              {/* 1. Property Identity (Name & Location) */}
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl md:text-4xl font-[family-name:var(--font-archivo-black)] text-[#44291B] leading-tight break-words">
+                  {property.name}
+                </h1>
+                <div className="flex items-center text-[#6b6a62] text-sm md:text-md mt-0.5 gap-1">
+                  <MapPin className="w-3 h-3 shrink-0" />
+                  <span className="break-words">{property.location}</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-8 shrink-0">
+
+              <div className="flex flex-wrap items-center gap-4 md:gap-8 shrink-0 w-full lg:w-auto justify-between lg:justify-end">
+
                 {/* Tags */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider border text-center ${isDorm
                     ? "bg-[#ebf2f4] text-[#5591AB] border-[#d1e3e8]"
                     : "bg-[#fbecd7] text-[#EB8A0B] border-[#f5dab8]"
@@ -203,34 +166,35 @@ export default function PropertyDetail({
                   </div>
                 </div>
 
-                {/* Vertical Divider */}
-                <div className="hidden lg:block w-px h-12 bg-[#e2e4c0]" />
-
-                {/* Assigned Manager (Moved to Header) */}
+                {/* Assigned Manager */}
                 {property.dormitory_manager && (
-                  <div className="hidden xl:flex items-center gap-2.5 bg-transparent">
-                    <Avatar className="h-7 w-7 border shadow-sm shrink-0">
-                      <AvatarFallback className="bg-[#264384] text-white text-[10px] font-black">
-                        {property.dormitory_manager.users.first_name[0]}
-                        {property.dormitory_manager.users.last_name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col leading-tight pr-1">
-                      <span className="text-sm font-bold text-[#44291B] whitespace-nowrap">
-                        {property.dormitory_manager.users.first_name} {property.dormitory_manager.users.last_name}
-                      </span>
-                      <span className="text-xs text-[#8c8b82] font-medium whitespace-nowrap">
-                        Dorm Manager
-                      </span>
+                  <>
+                    {/* Vertical Divider */}
+                    <div className="hidden lg:block w-px h-12 bg-[#e2e4c0]" />
+                    <div className="flex items-center gap-2.5 bg-transparent">
+                      <Avatar className="h-7 w-7 border shadow-sm shrink-0">
+                        <AvatarFallback className="bg-[#264384] text-white text-[10px] font-black">
+                          {property.dormitory_manager.users.first_name[0]}
+                          {property.dormitory_manager.users.last_name[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col leading-tight pr-1">
+                        <span className="text-sm font-bold text-[#44291B] whitespace-nowrap">
+                          {property.dormitory_manager.users.first_name} {property.dormitory_manager.users.last_name}
+                        </span>
+                        <span className="text-xs text-[#8c8b82] font-medium whitespace-nowrap">
+                          Dorm Manager
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
 
                 {/* Vertical Divider */}
                 <div className="hidden md:block w-px h-12 bg-[#e2e4c0]" />
 
-                {/*Occupancy */}
-                <div className="flex flex-col gap-1.5 shrink-0 w-[240px]">
+                {/* Occupancy Progress Section */}
+                <div className="flex flex-col gap-1.5 shrink-0 w-full md:w-[240px]">
                   <div className="flex justify-between items-end">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-[11px] font-semibold text-[#44291B] uppercase tracking-wider">
@@ -248,10 +212,10 @@ export default function PropertyDetail({
                   />
                 </div>
 
-                {/* Details Trigger */}
+                {/* Collapsible Trigger */}
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 text-[#8c8b82] hover:text-[#44291B] hover:bg-[#F6F8D5] rounded-full">
-                    <ChevronDown className="h-5 w-5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                  <Button variant="ghost" size="icon" className="h-10 w-10 text-[#8c8b82] hover:text-[#44291B] hover:bg-[#F6F8D5] rounded-full shrink-0">
+                    <ChevronDown className="h-5 w-5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </Button>
                 </CollapsibleTrigger>
               </div>
@@ -341,7 +305,7 @@ export default function PropertyDetail({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-[family-name:var(--font-archivo-black)] text-[#44291B]">Unit Types</h2>
-            <p className="text-sm text-[#8c8b82]">Manage room templates for occupancy</p>
+            <p className="text-sm text-[#44291B]">Manage room units for occupancy</p>
           </div>
         </div>
 
@@ -507,280 +471,9 @@ export default function PropertyDetail({
           accommodationId={property.accommodation_id}
         />
       </div>
-
-      {/* Complaints Panel - Full Width Split */}
-      {/* <ComplaintsPanel
-        propertyId={property.accommodation_id}
-        complaints={complaints}
-        onStatusChange={handleStatusChange}
-      /> */}
     </div>
   );
 }
-
-// const STATUS_ORDER: Complaint["complaint_status"][] = ["open", "under_review", "closed"];
-// const STATUS_META = {
-//   open: { label: "Open", style: "bg-[#FFF7ED] text-[#BA7517] border-[#f5dab8]" },
-//   under_review: { label: "Under Review", style: "bg-[#EEF2FB] text-[#264384] border-[#c5d0ef]" },
-//   closed: { label: "Closed", style: "bg-[#F0F6E9] text-[#3B6D11] border-[#d8e7c8]" },
-//   invalid: { label: "Invalid", style: "bg-[#FCEBEB] text-[#A32D2D] border-[#F7C1C1]" },
-// };
-
-// const STATUS_STYLE: Record<string, {
-//   step: string; dot: string; label: string; desc: string;
-// }> = {
-//   open: {
-//     step: "border-[#f5dab8] bg-[#FFF7ED]",
-//     dot: "bg-[#FFF7ED] border-[#BA7517] text-[#854F0B]",
-//     label: "text-[#854F0B]",
-//     desc: "text-[#BA7517]",
-//   },
-//   under_review: {
-//     step: "border-[#c5d0ef] bg-[#EEF2FB]",
-//     dot: "bg-[#EEF2FB] border-[#264384] text-[#0C447C]",
-//     label: "text-[#0C447C]",
-//     desc: "text-[#264384]",
-//   },
-//   closed: {
-//     step: "border-[#d8e7c8] bg-[#F0F6E9]",
-//     dot: "bg-[#F0F6E9] border-[#3B6D11] text-[#27500A]",
-//     label: "text-[#27500A]",
-//     desc: "text-[#3B6D11]",
-//   },
-// };
-
-// const STATUS_DESC: Record<string, string> = {
-//   open: "Complaint received",
-//   under_review: "Being investigated",
-//   closed: "Issue addressed",
-// };
-
-// interface ComplaintsPanelProps {
-//   propertyId: string;
-//   complaints: Complaint[];
-//   onStatusChange: (id: string, status: Complaint["complaint_status"]) => Promise<void>;
-// }
-
-// function ComplaintsPanel({ complaints, onStatusChange }: ComplaintsPanelProps) {
-//   const [selected, setSelected] = useState<Complaint | null>(complaints[0] ?? null);
-//   const [filter, setFilter] = useState<"all" | Complaint["complaint_status"]>("all");
-
-//   const visible = filter === "all"
-//     ? complaints
-//     : complaints.filter(c => c.complaint_status === filter);
-
-//   async function advance(complaint: Complaint, status: Complaint["complaint_status"]) {
-//     await onStatusChange(complaint.complaint_id, status);
-//     if (selected?.complaint_id === complaint.complaint_id) {
-//       setSelected({ ...complaint, complaint_status: status });
-//     }
-//   }
-
-//   return (
-//     <div className="grid lg:grid-cols-[1.5fr_1fr] gap-6 items-start">
-
-//       {/* List */}
-//       <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm overflow-hidden">
-//         <div className="flex items-center justify-between px-4 py-3 border-b border-[#e2e4c0]">
-//           <div>
-//             <h2 className="text-xl font-[family-name:var(--font-archivo-black)] text-[#44291B]">Complaints</h2>
-//             <p className="text-sm text-[#8c8b82]">{complaints.length} total</p>
-//           </div>
-//           <ToggleGroup
-//             className="text-[#44291B]"
-//             type="single"
-//             variant="outline"
-//             value={filter}
-//             onValueChange={(value) => {
-//               if (value) setFilter(value as typeof filter);
-//             }}
-//           >
-//             <ToggleGroupItem value="all">All</ToggleGroupItem>
-//             <ToggleGroupItem value="open">Open</ToggleGroupItem>
-//             <ToggleGroupItem value="under_review">In Review</ToggleGroupItem>
-//             <ToggleGroupItem value="closed">Closed</ToggleGroupItem>
-//           </ToggleGroup>
-//         </div>
-
-//         {visible.length === 0 ? (
-//           <div className="flex flex-col items-center justify-center py-10 text-[#8c8b82]">
-//             <AlertCircle className="w-6 h-6 mb-2 opacity-40" />
-//             <p className="text-xs">No complaints in this category</p>
-//           </div>
-//         ) : (
-//           <div>
-//             {visible.map(c => (
-//               <div
-//                 key={c.complaint_id}
-//                 onClick={() => setSelected(c)}
-//                 className={cn(
-//                   "flex items-center gap-3 px-4 py-3.5 border-b border-[#e2e4c0] last:border-0 cursor-pointer transition-colors",
-//                   selected?.complaint_id === c.complaint_id
-//                     ? "bg-[#eef2fb]"
-//                     : "hover:bg-[#F6F8D5]"
-//                 )}
-//               >
-//                 <div className="flex-1 min-w-0">
-//                   <p className="text-[13px] font-medium text-[#44291B] truncate capitalize">
-//                     {c.complaint_type}
-//                   </p>
-//                   <p className="text-[11px] text-[#8c8b82] mt-0.5">
-//                     {c.complainant_id} · {c.unit_id}
-//                     <span className="ml-2 text-[#b0b0a8]">
-//                       {new Date(c.submit_date).toLocaleDateString("en-PH", {
-//                         month: "short", day: "numeric", year: "numeric",
-//                       })}
-//                     </span>
-//                   </p>
-//                 </div>
-//                 <span className={cn(
-//                   "text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide shrink-0",
-//                   STATUS_META[c.complaint_status].style
-//                 )}>
-//                   {STATUS_META[c.complaint_status].label}
-//                 </span>
-//               </div>
-//             ))}
-//           </div>
-//         )}
-//       </Card>
-
-//       {/* Detail panel */}
-//       {selected ? (
-//         <Card className="bg-[#FDFFF4] border-[#e2e4c0] shadow-sm overflow-hidden sticky top-4">
-//           <div className="px-4 py-3 border-b border-[#e2e4c0] flex items-start justify-between gap-2">
-//             <p className="text-[13px] font-medium text-[#44291B] leading-snug capitalize">
-//               {selected.complaint_type}
-//             </p>
-//             <span className={cn(
-//               "text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0",
-//               STATUS_META[selected.complaint_status].style
-//             )}>
-//               {STATUS_META[selected.complaint_status].label}
-//             </span>
-//           </div>
-
-//           <CardContent className="p-4 space-y-4">
-
-//             {/* Meta grid */}
-//             <div className="grid grid-cols-2 gap-2">
-//               {[
-//                 { label: "Filed by", value: selected.complainant_id },
-//                 { label: "Unit", value: selected.unit_id },
-//                 {
-//                   label: "Filed on", value: new Date(selected.submit_date).toLocaleDateString("en-PH", {
-//                     month: "short", day: "numeric", year: "numeric",
-//                   })
-//                 },
-//               ].map(({ label, value }) => (
-//                 <div key={label} className="bg-[#F6F8D5] rounded-lg px-3 py-2">
-//                   <p className="text-[10px] text-[#8c8b82] uppercase tracking-wider">{label}</p>
-//                   <p className="text-[12px] font-medium mt-0.5 text-[#44291B]">{value}</p>
-//                 </div>
-//               ))}
-//             </div>
-
-//             {/* Description */}
-//             <div>
-//               <p className="text-[10px] font-semibold text-[#8c8b82] uppercase tracking-wider mb-1.5">
-//                 Description
-//               </p>
-//               <p className="text-[12px] text-[#44291B] leading-relaxed">
-//                 {selected.complaint_desc}
-//               </p>
-//             </div>
-
-//             {/* Status stepper */}
-//             <div>
-//               <p className="text-[10px] font-semibold text-[#8c8b82] uppercase tracking-wider mb-2">
-//                 Update Status
-//               </p>
-//               <div className="space-y-2">
-//                 {STATUS_ORDER.map((s, i) => {
-//                   const currentIdx = STATUS_ORDER.indexOf(selected.complaint_status);
-//                   const isDone = i < currentIdx;
-//                   const isCurrent = i === currentIdx;
-//                   const style = STATUS_STYLE[s];
-
-//                   return (
-//                     <button
-//                       key={s}
-//                       onClick={() => advance(selected, s)}
-//                       disabled={isDone}
-//                       className={cn(
-//                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors",
-//                         isCurrent ? style.step : "",
-//                         isDone ? "border-[#d8e7c8] bg-[#F0F6E9] opacity-50 cursor-default" : "",
-//                         !isCurrent && !isDone
-//                           ? "border-[#e2e4c0] bg-[#FDFFF4] hover:bg-[#F6F8D5] cursor-pointer"
-//                           : ""
-//                       )}
-//                     >
-//                       {/* Number indicator — no white bg */}
-//                       <div className={cn(
-//                         "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold border-2 shrink-0",
-//                         isDone
-//                           ? "bg-[#F0F6E9] border-[#3B6D11] text-[#27500A]"
-//                           : isCurrent
-//                             ? style.dot
-//                             : "bg-[#FDFFF4] border-[#d3d1c7] text-[#b0b0a8]"
-//                       )}>
-//                         {isDone ? "✓" : i + 1}
-//                       </div>
-//                       <div>
-//                         <p className={cn(
-//                           "text-[12px] font-medium",
-//                           isCurrent ? style.label
-//                             : isDone ? "text-[#3B6D11]"
-//                               : "text-[#8c8b82]"
-//                         )}>
-//                           {STATUS_META[s].label}
-//                         </p>
-//                         <p className={cn(
-//                           "text-[10px]",
-//                           isCurrent ? style.desc
-//                             : isDone ? "text-[#639922]"
-//                               : "text-[#b0b0a8]"
-//                         )}>
-//                           {STATUS_DESC[s]}
-//                         </p>
-//                       </div>
-//                     </button>
-//                   );
-//                 })}
-//               </div>
-
-//               {/* Mark as invalid */}
-//               {selected.complaint_status !== "invalid" && (
-//                 <button
-//                   onClick={() => advance(selected, "invalid")}
-//                   className="mt-2 w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-[#F7C1C1] bg-[#FCEBEB] text-left transition-colors hover:bg-[#f9d5d5] cursor-pointer"
-//                 >
-//                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold border-2 bg-[#FCEBEB] border-[#A32D2D] text-[#791F1F] shrink-0">
-//                     ✕
-//                   </div>
-//                   <div>
-//                     <p className="text-[12px] font-medium text-[#791F1F]">Mark as Invalid</p>
-//                     <p className="text-[10px] text-[#A32D2D]">Complaint is unfounded</p>
-//                   </div>
-//                 </button>
-//               )}
-//             </div>
-
-//           </CardContent>
-//         </Card>
-//       ) : (
-//         <Card className="bg-[#FDFFF4] border-[#e2e4c0] border-dashed shadow-sm">
-//           <div className="flex flex-col items-center justify-center py-12 text-[#8c8b82]">
-//             <AlertCircle className="w-7 h-7 mb-2 opacity-30" />
-//             <p className="text-xs">Select a complaint to view details</p>
-//           </div>
-//         </Card>
-//       )}
-//     </div>
-//   );
-// }
-
 
 //config
 function ConfigDetail({

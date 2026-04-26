@@ -61,10 +61,10 @@ export default function ApplicationPreview({
               <div className="space-y-2">
                 <h2 className="font-bold text-sm">Application Details</h2>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                    <p><b>Dorm:</b> Sampaguita Residence</p>
-                    <p><b>Room Type:</b> Double Occupancy</p>
-                    <p><b>Duration:</b> 6 Months</p>
-                    <p><b>Check-in:</b> 2026-01-10</p>
+                  <p><b>Dorm:</b> Sampaguita Residence</p>
+                  <p><b>Room Type:</b> Double Occupancy</p>
+                  <p><b>Duration:</b> 6 Months</p>
+                  <p><b>Check-in:</b> 2026-01-10</p>
                 </div>
               </div>
 
@@ -72,8 +72,8 @@ export default function ApplicationPreview({
               <div className="space-y-2">
                 <h2 className="font-bold text-sm">Emergency Contact</h2>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                    <p><b>Name:</b> Maria Dela Cruz</p>
-                    <p><b>Contact:</b> 0917-000-0000</p>
+                  <p><b>Name:</b> Maria Dela Cruz</p>
+                  <p><b>Contact:</b> 0917-000-0000</p>
                 </div>
               </div>
 

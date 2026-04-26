@@ -47,8 +47,8 @@ export default async function AdminBillingPage() {
       <main className="min-h-screen p-8" style={{ backgroundColor: '#F6F8D5' }}>
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="mb-8">
-            <h1 className={`${archivoBlack.className} text-3xl font-bold text-slate-900 tracking-tight`}>Billing Management</h1>
-            <p className={`${archivo.className} text-slate-500 mt-1 mb-4 text-sm`}>Overview of all tenant invoices, payments, and revenue.</p>
+            <h1 className={`${archivoBlack.className} text-5xl font-bold text-[#44291B] tracking-tight`}>Billing Management</h1>
+            <p className={`${archivo.className}  mt-1 mb-4 text-sm text-[#44291B`}>Overview of all tenant invoices, payments, and revenue.</p>
           </div>
           <div className="p-6 rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm">
             SUPABASE ERROR: {JSON.stringify(error)}
@@ -62,8 +62,8 @@ export default async function AdminBillingPage() {
     <main className="min-h-screen p-8" style={{ backgroundColor: '#F6F8D5' }}>
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="mb-8">
-          <h1 className={`${archivoBlack.className} text-3xl font-bold text-slate-900 tracking-tight`}>Billing Management</h1>
-          <p className={`${archivo.className} text-slate-500 mt-1 mb-4 text-sm`}>Overview of all tenant invoices, payments, and revenue.</p>
+          <h1 className={`${archivoBlack.className} text-5xl font-bold text-[#44291B] tracking-tight`}>Billing Management</h1>
+          <p className={`${archivo.className}  mt-1 mb-4 text-sm text-[#44291B]`}>Overview of all tenant invoices, payments, and revenue.</p>
         </div>
 
         <AdminBillingClient
