@@ -35,16 +35,17 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
   }
 
   useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session) {
-          router.push("/"); // or redirectByRole
-        }
-      }
-    );
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser((session?.user as unknown as User) ?? null);
+    });
+    return () => listener?.subscription.unsubscribe();
+  }, [supabase]);
 
-    return () => listener.subscription.unsubscribe();
-  }, []);
+  useEffect(() => {
+    if (currentUser) {
+      router.push("/");
+    }
+  }, [currentUser, router]);
 
   async function handleGoogleLogin() {
     await signInWithGoogle("/");

@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { UserWithRole } from "@/types/user.types";
 
 // FUNCTION: Retrieves user and user role from users table.
-export async function getUserWithRole(): Promise<UserWithRole | null>{
+export async function getUserWithRole(): Promise<UserWithRole | null> {
     const supabase = await createSupabaseServerClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -33,9 +33,10 @@ export async function requireRole(allowedRoles: string[]) {
     if (!userWithRole) redirect("/onboarding"); // redirect if unauthenticated
 
     const { user, role } = userWithRole;
-    
-    if (role == null) {
-        redirect("/role-selection");
+
+    // Check for missing role OR incomplete profile
+    if (role == null || !user.first_name || user.first_name === "TBD") {
+        redirect("/complete-profile");
     }
     else if (role != null && !allowedRoles.includes(role)) {
         redirect("/auth/auth-code-error");
@@ -51,22 +52,28 @@ export async function redirectByRole() {
     if (!userWithRole) redirect("/onboarding");
 
     const { user, role } = userWithRole;
-    if (!role) {
-        redirect("/role-selection");
+
+    // Check for missing role OR incomplete profile
+    if (!role || !user.first_name || user.first_name === "TBD") {
+        redirect("/complete-profile");
     } else {
         switch (role) {
             case "student":
-            redirect("/student/dashboard");
+                redirect("/student/dashboard");
+                break;
             case "guest":
-            redirect("/guest/dashboard");
+                redirect("/guest/dashboard");
+                break;
             case "housing_admin":
-            redirect("/admin/dashboard");
+                redirect("/admin/dashboard");
+                break;
             case "dormitory_manager":
-            redirect("/manager/dashboard");
+                redirect("/manager/dashboard");
+                break;
             default:
-            redirect("/login");
+                redirect("/login");
+                break;
         }
     }
-    
 }
 

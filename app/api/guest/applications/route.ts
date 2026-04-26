@@ -16,7 +16,7 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const BUCKET = 'application_documents';
 
 // GET — fetch authenticated user's applications
-export const GET = withRole(['student'], async (_req, { user }) => {
+export const GET = withRole(['guest'], async (_req, { user }) => {
   try {
     const applications = await CreateApplicationService.getApplicationsByUser(user.user_id);
     return NextResponse.json({ success: true, data: applications });
@@ -26,7 +26,7 @@ export const GET = withRole(['student'], async (_req, { user }) => {
 });
 
 // POST — create a new application (with file upload)
-export const POST = withRole(['student'], async (req, { user }) => {
+export const POST = withRole(['guest'], async (req, { user }) => {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;

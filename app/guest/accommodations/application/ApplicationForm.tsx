@@ -70,7 +70,7 @@ const formSchema = z
     //   .refine((val) => /^\d+$/.test(val), {
     //     message: "Zip code must be numbers only",
     //   }),
-    preferred_accommodation: z.string().min(1, "Dormitory is required"),
+    preferred_accommodation_id: z.string().min(1, "Dormitory is required"),
     preferred_unit_type: z.string().min(1, "Please select a valid unit type"),
     checkIn: z.date().refine((val) => val !== undefined && val !== null, {
       message: "Check-in date is required",
@@ -218,6 +218,7 @@ export default function ApplyAccommodationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormValues | null>(null);
   const [dynamicUnitTypes, setDynamicUnitTypes] = useState<string[]>([]);
+  const [preferredAccommodation, setPreferredAccommodation] = useState<string>("");
 
   const [userInfo, setUserInfo] = useState({
     firstName: "",
@@ -277,9 +278,8 @@ export default function ApplyAccommodationForm() {
     );
 
     const payload = {
-      preferred_accommodation: accommodationIdFromQuery,
+      preferred_accommodation_id: accommodationIdFromQuery,
       preferred_unit_type: unitIdFromQuery ? "" : data.preferred_unit_type,
-      date_submitted: new Date().toISOString(),
       duration_of_stay: months || 1,
       check_in: format(data.checkIn, "yyyy-MM-dd"),
       check_out: format(data.checkOut, "yyyy-MM-dd"),
@@ -288,16 +288,23 @@ export default function ApplyAccommodationForm() {
           accommodation?.accommodation_type === "renting_space"
           ? 1
           : 0,
-      application_status: "pending_dorm_manager" as ApplicationStatus,
-      user_id: userId,
       unit_id: unitIdFromQuery,
     };
 
+    if (!file) {
+      setFileError("Please upload the required document.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("data", JSON.stringify(payload));
+
     try {
-      const response = await fetch("/api/student/applications", {
+      const response = await fetch("/api/guest/applications", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -325,7 +332,7 @@ export default function ApplyAccommodationForm() {
         const userProfile = await getCurrentUserFromApi();
         if (userProfile) {
           setUserId(userProfile.user_id);
-          setUserRole(userProfile.role);
+          setUserRole(userProfile.role || "");
 
           // Prefill personal information from user data
           let contactNumber = "";
@@ -369,22 +376,22 @@ export default function ApplyAccommodationForm() {
           null;
         setAccommodation(matched);
 
-          const resUnit = await fetch(
-            `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
-          );
-          if (!resUnit.ok) throw new Error("Failed to fetch units");
+        const resUnit = await fetch(
+          `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
+        );
+        if (!resUnit.ok) throw new Error("Failed to fetch units");
 
-          const dataUnits: Unit[] = await resUnit.json();
-          
-          // Derive available unit types from the fetched units
-          const types = Array.from(new Set(dataUnits.map(u => u.unit_type)));
-          setDynamicUnitTypes(types);
+        const dataUnits: Unit[] = await resUnit.json();
 
-          if (unitIdFromQuery) {
-            const matchedUnit =
-              dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
-            setUnit(matchedUnit);
-          }
+        // Derive available unit types from the fetched units
+        const types = Array.from(new Set(dataUnits.map(u => u.unit_type)));
+        setDynamicUnitTypes(types);
+
+        if (unitIdFromQuery) {
+          const matchedUnit =
+            dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
+          setUnit(matchedUnit);
+        }
       } catch (error) {
         console.error("Failed to fetch accommodation:", error);
       }
@@ -440,7 +447,7 @@ export default function ApplyAccommodationForm() {
             {[
               {
                 label: "Selected Dormitory",
-                value: submittedData.preferred_accommodation,
+                value: accommodation?.name,
               },
               {
                 label: "Unit Type",
@@ -504,8 +511,8 @@ export default function ApplyAccommodationForm() {
               <div className="w-full md:w-1/3 flex-shrink-0">
                 <div className="w-full h-full min-h-[200px] bg-gray-300 flex items-center justify-center text-gray-500 text-xs rounded-xl overflow-hidden shadow-sm border-2 border-[#78A24C]/30 relative">
                   {accommodation.image ? (
-                    <img 
-                      src={accommodation.image} 
+                    <img
+                      src={accommodation.image}
                       alt={accommodation.name}
                       className="absolute inset-0 w-full h-full object-cover"
                       onError={(e) => {
@@ -642,13 +649,13 @@ export default function ApplyAccommodationForm() {
                   <Field
                     label="Selected Accommodation"
                     required
-                    error={errors.preferred_accommodation?.message}
+                    error={errors.preferred_accommodation_id?.message}
                   >
                     <Input
                       readOnly
                       className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`}
                       value={accommodation?.name || "Loading..."}
-                      {...register("preferred_accommodation")}
+                      {...register("preferred_accommodation_id")}
                     />
                   </Field>
                 </div>
@@ -675,17 +682,17 @@ export default function ApplyAccommodationForm() {
                           </SelectTrigger>
                           <SelectContent>
                             {dynamicUnitTypes.length > 0 ? (
-                                dynamicUnitTypes.map((type) => (
-                                    <SelectItem
-                                        key={type}
-                                        value={type}
-                                        className="capitalize"
-                                    >
-                                        {type === "wholeunit" ? "Whole Unit" : type}
-                                    </SelectItem>
-                                ))
+                              dynamicUnitTypes.map((type) => (
+                                <SelectItem
+                                  key={type}
+                                  value={type}
+                                  className="capitalize"
+                                >
+                                  {type === "wholeunit" ? "Whole Unit" : type}
+                                </SelectItem>
+                              ))
                             ) : (
-                                <SelectItem value="none" disabled>No types available</SelectItem>
+                              <SelectItem value="none" disabled>No types available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
