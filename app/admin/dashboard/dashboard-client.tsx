@@ -474,18 +474,38 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
         </Card>
 
         {/* Student Management */}
-        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl h-full lg:min-h-[26rem]">
-          <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Students</h2>
-          <div className="flex gap-1">
-            {(["housed", "waiting"] as const).map(t => (
-              <button key={t} onClick={() => { setStudentTab(t); setStudentSearch(""); setStudentPage(1); }} className={`${archivo.className} px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-colors ${studentTab === t ? "bg-[#78A24C] text-white" : "bg-slate-100 text-[#6B7280] hover:bg-slate-200"}`}>
-                {t === "housed" ? `Housed (${stats.studentsHoused})` : `Waiting (${stats.waitingListCount})`}
-              </button>
-            ))}
+        <Card className="shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl h-full lg:min-h-[26rem]">
+          <div className="flex items-center justify-between">
+            <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Students</h2>
           </div>
-          <div className="relative w-3/4">
-            <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input type="text" placeholder="Search students..." value={studentSearch} onChange={e => { setStudentSearch(e.target.value); setStudentPage(1); }} className={`${archivo.className} w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#cfd6e4] text-sm focus:outline-none focus:ring-2 focus:ring-[#78A24C]/20 focus:border-[#78A24C] transition-all bg-[#FDFFF4] text-[#44291B] placeholder:text-[#44291B]/40 h-10`} />
+
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-[#44291B]/40 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search students..."
+                value={studentSearch}
+                onChange={e => { setStudentSearch(e.target.value); setStudentPage(1); }}
+                className={`${archivo.className} w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#cfd6e4] text-sm focus:outline-none focus:ring-2 focus:ring-[#78A24C]/20 focus:border-[#78A24C] transition-all bg-[#FDFFF4] text-[#44291B] placeholder:text-[#44291B]/40 h-10`}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] w-full sm:w-auto h-10">
+              <Filter className="w-3.5 h-3.5 text-[#44291B]/40" />
+              <Select
+                value={studentTab}
+                onValueChange={(val: "housed" | "waiting") => { setStudentTab(val); setStudentSearch(""); setStudentPage(1); }}
+              >
+                <SelectTrigger className="w-full sm:w-[130px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] text-sm h-full tracking-wide">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#FDFFF4] border-[#cfd6e4] text-[#44291B]">
+                  <SelectItem value="housed" className="text-sm tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">Housed ({stats.studentsHoused})</SelectItem>
+                  <SelectItem value="waiting" className="text-sm tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">Waiting ({stats.waitingListCount})</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {(() => {
@@ -507,20 +527,20 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
 
             return (
               <div className="flex flex-col flex-1 min-h-0">
-                <div className="space-y-2 flex-1">
+                <div className="space-y-1.5 flex-1">
                   {studentTab === "housed" ? (
                     (pagedList as typeof housedStudents).map(s => {
                       const u = unwrap(s.users);
                       const unit = s.unit;
                       const accName = unit ? (Array.isArray(unit.accommodation) ? unit.accommodation[0]?.name : unit.accommodation?.name) : null;
                       return (
-                        <div key={s.assignment_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors group cursor-default">
-                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#4A5628] to-[#6B7A3A] text-white flex items-center justify-center text-[10px] font-semibold shrink-0">{initials(u?.first_name ?? "", u?.last_name ?? "")}</div>
+                        <div key={s.assignment_id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#F6F8D5] border-b border-[#cfd6e4]/40 last:border-b-0 transition-all group cursor-default">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#44291B] to-[#734A35] text-white flex items-center justify-center text-[10px] font-bold shrink-0">{initials(u?.first_name ?? "", u?.last_name ?? "")}</div>
                           <div className="min-w-0 flex-1">
-                            <p className={`${archivo.className} text-sm font-semibold text-[#1F2937] truncate group-hover:text-[#4A5628] transition-colors`}>{u?.first_name ?? "—"} {u?.last_name ?? ""}</p>
-                            <p className={`${archivo.className} text-xs text-[#9CA3AF] truncate`}>{accName ?? "—"} &middot; {unit?.unit_number ?? "—"}</p>
+                            <p className={`${archivo.className} text-sm font-bold text-[#44291B] truncate`}>{u?.first_name ?? "—"} {u?.last_name ?? ""}</p>
+                            <p className={`${archivo.className} text-[10px] text-[#44291B]/50 font-medium truncate uppercase tracking-tight`}>{accName ?? "—"} &middot; {unit?.unit_number ?? "—"}</p>
                           </div>
-                          <Badge variant="outline" className={`${archivoBlack.className} text-[10px] px-2 py-0.5 h-5 rounded-md bg-[#DFF2E8] text-[#1A6B3A] border-transparent shrink-0`}>Active</Badge>
+                          <Badge variant="outline" className={`${archivoBlack.className} text-[9px] px-2 py-0.5 h-5 rounded-md bg-[#ebf2f4] text-[#5591AB] border-none font-bold shrink-0`}>Housed</Badge>
                         </div>
                       );
                     })
@@ -529,13 +549,15 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
                       const u = unwrap(a.users);
                       const acc = unwrap(a.accommodation);
                       return (
-                        <div key={a.application_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors group cursor-default">
-                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#BA7517] to-[#D4922A] text-white flex items-center justify-center text-[10px] font-semibold shrink-0">{initials(u?.first_name ?? "", u?.last_name ?? "")}</div>
+                        <div key={a.application_id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#F6F8D5] border-b border-[#cfd6e4]/40 last:border-b-0 transition-all group cursor-default">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#F2C908] to-[#D4A106] text-white flex items-center justify-center text-[10px] font-bold shrink-0">{initials(u?.first_name ?? "", u?.last_name ?? "")}</div>
                           <div className="min-w-0 flex-1">
-                            <p className={`${archivo.className} text-sm font-semibold text-[#1F2937] truncate group-hover:text-[#BA7517] transition-colors`}>{u?.first_name ?? "—"} {u?.last_name ?? ""}</p>
-                            <p className={`${archivo.className} text-xs text-[#9CA3AF] truncate`}>{acc?.name ?? "—"} &middot; {a.preferred_unit_type ?? "—"}</p>
+                            <p className={`${archivo.className} text-sm font-bold text-[#44291B] truncate`}>{u?.first_name ?? "—"} {u?.last_name ?? ""}</p>
+                            <p className={`${archivo.className} text-[10px] text-[#44291B]/50 font-medium truncate uppercase tracking-tight`}>{acc?.name ?? "—"} &middot; {a.preferred_unit_type ?? "—"}</p>
                           </div>
-                          <span className={`${archivoBlack.className} px-2 py-0.5 rounded-full text-[10px] uppercase ${statusBadge(a.application_status)}`}>{a.application_status.replace(/_/g, " ")}</span>
+                          <span className={`${archivoBlack.className} px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap ${statusBadge(a.application_status)}`}>
+                            {a.application_status.replace(/_/g, " ")}
+                          </span>
                         </div>
                       );
                     })
