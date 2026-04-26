@@ -43,27 +43,19 @@ const INVOICE_STATUSES: BillingStatus[] = [
   BillingStatus.PARTIALLY_PAID,
 ];
 
+import { useRealtimeSync } from "@/lib/realtime-sync";
+
 export default function AdminBillingClient({ adminId, bills, summary, activeTenants }: { adminId: string, bills: any[], summary: any, activeTenants: any[] }) {
   const supabase = getSupabaseBrowserClient();
+  const router = useRouter();
+
+  // Sync billing data in real-time
+  useRealtimeSync('billing', undefined, '*');
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedBillIds, setSelectedBillIds] = useState<string[]>([]);
   const [invoicesPage, setInvoicesPage] = useState(1);
-  const router = useRouter();
-
-  useEffect(() => {
-    const channel = supabase
-      .channel('realtime_admin_billing')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, () => {
-        router.refresh();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [supabase, router]);
 
   // Modals state
   const [viewedReceipt, setViewedReceipt] = useState<any>(null);

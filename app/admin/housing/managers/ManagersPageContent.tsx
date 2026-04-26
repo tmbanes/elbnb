@@ -8,12 +8,12 @@ import ManagerDetail from "./ManagerDetail";
 import Modal from "@/app/admin/housing/components/modals/Modal";
 import { Button } from "@/components/ui/button";
 
-export default function ManagersContent() {
-  const [managers, setManagers] = useState<Manager[]>([]);
+export default function ManagersContent({ initialManagers, initialError }: { initialManagers: Manager[], initialError: string | null }) {
+  const [managers, setManagers] = useState<Manager[]>(initialManagers);
   const [selectedManager, setSelectedManager] = useState<Manager | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(initialError);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingManager, setEditingManager] = useState<any | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -33,9 +33,6 @@ export default function ManagersContent() {
     }
   }
 
-  useEffect(() => {
-    fetchManagers();
-  }, []);
 
   async function fetchManagerDetail(id: string) {
     try {

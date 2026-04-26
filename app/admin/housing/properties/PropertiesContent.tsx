@@ -9,18 +9,18 @@ import { Property } from "../../../../types/housing/types";
 import PropertiesList from "./PropertiesList";
 import PropertyDetail from "./PropertyDetails";
 
-export default function PropertiesContent() {
+export default function PropertiesContent({ initialData }: { initialData: { properties: Property[], managerCount: number } }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedId = searchParams.get("id");
   const typeFilter = searchParams.get("type");
 
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<Property[]>(initialData.properties);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [managerCount, setManagerCount] = useState(0);
+  const [managerCount, setManagerCount] = useState(initialData.managerCount);
   const [addPromptOpen, setAddPromptOpen] = useState(false);
   const [dormModalOpen, setDormModalOpen] = useState(false);
   const [rentalModalOpen, setRentalModalOpen] = useState(false);
@@ -49,9 +49,6 @@ export default function PropertiesContent() {
     }
   }
 
-  useEffect(() => {
-    fetchProperties();
-  }, []);
 
   useEffect(() => {
     if (!selectedId) {

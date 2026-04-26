@@ -5,14 +5,14 @@ import { userProfileService } from "@/services/user_profile";
 import { redirect } from "next/navigation";
 import StudentHistoryUI from "./StudentHistoryUI";
 
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
+
 export default async function ManagerStudentHistoryPage({ params }: { params: { id: string } }) {
     const supabase = await createSupabaseServerClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiAuthenticatedUser();
 
     if (!user) {
-        redirect("/");
+        redirect("/onboarding");
     }
 
     const studentId = params.id;

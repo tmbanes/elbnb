@@ -73,9 +73,12 @@ const enrollmentOptions = [
   { value: "awol", label: "AWOL" },
 ];
 
-
+// FUNCTION: Lets user complete profile
+// @params: user (User)
+// @returns: void
 export default function CompleteProfile({ user }: { user: User | null }) {
   const [personalDetails, setPersonalDetails] = useState({
+    // TBD is a placeholder
     first_name: user?.first_name === "TBD" ? "" : (user?.first_name || ""),
     middle_name: user?.middle_name || "",
     last_name: user?.last_name === "TBD" ? "" : (user?.last_name || ""),

@@ -1,28 +1,28 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { ensureInitialInvoicesForPendingPaymentApplications, getAllBillsForAdmin, getActiveTenants } from "@/services/user-services";
 import { redirect } from "next/navigation";
 import { Archivo, Archivo_Black } from "next/font/google";
 import AdminBillingClient from "./AdminBillingClient";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
 const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 export default async function AdminBillingPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiAuthenticatedUser();
 
   if (!user) {
-    redirect("/");
+    redirect("/onboarding");
   }
 
-  await ensureInitialInvoicesForPendingPaymentApplications();
+  // Parallelize the data fetching and the maintenance task
+  const [_, billsRes, tenantsRes] = await Promise.all([
+    ensureInitialInvoicesForPendingPaymentApplications(),
+    getAllBillsForAdmin("admin"),
+    getActiveTenants()
+  ]);
 
-  // Double check if user is admin role by getting profile metadata if needed, 
-  // or default to passing "admin" to service
-  const { data: bills, error } = await getAllBillsForAdmin("admin");
-  const { data: activeTenants } = await getActiveTenants();
+  const { data: bills, error } = billsRes;
+  const { data: activeTenants } = tenantsRes;
 
   // Calculate summary metrics
   let totalRevenue = 0;
@@ -48,7 +48,7 @@ export default async function AdminBillingPage() {
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="mb-8">
             <h1 className={`${archivoBlack.className} text-5xl font-bold text-[#44291B] tracking-tight`}>Billing Management</h1>
-            <p className={`${archivo.className}  mt-1 mb-4 text-sm text-[#44291B`}>Overview of all tenant invoices, payments, and revenue.</p>
+            <p className={`${archivo.className}  mt-1 mb-4 text-sm text-[#44291B]`}>Overview of all tenant invoices, payments, and revenue.</p>
           </div>
           <div className="p-6 rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm">
             SUPABASE ERROR: {JSON.stringify(error)}
@@ -67,7 +67,7 @@ export default async function AdminBillingPage() {
         </div>
 
         <AdminBillingClient
-          adminId={user.id}
+          adminId={user.user_id}
           bills={bills || []}
           summary={summary}
           activeTenants={activeTenants || []}
