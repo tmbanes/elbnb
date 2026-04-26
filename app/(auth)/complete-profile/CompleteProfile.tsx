@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, UserRole, College, COLLEGES } from "@/types/user.types";
+import { User, College, COLLEGES } from "@/types/user.types";
 
 ///ui components
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,8 @@ type GuestRoleData = {
   purpose_visit: string;
 };
 
+type ProfileCompletionRole = "student" | "guest";
+
 const initialStudentData: StudentRoleData = {
   student_num: "",
   degree_program: "",
@@ -78,14 +80,18 @@ export default function CompleteProfile({ user }: { user: User | null }) {
     middle_name: user?.middle_name || "",
     last_name: user?.last_name === "TBD" ? "" : (user?.last_name || ""),
   });
+
+  const initialRole: ProfileCompletionRole | null =
+    user?.role === "student" || user?.role === "guest" ? user.role : null;
+
+  const [selectedRole, setSelectedRole] = useState<ProfileCompletionRole | null>(initialRole);
+
   const [roleData, setRoleData] = useState<StudentRoleData | GuestRoleData>(
-    user?.role === "student" ? initialStudentData : initialGuestData
+    initialRole === "student" ? initialStudentData : initialGuestData
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-
-  const selectedRole = user?.role;
 
   const targetRoute: Record<string, string> = {
     student: "/student/dashboard",
@@ -137,14 +143,6 @@ export default function CompleteProfile({ user }: { user: User | null }) {
     }
   };
 
-  if (!selectedRole) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#8dbd59] p-4 text-white">
-        Loading or redirecting...
-      </div>
-    );
-  }
-
   return (
     <main className="min-h-screen w-full flex flex-col items-center justify-center bg-[#8dbd59] p-4 font-sans selection:bg-emerald-500/30">
 
@@ -152,11 +150,34 @@ export default function CompleteProfile({ user }: { user: User | null }) {
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-[#F6F8D5]">Complete your profile</CardTitle>
           <CardDescription className="text-[#F6F8D5]">
-            Please provide your personal details to finish signing up as a <span className="capitalize font-semibold underline underline-offset-4">{selectedRole}</span>.
+            Please provide your personal details to finish signing up as a <span className="capitalize font-semibold underline underline-offset-4">{selectedRole ?? "user"}</span>.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
+
+          {!user?.role && (
+            <div className="space-y-2">
+              <Label className={label_style}>Role</Label>
+              <Select
+                onValueChange={(value) => {
+                  const role = value as ProfileCompletionRole;
+                  setSelectedRole(role);
+                  setRoleData(role === "student" ? initialStudentData : initialGuestData);
+                  setError(null);
+                }}
+                value={selectedRole ?? undefined}
+              >
+                <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="guest">Guest</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Personal Details */}
           <div className="space-y-4">
@@ -198,155 +219,157 @@ export default function CompleteProfile({ user }: { user: User | null }) {
           </div>
 
           {/* Role-specific Form */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-[#F6F8D5] border-b border-[#F6F8D5]/20 pb-1 capitalize">{selectedRole} Details</h3>
+          {selectedRole && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-[#F6F8D5] border-b border-[#F6F8D5]/20 pb-1 capitalize">{selectedRole} Details</h3>
 
-            {selectedRole === "student" ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className={label_style}>Student Number</Label>
-                  <Input
-                    className={field_style}
-                    value={(roleData as StudentRoleData).student_num}
-                    onChange={(e) =>
-                      handleRoleFieldChange("student_num", e.target.value)
-                    }
-                    placeholder="20XX-XXXXX"
-                    required
-                  />
-                </div>
+              {selectedRole === "student" ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className={label_style}>Student Number</Label>
+                    <Input
+                      className={field_style}
+                      value={(roleData as StudentRoleData).student_num ?? ""}
+                      onChange={(e) =>
+                        handleRoleFieldChange("student_num", e.target.value)
+                      }
+                      placeholder="20XX-XXXXX"
+                      required
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className={label_style}>Degree Program</Label>
-                  <Input
-                    className={field_style}
-                    value={(roleData as StudentRoleData).degree_program}
-                    onChange={(e) =>
-                      handleRoleFieldChange("degree_program", e.target.value)
-                    }
-                    placeholder="e.g. BS Computer Science"
-                    required
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label className={label_style}>Degree Program</Label>
+                    <Input
+                      className={field_style}
+                      value={(roleData as StudentRoleData).degree_program ?? ""}
+                      onChange={(e) =>
+                        handleRoleFieldChange("degree_program", e.target.value)
+                      }
+                      placeholder="e.g. BS Computer Science"
+                      required
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className={label_style}>Enrollment Status</Label>
-                  <Select
-                    onValueChange={(value) =>
-                      handleRoleFieldChange("enrollment_status", value)
-                    }
-                    defaultValue={(roleData as StudentRoleData).enrollment_status}
-                    required
-                  >
-                    <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
-                      {enrollmentOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="space-y-2">
+                    <Label className={label_style}>Enrollment Status</Label>
+                    <Select
+                      onValueChange={(value) =>
+                        handleRoleFieldChange("enrollment_status", value)
+                      }
+                      defaultValue={(roleData as StudentRoleData).enrollment_status}
+                      required
+                    >
+                      <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
+                        {enrollmentOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className={label_style}>College</Label>
-                  <Select
-                    onValueChange={(value) =>
-                      handleRoleFieldChange("college", value)
-                    }
-                    defaultValue={(roleData as StudentRoleData).college}
-                    required
-                  >
-                    <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
-                      {COLLEGES.map((college) => (
-                        <SelectItem key={college} value={college}>
-                          {college}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="space-y-2">
+                    <Label className={label_style}>College</Label>
+                    <Select
+                      onValueChange={(value) =>
+                        handleRoleFieldChange("college", value)
+                      }
+                      defaultValue={(roleData as StudentRoleData).college}
+                      required
+                    >
+                      <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
+                        {COLLEGES.map((college) => (
+                          <SelectItem key={college} value={college}>
+                            {college}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2 sm:col-span-2">
-                  <Label className={label_style}>Home Address</Label>
-                  <Input
-                    className={full_width}
-                    value={(roleData as StudentRoleData).home_address}
-                    onChange={(e) =>
-                      handleRoleFieldChange("home_address", e.target.value)
-                    }
-                    placeholder="Full Address"
-                    required
-                  />
-                </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label className={label_style}>Home Address</Label>
+                    <Input
+                      className={full_width}
+                      value={(roleData as StudentRoleData).home_address ?? ""}
+                      onChange={(e) =>
+                        handleRoleFieldChange("home_address", e.target.value)
+                      }
+                      placeholder="Full Address"
+                      required
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className={label_style}>Emergency Person</Label>
-                  <Input
-                    className={field_style}
-                    value={(roleData as StudentRoleData).emergency_person}
-                    onChange={(e) =>
-                      handleRoleFieldChange("emergency_person", e.target.value)
-                    }
-                    placeholder="Name of emergency contact"
-                    required
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label className={label_style}>Emergency Person</Label>
+                    <Input
+                      className={field_style}
+                      value={(roleData as StudentRoleData).emergency_person ?? ""}
+                      onChange={(e) =>
+                        handleRoleFieldChange("emergency_person", e.target.value)
+                      }
+                      placeholder="Name of emergency contact"
+                      required
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className={label_style}>Emergency Contact #</Label>
-                  <Input
-                    className={field_style}
-                    value={(roleData as StudentRoleData).emergency_contact}
-                    onChange={(e) =>
-                      handleRoleFieldChange("emergency_contact", e.target.value)
-                    }
-                    placeholder="09XXXXXXXXX"
-                    required
-                  />
+                  <div className="space-y-2">
+                    <Label className={label_style}>Emergency Contact #</Label>
+                    <Input
+                      className={field_style}
+                      value={(roleData as StudentRoleData).emergency_contact ?? ""}
+                      onChange={(e) =>
+                        handleRoleFieldChange("emergency_contact", e.target.value)
+                      }
+                      placeholder="09XXXXXXXXX"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                <div className="space-y-2">
-                  <Label className={label_style}>Valid ID</Label>
-                  <Input
-                    className={field_style}
-                    value={(roleData as GuestRoleData).valid_id}
-                    onChange={(e) =>
-                      handleRoleFieldChange("valid_id", e.target.value)
-                    }
-                    placeholder="ID Number / Type"
-                    required
-                  />
-                </div>
+              ) : (
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label className={label_style}>Valid ID</Label>
+                    <Input
+                      className={field_style}
+                      value={(roleData as GuestRoleData).valid_id ?? ""}
+                      onChange={(e) =>
+                        handleRoleFieldChange("valid_id", e.target.value)
+                      }
+                      placeholder="ID Number / Type"
+                      required
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className={label_style}>Purpose of Visit</Label>
-                  <Input
-                    className={field_style}
-                    value={(roleData as GuestRoleData).purpose_visit}
-                    onChange={(e) =>
-                      handleRoleFieldChange("purpose_visit", e.target.value)
-                    }
-                    placeholder="e.g. Temporary stay, visiting family"
-                    required
-                  />
+                  <div className="space-y-2">
+                    <Label className={label_style}>Purpose of Visit</Label>
+                    <Input
+                      className={field_style}
+                      value={(roleData as GuestRoleData).purpose_visit ?? ""}
+                      onChange={(e) =>
+                        handleRoleFieldChange("purpose_visit", e.target.value)
+                      }
+                      placeholder="e.g. Temporary stay, visiting family"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Actions */}
           <Button
             onClick={handleContinue}
-            disabled={loading}
+            disabled={loading || !selectedRole}
             className={button_style}
           >
             {loading ? "Saving..." : "Finish Setup"}
