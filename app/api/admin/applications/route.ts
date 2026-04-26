@@ -17,7 +17,7 @@ function mapInvoiceKindToBillingType(kind: ManualInvoiceItem["kind"]) {
   return "room_rent";
 }
 
-export const GET = withRole(["housing_admin"], async (req: NextRequest) => {
+export const GET = withRole(["housing_admin", "admin"], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
     const { searchParams } = new URL(req.url);
@@ -147,7 +147,7 @@ export const GET = withRole(["housing_admin"], async (req: NextRequest) => {
   }
 });
 
-export const PATCH = withRole(["housing_admin"], async (req: NextRequest) => {
+export const PATCH = withRole(["housing_admin", "admin"], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 
@@ -445,7 +445,7 @@ export const PATCH = withRole(["housing_admin"], async (req: NextRequest) => {
   }
 });
 
-export const POST = withRole(["housing_admin"], async (req: NextRequest) => {
+export const POST = withRole(["housing_admin", "admin"], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 

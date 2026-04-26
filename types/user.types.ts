@@ -1,4 +1,4 @@
-export type UserRole = "student" | "dormitory_manager" | "housing_admin" | "guest";
+export type UserRole = "student" | "dormitory_manager" | "housing_admin" | "admin" | "guest";
 export type UserStatus = "active" | "inactive" | "deactivated";
 export type EnrollmentStatus = "enrolled" | "loa" | "awol";
 export type ResidencyStatus = "resident" | "non-resident" | "evicted";

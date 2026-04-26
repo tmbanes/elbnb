@@ -4,6 +4,7 @@ const USER_ROLES: UserRole[] = [
   "student",
   "dormitory_manager",
   "housing_admin",
+  "admin",
   "guest",
 ];
 
