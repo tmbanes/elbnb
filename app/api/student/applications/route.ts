@@ -67,7 +67,8 @@ export const POST = withRole(['student'], async (req, { user }) => {
     const supabase = await createSupabaseServerClient();
     const fileUuid = uuidv4();
     const ext = file.name.split('.').pop();
-    const storagePath = `${applicationId}/${fileUuid}.${ext}`;
+    const fileName = `${fileUuid}.${ext}`;
+    const storagePath = `${applicationId}/${fileName}`;
     const bytes = await file.arrayBuffer();
 
     const { error: uploadError } = await supabase.storage
@@ -81,12 +82,12 @@ export const POST = withRole(['student'], async (req, { user }) => {
 
     const { error: updateError } = await supabase
       .from('accommodation_application')
-      .update({ file: fileUuid })
+      .update({ file: fileName })
       .eq('application_id', applicationId);
 
     if (updateError) throw new Error(`Failed to save file reference: ${updateError.message}`);
 
-    return NextResponse.json({ success: true, data: { ...application, file: fileUuid } });
+    return NextResponse.json({ success: true, data: { ...application, file: fileName } });
   } catch (err) {
     console.error('Application creation error:', err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

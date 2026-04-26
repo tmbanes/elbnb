@@ -14,6 +14,10 @@ export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req,
       .eq("manager_id", user.user_id) // user object from withRole has user_id
       .single();
 
+    if (managerError) {
+      console.error("DEBUG: managerError:", managerError);
+    }
+
     if (managerError || !accommodationData) {
       return NextResponse.json(
         { error: "No accommodation assignment found for this manager." },
