@@ -316,21 +316,99 @@ not yet tested
 
   async getNotifications(user_id: string) {
     const client = await supabase();
-    const { data, error } = await client
-      .from("notifications")
-      .select("*")
+    
+    // 1. Get user role
+    const { data: profile } = await client
+      .from("users")
+      .select("role")
       .eq("user_id", user_id)
-      .order("created_at", { ascending: false });
+      .single();
 
-    if (error) {
-      if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
-        console.warn("Notifications table is missing in Supabase. Returning empty array.");
-        return { data: [], error: null };
+    if (!profile) return { data: [], error: null };
+    const role = profile.role.toLowerCase();
+
+    // 2. Build conditions based on user role and interests
+    const actorCondition = (role === "student" || role === "guest")
+      ? `and(user_id.eq.${user_id},action_type.neq.submit_application)`
+      : (role === "dormitory_manager")
+        ? `and(user_id.eq.${user_id},action_type.not.in.(screen_application,update_user))`
+        : `user_id.eq.${user_id}`;
+    const conditions: string[] = [actorCondition];
+
+    try {
+      if (role === "student" || role === "guest") {
+        // Students/Guests care about their own applications and bills
+        const { data: apps } = await client
+          .from("accommodation_application")
+          .select("application_id")
+          .eq("user_id", user_id);
+        const appIds = apps?.map(a => a.application_id) || [];
+
+        const { data: assignments } = await client
+          .from("accommodation_assignment")
+          .select("assignment_id")
+          .eq("user_id", user_id);
+        const assignmentIds = assignments?.map(a => a.assignment_id) || [];
+
+        const { data: bills } = assignmentIds.length > 0 
+          ? await client.from("billing").select("billing_id").in("assignment_id", assignmentIds)
+          : { data: [] };
+        const billIds = (bills as any[])?.map(b => b.billing_id) || [];
+
+        if (appIds.length > 0) {
+          conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}),action_type.in.(screen_application,approve_application,reject_application))`);
+        }
+        if (billIds.length > 0) {
+          conditions.push(`and(entity_type.eq.billing,entity_id.in.(${billIds.join(',')}),action_type.in.(generate_billing,mark_billing_paid))`);
+        }
+      } else if (role === "dormitory_manager") {
+        // Managers care about applications for their accommodations
+        const { data: accoms } = await client
+          .from("accommodation")
+          .select("accommodation_id")
+          .eq("manager_id", user_id);
+        const accomIds = accoms?.map(a => a.accommodation_id) || [];
+
+        if (accomIds.length > 0) {
+          const { data: apps } = await client
+            .from("accommodation_application")
+            .select("application_id")
+            .in("preferred_accommodation_id", accomIds);
+          const appIds = apps?.map(a => a.application_id) || [];
+
+          if (appIds.length > 0) {
+            conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}),action_type.in.(submit_application,approve_application))`);
+          }
+        }
+      } else if (role === "housing_admin" || role === "admin") {
+        // Admins care about screening, payments, and cancellations
+        conditions.push(`action_type.in.(screen_application,mark_billing_paid,cancel_application)`);
       }
-      console.error("Error fetching notifications:", error.message);
-    }
 
-    return { data, error };
+      const { data: logs, error: logsError } = await client
+        .from("activity_log")
+        .select("*")
+        .or(conditions.join(','))
+        .not("action_type", "in", "(login,logout)")
+        .order("timestamp", { ascending: false })
+        .limit(20);
+
+      if (logsError) throw logsError;
+
+      const mapped = (logs || []).map(log => ({
+        id: log.log_id,
+        title: log.action_type.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+        message: log.log_desc,
+        created_at: log.timestamp,
+        is_read: false, // Default to false so they show up as new
+        type: log.entity_type
+      }));
+
+      return { data: mapped, error: null };
+    } catch (err: any) {
+      console.error("Error fetching notifications from activity_log:", err.message);
+      return { data: [], error: err };
+    }
   }
 };
 

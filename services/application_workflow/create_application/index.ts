@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 import { AccommodationApplication, ApplicationStatus, CancellableStatus } from '@/types/application_workflow'
+import { createActivityLog, getCurrentUserRole } from '@/services/activity_log/server'
 
 // Input type for creation: server generates application_id; accommodation_assignment is a join
 type CreateApplicationInput = Omit<AccommodationApplication, 'application_id' | 'accommodation_assignment'>
@@ -168,6 +169,19 @@ export class CreateApplicationService {
 
     if (error) {
       throw new Error(`Failed to create application: ${error.message}`)
+    }
+
+    // Log the submission
+    const actor = await getCurrentUserRole()
+    if (actor) {
+      await createActivityLog({
+        p_user_id: actor.userId,
+        p_action_type: "submit_application",
+        p_log_desc: `${actor.first_name} submitted a new application`,
+        p_entity_type: "application",
+        p_entity_id: application.application_id,
+        p_user_role: actor.role,
+      })
     }
 
     return application

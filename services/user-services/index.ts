@@ -802,6 +802,7 @@ import { AccomodationHistory } from "@/types/accomodation/accomodationHistory";
 import { BillingCreation, BillingInformation } from "@/types/billing";
 import { BillingStatus } from "@/types/billing/enums";
 import { BillingItemType } from "@/types/billing/enums";
+import { createActivityLog, getCurrentUserRole } from "@/services/activity_log/server";
 
 //======================================================//
 // TYPES
@@ -1437,6 +1438,20 @@ export async function approveReceipt(
   await supabase.from("payment_logs").insert([
     { billing_id, status: BillingStatus.PAID, changed_by: admin_id },
   ]);
+
+  // Log the payment approval
+  const actor = await getCurrentUserRole();
+  if (actor) {
+    await createActivityLog({
+      p_user_id: actor.userId,
+      p_action_type: "mark_billing_paid",
+      p_log_desc: `${actor.first_name} approved payment for billing ID ${billing_id}`,
+      p_entity_type: "billing",
+      p_entity_id: billing_id,
+      p_user_role: actor.role,
+    });
+  }
+
 
   return result;
 }
