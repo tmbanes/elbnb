@@ -391,7 +391,7 @@ not yet tested
             conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}),action_type.in.(submit_application,approve_application))`);
           }
         }
-      } else if (role === "housing_admin" || role === "housing_administrator" || role === "admin") {
+      } else if (role === "housing_admin" || role === "admin") {
         // Admins care about screening, payments, and cancellations
         conditions.push(`action_type.in.(screen_application,mark_billing_paid,cancel_application)`);
       }
