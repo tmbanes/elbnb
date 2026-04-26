@@ -37,9 +37,8 @@ export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req:
       .eq("manager_id", user.id)
       .single();
 
-     
     if (managerError) {
-      console.error("REAL SUPABASE ERROR:", managerError);
+      console.error("DEBUG: managerError:", managerError);
     }
 
     if (managerError || !accommodationData) {
@@ -67,6 +66,7 @@ export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req:
         number_of_companions,
         application_status,
         user_id,
+        file,
         users (
           first_name,
           last_name,

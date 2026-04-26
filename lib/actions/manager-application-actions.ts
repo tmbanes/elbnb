@@ -17,6 +17,7 @@ export interface Application {
   number_of_companions: number;
   application_status: string;
   user_id: string;
+  file?: string;
   users: ApplicationUser;
 }
 
