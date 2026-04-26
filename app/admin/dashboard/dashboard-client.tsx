@@ -4,7 +4,14 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Home, Users, KeyRound, Scissors, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, MoreHorizontal, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Building2, Home, Users, KeyRound, Scissors, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, Filter, MoreHorizontal, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { Archivo, Archivo_Black } from "next/font/google";
 
 const archivo = Archivo({ subsets: ["latin"] });
@@ -66,17 +73,23 @@ const STUDENT_PER_PAGE = 5;
 function PaginationControls({ currentPage, totalPages, onPageChange, className = "" }: { currentPage: number; totalPages: number; onPageChange: (p: number) => void; className?: string }) {
   if (totalPages <= 1) return null;
   return (
-    <div className={`flex items-center justify-end gap-1 pt-2 ${className}`}>
-      <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="h-6 w-6 rounded-md flex items-center justify-center text-[#6B7280] hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        <ChevronLeft className="w-3.5 h-3.5" />
+    <div className={`flex items-center justify-end gap-2 pt-4 ${className}`}>
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-transparent rounded-lg disabled:opacity-30 hover:bg-[#E3E3E3] transition-colors h-8"
+      >
+        <ChevronLeft className="w-3.5 h-3.5" /> Prev
       </button>
-      {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-        <button key={p} onClick={() => onPageChange(p)} className={`h-6 w-6 rounded-md text-xs font-semibold transition-colors ${p === currentPage ? "bg-[#78A24C] text-white" : "text-[#6B7280] hover:bg-slate-100"}`}>
-          {p}
-        </button>
-      ))}
-      <button onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} className="h-6 w-6 rounded-md flex items-center justify-center text-[#6B7280] hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        <ChevronRight className="w-3.5 h-3.5" />
+      <div className="flex items-center px-3 text-xs font-bold text-slate-700">
+        {currentPage} / {totalPages}
+      </div>
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-transparent rounded-lg disabled:opacity-30 hover:bg-[#E3E3E3] transition-colors h-8"
+      >
+        Next <ChevronRight className="w-3.5 h-3.5" />
       </button>
     </div>
   );
@@ -254,44 +267,62 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-8 duration-500 delay-300">
 
         {/* Property Occupancy */}
-        <Card className="lg:col-span-2 shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl h-full">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Property Occupancy</h2>
-            <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
-              {(["all", "available"] as const).map(f => (
-                <button key={f} onClick={() => { setPropFilter(f); setPropPage(1); }} className={`${archivo.className} px-3 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide transition-colors ${propFilter === f ? "bg-white text-[#374151] shadow-sm" : "text-[#6B7280] hover:text-[#374151]"}`}>
-                  {f === "available" ? "Available" : "All"}
-                </button>
-              ))}
-            </div>
+        <Card className="lg:col-span-2 shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl h-full">
+          <div className="flex items-center justify-between">
+            <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Property Occupancy</h2>
           </div>
-          <div className="relative">
-            <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search property, type, or slots..."
-              value={propSearch}
-              onChange={(e) => { setPropSearch(e.target.value); setPropPage(1); }}
-              className={`${archivo.className} w-full pl-9 pr-3 py-2.5 rounded-lg border border-[#E5E7EB] text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#4A5628]/20 focus:border-[#4A5628] transition-all`}
-            />
+
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-[#44291B]/40 bg-[#FDFFF4] absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search properties..."
+                value={propSearch}
+                onChange={(e) => { setPropSearch(e.target.value); setPropPage(1); }}
+                className={`${archivo.className} w-full pl-9 pr-3 py-2.5 bg-[#FDFFF4] rounded-xl border border-[#cfd6e4] text-sm text-[#44291B] placeholder:text-[#44291B]/40 focus:outline-none focus:ring-2 focus:ring-[#78A24C]/20 focus:border-[#78A24C] transition-all h-10`}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] w-full sm:w-auto h-10">
+              <Filter className="w-3.5 h-3.5 text-[#44291B]/40 bg-[#FDFFF4]" />
+              <Select
+                value={propFilter}
+                onValueChange={(val: "all" | "available") => { setPropFilter(val); setPropPage(1); }}
+              >
+                <SelectTrigger className="w-full sm:w-[130px] border-none shadow-none bg-[#FDFFF4] focus:ring-0 px-0 text-[#44291B] text-sm h-full  tracking-wide">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#FDFFF4] border-[#cfd6e4] text-[#44291B]">
+                  <SelectItem value="all" className="text-sm tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">All Properties</SelectItem>
+                  <SelectItem value="available" className="text-sm  tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">Available Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-5">
             {filteredProps.length === 0 ? (
-              <p className="text-sm text-[#9CA3AF] text-center py-8">No properties match this filter.</p>
+              <p className="text-sm text-[#44291B]/40 text-center py-8">No properties match this filter.</p>
             ) : filteredProps.slice((propPage - 1) * PROP_PER_PAGE, propPage * PROP_PER_PAGE).map(p => (
-              <div key={p.id} className="group hover:bg-slate-50 rounded-lg p-3 -mx-2 transition-colors">
+              <div key={p.id} className="group hover:bg-[#F6F8D5] rounded-xl p-3 -mx-2 transition-colors">
                 <div className="flex justify-between items-center mb-1">
                   <div className="flex items-center gap-2.5">
-                    <span className={`${archivoBlack.className} text-base text-[#1F2937]`}>{p.name}</span>
-                    <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-5 rounded-md border-[#E5E7EB]">{p.type === "dormitory" ? "Dorm" : "Rental"}</Badge>
+                    <span className={`${archivoBlack.className} text-base text-[#44291B]`}>{p.name}</span>
+                    <Badge className={`text-[10px] px-2.5 py-0.5 h-5 rounded-full border-none font-bold ${p.type === "dormitory" ? "bg-[#ebf2f4] text-[#5591AB]" : "bg-[#fbecd7] text-[#EB8A0B]"}`}>
+                      {p.type === "dormitory" ? "Dorm" : "Rental"}
+                    </Badge>
                     {p.rate >= 90 && (
-                      <Badge className="h-5 px-2 py-0.5 rounded-md text-[10px] bg-[#FDEAEA] text-[#8B1A1A] border border-[#f5c2c2]">Nearly Full</Badge>
+                      <Badge className="h-5 px-2 py-0.5 rounded-md text-[10px] bg-red-100 text-red-700 border border-red-200 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> Nearly Full
+                      </Badge>
                     )}
                     {p.rate < 35 && (
-                      <Badge className="h-5 px-2 py-0.5 rounded-md text-[10px] bg-[#FFF3CD] text-[#BA7517] border border-[#f5df96]">Low Occupancy</Badge>
+                      <Badge className="h-5 px-2 py-0.5 rounded-md text-[10px] bg-[#FEFCE8] text-[#854D0E] border border-[#FDE68A] flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> Low Occupancy
+                      </Badge>
                     )}
                   </div>
-                  <span className={`${archivoBlack.className} text-base text-[#1F2937]`}>{pct(p.rate)}</span>
+                  <span className={`${archivoBlack.className} text-base text-[#44291B]`}>{pct(p.rate)}</span>
                 </div>
                 <div className={`${archivo.className} flex gap-1.5 mb-2 text-sm text-[#94a3b8]`}>
                   <span>{p.currentOccupancy}/{p.totalCapacity} slots</span>
@@ -301,7 +332,7 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
                   <span className="text-[#5C9E44]">{p.availableSlots} available</span>
                 </div>
                 <div className="w-full bg-[#EDEEE5] rounded-full h-2.5 overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-700 ease-out bg-[#5C9E44]" style={{ width: `${p.rate}%` }} />
+                  <div className="h-full rounded-full transition-all duration-700 ease-out bg-[#264384]" style={{ width: `${p.rate}%` }} />
                 </div>
               </div>
             ))}
