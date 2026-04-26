@@ -550,22 +550,22 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
 
       {/* ── Row: Quick Reports ── */}
       <div className="grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-12 duration-500 delay-700">
-        <Card className="shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl">
-          <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Quick Reports</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Card className="shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl">
+          <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Quick Reports</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {[
-              { label: "Dormitories with occupancy rates", icon: House },
-              { label: "Available vs occupied units", icon: BarChart3 },
-              { label: "Students currently housed", icon: UserCheck },
-              { label: "Students on waiting list", icon: Clock3 },
-              { label: "Revenue summary per property", icon: Wallet },
-              { label: "Overdue & unpaid fees", icon: FileText },
+              { label: "Dormitories with occupancy rates", icon: House, color: "#78A24C" },
+              { label: "Available vs occupied units", icon: BarChart3, color: "#264384" },
+              { label: "Students currently housed", icon: UserCheck, color: "#5591AB" },
+              { label: "Students on waiting list", icon: Clock3, color: "#F2C908" },
+              { label: "Revenue summary per property", icon: Wallet, color: "#EB8A0B" },
+              { label: "Overdue & unpaid fees", icon: FileText, color: "#DF3538" },
             ].map((report, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-[#E5E7EB] hover:border-[#c8d1df] hover:bg-slate-50 transition-all group cursor-pointer">
-                <div className="h-8 w-8 rounded-lg bg-[#F0F2E9] text-[#4A5628] flex items-center justify-center shrink-0 transition-all">
-                  <report.icon className="w-4 h-4" />
+              <div key={i} className="flex items-center gap-3 p-4 rounded-xl border border-[#cfd6e4]/50 bg-white/50 hover:bg-[#F6F8D5] hover:border-[#cfd6e4] transition-all group cursor-pointer">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-all shadow-sm" style={{ backgroundColor: `${report.color}15`, color: report.color }}>
+                  <report.icon className="w-5 h-5" />
                 </div>
-                <span className={`${archivo.className} text-sm text-[#374151] font-medium leading-snug`}>{report.label}</span>
+                <span className={`${archivo.className} text-sm text-[#44291B] font-bold leading-snug`}>{report.label}</span>
               </div>
             ))}
           </div>
