@@ -28,7 +28,8 @@ export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
   const { data, error } = await supabaseAdmin.from("dormitory_manager").select(`
       employee_id,
       office_location,
-      users (user_id, first_name, last_name, email, role)
+      users (user_id, first_name, last_name, email, role),
+      accommodation:accommodation(name)
     `);
 
   if (error)

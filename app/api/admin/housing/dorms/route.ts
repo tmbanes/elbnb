@@ -75,6 +75,8 @@ export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
 
   const response = data?.map((item: any) => ({
     ...item,
+    dormitory: Array.isArray(item.dormitory) ? item.dormitory[0] : item.dormitory,
+    dormitory_manager: Array.isArray(item.dormitory_manager) ? item.dormitory_manager[0] : item.dormitory_manager,
     units: item.unit || []
   }));
 

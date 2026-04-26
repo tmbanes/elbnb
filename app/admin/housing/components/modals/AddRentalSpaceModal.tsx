@@ -24,6 +24,7 @@ import { Plus } from "lucide-react";
 interface Manager {
   employee_id: string;
   users: { user_id: string; first_name: string; last_name: string };
+  accommodation?: { name: string }[];
 }
 
 interface RentalForm {
@@ -441,11 +442,18 @@ export default function AddRentalSpaceModal({
                   <SelectValue placeholder="Select a manager" />
                 </SelectTrigger>
                 <SelectContent>
-                  {managers.map((m) => (
-                    <SelectItem key={m.employee_id} value={m.users.user_id}>
-                      {m.users.first_name} {m.users.last_name}
-                    </SelectItem>
-                  ))}
+                  {managers.map((m) => {
+                    const isAssignedElsewhere = (m.accommodation?.length ?? 0) > 0 && m.users.user_id !== existingRental?.manager_id;
+                    return (
+                      <SelectItem 
+                        key={m.employee_id} 
+                        value={m.users.user_id}
+                        disabled={isAssignedElsewhere}
+                      >
+                        {m.users.first_name} {m.users.last_name}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </Field>
@@ -659,11 +667,18 @@ export default function AddRentalSpaceModal({
                     <SelectValue placeholder="Select a manager" />
                   </SelectTrigger>
                   <SelectContent>
-                    {managers.map((m) => (
-                      <SelectItem key={m.employee_id} value={m.users.user_id}>
-                        {m.users.first_name} {m.users.last_name}
-                      </SelectItem>
-                    ))}
+                    {managers.map((m) => {
+                      const isAssignedElsewhere = (m.accommodation?.length ?? 0) > 0 && m.users.user_id !== existingRental?.manager_id;
+                      return (
+                        <SelectItem 
+                          key={m.employee_id} 
+                          value={m.users.user_id}
+                          disabled={isAssignedElsewhere}
+                        >
+                          {m.users.first_name} {m.users.last_name}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </Field>

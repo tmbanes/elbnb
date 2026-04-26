@@ -192,9 +192,9 @@ export default function ApplicationList({
         rejected: { class: "bg-rose-50 text-rose-700 border-rose-100" },
         cancelled: { class: "bg-slate-50 text-slate-700 border-slate-100" },
         waitlisted: { class: "bg-amber-50 text-amber-700 border-amber-100" },
-        pending_admin: { class: "bg-sky-50 text-sky-700 border-sky-100 animate-pulse" },
-        pending_payment: { class: "bg-purple-50 text-purple-700 border-purple-100 animate-pulse" },
-        pending_dorm_manager: { class: "bg-amber-50 text-amber-700 border-amber-100 animate-pulse" },
+        pending_admin: { class: "bg-sky-50 text-sky-700 border-sky-100" },
+        pending_payment: { class: "bg-purple-50 text-purple-700 border-purple-100" },
+        pending_dorm_manager: { class: "bg-amber-50 text-amber-700 border-amber-100" },
     };
 
     return (

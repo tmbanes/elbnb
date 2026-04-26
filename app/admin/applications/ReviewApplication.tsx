@@ -289,7 +289,7 @@ export default function ReviewApplication({
   return (
     <div 
       key={applicationId}
-      className="h-full overflow-y-auto space-y-6 px-6 py-8 bg-[#F6F8D5] scrollbar-hide animate-in slide-in-from-right duration-300 ease-in-out"
+      className="h-full overflow-y-auto space-y-6 px-6 py-8 bg-[#F6F8D5] scrollbar-hide"
     >
       {/* HEADER */}
       <div className="flex items-start justify-between">
@@ -305,7 +305,7 @@ export default function ReviewApplication({
       </div>
 
       {/* APPLICANT INFO */}
-      <Card className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+      <Card className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm rounded-2xl overflow-hidden">
         <CardContent className="p-5 space-y-4">
           <h3 className="text-xs font-extrabold text-[#44291B]/40 uppercase tracking-widest border-b border-[#e8e2d6] pb-2">
             Applicant Information
@@ -340,7 +340,7 @@ export default function ReviewApplication({
       </Card>
 
       {/* STAY & DORM DETAILS */}
-      <Card className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 delay-75 fill-mode-both">
+      <Card className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm rounded-2xl overflow-hidden">
         <CardContent className="p-5 space-y-4">
           <h3 className="text-xs font-extrabold text-[#44291B]/40 uppercase tracking-widest border-b border-[#e8e2d6] pb-2">
             Stay & Dormitory
@@ -375,7 +375,7 @@ export default function ReviewApplication({
       </Card>
 
       {/* UNIT ASSIGNMENT */}
-      <Card className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
+      <Card className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm rounded-2xl overflow-hidden">
         <CardContent className="p-5 space-y-4">
           <h3 className="text-xs font-extrabold text-[#44291B]/40 uppercase tracking-widest border-b border-[#e8e2d6] pb-2">
             Unit Selection
@@ -416,7 +416,7 @@ export default function ReviewApplication({
       </Card>
 
       {/* DOCUMENTS */}
-      <Card className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 fill-mode-both">
+      <Card className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm rounded-2xl overflow-hidden">
         <CardContent className="p-5 space-y-4">
           <h3 className="text-xs font-extrabold text-[#44291B]/40 uppercase tracking-widest border-b border-[#e8e2d6] pb-2">
             Supporting Documents
