@@ -1,7 +1,7 @@
 import { UserRole } from "../user.types";
 
 type EntityLogType = "application" | "unit" | "billing" | "auth"
-                                | "document" | "accommodation";
+                                | "document" | "accommodation" | "assignment";
 type ActivityLogType = "login"
     | "logout"
     | "create_user"

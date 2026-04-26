@@ -123,9 +123,19 @@ async function signInWithGoogle(next = "/") {
 // FUNCTION: to sign out
 const browserClient = getSupabaseBrowserClient();
 async function signOut() {
+  const profile = await getCurrentUserFromApi();
   const { error } = await browserClient.auth.signOut();
   if (error) {
     console.error("[ERROR] signing out:", error.message);
+  } else if (profile) {
+    await createActivityLog({
+      p_user_id: profile.user_id,
+      p_action_type: "logout",
+      p_log_desc: `${profile.first_name} logged out`,
+      p_entity_type: "auth",
+      p_entity_id: profile.user_id,
+      p_user_role: profile.role || "guest",
+    });
   }
 }
 

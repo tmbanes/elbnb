@@ -4,6 +4,7 @@ import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { createSupabaseServiceClient } from "@/lib/supabase/service-client";
+import { createActivityLog, getCurrentUserRole } from "@/services/activity_log/server";
 
 export const GET = withRole(['housing_admin'], async (_req: NextRequest) => {
   try {
@@ -132,6 +133,46 @@ export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
 
     if (updateErr) {
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    }
+
+    // Log the action
+    const actor = await getCurrentUserRole();
+    if (actor) {
+      const { data: assignmentData } = await serviceSupabase
+        .from("accommodation_assignment")
+        .select("user_id, users(first_name, last_name)")
+        .eq("assignment_id", assignment_id)
+        .single();
+      
+      const residentName = assignmentData?.users 
+        ? `${(assignmentData.users as any).first_name} ${(assignmentData.users as any).last_name}`
+        : "Unknown Resident";
+
+      let logAction: any = "terminate_assignment";
+      let logDesc = "";
+
+      if (action === "record-move-in") {
+        logAction = "accept_assignment";
+        logDesc = `${actor.first_name} recorded move-in for ${residentName}`;
+      } else if (action === "record-move-out") {
+        logAction = "terminate_assignment";
+        logDesc = `${actor.first_name} recorded move-out for ${residentName}`;
+      } else if (action === "terminate") {
+        logAction = "terminate_assignment";
+        logDesc = `${actor.first_name} terminated stay for ${residentName}`;
+      } else if (action === "override") {
+        logAction = "reassign_assignment";
+        logDesc = `${actor.first_name} reassigned ${residentName} to unit ${details?.targetUnit}`;
+      }
+
+      await createActivityLog({
+        p_user_id: actor.userId,
+        p_action_type: logAction,
+        p_log_desc: logDesc,
+        p_entity_type: "assignment",
+        p_entity_id: assignment_id,
+        p_user_role: actor.role,
+      });
     }
 
     return NextResponse.json({ success: true });

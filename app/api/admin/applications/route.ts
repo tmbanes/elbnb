@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withRole } from "@/lib/auth/api-guard";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createActivityLog, getCurrentUserRole } from "@/services/activity_log/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 type ManualInvoiceItem = {
@@ -171,6 +172,29 @@ export const PATCH = withRole(["housing_admin"], async (req: NextRequest) => {
         .eq("application_status", "pending_admin");
 
       if (error) throw new Error(error.message);
+
+      const actor = await getCurrentUserRole();
+      if (actor) {
+        const { data: appData } = await supabase
+          .from("accommodation_application")
+          .select("user_id, users(first_name, last_name)")
+          .eq("application_id", application_id)
+          .single();
+        
+        const applicantName = appData?.users 
+          ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
+          : "Unknown Applicant";
+
+        await createActivityLog({
+          p_user_id: actor.userId,
+          p_action_type: "reject_application",
+          p_log_desc: `${actor.first_name} rejected application for ${applicantName}`,
+          p_entity_type: "application",
+          p_entity_id: application_id,
+          p_user_role: actor.role,
+        });
+      }
+
       return NextResponse.json({ success: true, new_status: "rejected" });
     }
 
@@ -240,6 +264,28 @@ export const PATCH = withRole(["housing_admin"], async (req: NextRequest) => {
         .eq("application_id", application_id);
 
       if (appUpdateError) throw new Error(appUpdateError.message);
+
+      const actor = await getCurrentUserRole();
+      if (actor) {
+        const { data: appData } = await supabase
+          .from("accommodation_application")
+          .select("user_id, users(first_name, last_name)")
+          .eq("application_id", application_id)
+          .single();
+        
+        const applicantName = appData?.users 
+          ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
+          : "Unknown Applicant";
+
+        await createActivityLog({
+          p_user_id: actor.userId,
+          p_action_type: "approve_application",
+          p_log_desc: `${actor.first_name} approved application for ${applicantName} (Final Approval)`,
+          p_entity_type: "application",
+          p_entity_id: application_id,
+          p_user_role: actor.role,
+        });
+      }
 
       return NextResponse.json({
         success: true,
@@ -319,6 +365,37 @@ export const PATCH = withRole(["housing_admin"], async (req: NextRequest) => {
         .update({ application_status: "pending_admin", unit_id: null })
         .eq("application_id", application.application_id);
       throw new Error(`Failed to create assignment: ${assignError.message}`);
+    }
+
+    const actor = await getCurrentUserRole();
+    if (actor) {
+      const { data: appData } = await supabase
+        .from("accommodation_application")
+        .select("user_id, users(first_name, last_name)")
+        .eq("application_id", application_id)
+        .single();
+      
+      const applicantName = appData?.users 
+        ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
+        : "Unknown Applicant";
+
+      await createActivityLog({
+        p_user_id: actor.userId,
+        p_action_type: "approve_application",
+        p_log_desc: `${actor.first_name} approved application for ${applicantName} (Awaiting Payment)`,
+        p_entity_type: "application",
+        p_entity_id: application_id,
+        p_user_role: actor.role,
+      });
+
+      await createActivityLog({
+        p_user_id: actor.userId,
+        p_action_type: "create_assignment",
+        p_log_desc: `${actor.first_name} created accommodation assignment for ${applicantName}`,
+        p_entity_type: "assignment",
+        p_entity_id: assignment.assignment_id,
+        p_user_role: actor.role,
+      });
     }
 
     return NextResponse.json({
@@ -500,6 +577,28 @@ export const POST = withRole(["housing_admin"], async (req: NextRequest) => {
     if (insertItemsError) {
       await supabaseAdmin.from("billing").delete().eq("billing_id", createdBilling.billing_id);
       return NextResponse.json({ error: insertItemsError.message }, { status: 500 });
+    }
+
+    const actor = await getCurrentUserRole();
+    if (actor) {
+      const { data: appData } = await supabase
+        .from("accommodation_application")
+        .select("user_id, users(first_name, last_name)")
+        .eq("application_id", application_id)
+        .single();
+      
+      const applicantName = appData?.users 
+        ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
+        : "Unknown Applicant";
+
+      await createActivityLog({
+        p_user_id: actor.userId,
+        p_action_type: "generate_billing",
+        p_log_desc: `${actor.first_name} generated invoice for ${applicantName}`,
+        p_entity_type: "billing",
+        p_entity_id: createdBilling.billing_id,
+        p_user_role: actor.role,
+      });
     }
 
     return NextResponse.json({
