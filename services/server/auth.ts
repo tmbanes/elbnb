@@ -7,6 +7,7 @@ import {
   GuestCreationRequest
 } from "@/types/user.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createActivityLog, getCurrentUserRole } from "../activity_log/server";
 
 // FUNCTION: Sign up with email and password [To-Do: Test]
 export async function createUserProfile<T extends UserCreationRequest>(userData: T) {
@@ -42,12 +43,24 @@ export async function createUserProfile<T extends UserCreationRequest>(userData:
     }
 
     // Return id and session
-    return {
+    const result = {
       success: true,
       userId: data.user.id,
       session: data.session || null, // null if email verification required
       emailVerificationRequired: data.session === null,
     };
+
+    // Log the user creation
+    await createActivityLog({
+      p_user_id: data.user.id,
+      p_action_type: "create_user",
+      p_log_desc: `${userMetadata.first_name} ${userMetadata.last_name} created their account`,
+      p_entity_type: "user",
+      p_entity_id: data.user.id,
+      p_user_role: userMetadata.role || "guest",
+    });
+
+    return result;
   } catch (err: any) {
     console.error("Unexpected signup error:", err);
     return { success: false, error: "An unexpected error occurred." };
@@ -108,10 +121,20 @@ export async function signInWithEmail({
 
 // FUNCTION: to sign out
 export async function signOut() {
+  const user = await getCurrentUserRole();
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signOut();
   if (error) {
     console.error("[ERROR] signing out:", error.message);
+  } else if (user) {
+    await createActivityLog({
+      p_user_id: user.userId,
+      p_action_type: "logout",
+      p_log_desc: `${user.first_name} logged out`,
+      p_entity_type: "auth",
+      p_entity_id: user.userId,
+      p_user_role: user.role,
+    });
   }
 }
 

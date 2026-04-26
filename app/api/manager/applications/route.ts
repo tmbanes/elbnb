@@ -1,6 +1,7 @@
 import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createActivityLog, getCurrentUserRole } from "@/services/activity_log/server";
 
 export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req: NextRequest) => {
   try {
@@ -168,6 +169,29 @@ export const PATCH = withRole(['dormitory_manager', 'housing_admin'], async (req
       .eq("application_status", "pending_dorm_manager"); // safety: only update if still at manager stage
 
     if (error) throw new Error(error.message);
+
+    // Log the action
+    const actor = await getCurrentUserRole();
+    if (actor) {
+      const { data: appData } = await supabase
+        .from("accommodation_application")
+        .select("user_id, users(first_name, last_name)")
+        .eq("application_id", application_id)
+        .single();
+      
+      const applicantName = appData?.users 
+        ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
+        : "Unknown Applicant";
+
+      await createActivityLog({
+        p_user_id: actor.userId,
+        p_action_type: action === "forward" ? "screen_application" : "reject_application",
+        p_log_desc: `${actor.first_name} ${action === "forward" ? "screened" : "rejected"} application for ${applicantName}`,
+        p_entity_type: "application",
+        p_entity_id: application_id,
+        p_user_role: actor.role,
+      });
+    }
 
     return NextResponse.json({ success: true, new_status: newStatus });
   } catch (e) {

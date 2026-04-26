@@ -1,6 +1,7 @@
 // /services/student_profile/index.ts
 
 import { createSupabaseServerClient as supabase } from "@/lib/supabase/server-client";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import {
   UserProfile,
   AccommodationAssignment,
@@ -316,21 +317,258 @@ not yet tested
 
   async getNotifications(user_id: string) {
     const client = await supabase();
-    const { data, error } = await client
-      .from("notifications")
-      .select("*")
+    const adminClient = supabaseAdmin;
+    
+    // 1. Get user role
+    const { data: profile } = await client
+      .from("users")
+      .select("role")
       .eq("user_id", user_id)
-      .order("created_at", { ascending: false });
+      .single();
 
-    if (error) {
-      if ((error as any).code === 'PGRST116' || error.message?.includes('Could not find the table')) {
-        console.warn("Notifications table is missing in Supabase. Returning empty array.");
-        return { data: [], error: null };
+    if (!profile) return { data: [], error: null };
+    const role = profile.role.toLowerCase().replace(/\s+/g, '_');
+
+    // 2. Build conditions based on user role and interests
+    const actorCondition = (role === "student" || role === "guest")
+      ? `and(user_id.eq.${user_id},action_type.not.in.(submit_application,cancel_application,update_user))`
+      : (role === "dormitory_manager")
+        ? `and(user_id.eq.${user_id},action_type.not.in.(screen_application,update_user))`
+        : `user_id.eq.${user_id}`;
+    const conditions: string[] = [actorCondition];
+    const appLookup: Record<string, any> = {};
+
+    try {
+      if (role === "student" || role === "guest") {
+        // Students/Guests care about their own applications and bills
+        const { data: apps } = await client
+          .from("accommodation_application")
+          .select("application_id, accommodation:preferred_accommodation_id(name)")
+          .eq("user_id", user_id);
+        const appIds = apps?.map(a => a.application_id) || [];
+        apps?.forEach(a => {
+          appLookup[a.application_id] = {
+            accomName: (a.accommodation as any)?.name || "Accommodation"
+          };
+        });
+
+        const { data: assignments } = await client
+          .from("accommodation_assignment")
+          .select("assignment_id")
+          .eq("user_id", user_id);
+        const assignmentIds = assignments?.map(a => a.assignment_id) || [];
+
+        const { data: bills } = assignmentIds.length > 0 
+          ? await client.from("billing").select("billing_id").in("assignment_id", assignmentIds)
+          : { data: [] };
+        const billIds = (bills as any[])?.map(b => b.billing_id) || [];
+
+        if (appIds.length > 0) {
+          conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}),action_type.not.in.(submit_application,cancel_application,update_user))`);
+        }
+        if (assignmentIds.length > 0) {
+          conditions.push(`and(entity_type.eq.assignment,entity_id.in.(${assignmentIds.join(',')}),action_type.not.in.(submit_application,cancel_application,update_user,create_assignment))`);
+        }
+        if (billIds.length > 0) {
+          conditions.push(`and(entity_type.eq.billing,entity_id.in.(${billIds.join(',')}),action_type.not.in.(mark_billing_paid))`);
+        }
+
+        const { data: docs } = await client.from("application_document").select("document_id").eq("user_id", user_id);
+        const docIds = docs?.map(d => d.document_id) || [];
+        if (docIds.length > 0) {
+          conditions.push(`and(entity_type.eq.document,entity_id.in.(${docIds.join(',')}))`);
+        }
+      } else if (role === "dormitory_manager") {
+        // Managers care about applications for their accommodations
+        const { data: accoms } = await client
+          .from("accommodation")
+          .select("accommodation_id")
+          .eq("manager_id", user_id);
+        const accomIds = accoms?.map(a => a.accommodation_id) || [];
+
+        if (accomIds.length > 0) {
+          const { data: apps } = await client
+            .from("accommodation_application")
+            .select("application_id, preferred_accommodation_id(name), users(first_name, last_name)")
+            .in("preferred_accommodation_id", accomIds);
+          const appIds = apps?.map(a => a.application_id) || [];
+          apps?.forEach(a => {
+            appLookup[a.application_id] = {
+              accomName: (a.preferred_accommodation_id as any)?.name || "Accommodation",
+              applicantName: (a.users as any) ? `${(a.users as any).first_name} ${(a.users as any).last_name}` : "A student"
+            };
+          });
+
+          if (appIds.length > 0) {
+            conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}),action_type.in.(submit_application,approve_application))`);
+          }
+        }
+      } else if (role === "housing_admin" || role === "admin") {
+        // Admins care about screenings, payments, cancellations, and new submissions
+        // We explicitly exclude 'approve_application' and 'generate_billing' as requested
+        conditions.push(`action_type.in.(screen_application,mark_billing_paid,cancel_application,submit_application,submit_payment)`);
       }
-      console.error("Error fetching notifications:", error.message);
-    }
 
-    return { data, error };
+      const { data: logs, error: logsError } = await adminClient
+        .from("activity_log")
+        .select("*")
+        .or(conditions.join(','))
+        .not("action_type", "in", "(login,logout)")
+        .neq("user_id", user_id) // Don't notify users about their own actions
+        .order("timestamp", { ascending: false })
+        .limit(30);
+
+      if (logsError) throw logsError;
+
+      // --- LOOKUP PHASE ---
+      // Fetch details for logs that haven't been looked up yet (critical for Admin)
+      const appIdsToLookup = (logs || [])
+        .filter(l => l.entity_type === 'application' && !appLookup[l.entity_id])
+        .map(l => l.entity_id);
+      
+      const billIdsToLookup = (logs || [])
+        .filter(l => l.entity_type === 'billing' && !appLookup[l.entity_id])
+        .map(l => l.entity_id);
+
+      if (appIdsToLookup.length > 0) {
+        const { data: extraApps } = await adminClient
+          .from("accommodation_application")
+          .select("application_id, preferred_accommodation_id(name), users(first_name, last_name)")
+          .in("application_id", appIdsToLookup);
+        
+        extraApps?.forEach(a => {
+          appLookup[a.application_id] = {
+            accomName: (a.preferred_accommodation_id as any)?.name || "Accommodation",
+            applicantName: (a.users as any) ? `${(a.users as any).first_name} ${(a.users as any).last_name}` : "A student"
+          };
+        });
+      }
+
+      if (billIdsToLookup.length > 0) {
+        const { data: extraBills } = await adminClient
+          .from("billing")
+          .select("billing_id, accommodation_assignment(users(first_name, last_name))")
+          .in("billing_id", billIdsToLookup);
+        
+        extraBills?.forEach(b => {
+          const user = (b.accommodation_assignment as any)?.users;
+          appLookup[b.billing_id] = {
+            applicantName: user ? `${user.first_name} ${user.last_name}` : "A student"
+          };
+        });
+      }
+
+      const mapped = (logs || []).map((log: any) => {
+        let title = log.action_type.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        let message = log.log_desc;
+        let link = "";
+
+        // Customize based on role and action
+        if (role === 'student' || role === 'guest') {
+          const details = appLookup[log.entity_id] || {};
+          const accomName = details.accomName || "your selected accommodation";
+
+          switch (log.action_type) {
+            case 'screen_application':
+              title = "Application Screened";
+              message = `Your application to ${accomName} has been reviewed by the dormitory manager and forwarded to the administrator.`;
+              link = `/${role}/application`;
+              break;
+            case 'approve_application':
+              title = "Application Approved";
+              message = log.log_desc.includes("Final Approval") 
+                ? `Congratulations! Your application to ${accomName} has received final approval.`
+                : `Congratulations! Your application to ${accomName} has been approved by Admin and is now awaiting payment.`;
+              link = `/${role}/application`;
+              break;
+            case 'reject_application':
+              title = "Application Rejected";
+              message = `We regret to inform you that your application to ${accomName} has been rejected.`;
+              link = `/${role}/application`;
+              break;
+            case 'generate_billing':
+              title = "New Billing Notice";
+              message = `A new billing statement has been sent for your stay at ${accomName}.`;
+              link = `/${role}/billing`;
+              break;
+            case 'update_assignment':
+              title = "New Assignment";
+              message = `You have been assigned to ${accomName}! Check your dashboard for details.`;
+              link = `/${role}/dashboard`;
+              break;
+          }
+        } else if (role === 'dormitory_manager') {
+          const details = appLookup[log.entity_id] || {};
+          const applicantName = details.applicantName || "A user";
+          const accomName = details.accomName;
+
+          switch (log.action_type) {
+            case 'submit_application':
+              title = "New Incoming Application";
+              message = `${applicantName} has submitted an application to ${accomName}.`;
+              link = "/manager/applications";
+              break;
+            case 'approve_application':
+              title = "Application Approved by Admin";
+              message = `The administrator has approved an application for ${applicantName} at ${accomName}.`;
+              link = "/manager/applications";
+              break;
+          }
+        } else if (role === 'housing_admin' || role === 'admin') {
+          const details = appLookup[log.entity_id] || {};
+          const applicantName = details.applicantName || "a user";
+          const accomName = details.accomName || "accommodation";
+
+          switch (log.action_type) {
+            case 'screen_application':
+              title = "Application Ready for Approval";
+              message = `An application for ${applicantName} has been screened and is waiting for your approval.`;
+              link = "/admin/applications";
+              break;
+            case 'cancel_application':
+              title = "Application Cancelled";
+              message = `${applicantName} has cancelled their application for ${accomName}.`;
+              link = "/admin/applications";
+              break;
+            case 'mark_billing_paid':
+              title = "Payment Received";
+              message = `A payment has been recorded for ${applicantName}.`;
+              link = "/admin/billing";
+              break;
+            case 'update_assignment':
+              title = "Assignment Activated";
+              message = `The assignment for ${applicantName} has been officially activated.`;
+              link = "/admin/applications";
+              break;
+            case 'submit_payment':
+              title = "Payment Proof Submitted";
+              message = `${applicantName} has submitted proof of payment.`;
+              link = "/admin/billing";
+              break;
+            case 'submit_application':
+              title = "New Submission";
+              message = `A new application has been submitted by ${applicantName}.`;
+              link = "/admin/applications";
+              break;
+          }
+        }
+
+        return {
+          id: log.log_id,
+          title,
+          message,
+          created_at: log.timestamp,
+          is_read: false,
+          type: log.entity_type,
+          link
+        };
+      });
+
+      return { data: mapped, error: null };
+    } catch (err: any) {
+      console.error("Error fetching notifications from activity_log:", err.message);
+      return { data: [], error: err };
+    }
   }
 };
 

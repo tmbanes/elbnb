@@ -8,6 +8,7 @@ import {
     Banknote, LogOut, UserPlus, ArrowLeftRight, AlertTriangle, BarChart2, CheckCircle2, ChevronRight,
     Filter, User, Plus, RotateCcw, Clock, Send, History
 } from "lucide-react";
+import { useRealtimeSync } from "@/lib/realtime-sync";
 import {
     Dialog,
     DialogContent,
@@ -26,11 +27,13 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import Image from "next/image";
 import Link from "next/link";
 import { Archivo } from "next/font/google";
+import { useRouter } from "next/navigation";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
 interface ManagerDashboardUIProps {
     profile: any;
+    notifications: any[];
     onLogout?: () => void;
     isLoggingOut?: boolean;
 }
@@ -39,12 +42,29 @@ function formatPHP(amount: number) {
     return `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function ManagerDashboardUI({ profile, onLogout, isLoggingOut }: ManagerDashboardUIProps) {
+export default function ManagerDashboardUI({ profile, notifications: initialNotifications, onLogout, isLoggingOut }: ManagerDashboardUIProps) {
     const [dashboardView, setDashboardView] = useState<'operations' | 'financials'>('operations');
     const [showLogout, setShowLogout] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [notifications, setNotifications] = useState(initialNotifications);
     const [hasMounted, setHasMounted] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+            setNotifications(initialNotifications.map(n => ({
+                ...n,
+                is_read: n.is_read || readIds.includes(n.id)
+            })));
+        }
+    }, [initialNotifications]);
 
     useEffect(() => { setHasMounted(true); }, []);
+
+    // Sync notifications in real-time
+    // Since notifications are fetched from activity_log, we watch that table
+    useRealtimeSync('activity_log', undefined, 'INSERT');
 
     const [roomView, setRoomView] = useState<'grid' | 'list'>('grid');
 
@@ -443,10 +463,68 @@ export default function ManagerDashboardUI({ profile, onLogout, isLoggingOut }: 
                             />
                         </div>
                         <div className="flex items-center gap-6">
-                            <button className="relative text-slate-600 hover:text-slate-900 transition-colors">
-                                <Bell className="w-5 h-5" />
-                                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#A05C5C] rounded-full ring-2 ring-[#F6F8D5]"></span>
-                            </button>
+                            <div className="relative">
+                                <button 
+                                    className={`relative text-slate-600 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-100 ${showNotifications ? 'bg-slate-100 text-[#5D6BDE]' : ''}`}
+                                    onClick={() => setShowNotifications(!showNotifications)}
+                                >
+                                    <Bell className="w-5 h-5" />
+                                    {notifications.filter(n => !n.is_read).length > 0 && (
+                                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#A05C5C] rounded-full ring-2 ring-[#F6F8D5]"></span>
+                                    )}
+                                </button>
+
+                                {showNotifications && (
+                                    <div className="absolute right-0 top-full mt-4 w-80 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[60] overflow-hidden">
+                                        <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
+                                            <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
+                                            <button 
+                                                className="text-[10px] font-bold text-[#5D6BDE] uppercase tracking-wider hover:underline"
+                                                onClick={() => setNotifications(prev => prev.map(n => ({...n, is_read: true})))}
+                                            >
+                                                Mark all as read
+                                            </button>
+                                        </div>
+                                        <div className="max-h-[350px] overflow-y-auto">
+                                            {notifications.length > 0 ? (
+                                                notifications.map((n, i) => (
+                                                    <div 
+                                                        key={i} 
+                                                        className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer group"
+                                                        onClick={() => {
+                                                            const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+                                                            if (!readIds.includes(n.id)) {
+                                                                readIds.push(n.id);
+                                                                localStorage.setItem('read_notifications', JSON.stringify(readIds));
+                                                            }
+                                                            setNotifications(prev => prev.map((notif, idx) => 
+                                                                idx === i ? { ...notif, is_read: true } : notif
+                                                            ));
+                                                            if (n.link) router.push(n.link);
+                                                        }}
+                                                    >
+                                                        <div className="flex gap-3">
+                                                            <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-[#5D6BDE]' : 'bg-transparent'}`}></div>
+                                                            <div>
+                                                                <p className="text-[13px] font-bold text-slate-900 mb-1 group-hover:text-[#5D6BDE] transition-colors">{n.title}</p>
+                                                                <p className="text-[12px] text-slate-500 leading-relaxed mb-1.5">{n.message}</p>
+                                                                <p className="text-[10px] text-slate-400 font-medium">{new Date(n.created_at).toLocaleDateString()}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="py-10 text-center">
+                                                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                        <Bell className="w-5 h-5 text-slate-300" />
+                                                    </div>
+                                                    <p className="text-slate-400 text-xs italic">No notifications yet.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                             <div className="relative">
                                 <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setShowLogout(!showLogout)}>
                                     <div className="flex flex-col items-end">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,9 @@ type HousedStudent = {
 type Alert = { type: "warning" | "danger" | "info"; message: string };
 
 interface Props {
+  user: any;
+  profile: any;
+  notifications: any[];
   stats: Stats;
   propertyOccupancy: PropertyOcc[];
   recentApplications: AppRow[];
@@ -120,7 +123,7 @@ function DonutChart({ value, size = 120, label, color = "#78A24C" }: { value: nu
 }
 
 // ── Main Component ──
-export function DashboardClient({ stats, propertyOccupancy, recentApplications, pendingApplications, housedStudents, billingStatusCounts, alerts }: Props) {
+export function DashboardClient({ user, profile, notifications: initialNotifications, stats, propertyOccupancy, recentApplications, pendingApplications, housedStudents, billingStatusCounts, alerts }: Props) {
   const [propFilter, setPropFilter] = useState<"all" | "available">("all");
   const [propSearch, setPropSearch] = useState("");
   const [propPage, setPropPage] = useState(1);
@@ -129,6 +132,22 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
   const [studentTab, setStudentTab] = useState<"housed" | "waiting">("housed");
   const [studentSearch, setStudentSearch] = useState("");
   const [studentPage, setStudentPage] = useState(1);
+  
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState(initialNotifications);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+      setNotifications(initialNotifications.map(n => ({
+        ...n,
+        is_read: n.is_read || readIds.includes(n.id)
+      })));
+    }
+  }, [initialNotifications]);
+
+  useRealtimeSync('activity_log', undefined, 'INSERT');
 
   const totalInInvoices = Object.values(billingStatusCounts).reduce((s, v) => s + v, 0);
   const paidLikeInvoices = (billingStatusCounts.paid ?? 0) + (billingStatusCounts.paid_late ?? 0) + (billingStatusCounts.partially_paid ?? 0);
@@ -183,7 +202,72 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
             Live overview &middot; {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {/* Notifications Dropdown */}
+          <div className="relative mr-2">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="h-10 w-10 rounded-xl bg-white border border-black/5 flex items-center justify-center hover:bg-slate-50 transition-all shadow-sm relative group"
+            >
+              <Bell className="w-5 h-5 text-[#4A5628] group-hover:scale-110 transition-transform" />
+              {notifications.some(n => !n.is_read) && (
+                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#D03027] rounded-full border-2 border-white animate-pulse" />
+              )}
+            </button>
+
+            {showNotifications && (
+              <div className="absolute right-0 top-full mt-3 w-80 bg-white rounded-2xl shadow-xl border border-black/5 overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200">
+                <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                  <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
+                  <button 
+                    onClick={() => setNotifications(prev => prev.map(n => ({...n, is_read: true})))}
+                    className="text-[10px] font-bold text-[#78A24C] uppercase tracking-wider hover:text-[#5C7E3A] transition-colors"
+                  >
+                    Mark all as read
+                  </button>
+                </div>
+                <div className="max-h-[350px] overflow-y-auto">
+                  {notifications.length > 0 ? (
+                    notifications.map((n, i) => (
+                      <div 
+                        key={i} 
+                        className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer group"
+                        onClick={() => {
+                          const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+                          if (!readIds.includes(n.id)) {
+                            readIds.push(n.id);
+                            localStorage.setItem('read_notifications', JSON.stringify(readIds));
+                          }
+                          setNotifications(prev => prev.map((notif, idx) => 
+                            idx === i ? { ...notif, is_read: true } : notif
+                          ));
+                          if (n.link) router.push(n.link);
+                          setShowNotifications(false);
+                        }}
+                      >
+                        <div className="flex gap-3">
+                          <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-[#78A24C]' : 'bg-transparent'}`}></div>
+                          <div>
+                            <p className="text-[13px] font-bold text-slate-900 mb-1 group-hover:text-[#78A24C] transition-colors">{n.title}</p>
+                            <p className="text-[12px] text-slate-500 leading-relaxed mb-1.5">{n.message}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{new Date(n.created_at).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-10 text-center">
+                      <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Bell className="w-5 h-5 text-slate-300" />
+                      </div>
+                      <p className="text-slate-400 text-xs italic">No notifications yet.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <Button variant="outline" className={`${archivo.className} text-xs font-semibold rounded-xl bg-white shadow-sm h-10 px-4`}>
             <Download className="w-4 h-4 mr-1.5" /> Export CSV
           </Button>

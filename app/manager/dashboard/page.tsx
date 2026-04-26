@@ -15,12 +15,16 @@ export default async function DormitoryManagerDashboardPage() {
     redirect("/");
   }
 
-  // Fetch manager profile
-  const { data: profile } = await userProfileService.getProfile(user.id);
+  // Fetch manager profile and notifications
+  const [profileRes, notificationsRes] = await Promise.all([
+    userProfileService.getProfile(user.id),
+    userProfileService.getNotifications(user.id)
+  ]);
 
   return (
     <ManagerDashboardUI
-      profile={profile}
+      profile={profileRes.data}
+      notifications={notificationsRes.data || []}
     />
   );
 }

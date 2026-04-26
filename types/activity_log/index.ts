@@ -1,7 +1,7 @@
 import { UserRole } from "../user.types";
 
 type EntityLogType = "application" | "unit" | "billing" | "auth"
-                                | "document" | "accommodation";
+                                | "document" | "accommodation" | "assignment";
 type ActivityLogType = "login"
     | "logout"
     | "create_user"
@@ -27,6 +27,8 @@ type ActivityLogType = "login"
     | "update_billing"
     | "cancel_billing"
     | "mark_billing_paid"
+    | "submit_payment"
+    | "update_assignment"
     | "upload_doc"
     | "update_doc_status"
     | "generate_report";

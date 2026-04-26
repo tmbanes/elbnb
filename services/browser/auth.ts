@@ -82,20 +82,19 @@ async function signInWithEmail({
   const signedInUser = data.user;
 
   if (signedInUser) {
-    
-    const profile = await getCurrentUserFromApi();
-    const userRole = profile?.role ? profile.role: "guest";
+    const metadata = signedInUser.user_metadata || {};
+    const userRole = metadata.role || "guest";
+    const firstName = metadata.first_name || "User";
   
     // Log activity for successful sign-in.
     await createActivityLog({
       p_user_id: signedInUser.id,
       p_action_type: "login",
-      p_log_desc: `${profile!.first_name} logged in `,
+      p_log_desc: `${firstName} logged in`,
       p_entity_type: "auth", 
       p_entity_id: signedInUser.id,
       p_user_role: userRole as UserRole,
     });
-
   }
 
   return { success: true };
@@ -123,9 +122,19 @@ async function signInWithGoogle(next = "/") {
 // FUNCTION: to sign out
 const browserClient = getSupabaseBrowserClient();
 async function signOut() {
+  const profile = await getCurrentUserFromApi();
   const { error } = await browserClient.auth.signOut();
   if (error) {
     console.error("[ERROR] signing out:", error.message);
+  } else if (profile) {
+    await createActivityLog({
+      p_user_id: profile.user_id,
+      p_action_type: "logout",
+      p_log_desc: `${profile.first_name} logged out`,
+      p_entity_type: "auth",
+      p_entity_id: profile.user_id,
+      p_user_role: profile.role || "guest",
+    });
   }
 }
 

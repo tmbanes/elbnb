@@ -82,6 +82,7 @@ export async function adminApproveReceiptAction(billingId: string, adminId: stri
   }
   revalidatePath("/admin/dashboard/billing");
   revalidatePath("/admin/billing");
+  revalidatePath("/admin/applications");
   revalidatePath("/student/billing");
   revalidatePath("/guest/billing");
   return result;

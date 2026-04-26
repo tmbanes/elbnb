@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 import { AccommodationApplication, ApplicationStatus, CancellableStatus } from '@/types/application_workflow'
+import { createActivityLog, getCurrentUserRole } from '@/services/activity_log/server'
 
 // Input type for creation: server generates application_id; accommodation_assignment is a join
 type CancelApplicationInput = AccommodationApplication
@@ -36,6 +37,19 @@ export class CancelApplicationService {
     
     if (error) {
       throw new Error(`Failed to update application: ${error.message}`)
+    }
+
+    // Log the cancellation
+    const actor = await getCurrentUserRole()
+    if (actor) {
+      await createActivityLog({
+        p_user_id: actor.userId,
+        p_action_type: "cancel_application",
+        p_log_desc: `${actor.first_name} cancelled application ${application.application_id}`,
+        p_entity_type: "application",
+        p_entity_id: data.application_id,
+        p_user_role: actor.role,
+      })
     }
 
     return data
