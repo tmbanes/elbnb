@@ -48,12 +48,15 @@ export default function ManagerDashboardUI({ profile, notifications: initialNoti
     const [notifications, setNotifications] = useState(initialNotifications);
     const [hasMounted, setHasMounted] = useState(false);
 
+    useEffect(() => {
+        setNotifications(initialNotifications);
+    }, [initialNotifications]);
+
     useEffect(() => { setHasMounted(true); }, []);
 
     // Sync notifications in real-time
-    // Since notifications are fetched from activity_log, we sync activity_log
-    // Note: This is a simplified sync; a more complex one would filter by role logic
-    useRealtimeSync('activity_log', `*`, 'INSERT');
+    // Since notifications are fetched from activity_log, we watch that table
+    useRealtimeSync('activity_log', undefined, 'INSERT');
 
     const [roomView, setRoomView] = useState<'grid' | 'list'>('grid');
 

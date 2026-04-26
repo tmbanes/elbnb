@@ -1,6 +1,7 @@
 // /services/student_profile/index.ts
 
 import { createSupabaseServerClient as supabase } from "@/lib/supabase/server-client";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import {
   UserProfile,
   AccommodationAssignment,
@@ -316,6 +317,7 @@ not yet tested
 
   async getNotifications(user_id: string) {
     const client = await supabase();
+    const adminClient = supabaseAdmin;
     
     // 1. Get user role
     const { data: profile } = await client
@@ -325,7 +327,7 @@ not yet tested
       .single();
 
     if (!profile) return { data: [], error: null };
-    const role = profile.role.toLowerCase();
+    const role = profile.role.toLowerCase().replace(/\s+/g, '_');
 
     // 2. Build conditions based on user role and interests
     const actorCondition = (role === "student" || role === "guest")
@@ -356,10 +358,19 @@ not yet tested
         const billIds = (bills as any[])?.map(b => b.billing_id) || [];
 
         if (appIds.length > 0) {
-          conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}),action_type.in.(screen_application,approve_application,reject_application))`);
+          conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}))`);
+        }
+        if (assignmentIds.length > 0) {
+          conditions.push(`and(entity_type.eq.assignment,entity_id.in.(${assignmentIds.join(',')}))`);
         }
         if (billIds.length > 0) {
-          conditions.push(`and(entity_type.eq.billing,entity_id.in.(${billIds.join(',')}),action_type.in.(generate_billing,mark_billing_paid))`);
+          conditions.push(`and(entity_type.eq.billing,entity_id.in.(${billIds.join(',')}))`);
+        }
+
+        const { data: docs } = await client.from("application_document").select("document_id").eq("user_id", user_id);
+        const docIds = docs?.map(d => d.document_id) || [];
+        if (docIds.length > 0) {
+          conditions.push(`and(entity_type.eq.document,entity_id.in.(${docIds.join(',')}))`);
         }
       } else if (role === "dormitory_manager") {
         // Managers care about applications for their accommodations
@@ -380,12 +391,12 @@ not yet tested
             conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}),action_type.in.(submit_application,approve_application))`);
           }
         }
-      } else if (role === "housing_admin" || role === "admin") {
+      } else if (role === "housing_admin" || role === "housing_administrator" || role === "admin") {
         // Admins care about screening, payments, and cancellations
         conditions.push(`action_type.in.(screen_application,mark_billing_paid,cancel_application)`);
       }
 
-      const { data: logs, error: logsError } = await client
+      const { data: logs, error: logsError } = await adminClient
         .from("activity_log")
         .select("*")
         .or(conditions.join(','))

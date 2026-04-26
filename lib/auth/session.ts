@@ -40,8 +40,6 @@ export const getApiAuthenticatedUser = cache(async (): Promise<User | null> => {
         }
     }
 
-    console.log("[DEBUG] getApiAuthenticatedUser - email:", user.email, "metadata.role:", metadata.role);
-
     // Construct User object
     return {
         user_id: user.id,

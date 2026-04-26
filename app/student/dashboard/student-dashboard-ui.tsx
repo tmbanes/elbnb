@@ -62,13 +62,19 @@ export default function StudentDashboardUI({
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState(initialNotifications);
+    
+    useEffect(() => {
+        setNotifications(initialNotifications);
+    }, [initialNotifications]);
+
     const [isSubmittingExtension, setIsSubmittingExtension] = useState(false);
 
     const supabase = getSupabaseBrowserClient();
     const router = useRouter();
 
-    // Sync notifications in real-time
-    useRealtimeSync('notifications', `user_id=eq.${user?.user_id}`, 'INSERT');
+    // Sync notifications in real-time via activity_log
+    // We listen to all activity_log inserts to trigger a refresh
+    useRealtimeSync('activity_log', undefined, 'INSERT');
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
