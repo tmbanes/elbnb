@@ -34,11 +34,15 @@ async function getCurrentUserRole(): Promise<{ userId: string; role: UserRole, f
     .eq("user_id", user.id)
     .single();
 
-  const role = isUserRole((profileData as { role?: unknown } | null)?.role)
-    ? ((profileData as { role?: UserRole } | null)?.role ?? "guest")
+  const role = isUserRole(profileData?.role)
+    ? (profileData?.role ?? "guest")
     : "guest";
 
-  return { userId: user.id, role, first_name: profileData!.first_name + profileData!.last_name };
+  return { 
+    userId: user.id, 
+    role, 
+    first_name: profileData ? `${profileData.first_name} ${profileData.last_name}` : (user.email || "User")
+  };
 }
 
 

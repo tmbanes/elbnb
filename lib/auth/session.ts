@@ -13,9 +13,36 @@ export const getApiAuthenticatedUser = cache(async (): Promise<User | null> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const metadata = user.user_metadata || {};
+    let metadata = user.user_metadata || {};
 
-    // Construct User object directly from JWT metadata to avoid DB query
+    // SOURCE OF TRUTH: Fetch from the public.users table to ensure roles are current.
+    // This prevents stale JWT metadata from causing incorrect redirects (e.g. Managers sent to Student dashboard).
+    const { data: dbUser } = await supabase
+        .from("users")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (dbUser) {
+        // Use database values as primary, metadata as fallback
+        metadata = { ...metadata, ...dbUser };
+        
+        // If metadata is out of sync, trigger a background update
+        if (dbUser.role !== user.user_metadata?.role) {
+            supabase.auth.updateUser({
+                data: { 
+                    role: dbUser.role,
+                    first_name: dbUser.first_name,
+                    last_name: dbUser.last_name,
+                    user_status: dbUser.user_status
+                }
+            }).catch(() => {});
+        }
+    }
+
+    console.log("[DEBUG] getApiAuthenticatedUser - email:", user.email, "metadata.role:", metadata.role);
+
+    // Construct User object
     return {
         user_id: user.id,
         email: user.email || metadata.email || "",
