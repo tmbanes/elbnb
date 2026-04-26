@@ -5,6 +5,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { signInWithGoogle } from "@/services/browser/auth";
 import { User } from "@/types/user.types";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 //ui components
 import { Button } from "@/components/ui/button";
@@ -16,9 +17,6 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import router from "next/router";
-
-
 //style constants
 const button_style = "w-full h-11 rounded-full bg-[#fbbc05] text-[#2d1a12] font-semibold hover:bg-[#f9d776]";
 
@@ -29,6 +27,7 @@ type GoogleLoginProps = {
 export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
   const supabase = getSupabaseBrowserClient();
   const [currentUser, setCurrentUser] = useState<User | null>(user);
+  const router = useRouter();
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -36,16 +35,17 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
   }
 
   useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session) {
-          router.push("/"); // or redirectByRole
-        }
-      }
-    );
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser((session?.user as unknown as User) ?? null);
+    });
+    return () => listener?.subscription.unsubscribe();
+  }, [supabase]);
 
-    return () => listener.subscription.unsubscribe();
-  }, []);
+  useEffect(() => {
+    if (currentUser) {
+      router.push("/");
+    }
+  }, [currentUser, router]);
 
   async function handleGoogleLogin() {
     await signInWithGoogle("/");

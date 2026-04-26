@@ -2,11 +2,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createUserProfile } from "@/services/server/auth";
-import { UserCreationRequest } from "@/types/user.types";
+import { StudentCreationRequest, UserCreationRequest } from "@/types/user.types";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as UserCreationRequest;
+    const body = (await req.json()) as StudentCreationRequest;
 
     // Signup with Supabase Admin client
     const result = await createUserProfile(body);

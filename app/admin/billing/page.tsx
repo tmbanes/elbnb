@@ -1,8 +1,11 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { ensureInitialInvoicesForPendingPaymentApplications, getAllBillsForAdmin, getActiveTenants } from "@/services/user-services";
 import { redirect } from "next/navigation";
+import { Archivo, Archivo_Black } from "next/font/google";
 import AdminBillingClient from "./AdminBillingClient";
-import LogoutButton from "@/components/logout-button";
+
+const archivo = Archivo({ subsets: ["latin"] });
+const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 export default async function AdminBillingPage() {
   const supabase = await createSupabaseServerClient();
@@ -39,13 +42,28 @@ export default async function AdminBillingPage() {
     transactionCount: (bills || []).length
   };
 
+  if (error) {
+    return (
+      <main className="min-h-screen p-8" style={{ backgroundColor: '#F6F8D5' }}>
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="mb-8">
+            <h1 className={`${archivoBlack.className} text-5xl font-bold text-[#44291B] tracking-tight`}>Billing Management</h1>
+            <p className={`${archivo.className}  mt-1 mb-4 text-sm text-[#44291B`}>Overview of all tenant invoices, payments, and revenue.</p>
+          </div>
+          <div className="p-6 rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm">
+            SUPABASE ERROR: {JSON.stringify(error)}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen p-8 bg-slate-50/50">
+    <main className="min-h-screen p-8" style={{ backgroundColor: '#F6F8D5' }}>
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Billing Management</h1>
-          <p className="text-slate-500 mt-1 mb-4 text-sm">Overview of all tenant invoices, payments, and revenue.</p>
-          <LogoutButton />
+          <h1 className={`${archivoBlack.className} text-5xl font-bold text-[#44291B] tracking-tight`}>Billing Management</h1>
+          <p className={`${archivo.className}  mt-1 mb-4 text-sm text-[#44291B]`}>Overview of all tenant invoices, payments, and revenue.</p>
         </div>
 
         <AdminBillingClient

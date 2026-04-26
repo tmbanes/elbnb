@@ -1,17 +1,14 @@
 // app/admin/housing/properties/PropertiesList.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { getPropertyColumns } from "@/app/admin/housing/components/columns/propertyColumns";
 import { Property } from "../../../../types/housing/types";
 
 // ui components
 import { DataTable } from "@/components/ui/data-table";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
+import Modal from "@/app/admin/housing/components/modals/Modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,11 +16,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Card,
   CardTitle,
   CardHeader
 } from "@/components/ui/card";
-import { ChevronLeft, Plus, Building2, Home, Users, Bed } from "lucide-react";
+import { ChevronLeft, Plus, Building2, Home, Users, Bed, Search, Filter } from "lucide-react";
 
 interface SummaryStats {
   totalDorms: number;
@@ -33,6 +37,7 @@ interface SummaryStats {
 }
 
 interface PropertiesListProps {
+  properties: Property[];
   filtered: Property[];
   tableData: Array<{
     id: string;
@@ -56,41 +61,44 @@ interface PropertiesListProps {
   onBackToHousing: () => void;
 }
 
+//Stat Card Function
 function StatCard({
   label,
   value,
   icon,
-  description,
   accentColor,
   iconBg,
+  description
 }: {
   label: string;
   value: number;
   icon: React.ReactNode;
-  description?: string;
   accentColor: string;
   iconBg: string;
+  description: string
 }) {
   return (
+    //Stat Card UI
     <Card
-      className="shadow-sm bg-[#FDFFF4] transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-md cursor-default"
-      style={{ borderTop: `6px solid ${accentColor}` }}
+      className="shadow-sm transition-all border-none"
+      style={{ backgroundColor: accentColor }}
     >
-      <CardHeader className="p-3.5">
+      <CardHeader className="p-4">
         <div className="flex items-center justify-between gap-3.5">
-          <div className="flex flex-col gap-0.5 pl-3">
-            <p className="text-[11px] font-medium text-[#44291B] uppercase tracking-widest">
+          <div className="flex flex-col gap-0.5 pl-2">
+            <p className="text-[11px] font-bold text-white/90 uppercase tracking-widest">
               {label}
             </p>
-            <CardTitle className="text-3xl font-bold text-[#44291B] leading-tight">
+            <CardTitle className="text-3xl font-bold text-white leading-tight">
               {value.toLocaleString()}
             </CardTitle>
           </div>
+
+          {/* Icon UI Styling */}
           <div
-            className="h-12 w-12 rounded-md flex items-center justify-center shrink-0"
-            style={{ backgroundColor: iconBg }}
+            className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 bg-white/20"
           >
-            {React.cloneElement(icon as React.ReactElement)}
+            {icon}
           </div>
         </div>
       </CardHeader>
@@ -99,6 +107,7 @@ function StatCard({
 }
 
 export default function PropertiesList({
+  properties = [],
   filtered = [],
   tableData = [],
   typeFilter,
@@ -110,157 +119,176 @@ export default function PropertiesList({
   onDeleteProperty,
   onBackToHousing,
 }: PropertiesListProps) {
-  const [stats, setStats] = useState<SummaryStats>({
-    totalDorms: 0,
-    totalRentalSpaces: 0,
-    totalManagers: 0,
-    totalUnits: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeProperty, setActiveProperty] = useState<Property | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const [dormsRes, rentalRes, managersRes] = await Promise.all([
-          fetch("/api/admin/housing/dorms"),
-          fetch("/api/admin/housing/rental-spaces"),
-          fetch("/api/admin/housing/managers"),
-        ]);
+  const stats: SummaryStats = useMemo(() => {
+    const totalCapacity = properties.reduce(
+      (acc, curr) => acc + Number(curr.total_capacity || 0),
+      0
+    );
 
-        if (dormsRes.ok && rentalRes.ok && managersRes.ok) {
-          const [dorms, rentals, managers] = await Promise.all([
-            dormsRes.json(),
-            rentalRes.json(),
-            managersRes.json(),
-          ]);
-
-          const totalCapacity = [...dorms, ...rentals].reduce(
-            (acc, curr) => acc + (curr.total_capacity || 0),
-            0
-          );
-
-          setStats({
-            totalDorms: dorms.length,
-            totalRentalSpaces: rentals.length,
-            totalManagers: managers.length,
-            totalUnits: totalCapacity,
-          });
-        }
-      } catch (err) {
-        console.error("Failed to fetch stats:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchStats();
-  }, []);
+    return {
+      totalDorms: properties.filter((p) => p.accommodation_type === "dormitory")
+        .length,
+      totalRentalSpaces: properties.filter(
+        (p) => p.accommodation_type === "renting_space"
+      ).length,
+      totalManagers: managerCount,
+      totalUnits: totalCapacity,
+    };
+  }, [managerCount, properties]);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-6 space-y-4 font-[family-name:var(--font-archivo)]">
       <div>
-        <h1 className="text-4xl font-bold text-[#44291B] mr-2">Properties Page</h1>
-        <p className="text-sm text-[#44291B]">Manage your Properties and view their details</p>
-
+        <h1 className="text-3xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] mr-2">Properties Page</h1>
+        <p className="text-sm md:text-md text-[#44291B] pt-3">Manage your Properties and view their details</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 pt-2">
         <StatCard
           label="Dormitories"
           value={stats.totalDorms}
-          icon={<Building2 style={{ color: "#5591AB" }} />}
-          description="Active dorm buildings"
+          icon={<Building2 className="text-white w-5 h-5" />}
           accentColor="#5591AB"
           iconBg="#ebf2f4"
         />
         <StatCard
           label="Rental Spaces"
           value={stats.totalRentalSpaces}
-          icon={<Home style={{ color: "#EB8A0B" }} />}
-          description="Private rental units"
+          icon={<Home className="text-white w-5 h-5" />}
           accentColor="#EB8A0B"
           iconBg="#fbecd7"
         />
         <StatCard
           label="Managers"
           value={stats.totalManagers}
-          icon={<Users style={{ color: "#F2C908" }} />}
-          description="Assigned staff"
+          icon={<Users className="text-white w-5 h-5" />}
           accentColor="#F2C908"
           iconBg="#f2c70823"
         />
         <StatCard
           label="Total Capacity"
           value={stats.totalUnits}
-          icon={<Bed style={{ color: "#264384" }} />}
-          description="Total beds available"
+          icon={<Bed className="text-white w-5 h-5" />}
           accentColor="#264384"
           iconBg="#e6e8ef"
         />
       </div>
 
-      {(filtered?.length === 0) && !loading ? (
+      {/* FILTER & ACTIONS */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm mt-4">
+        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 w-full md:max-w-md">
+          <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
+            <Search className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search property name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-2 bg-transparent text-sm outline-none text-[#44291B] placeholder:text-[#44291B]/50"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] w-full sm:w-auto">
+            <Filter className="w-4 h-4 text-[#44291B]/50" />
+            <Select
+              value={typeFilter || "all"}
+              onValueChange={(val) => onFilterChange(val === "all" ? "" : val)}
+            >
+              <SelectTrigger className="w-full sm:w-[140px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
+                <SelectValue placeholder="All Properties" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md">
+                <SelectItem value="all" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
+                <SelectItem value="dormitory" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Dorms</SelectItem>
+                <SelectItem value="renting_space" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Rental Spaces</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="hidden sm:block h-6 w-px bg-[#e8e2d6] mx-2"></div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={managerCount === 0}
+                title={managerCount === 0 ? "Please add a Property Manager first" : ""}
+                className="flex items-center justify-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto w-full sm:w-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Property</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md"
+            >
+              <DropdownMenuItem
+                onClick={() => onAddProperty("dormitory")}
+                className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer"
+              >
+                <Building2 className="mr-2 h-4 w-4" />
+                <span>Add Dorm</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onAddProperty("renting_space")}
+                className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer"
+              >
+                <Home className="mr-2 h-4 w-4" />
+                <span>Add Rental Space</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {filtered?.length === 0 ? (
         <div className="flex h-[200px] items-center justify-center rounded-md border border-dashed mt-4">
           <p className="text-muted-foreground">No properties yet. Click Add Property to get started.</p>
         </div>
       ) : (
         <DataTable
-          columns={getPropertyColumns(onEditProperty, onDeleteProperty)}
-          data={tableData}
-          header={
-            <div>
-              <h1 className="text-2xl font-bold text-[#44291B]">Properties</h1>
-              <p className="text-sm text-[#44291B]">Manage your Dormitory or Rental Space Properties</p>
-            </div>
-          }
-          toolbar={
-            <div className="flex items-center gap-4">
-              <ToggleGroup
-                className="text-[#44291B]"
-                type="single"
-                variant="outline"
-                value={typeFilter ?? ""}
-                onValueChange={(value) => {
-                  if (value !== undefined) onFilterChange(value);
-                }}
-              >
-                <ToggleGroupItem value=" " aria-label="All">
-                  All
-                </ToggleGroupItem>
-                <ToggleGroupItem value="dormitory" aria-label="Dormitories">
-                  Dorms
-                </ToggleGroupItem>
-                <ToggleGroupItem value="renting_space" aria-label="Rental Spaces">
-                  Rental Spaces
-                </ToggleGroupItem>
-              </ToggleGroup>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    disabled={managerCount === 0}
-                    title={managerCount === 0 ? "Please add a Property Manager first" : ""}
-                    className="bg-[#264384] hover:bg-[#5273BC] text-white"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    <span className="mr-4">Add Property</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[#FDFFF4] text-[#44291B]">
-                  <DropdownMenuItem onClick={() => onAddProperty("dormitory")}>
-                    <Building2 className="mr-2 h-4 w-4" />
-                    <span>Add Dorm</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onAddProperty("renting_space")}>
-                    <Home className="mr-2 h-4 w-4" />
-                    <span>Add Rental Space</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          }
+          columns={getPropertyColumns(onEditProperty, (id, type) => {
+            const prop = filtered.find(p => p.accommodation_id === id);
+            if (prop) {
+              setActiveProperty(prop);
+              setDeleteModalOpen(true);
+            }
+          })}
+          data={tableData.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))}
+          onRowClick={(row: any) => onSelectProperty(row.id)}
         />
       )}
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Property"
+        description={`Are you sure you want to delete ${activeProperty?.name}? This action cannot be undone and will delete all associated units.`}
+      >
+        <div className="space-y-4">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (activeProperty) {
+                  onDeleteProperty(activeProperty.accommodation_id, activeProperty.accommodation_type);
+                  setDeleteModalOpen(false);
+                  setActiveProperty(null);
+                }
+              }}
+            >
+              Delete Property
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

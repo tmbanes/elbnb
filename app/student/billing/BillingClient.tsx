@@ -12,7 +12,10 @@ import {
   CheckCircle2,
   Clock,
   Printer,
-  Download as DownloadIcon
+  Download as DownloadIcon,
+  ChevronLeft,
+  ChevronRight,
+  Search
 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -20,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function BillingClient({
   userId,
@@ -27,13 +31,18 @@ export default function BillingClient({
   bills,
   paymentHistory,
   uploadEndpoint = "/api/student/billing/upload-receipt",
+  cancelEndpoint = "/api/student/billing/cancel-receipt",
 }: any) {
   const supabase = getSupabaseBrowserClient();
 
   const [selectedBill, setSelectedBill] = useState<any>(null);
+  const [printMode, setPrintMode] = useState<"bill" | "statement" | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCancellingReceipt, setIsCancellingReceipt] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null);
+  const [isLoadingReceiptPreview, setIsLoadingReceiptPreview] = useState(false);
   const router = useRouter();
 
   const USE_DUMMY_BILLING_DATA = false;
@@ -106,7 +115,99 @@ export default function BillingClient({
     [paymentHistory]
   );
 
+  const [invoicesSearchQuery, setInvoicesSearchQuery] = useState("");
+  const [historySearchQuery, setHistorySearchQuery] = useState("");
+
+  const searchedBills = useMemo(() => {
+    const rankByStatus = (status?: string) => {
+      switch (status) {
+        case BillingStatus.UNPAID:
+        case BillingStatus.OVERDUE:
+        case BillingStatus.FAILED:
+        case BillingStatus.PENDING:
+        case BillingStatus.PENDING_VERIFICATION:
+          return 0;
+        case BillingStatus.PAID:
+        case BillingStatus.PAID_LATE:
+          return 2;
+        default:
+          return 1;
+      }
+    };
+
+    const sortBills = (list: any[]) =>
+      [...list].sort((a: any, b: any) => {
+        const rankDiff = rankByStatus(a?.status) - rankByStatus(b?.status);
+        if (rankDiff !== 0) return rankDiff;
+
+        const aDate = new Date(a?.created_at || 0).getTime();
+        const bDate = new Date(b?.created_at || 0).getTime();
+        return bDate - aDate;
+      });
+
+    if (!invoicesSearchQuery) return sortBills(normalizedBills);
+    const lowerQuery = invoicesSearchQuery.toLowerCase();
+    const filtered = normalizedBills.filter((bill: any) =>
+      String(bill?.billing_id || "").toLowerCase().includes(lowerQuery) ||
+      (bill?.status || "").replace(/_/g, ' ').toLowerCase().includes(lowerQuery)
+    );
+    return sortBills(filtered);
+  }, [normalizedBills, invoicesSearchQuery]);
+
+  const searchedHistory = useMemo(() => {
+    if (!historySearchQuery) return normalizedPaymentHistory;
+    const lowerQuery = historySearchQuery.toLowerCase();
+    return normalizedPaymentHistory.filter((entry: any) =>
+      String(entry?.billing_id || "").toLowerCase().includes(lowerQuery) ||
+      (entry?.status || "").replace(/_/g, ' ').toLowerCase().includes(lowerQuery)
+    );
+  }, [normalizedPaymentHistory, historySearchQuery]);
+
+  const [invoicesPage, setInvoicesPage] = useState(1);
+  const invoicesPerPage = 5;
+
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyPerPage = 5;
+
+  const totalInvoicesPages = Math.max(1, Math.ceil(searchedBills.length / invoicesPerPage));
+  const safeInvoicesPage = Math.max(1, Math.min(invoicesPage, totalInvoicesPages));
+  const startInvoiceIndex = (safeInvoicesPage - 1) * invoicesPerPage;
+  const paginatedInvoices = searchedBills.slice(startInvoiceIndex, startInvoiceIndex + invoicesPerPage);
+
+  const getVisibleInvoicePages = () => {
+    const pages: number[] = [];
+    let start = Math.max(1, safeInvoicesPage - 1);
+    let end = Math.min(totalInvoicesPages, start + 2);
+    start = Math.max(1, end - 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  };
+
+  const totalHistoryPages = Math.max(1, Math.ceil(searchedHistory.length / historyPerPage));
+  const safeHistoryPage = Math.max(1, Math.min(historyPage, totalHistoryPages));
+  const startHistoryIndex = (safeHistoryPage - 1) * historyPerPage;
+  const paginatedHistory = searchedHistory.slice(startHistoryIndex, startHistoryIndex + historyPerPage);
+
+  const getVisibleHistoryPages = () => {
+    const pages: number[] = [];
+    let start = Math.max(1, safeHistoryPage - 1);
+    let end = Math.min(totalHistoryPages, start + 2);
+    start = Math.max(1, end - 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  };
+
   const focusedBill = selectedBill;
+
+  const getInvoiceLineItems = (bill: any) => {
+    const rawItems = bill?.breakdown ?? bill?.billing_item ?? bill?.billing_items ?? bill?.items ?? [];
+    const itemsArray = Array.isArray(rawItems) ? rawItems : [rawItems].filter(Boolean);
+
+    return itemsArray.map((item: any) => ({
+      label: String(item?.label ?? item?.type ?? item?.name ?? "Line Item"),
+      amount: Number(item?.amount ?? 0),
+    }));
+  };
 
   const toCurrencyNumber = (value: unknown) => {
     const n = Number(value ?? 0);
@@ -149,6 +250,55 @@ export default function BillingClient({
     }
   }, [normalizedBills, selectedBill]);
 
+  useEffect(() => {
+    const receiptPath = selectedBill?.transaction_reference || selectedBill?.receipt_files?.[selectedBill?.receipt_files?.length - 1];
+
+    if (!receiptPath) {
+      setReceiptPreviewUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadPreview = async () => {
+      setIsLoadingReceiptPreview(true);
+      try {
+        const response = await fetch(`/api/admin/billing/receipt-url?path=${encodeURIComponent(receiptPath)}`);
+        const payload = await response.json().catch(() => ({}));
+
+        if (response.ok && payload.signedUrl && !cancelled) {
+          setReceiptPreviewUrl(payload.signedUrl);
+        } else if (!cancelled) {
+          setReceiptPreviewUrl(null);
+        }
+      } catch {
+        if (!cancelled) setReceiptPreviewUrl(null);
+      } finally {
+        if (!cancelled) setIsLoadingReceiptPreview(false);
+      }
+    };
+
+    loadPreview();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedBill?.billing_id, selectedBill?.transaction_reference, selectedBill?.receipt_files]);
+
+  useEffect(() => {
+    if (!printMode) return;
+
+    const timer = window.setTimeout(() => window.print(), 75);
+    const handleAfterPrint = () => setPrintMode(null);
+
+    window.addEventListener("afterprint", handleAfterPrint);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("afterprint", handleAfterPrint);
+    };
+  }, [printMode]);
+
   const getStatusColor = (status?: string) => {
     switch (status) {
       case BillingStatus.PAID: return "bg-green-100 text-green-700 border-green-200";
@@ -158,6 +308,30 @@ export default function BillingClient({
       case BillingStatus.OVERDUE: return "bg-red-100 text-red-700 border-red-200";
       case BillingStatus.FAILED: return "bg-rose-100 text-rose-700 border-rose-200";
       default: return "bg-slate-100 text-slate-700 border-slate-200";
+    }
+  };
+
+  const getStatusBorderColor = (status?: string) => {
+    switch (status) {
+      case BillingStatus.PAID: return "border-l-[#769C51]";
+      case BillingStatus.UNPAID: return "border-l-slate-400";
+      case BillingStatus.PENDING_VERIFICATION: return "border-l-[#EAB308]";
+      case BillingStatus.PENDING: return "border-l-[#EAB308]";
+      case BillingStatus.OVERDUE: return "border-l-[#EF4444]";
+      case BillingStatus.FAILED: return "border-l-[#F43F5E]";
+      default: return "border-l-slate-400";
+    }
+  };
+
+  const getStatusBadgeBg = (status?: string) => {
+    switch (status) {
+      case BillingStatus.PAID: return "bg-[#769C51]";
+      case BillingStatus.UNPAID: return "bg-slate-500";
+      case BillingStatus.PENDING_VERIFICATION: return "bg-[#EAB308]";
+      case BillingStatus.PENDING: return "bg-[#EAB308]";
+      case BillingStatus.OVERDUE: return "bg-[#EF4444]";
+      case BillingStatus.FAILED: return "bg-[#F43F5E]";
+      default: return "bg-slate-500";
     }
   };
 
@@ -198,19 +372,62 @@ export default function BillingClient({
     }
   };
 
+  const handleCancelReceipt = async () => {
+    if (!focusedBill?.billing_id) return;
+
+    if (!confirm("Cancel the uploaded receipt? You can reupload a new one after this.")) return;
+
+    setIsCancellingReceipt(true);
+    setUploadError("");
+
+    try {
+      const response = await fetch(cancelEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billingId: focusedBill.billing_id }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to cancel receipt.");
+      }
+
+      setUploadFile(null);
+      router.refresh();
+    } catch (err: any) {
+      setUploadError(err.message || "Failed to cancel receipt.");
+    } finally {
+      setIsCancellingReceipt(false);
+    }
+  };
+
   const handlePrint = () => {
-    window.print();
+    if (!focusedBill) return;
+    setPrintMode("bill");
   };
 
   const handleDownloadStatement = () => {
-    // For now we reuse print-to-PDF behavior; later you can replace with a real statement generator.
-    window.print();
+    setPrintMode("statement");
   };
 
   return (
     <>
       <style jsx global>{`
       @media print {
+        @page {
+          margin: 6mm;
+        }
+
+        html,
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          background: #fff !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
         body * {
           visibility: hidden !important;
         }
@@ -221,12 +438,20 @@ export default function BillingClient({
         }
 
         #invoice-print-root {
-          position: fixed;
-          inset: 0;
+          position: static !important;
           width: 100%;
+          min-height: auto;
           background: #fff;
           z-index: 9999;
+          box-sizing: border-box;
+          padding: 0;
         }
+      }
+
+      [data-slot="dialog-overlay"] {
+        background: rgba(15, 23, 42, 0.42) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
       }
     `}</style>
       <div className="space-y-8 print:hidden">
@@ -238,61 +463,61 @@ export default function BillingClient({
 
         {/* Top Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-white/90 ring-1 ring-black/5 rounded-2xl shadow-sm">
+          <Card className="bg-[#5591AB] text-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden transition-all hover:-translate-y-1">
             <CardHeader className="pb-0">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <CardTitle className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Current Balance</CardTitle>
+                  <CardTitle className="text-xs font-bold tracking-wide text-white/90 uppercase">Remaining Balance</CardTitle>
                 </div>
-                <div className="p-2 rounded-xl bg-slate-50 ring-1 ring-black/5">
-                  <CreditCard className="w-5 h-5 text-slate-400" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-extrabold text-slate-900">₱{formatPeso(displaySummary?.balance)}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/90 ring-1 ring-black/5 rounded-2xl shadow-sm">
-            <CardHeader className="pb-0">
-              <div className="flex items-start justify-between gap-3">
-                <CardTitle className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Total Paid</CardTitle>
-                <div className="p-2 rounded-xl bg-emerald-50 ring-1 ring-emerald-200/60">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <div className="p-2 rounded-xl bg-white/20 ring-1 ring-white/10">
+                  <CreditCard className="w-5 h-5 text-white" />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-extrabold text-slate-900">₱{formatPeso(displaySummary?.paid)}</div>
+              <div className="text-2xl font-extrabold pt-2">₱{formatPeso(displaySummary?.balance)}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/90 ring-1 ring-black/5 rounded-2xl shadow-sm">
+          <Card className="bg-[#10B981] text-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden transition-all hover:-translate-y-1">
             <CardHeader className="pb-0">
               <div className="flex items-start justify-between gap-3">
-                <CardTitle className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Overdue</CardTitle>
-                <div className="p-2 rounded-xl bg-red-50 ring-1 ring-red-200/60">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
+                <CardTitle className="text-xs font-bold tracking-wide text-white/90 uppercase">Total Paid</CardTitle>
+                <div className="p-2 rounded-xl bg-white/20 ring-1 ring-white/10">
+                  <CheckCircle2 className="w-5 h-5 text-white" />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-extrabold text-red-600">₱{formatPeso(overdueAmount)}</div>
+              <div className="text-2xl font-extrabold pt-2">₱{formatPeso(displaySummary?.paid)}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-[#0D2A6B] text-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden">
+          <Card className="bg-[#EF4444] text-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden transition-all hover:-translate-y-1">
             <CardHeader className="pb-0">
               <div className="flex items-start justify-between gap-3">
-                <CardTitle className="text-xs font-semibold tracking-wide text-white/80 uppercase">Next Payment Due</CardTitle>
-                <div className="p-2 rounded-xl bg-white/15 ring-1 ring-white/20">
+                <CardTitle className="text-xs font-bold tracking-wide text-white/90 uppercase">Overdue</CardTitle>
+                <div className="p-2 rounded-xl bg-white/20 ring-1 ring-white/10">
+                  <AlertCircle className="w-5 h-5 text-white" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-extrabold pt-2">₱{formatPeso(overdueAmount)}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#0D2A6B] text-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden transition-all hover:-translate-y-1">
+            <CardHeader className="pb-0">
+              <div className="flex items-start justify-between gap-3">
+                <CardTitle className="text-xs font-bold tracking-wide text-white/90 uppercase">Next Payment Due</CardTitle>
+                <div className="p-2 rounded-xl bg-white/20 ring-1 ring-white/10">
                   <Clock className="w-5 h-5 text-white" />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-extrabold">
+              <div className="text-2xl font-extrabold pt-2">
                 {nextUnpaidBill
                   ? safeDateLabel(nextUnpaidBill?.due_date, "MMM dd, yyyy")
                   : "All clear!"}
@@ -310,11 +535,19 @@ export default function BillingClient({
                 <CardTitle className="text-lg font-bold text-slate-900">My Invoices</CardTitle>
                 <div className="text-sm text-slate-500">Review bills, download statements, and upload receipts.</div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={handleDownloadStatement} className="bg-white">
-                  <DownloadIcon className="size-4" />
-                  Download Statement
-                </Button>
+              <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+                <div className="flex bg-white border border-[#e8e2d6] shadow-sm transition hover:shadow-md hover:border-[#44291B]/30 rounded-xl overflow-hidden flex-1 md:w-[250px] items-center">
+                  <div className="pl-3 flex items-center justify-center text-slate-400">
+                    <Search className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search invoice or status"
+                    value={invoicesSearchQuery}
+                    onChange={(e) => { setInvoicesSearchQuery(e.target.value); setInvoicesPage(1); }}
+                    className="w-full px-3 py-2 bg-transparent text-sm outline-none font-sans"
+                  />
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -332,16 +565,11 @@ export default function BillingClient({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {normalizedBills.map((bill: any) => {
-                  const isActionable =
-                    bill?.status === BillingStatus.UNPAID ||
-                    bill?.status === BillingStatus.OVERDUE ||
-                    bill?.status === BillingStatus.FAILED;
-
+                {paginatedInvoices.map((bill: any) => {
                   const billId = bill?.billing_id || "Unknown";
 
                   return (
-                    <TableRow key={billId} className="hover:bg-slate-50/60">
+                    <TableRow key={billId} className="hover:bg-slate-50/60 transition-colors">
                       <TableCell className="px-4 py-4">
                         <div className="font-semibold text-slate-900">
                           {bill?.billing_period_date
@@ -357,16 +585,21 @@ export default function BillingClient({
                       <TableCell className="px-4 py-4">
                         <Badge
                           variant="outline"
-                          className={`border ${getStatusColor(bill?.status)} rounded-full px-2.5 py-1 font-semibold`}
+                          className={`border ${getStatusColor(bill?.status)} rounded-full px-2.5 py-1 font-bold`}
                         >
-                          {getStatusFormat(bill?.status)}
+                          {getStatusFormat(bill?.status).toUpperCase()}
                         </Badge>
+                        {bill?.reminded_at && (
+                          <div className="mt-2 text-[11px] font-medium text-amber-700">
+                            Reminded by admin
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="px-4 py-4">
                         <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setSelectedBill(bill)} className="bg-white">
+                          <Button variant="outline" size="sm" onClick={() => setSelectedBill(bill)} className="bg-white">
                             <FileText className="size-4" />
-                            Detail
+                            View Details
                           </Button>
                         </div>
                       </TableCell>
@@ -376,9 +609,57 @@ export default function BillingClient({
               </TableBody>
             </Table>
 
-            {normalizedBills.length === 0 && (
+            {searchedBills.length === 0 && (
               <div className="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600">
                 No billing records found.
+              </div>
+            )}
+
+            {/* PAGINATION BAR FOR INVOICES */}
+            {searchedBills.length > 0 && (
+              <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100">
+                <p className="text-sm text-slate-500">
+                  Showing <span className="font-semibold text-slate-700">{startInvoiceIndex + 1}</span> to{" "}
+                  <span className="font-semibold text-slate-700">{Math.min(startInvoiceIndex + invoicesPerPage, searchedBills.length)}</span> of{" "}
+                  <span className="font-semibold text-slate-700">{searchedBills.length}</span> results
+                </p>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setInvoicesPage(p => Math.max(1, p - 1))}
+                    disabled={safeInvoicesPage <= 1}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safeInvoicesPage <= 1
+                      ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                      }`}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  {getVisibleInvoicePages().map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setInvoicesPage(page)}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${page === safeInvoicesPage
+                        ? "bg-[#0D2A6B] text-white border-[#0D2A6B] shadow-sm"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                        }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setInvoicesPage(p => Math.min(totalInvoicesPages, p + 1))}
+                    disabled={safeInvoicesPage >= totalInvoicesPages}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safeInvoicesPage >= totalInvoicesPages
+                      ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                      }`}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             )}
           </CardContent>
@@ -387,11 +668,25 @@ export default function BillingClient({
         {/* Transaction History */}
         <Card className="bg-white/90 ring-1 ring-black/5 rounded-2xl shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-bold text-slate-900">Transaction History</CardTitle>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <CardTitle className="text-lg font-bold text-slate-900">Transaction History</CardTitle>
+              <div className="flex bg-white border border-[#e8e2d6] shadow-sm transition hover:shadow-md hover:border-[#44291B]/30 rounded-xl overflow-hidden flex-1 max-w-xs items-center">
+                <div className="pl-3 flex items-center justify-center text-slate-400">
+                  <Search className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search invoice or status"
+                  value={historySearchQuery}
+                  onChange={(e) => { setHistorySearchQuery(e.target.value); setHistoryPage(1); }}
+                  className="w-full px-3 py-2 bg-transparent text-sm outline-none font-sans"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="pt-0">
             <Separator className="mb-4" />
-            {normalizedPaymentHistory.length > 0 ? (
+            {searchedHistory.length > 0 && (
               <Table className="text-slate-700">
                 <TableHeader>
                   <TableRow className="bg-slate-50/80">
@@ -402,7 +697,7 @@ export default function BillingClient({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {normalizedPaymentHistory.map((entry: any, index: number) => {
+                  {paginatedHistory.map((entry: any, index: number) => {
                     const nestedBilling = Array.isArray(entry?.billing) ? entry.billing[0] : entry?.billing;
                     const historyAmount = nestedBilling?.amount ?? entry?.amount ?? 0;
 
@@ -414,9 +709,9 @@ export default function BillingClient({
                         <TableCell className="px-4 py-3">
                           <Badge
                             variant="outline"
-                            className={`border ${getStatusColor(entry?.status)} rounded-full px-2.5 py-1 font-semibold`}
+                            className={`border ${getStatusColor(entry?.status)} rounded-full px-2.5 py-1 font-bold`}
                           >
-                            {getStatusFormat(entry?.status)}
+                            {getStatusFormat(entry?.status).toUpperCase()}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -424,141 +719,229 @@ export default function BillingClient({
                   })}
                 </TableBody>
               </Table>
-            ) : (
-              <div className="text-sm text-slate-600">
+            )}
+
+            {searchedHistory.length === 0 && (
+              <div className="text-sm text-slate-600 mt-4">
                 No payment activity yet.
+              </div>
+            )}
+
+            {/* PAGINATION BAR FOR HISTORY */}
+            {searchedHistory.length > 0 && (
+              <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100">
+                <p className="text-sm text-slate-500">
+                  Showing <span className="font-semibold text-slate-700">{startHistoryIndex + 1}</span> to{" "}
+                  <span className="font-semibold text-slate-700">{Math.min(startHistoryIndex + historyPerPage, searchedHistory.length)}</span> of{" "}
+                  <span className="font-semibold text-slate-700">{searchedHistory.length}</span> results
+                </p>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                    disabled={safeHistoryPage <= 1}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safeHistoryPage <= 1
+                      ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                      }`}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  {getVisibleHistoryPages().map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setHistoryPage(page)}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${page === safeHistoryPage
+                        ? "bg-[#0D2A6B] text-white border-[#0D2A6B] shadow-sm"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                        }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setHistoryPage(p => Math.min(totalHistoryPages, p + 1))}
+                    disabled={safeHistoryPage >= totalHistoryPages}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition ${safeHistoryPage >= totalHistoryPages
+                      ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                      }`}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Focused Invoice + Upload */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="bg-white/90 ring-1 ring-black/5 rounded-2xl shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="inline-flex items-center rounded-lg bg-[#0D2A6B] text-white text-xs font-bold px-3 py-1">
-                    Focused invoice detail
-                  </div>
-                  <div className="mt-3 text-xl font-extrabold text-slate-900">
-                    {focusedBill ? String(focusedBill?.billing_id || "Unknown").split("-")[0] : "No invoice selected"}
-                  </div>
-                </div>
-                <Button variant="outline" onClick={handlePrint} className="bg-white">
-                  <Printer className="size-4" />
-                  Download PDF
-                </Button>
-              </div>
-            </CardHeader>
 
-            <CardContent className="pt-0">
-              <Separator className="mb-4" />
-              {focusedBill ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
+      </div>
+
+      <Dialog open={Boolean(focusedBill)} onOpenChange={(open) => { if (!open) setSelectedBill(null); }}>
+        <DialogContent className="w-[92vw] max-w-[92vw] sm:max-w-[84vw] md:max-w-[74vw] lg:max-w-[62vw] xl:max-w-[56vw] max-h-[90vh] overflow-y-auto p-0">
+          {focusedBill && (
+            <div className="px-4 py-3 animate-in slide-in-from-top-2 fade-in duration-200">
+              <DialogHeader className="sr-only">
+                <DialogTitle>
+                  Invoice Details {String(focusedBill?.billing_id || "Unknown").split("-")[0]}
+                </DialogTitle>
+                <DialogDescription>
+                  Review invoice details, charge breakdown, payment receipt, and available invoice actions.
+                </DialogDescription>
+              </DialogHeader>
+              <div className={`rounded-xl bg-[#FDFFF4] border border-slate-200 border-l-[8px] ${getStatusBorderColor(focusedBill?.status)} p-5 shadow-sm w-full max-w-none mx-auto flex flex-col gap-4`}>
+                <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-6">
                     <div>
-                      <div className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Due date</div>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Invoice ID</div>
+                      <div className="font-semibold text-slate-900">{String(focusedBill?.billing_id || "Unknown").split("-")[0]}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Billing Period</div>
+                      <div className="font-semibold text-slate-900">{focusedBill?.billing_period_date ? safeDateLabel(focusedBill.billing_period_date, "MMMM yyyy", "N/A") : "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Due Date</div>
                       <div className="font-semibold text-slate-900">{safeDateLabel(focusedBill?.due_date, "MMM dd, yyyy")}</div>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={`border ${getStatusColor(focusedBill?.status)} rounded-full px-2.5 py-1 font-semibold`}
-                    >
-                      {getStatusFormat(focusedBill?.status)}
-                    </Badge>
-                  </div>
-
-                  <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                    <div className="text-xs font-bold text-slate-600 uppercase mb-3">Breakdown</div>
-                    <div className="space-y-2">
-                      {(focusedBill?.breakdown || []).map((item: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between text-sm">
-                          <div className="text-slate-700 capitalize">{String(item.label || "").replace(/_/g, " ")}</div>
-                          <div className="font-semibold text-slate-900">₱{Math.abs(toCurrencyNumber(item?.amount)).toLocaleString()}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <Separator className="my-3" />
-                    <div className="flex items-center justify-between font-extrabold text-slate-900">
-                      <div>Total Balance Due</div>
-                      <div>₱{formatPeso(focusedBill?.summary?.total ?? focusedBill?.amount ?? 0)}</div>
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Amount</div>
+                      <div className="font-semibold text-slate-900">₱{formatPeso(focusedBill?.summary?.total ?? focusedBill?.amount ?? 0)}</div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" className="bg-white flex-1" onClick={handlePrint}>
-                      <Printer className="size-4" />
-                      Download PDF
-                    </Button>
+                  <div>
+                    <div className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white font-bold text-xs uppercase tracking-wide shadow-sm ${getStatusBadgeBg(focusedBill?.status)}`}>
+                      {focusedBill?.status === BillingStatus.PAID && <CheckCircle2 className="w-4 h-4" />}
+                      {focusedBill?.status === BillingStatus.UNPAID && <AlertCircle className="w-4 h-4" />}
+                      {focusedBill?.status === BillingStatus.OVERDUE && <AlertCircle className="w-4 h-4" />}
+                      {focusedBill?.status === BillingStatus.FAILED && <AlertCircle className="w-4 h-4" />}
+                      {(focusedBill?.status === BillingStatus.PENDING || focusedBill?.status === BillingStatus.PENDING_VERIFICATION) && <Clock className="w-4 h-4" />}
+                      <span>{getStatusFormat(focusedBill?.status)}</span>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div className="text-sm text-slate-500">Select an invoice to see details.</div>
-              )}
-            </CardContent>
-          </Card>
 
-          <Card className="bg-white/90 ring-1 ring-black/5 rounded-2xl shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-bold text-slate-900">Cash Payment - Upload Receipt</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <Separator className="mb-4" />
-              {!focusedBill ? (
-                <div className="text-sm text-slate-500">Select an invoice to upload a receipt.</div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="text-sm text-slate-600">
-                    If you paid via cash at the management office, upload a clear photo of your receipt for verification.
+                <Separator />
+
+                {focusedBill?.reminded_at && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Reminded by admin on {safeDateLabel(focusedBill.reminded_at, "MMM dd, yyyy HH:mm", "N/A")}.
+                  </div>
+                )}
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Charge Breakdown</div>
+                  {getInvoiceLineItems(focusedBill).length > 0 ? (
+                    getInvoiceLineItems(focusedBill).map((item: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between text-sm">
+                        <div className="text-slate-600 capitalize">{String(item.label || "").replace(/_/g, " ")}</div>
+                        <div className="font-medium text-slate-900">₱{Math.abs(toCurrencyNumber(item?.amount)).toLocaleString()}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-slate-500">No line items found for this invoice.</div>
+                  )}
+                  <Separator className="my-3" />
+                  <div className="flex items-center justify-between font-extrabold text-slate-900">
+                    <div>Total Balance Due</div>
+                    <div className="text-lg">₱{formatPeso(focusedBill?.summary?.total ?? focusedBill?.amount ?? 0)}</div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
+                    <span>Payment Receipt</span>
                   </div>
 
-                  {(
-                    focusedBill?.status === BillingStatus.UNPAID ||
-                    focusedBill?.status === BillingStatus.OVERDUE ||
-                    focusedBill?.status === BillingStatus.FAILED
-                  ) ? (
-                    <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
-                      <div className="flex flex-col gap-3">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                          className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white file:text-slate-700 hover:file:bg-slate-50 transition"
-                        />
-                        <Button
-                          disabled={!uploadFile || isUploading || USE_DUMMY_BILLING_DATA}
-                          onClick={() => handleUploadPayment(focusedBill?.billing_id)}
-                          className="w-full bg-[#2F4F1A] hover:bg-[#284315] text-white h-10"
-                        >
-                          {USE_DUMMY_BILLING_DATA ? "Disabled in dummy mode" : isUploading ? "Uploading..." : (
-                            <span className="inline-flex items-center gap-2">
-                              <UploadCloud className="size-4" /> Submit Receipt
-                            </span>
-                          )}
-                        </Button>
-                        {uploadError && <div className="text-sm text-red-600">{uploadError}</div>}
+                  {isLoadingReceiptPreview ? (
+                    <div className="text-sm text-slate-500 flex items-center gap-2 py-2">
+                      <Clock className="w-4 h-4 animate-spin" /> Loading receipt...
+                    </div>
+                  ) : receiptPreviewUrl ? (
+                    <div className="flex flex-col sm:flex-row gap-3 items-start bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0">
+                        <img src={receiptPreviewUrl} alt="Receipt preview" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="text-sm text-slate-600">
+                          {focusedBill?.status !== BillingStatus.PAID && focusedBill?.status !== BillingStatus.PAID_LATE
+                            ? "A receipt has been uploaded for this invoice and is currently under review by the management."
+                            : "A receipt has been uploaded and this invoice is already approved/paid by the management."}
+                        </div>
+                        {focusedBill?.status !== BillingStatus.PAID && focusedBill?.status !== BillingStatus.PAID_LATE && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelReceipt}
+                            disabled={isCancellingReceipt}
+                            className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                          >
+                            {isCancellingReceipt ? "Cancelling..." : "Cancel Upload"}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ) : (
-                    <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600">
-                      This invoice is <span className="font-semibold">{getStatusFormat(focusedBill?.status)}</span>. Receipt upload is only available for unpaid/overdue invoices.
-                    </div>
+                    (focusedBill?.status === BillingStatus.UNPAID || focusedBill?.status === BillingStatus.OVERDUE || focusedBill?.status === BillingStatus.FAILED) ? (
+                      <div className="rounded-xl border border-dashed border-[#769C51]/40 bg-[#769C51]/5 p-4">
+                        <div className="text-sm text-slate-600 mb-3">
+                          If you paid via cash at the management office, upload a clear photo of your receipt for verification.
+                        </div>
+                        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                            className="flex-1 min-w-0 block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white file:text-slate-700 hover:file:bg-slate-50 transition cursor-pointer shadow-sm border border-slate-200"
+                          />
+                          <Button
+                            disabled={!uploadFile || isUploading || USE_DUMMY_BILLING_DATA}
+                            onClick={() => handleUploadPayment(focusedBill?.billing_id || "")}
+                            className="w-full sm:w-auto bg-[#769C51] hover:bg-[#608240] text-white"
+                          >
+                            {USE_DUMMY_BILLING_DATA ? "Disabled" : isUploading ? "Uploading..." : (
+                              <>
+                                <UploadCloud className="size-4 mr-2" /> Submit
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        {uploadError && <div className="mt-2 text-sm text-red-600">{uploadError}</div>}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500 italic py-2">
+                        Receipt upload is not required for this invoice.
+                      </div>
+                    )
                   )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+
+                <div className="pt-4 flex justify-end">
+                  <Button variant="outline" size="sm" onClick={handlePrint} className="bg-white">
+                    <Printer className="size-4 mr-2" />
+                    Download Invoice
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Printable View (Hidden in normal screen, block in print) */}
-      {selectedBill && (
-        <div id="invoice-print-root" className="hidden print:block font-sans text-black bg-white p-8 absolute inset-0 text-sm">
-          <div className="flex justify-between items-end border-b-2 border-slate-900 pb-6 mb-8">
+      {printMode === "bill" && focusedBill && (
+        <div id="invoice-print-root" className="hidden print:block font-sans text-black bg-white p-4 text-sm w-full">
+          <div className="flex justify-between items-end border-b-2 border-slate-900 pb-3 mb-4">
             <div>
               <h1 className="text-4xl font-extrabold text-slate-900 uppercase tracking-tighter">INVOICE</h1>
-              <p className="text-slate-500 mt-1 font-mono">#{selectedBill?.billing_id || "N/A"}</p>
+              <p className="text-slate-500 mt-1 font-mono">#{focusedBill?.billing_id || "N/A"}</p>
             </div>
             <div className="text-right">
               <p className="font-bold text-slate-800 text-xl">ELbnb Housing</p>
@@ -566,21 +949,21 @@ export default function BillingClient({
             </div>
           </div>
 
-          <div className="flex justify-between mb-10">
+          <div className="flex justify-between mb-5">
             <div>
               <p className="text-slate-500 font-bold mb-1">BILLED TO:</p>
-              <p className="font-semibold text-lg">{selectedBill?.accommodation_assignment?.users ? `${selectedBill.accommodation_assignment.users.first_name} ${selectedBill.accommodation_assignment.users.last_name}` : "Student Resident"}</p>
+              <p className="font-semibold text-lg">{focusedBill?.accommodation_assignment?.users ? `${focusedBill.accommodation_assignment.users.first_name} ${focusedBill.accommodation_assignment.users.last_name}` : "Student Resident"}</p>
               <p className="text-slate-600">ID: {userId}</p>
             </div>
             <div className="text-right">
               <p className="text-slate-500 font-bold mb-1">DETAILS:</p>
-              <p><span className="font-semibold">Billed Date:</span> {safeDateLabel(selectedBill?.created_at, "MM/dd/yyyy")}</p>
-              <p><span className="font-semibold">Due Date:</span> {safeDateLabel(selectedBill?.due_date, "MM/dd/yyyy")}</p>
-              <p className="mt-2"><span className="font-bold">Status:</span> {getStatusFormat(selectedBill?.status).toUpperCase()}</p>
+              <p><span className="font-semibold">Billed Date:</span> {safeDateLabel(focusedBill?.created_at, "MM/dd/yyyy")}</p>
+              <p><span className="font-semibold">Due Date:</span> {safeDateLabel(focusedBill?.due_date, "MM/dd/yyyy")}</p>
+              <p className="mt-2"><span className="font-bold">Status:</span> {getStatusFormat(focusedBill?.status).toUpperCase()}</p>
             </div>
           </div>
 
-          <table className="w-full text-left border-collapse mb-10">
+          <table className="w-full text-left border-collapse mb-5">
             <thead>
               <tr className="border-b border-slate-300">
                 <th className="py-3 font-bold uppercase text-xs text-slate-500 w-2/3">Item Description</th>
@@ -588,16 +971,19 @@ export default function BillingClient({
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-slate-100">
-                <td className="py-4 font-semibold">{selectedBill?.billing_period_date ? `Invoice for ${safeDateLabel(selectedBill.billing_period_date, "MMMM yyyy")}` : "Student Invoice"} - Base</td>
-                <td className="py-4 text-right font-medium">₱{formatPeso(selectedBill?.amount)}</td>
-              </tr>
-              {selectedBill?.breakdown?.map((item: any, i: number) => (
-                <tr key={i} className="border-b border-slate-100">
-                  <td className="py-3 capitalize text-slate-700 pl-4">↳ {item.label.replace(/_/g, " ")}</td>
-                  <td className="py-3 text-right">₱{formatPeso(item?.amount)}</td>
+              {getInvoiceLineItems(focusedBill).length > 0 ? (
+                getInvoiceLineItems(focusedBill).map((item: any, i: number) => (
+                  <tr key={i} className="border-b border-slate-100">
+                    <td className="py-3 capitalize text-slate-700">{String(item.label || "").replace(/_/g, " ")}</td>
+                    <td className="py-3 text-right">₱{formatPeso(item?.amount)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr className="border-b border-slate-100">
+                  <td className="py-4 font-semibold">Total Amount</td>
+                  <td className="py-4 text-right font-medium">₱{formatPeso(focusedBill?.amount)}</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
 
@@ -605,12 +991,99 @@ export default function BillingClient({
             <div className="w-1/2">
               <div className="border-t-2 border-slate-900 pt-4 flex justify-between">
                 <span className="text-lg font-bold">TOTAL DUE</span>
-                <span className="text-2xl font-black">₱{formatPeso(selectedBill?.summary?.total ?? selectedBill?.amount ?? 0)}</span>
+                <span className="text-2xl font-black">₱{formatPeso(focusedBill?.summary?.total ?? focusedBill?.amount ?? 0)}</span>
               </div>
             </div>
           </div>
 
-          <div className="mt-20 border-t border-slate-300 pt-4 text-center text-slate-400 text-xs">
+          <div className="mt-8 border-t border-slate-300 pt-3 text-center text-slate-400 text-xs">
+            This is an electronically generated statement. No physical signature is required.
+          </div>
+        </div>
+      )}
+
+      {printMode === "statement" && (
+        <div id="invoice-print-root" className="hidden print:block font-sans text-black bg-white p-4 text-sm w-full">
+          <div className="flex justify-between items-end border-b-2 border-slate-900 pb-3 mb-4">
+            <div>
+              <h1 className="text-4xl font-extrabold text-slate-900 uppercase tracking-tighter">INVOICE HISTORY</h1>
+              <p className="text-slate-500 mt-1">All billing records for this account</p>
+            </div>
+            <div className="text-right">
+              <p className="font-bold text-slate-800 text-xl">ELbnb Housing</p>
+              <p className="text-slate-500">Student Residence Account</p>
+            </div>
+          </div>
+
+          <div className="flex justify-between mb-5">
+            <div>
+              <p className="text-slate-500 font-bold mb-1">BILLED TO:</p>
+              <p className="font-semibold text-lg">{normalizedBills[0]?.accommodation_assignment?.users ? `${normalizedBills[0].accommodation_assignment.users.first_name} ${normalizedBills[0].accommodation_assignment.users.last_name}` : "Student Resident"}</p>
+              <p className="text-slate-600">ID: {userId}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-slate-500 font-bold mb-1">SUMMARY:</p>
+              <p><span className="font-semibold">Invoices:</span> {normalizedBills.length}</p>
+              <p><span className="font-semibold">Paid:</span> ₱{formatPeso(displaySummary?.paid)}</p>
+              <p><span className="font-semibold">Balance:</span> ₱{formatPeso(displaySummary?.balance)}</p>
+            </div>
+          </div>
+
+          <table className="w-full text-left border-collapse mb-5">
+            <thead>
+              <tr className="border-b border-slate-300">
+                <th className="py-3 font-bold uppercase text-xs text-slate-500">Invoice</th>
+                <th className="py-3 font-bold uppercase text-xs text-slate-500">Period</th>
+                <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Amount</th>
+                <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Due Date</th>
+                <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {normalizedBills.map((bill: any) => (
+                <tr key={bill?.billing_id || bill?.created_at} className="border-b border-slate-100">
+                  <td className="py-3 font-mono text-xs">{String(bill?.billing_id || "N/A").split("-")[0]}</td>
+                  <td className="py-3 font-semibold">{bill?.billing_period_date ? safeDateLabel(bill.billing_period_date, "MMMM yyyy") : "Student Invoice"}</td>
+                  <td className="py-3 text-right">₱{formatPeso(bill?.amount)}</td>
+                  <td className="py-3 text-right">{safeDateLabel(bill?.due_date, "MM/dd/yyyy")}</td>
+                  <td className="py-3 text-right">{getStatusFormat(bill?.status).toUpperCase()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {normalizedPaymentHistory.length > 0 && (
+            <>
+              <div className="mb-3 font-bold uppercase text-xs text-slate-500">Payment History</div>
+              <table className="w-full text-left border-collapse mb-5">
+                <thead>
+                  <tr className="border-b border-slate-300">
+                    <th className="py-3 font-bold uppercase text-xs text-slate-500">Date</th>
+                    <th className="py-3 font-bold uppercase text-xs text-slate-500">Invoice</th>
+                    <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Amount</th>
+                    <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {normalizedPaymentHistory.map((entry: any, index: number) => {
+                    const nestedBilling = Array.isArray(entry?.billing) ? entry.billing[0] : entry?.billing;
+                    const historyAmount = nestedBilling?.amount ?? entry?.amount ?? 0;
+
+                    return (
+                      <tr key={`${entry?.billing_id || "unknown"}-${entry?.created_at || index}`} className="border-b border-slate-100">
+                        <td className="py-3">{safeDateLabel(entry?.created_at, "MM/dd/yyyy HH:mm")}</td>
+                        <td className="py-3 font-mono text-xs">{String(entry?.billing_id || "N/A").split("-")[0]}</td>
+                        <td className="py-3 text-right">₱{formatPeso(historyAmount)}</td>
+                        <td className="py-3 text-right">{getStatusFormat(entry?.status).toUpperCase()}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </>
+          )}
+
+          <div className="mt-8 border-t border-slate-300 pt-3 text-center text-slate-400 text-xs">
             This is an electronically generated statement. No physical signature is required.
           </div>
         </div>
@@ -618,3 +1091,4 @@ export default function BillingClient({
     </>
   );
 }
+

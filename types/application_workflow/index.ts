@@ -37,6 +37,7 @@ export interface AccommodationApplication {
     accommodataion_id: string;
     name: string;
   };
+  file: string;
 }
 
 export interface TransitionApplicationStatus {

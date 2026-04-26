@@ -23,22 +23,20 @@ export default function Modal({
   children,
 }: ModalProps) {
   return (
-
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto bg-[#FDFFF4] text-[#44291B]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-[#44291B]">{title}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-[#44291B]">
+            {title}
+          </DialogTitle>
           {description && (
-            <div className="text-sm text-[#44291B]">
-              {description}
-            </div>
+            <div className="text-sm text-[#44291B]">{description}</div>
           )}
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          {children}
-        </div>
+        <div className="grid gap-4 py-4">{children}</div>
       </DialogContent>
     </Dialog>
   );
 }
+

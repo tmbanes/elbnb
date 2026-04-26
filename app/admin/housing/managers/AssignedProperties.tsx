@@ -30,40 +30,42 @@ function PropertyCard({
   router: ReturnType<typeof useRouter>;
 }) {
   return (
-    <Card 
-      onClick={() => router.push(`/admin/housing?id=${property.accommodation_id}`)}
-      className="shadow-sm bg-[#FDFFF4] transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-md cursor-default"
+    <Card
+      onClick={() => router.push(`/admin/housing?id=${property.accommodation_id}&from=managers`)}
+      className="shadow-sm bg-[#FDFFF4] transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-md cursor-default overflow-hidden" // Added overflow-hidden
       style={{ borderTop: `6px solid ${isDorm ? "#5591AB" : "#EB8A0B"}` }}
     >
-
       <CardContent className="p-4">
-        {/* Top Section */}
-        <div className="flex items-start justify-between gap-2 mb-4">
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold text-[#44291B] leading-tight group-hover:text-[#264384] transition-colors">
+
+        <div className="flex items-start justify-between gap-2 mb-4 min-w-0">
+
+
+          <div className="space-y-1 flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-[#44291B] leading-tight group-hover:text-[#264384] transition-colors truncate">
               {property.name}
             </h3>
-            <div className="flex items-start gap-1 text-[11px] text-[#8c8b82]">
-              <MapPin className="w-3 h-3 shrink-0 mt-0.5" /> 
-              <span className="leading-normal break-words">
+
+            {/* Location */}
+            <div className="flex items-start gap-1 text-[11px] text-[#8c8b82] min-w-0">
+              <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
+              <span className="truncate block" title={property.location}>
                 {property.location}
               </span>
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-1.5">
-            <Badge 
-              variant="outline" 
-              className={`text-[9px] uppercase tracking-wider h-5 px-2 font-bold ${
-                isDorm 
-                  ? "bg-[#ebf2f4] text-[#5591AB] border-[#d1e3e8]" 
-                  : "bg-[#fbecd7] text-[#EB8A0B] border-[#f5dab8]"
-              }`}
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <Badge
+              variant="outline"
+              className={`text-[9px] uppercase tracking-wider h-5 px-2 font-bold ${isDorm
+                ? "bg-[#ebf2f4] text-[#5591AB] border-[#d1e3e8]"
+                : "bg-[#fbecd7] text-[#EB8A0B] border-[#f5dab8]"
+                }`}
             >
               {isDorm ? "Dormitory" : "Rental"}
             </Badge>
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className="text-[9px] uppercase tracking-wider h-5 px-2 font-bold bg-[#F0F6E9] text-[#78A24C] border-[#d8e7c8]"
             >
               {property.accommodation_status}
@@ -71,23 +73,27 @@ function PropertyCard({
           </div>
         </div>
 
-        {/* Occupancy */}
         <div className="space-y-2 pt-5 border-t border-[#e2e4c0]">
+
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-[#264384]">
               Occupancy
             </span>
+
             <span className="text-[11px] font-medium text-[#44291B]">
               {occupied} / {totalCap}
             </span>
           </div>
-          
+
+
+
           <div className="flex items-center gap-3">
-            <Progress 
-              value={pct} 
-              className="h-1.5 bg-[#F6F8D5]" 
+            <Progress
+              value={pct}
+              className="h-1.5 bg-[#F6F8D5]"
             />
             <ChevronRight className="w-4 h-4 text-[#264384] opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+
           </div>
         </div>
       </CardContent>
@@ -138,7 +144,7 @@ export default function AssignedProperties({ managerId }: AssignedPropertiesProp
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-[#264384]" />
+          <div className="w-8 h-8 border-4 border-[#264384] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : error ? (
         <div className="p-4 rounded-lg bg-red-50 border border-red-100 text-sm text-[#DF3538]">

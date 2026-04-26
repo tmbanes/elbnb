@@ -52,31 +52,31 @@ function ApplicationFormContent() {
   const checkOut = derivedCheckOut()
 
   // AUTH CHECK — must be logged in to access this page
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch('/api/auth')
-        if (!res.ok) throw new Error('Auth failed')
-        const data = await res.json()
-        const user = data.user
+  // useEffect(() => {
+  //   const fetchUser = async () => {
+  //     try {
+  //       const res = await fetch('/api/auth')
+  //       if (!res.ok) throw new Error('Auth failed')
+  //       const data = await res.json()
+  //       const user = data.user
 
-        if (!user?.user_id) {
-          router.push('/login')
-          return
-        }
+  //       if (!user?.user_id) {
+  //         router.push('/login')
+  //         return
+  //       }
 
-        setUserId(user.user_id)
-        setUserRole(user.role)
-      } catch (err) {
-        console.error(err)
-        router.push('/login')
-      } finally {
-        setIsLoading(false)
-      }
-    }
+  //       setUserId(user.user_id)
+  //       setUserRole(user.role)
+  //     } catch (err) {
+  //       console.error(err)
+  //       router.push('/login')
+  //     } finally {
+  //       setIsLoading(false)
+  //     }
+  //   }
 
-    fetchUser()
-  }, [router])
+  //   fetchUser()
+  // }, [router])
 
   // FETCH ACCOMMODATION + UNIT details for display
   useEffect(() => {
@@ -84,7 +84,7 @@ function ApplicationFormContent() {
 
     const fetchAccommodation = async () => {
       try {
-        const res = await fetch('/api/dashboard/tiles?type=accommodations')
+        const res = await fetch('/api/shared/dashboard/tiles?type=accommodations')
         if (!res.ok) throw new Error('Failed to fetch accommodations')
 
         const data: Accommodation[] = await res.json()
@@ -93,7 +93,7 @@ function ApplicationFormContent() {
 
         if (unitIdFromQuery) {
           const resUnit = await fetch(
-            `/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`
+            `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`
           )
           if (!resUnit.ok) throw new Error('Failed to fetch units')
 
@@ -146,11 +146,12 @@ function ApplicationFormContent() {
         : 0,
       application_status: 'pending_dorm_manager' as ApplicationStatus,
       user_id: userId,
-      unit_id: unitIdFromQuery, // '' when absent — handled in service
+      unit_id: unitIdFromQuery,
+      file: ""
     }
 
     try {
-      const response = await fetch('/api/applications/create_application', {
+      const response = await fetch('/api/student/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

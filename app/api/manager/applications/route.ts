@@ -1,7 +1,9 @@
+import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createActivityLog, getCurrentUserRole } from "@/services/activity_log/server";
 
-export async function GET(_req: NextRequest) {
+export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 
@@ -36,7 +38,7 @@ export async function GET(_req: NextRequest) {
       .single();
 
     if (managerError) {
-      console.error("REAL SUPABASE ERROR:", managerError);
+      console.error("DEBUG: managerError:", managerError);
     }
 
     if (managerError || !accommodationData) {
@@ -47,6 +49,7 @@ export async function GET(_req: NextRequest) {
     }
 
     const accommodation = accommodationData?.accommodation_id;
+    console.log(`accom id : ${accommodation}`);
 
     // Fetch all applications for this accommodation that are pending dorm manager review
     const { data: applications, error: appError } = await supabase
@@ -54,7 +57,6 @@ export async function GET(_req: NextRequest) {
       .select(
         `
         application_id,
-        preferred_accommodation_id,
         preferred_accommodation_id,
         preferred_unit_type,
         date_submitted,
@@ -64,6 +66,7 @@ export async function GET(_req: NextRequest) {
         number_of_companions,
         application_status,
         user_id,
+        file,
         users (
           first_name,
           last_name,
@@ -83,7 +86,7 @@ export async function GET(_req: NextRequest) {
       .eq("accommodation_id", accommodation);
 
     if (unitsError) throw new Error(unitsError.message);
-
+      console.log(applications)
     return NextResponse.json({
       accommodation: accommodationData,
       applications: applications ?? [],
@@ -94,9 +97,9 @@ export async function GET(_req: NextRequest) {
       e instanceof Error ? e.message : "Failed to fetch applications.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withRole(['dormitory_manager', 'housing_admin'], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 
@@ -167,10 +170,33 @@ export async function PATCH(req: NextRequest) {
 
     if (error) throw new Error(error.message);
 
+    // Log the action
+    const actor = await getCurrentUserRole();
+    if (actor) {
+      const { data: appData } = await supabase
+        .from("accommodation_application")
+        .select("user_id, users(first_name, last_name)")
+        .eq("application_id", application_id)
+        .single();
+      
+      const applicantName = appData?.users 
+        ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
+        : "Unknown Applicant";
+
+      await createActivityLog({
+        p_user_id: actor.userId,
+        p_action_type: action === "forward" ? "screen_application" : "reject_application",
+        p_log_desc: `${actor.first_name} ${action === "forward" ? "screened" : "rejected"} application for ${applicantName}`,
+        p_entity_type: "application",
+        p_entity_id: application_id,
+        p_user_role: actor.role,
+      });
+    }
+
     return NextResponse.json({ success: true, new_status: newStatus });
   } catch (e) {
     const message =
       e instanceof Error ? e.message : "Failed to update application.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});

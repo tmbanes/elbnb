@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server-client"
 import { redirect } from "next/navigation"
-import { studentProfileService } from "@/services/student_profile"
+import { userProfileService } from "@/services/user_profile"
+import { ensureInitialInvoicesForUser } from "@/services/user-services"
 import ApplicationsPage from "./ApplicationsPage";
 
 export default async function AccommodationHistoryPage() {
@@ -12,8 +13,11 @@ export default async function AccommodationHistoryPage() {
     redirect("/onboarding");
   }
 
+  // Keep billing invoices in sync for pending_payment applications.
+  await ensureInitialInvoicesForUser(user.id);
+
   // Fetch data from service layer
-  const { data: records, error } = await studentProfileService.getAccommodationHistory(user.id);
+  const { data: records, error } = await userProfileService.getAccommodationHistory(user.id);
 
   if (error) {
     return (
@@ -30,7 +34,7 @@ export default async function AccommodationHistoryPage() {
       {/* Container for the Header. 
           The ApplicationsPage has its own internal container for the cards 
       */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
         <header className="mb-2">
           <h1 className="text-4xl font-bold tracking-tight" style={{ color: '#44291B' }}>
             Accommodation Overview

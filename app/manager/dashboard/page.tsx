@@ -1,28 +1,30 @@
-// app\manager\dashboard\page.tsx
+// app/manager/dashboard/page.tsx
 
-"use client";
-
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { useState } from "react";
+import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { userProfileService } from "@/services/user_profile";
+import { redirect } from "next/navigation";
 import ManagerDashboardUI from "./manager-dashboard-ui";
 
-export default function DormitoryManagerDashboardPage() {
-  const supabase = getSupabaseBrowserClient();
-  const [isExiting, setIsExiting] = useState(false);
+export default async function DormitoryManagerDashboardPage() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const handleLogout = async () => {
-    setIsExiting(true);
-    await supabase.auth.signOut();
+  if (!user) {
+    redirect("/");
+  }
 
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 300);
-  };
+  // Fetch manager profile and notifications
+  const [profileRes, notificationsRes] = await Promise.all([
+    userProfileService.getProfile(user.id),
+    userProfileService.getNotifications(user.id)
+  ]);
 
   return (
     <ManagerDashboardUI
-      onLogout={handleLogout}
-      isLoggingOut={isExiting}
+      profile={profileRes.data}
+      notifications={notificationsRes.data || []}
     />
   );
 }

@@ -310,12 +310,12 @@ export default function EditUnitModal({
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleSubmit} 
+          <Button
+            onClick={handleSubmit}
             disabled={loading}
-            className="bg-[#264384] hover:bg-[#5273BC] text-white"
-        >
-            {loading ? "Updating..." : "Update Unit"}
+            className="bg-[#78A24C] hover:!bg-[#E7FAD3] text-white hover:!text-[#78A24C]"
+          >
+            {loading ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>

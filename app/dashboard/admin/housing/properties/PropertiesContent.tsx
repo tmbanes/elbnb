@@ -149,8 +149,6 @@ export default function PropertiesContent() {
   }
 
   async function handleDeleteUnit(unitId: string) {
-    if (!confirm("Are you sure you want to remove this unit?")) return;
-
     const res = await fetch(`/api/admin/housing/units?id=${unitId}`, {
       method: "DELETE",
     });
@@ -247,6 +245,7 @@ export default function PropertiesContent() {
   ) : (
     <>
       <PropertiesList
+        properties={properties}
         filtered={filtered}
         tableData={tableData}
         typeFilter={typeFilter}

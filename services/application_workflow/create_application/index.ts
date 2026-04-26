@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 import { AccommodationApplication, ApplicationStatus, CancellableStatus } from '@/types/application_workflow'
+import { createActivityLog, getCurrentUserRole } from '@/services/activity_log/server'
 
 // Input type for creation: server generates application_id; accommodation_assignment is a join
 type CreateApplicationInput = Omit<AccommodationApplication, 'application_id' | 'accommodation_assignment'>
@@ -93,8 +94,63 @@ export class CreateApplicationService {
       throw new Error('The application period for this accommodation has ended.')
     }
 
-    // GUARD 4: if user is currently assigned to this unit
-    // TO DO: GUARD 4
+    // GUARD 4: check if user is already actively assigned
+    // const { data: assignment, error: assignmentError } = await supabase
+    //   .from('accommodation_assignment')
+    //   .select('assignment_id')
+    //   .eq('user_id', data.user_id)
+    //   .eq('assignment_status', 'active')
+    //   .limit(1)
+
+    // if (assignmentError) throw new Error(`Failed to fetch assignment: ${assignmentError.message}`)
+
+    // // Only block if they actually have an active assignment
+    // if (assignment) {
+    //   throw new Error('You are already assigned to a unit.')
+    // }
+
+    // GUARD 5: user cannot apply to more than 3 dormitory-type accommodations
+    const { data: accommodationType, error: typeError } = await supabase
+      .from('accommodation')
+      .select('accommodation_type')
+      .eq('accommodation_id', data.preferred_accommodation_id)
+      .single()
+
+    if (typeError || !accommodationType) throw new Error('Accommodation not found.')
+
+    const { data: applications, error: applicationsError } = await supabase
+      .from('accommodation_application')
+      .select('application_id, preferred_accommodation_id, accommodation!inner(accommodation_type)')
+      .eq('user_id', data.user_id)
+      .eq('accommodation.accommodation_type', accommodationType.accommodation_type)
+      .in('application_status', CANCELLABLE_STATUSES)
+
+    if (applicationsError) throw new Error('Failed to fetch applications.')
+
+    if (applications.length >= 3) {
+      throw new Error('You cannot apply to more than 3 dormitory-type accommodations.')
+    }
+
+    // GUARD 6: check if the accomm_sex of the accommodation matches the sex of the user
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('sex')
+      .eq('user_id', data.user_id)
+      .single()
+
+    if (userError || !user) throw new Error('User not found.')
+
+    const { data: accommodationSex, error: accommodationSexError } = await supabase
+      .from('accommodation')
+      .select('accomm_sex')
+      .eq('accommodation_id', data.preferred_accommodation_id)
+      .single()
+
+    if (accommodationSexError || !accommodationSex) throw new Error('Accommodation not found.')
+
+    if (accommodationSex.accomm_sex !== 'COED' && accommodationSex.accomm_sex !== user.sex) {
+      throw new Error('The sex of the accommodation does not match the sex of the user.')
+    }
 
     //////// SERVER CONTROLLING FIELDS ////////////////
     const payload = {
@@ -102,6 +158,7 @@ export class CreateApplicationService {
       unit_id: unitId,                                // normalised null
       date_submitted: new Date().toISOString(),       // authoritative timestamp
       application_status: INITIAL_SUBMIT_APPLICATION_STATUS,
+      file: data.file ?? null
     }
 
     const { data: application, error } = await supabase
@@ -112,6 +169,19 @@ export class CreateApplicationService {
 
     if (error) {
       throw new Error(`Failed to create application: ${error.message}`)
+    }
+
+    // Log the submission
+    const actor = await getCurrentUserRole()
+    if (actor) {
+      await createActivityLog({
+        p_user_id: actor.userId,
+        p_action_type: "submit_application",
+        p_log_desc: `${actor.first_name} submitted a new application`,
+        p_entity_type: "application",
+        p_entity_id: application.application_id,
+        p_user_role: actor.role,
+      })
     }
 
     return application

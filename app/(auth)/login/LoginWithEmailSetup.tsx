@@ -42,20 +42,18 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
     password: "",
   });
 
-  // useEffect(() => {
-  //   const { data: listener } = supabase.auth.onAuthStateChange(
-  //     (_event, session) => {
-  //       setCurrentUser(session?.user ?? null);
-  //     }
-  //   );
-  //   return () => listener?.subscription.unsubscribe();
-  // }, [supabase]);
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser((session?.user as unknown as User) ?? null);
+    });
+    return () => listener?.subscription.unsubscribe();
+  }, [supabase]);
 
-  // useEffect(() => {
-  //   if (currentUser) {
-  //     router.push("/");
-  //   }
-  // }, [currentUser]);
+  useEffect(() => {
+    if (currentUser) {
+      router.push("/");
+    }
+  }, [currentUser, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 import { AccommodationAssignment, AssignmentStatus } from '@/types/assignment_workflow'
+import { AccommodationHistory } from '@/types/accomodation/accomodationHistory'
 
 // Statuses that can be terminated by the user (active → terminated)
 const TERMINATABLE_STATUSES: AssignmentStatus[] = ['active']
@@ -27,6 +28,35 @@ export class AssignmentService {
     }
     console.log("Fetched Assignments from Service: " + data)
     return data || []
+  }
+
+  /** Fetch the Accommodation History of a User including all complete details of the Assignment, Accommodation, and Unit */
+  static async getAccommodationHistoryByUser(
+    userId: string
+  ): Promise<AccommodationHistory[]> {
+    const supabase = await createSupabaseServerClient();
+
+    const { data, error } = await supabase
+      .from("accommodation_assignment")
+      .select(`
+        *,
+        accommodation:accommodation_id (
+          *
+        ),
+        unit:unit_id (
+          *
+        )
+      `)
+      .eq("user_id", userId)
+      .order("move_in_date", { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch accommodation history: ${error.message}`);
+    }
+
+    console.log("Fetched Accommodation History from Service:", data);
+
+    return (data || []) as AccommodationHistory[];
   }
 
   /** Fetch a single assignment by ID. */

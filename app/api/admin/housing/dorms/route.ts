@@ -1,30 +1,48 @@
+import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 // GET /api/admin/housing/dorms          → all dorms
 // GET /api/admin/housing/dorms?id=123   → single dorm with units + manager
-export async function GET(req: NextRequest) {
-
-  // TO DO: Protect this API route. Make this only accessible to admin (if admin lang talaga pwede maka-access nito).
-  // const auth = await requireApiRole(['housing_admin']);
-
-  // if ("error" in auth) {
-  //   return NextResponse.json(
-  //     { error: auth.error },
-  //     { status: auth.status }
-  //   );
-  // }
-
-  // const user = auth.user;
+export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
 
+  //replace custom function to query
   if (id) {
-    const { data, error } = await supabaseAdmin.rpc("get_dormitory_details", {
-      p_accommodation_id: id,
-    });
+    const { data, error } = await supabaseAdmin
+      .from("accommodation")
+      .select(
+        `
+        accommodation_id, name, location,
+        accommodation_type, accommodation_status, total_capacity,
+        manager_id,
+        dormitory_manager!accommodation_manager_id_fkey (
+          employee_id,
+          users (first_name, last_name, email)
+        ),
+        dormitory (
+          number_of_semestersAllowed,
+          curfew_time,
+          allowed_programs,
+          term_type,
+          separate_by_gender
+        ),
+        unit (
+          unit_id, unit_number, unit_type,
+          max_occupancy, current_occupancy,
+          rental_fee, unit_status
+        )
+      `,
+      )
+      .eq("accommodation_id", id)
+      .single();
+
     if (error)
       return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data);
+
+    // Rename 'unit' to 'units' for consistency
+    const response = data && data.unit ? { ...data, units: data.unit } : data;
+    return NextResponse.json(response);
   }
 
   const { data, error } = await supabaseAdmin
@@ -44,6 +62,9 @@ export async function GET(req: NextRequest) {
         allowed_programs,
         term_type,
         separate_by_gender
+      ),
+      unit (
+        current_occupancy
       )
     `,
     )
@@ -51,11 +72,17 @@ export async function GET(req: NextRequest) {
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
-}
+
+  const response = data?.map((item: any) => ({
+    ...item,
+    units: item.unit || []
+  }));
+
+  return NextResponse.json(response);
+});
 
 // POST /api/admin/housing/dorms
-export async function POST(req: NextRequest) {
+export const POST = withRole(['housing_admin'], async (req: NextRequest) => {
   const body = await req.json();
 
   const { data, error } = await supabaseAdmin.rpc("create_dormitory_full", {
@@ -73,11 +100,11 @@ export async function POST(req: NextRequest) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
-}
+});
 
 // PATCH /api/admin/housing/dorms?id=123
 // Body: { accommodationFields: {...}, dormitoryFields: {...} }
-export async function PATCH(req: NextRequest) {
+export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
@@ -102,10 +129,10 @@ export async function PATCH(req: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
-}
+});
 
 // DELETE /api/admin/housing/dorms?id=123
-export async function DELETE(req: NextRequest) {
+export const DELETE = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
@@ -116,4 +143,4 @@ export async function DELETE(req: NextRequest) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
-}
+});
