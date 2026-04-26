@@ -367,7 +367,7 @@ not yet tested
           conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}),action_type.not.in.(submit_application,cancel_application,update_user))`);
         }
         if (assignmentIds.length > 0) {
-          conditions.push(`and(entity_type.eq.assignment,entity_id.in.(${assignmentIds.join(',')}),action_type.not.in.(create_assignment,submit_application,cancel_application,update_user))`);
+          conditions.push(`and(entity_type.eq.assignment,entity_id.in.(${assignmentIds.join(',')}),action_type.not.in.(submit_application,cancel_application,update_user,create_assignment))`);
         }
         if (billIds.length > 0) {
           conditions.push(`and(entity_type.eq.billing,entity_id.in.(${billIds.join(',')}),action_type.not.in.(mark_billing_paid))`);
@@ -491,7 +491,7 @@ not yet tested
               message = `A new billing statement has been sent for your stay at ${accomName}.`;
               link = `/${role}/billing`;
               break;
-            case 'create_assignment':
+            case 'update_assignment':
               title = "New Assignment";
               message = `You have been assigned to ${accomName}! Check your dashboard for details.`;
               link = `/${role}/dashboard`;
