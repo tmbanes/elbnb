@@ -524,9 +524,11 @@ export default function ReviewApplication({
               </Button>
 
               {!["paid", "paid_late"].includes(appData?.invoiceDraft?.status?.toLowerCase() || "") && (
-                <p className="text-[11px] text-blue-700 text-center">
-                  Approve is enabled after the latest invoice is marked as paid.
-                </p>
+                <div className="text-center space-y-1">
+                  <p className="text-[11px] text-blue-700">
+                    Approve is enabled after the latest invoice is marked as paid.
+                  </p>
+                </div>
               )}
             </div>
           </div>

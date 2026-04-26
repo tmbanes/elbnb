@@ -367,7 +367,7 @@ not yet tested
           conditions.push(`and(entity_type.eq.application,entity_id.in.(${appIds.join(',')}),action_type.not.in.(submit_application,cancel_application,update_user))`);
         }
         if (assignmentIds.length > 0) {
-          conditions.push(`and(entity_type.eq.assignment,entity_id.in.(${assignmentIds.join(',')}),action_type.not.in.(submit_application,cancel_application,update_user))`);
+          conditions.push(`and(entity_type.eq.assignment,entity_id.in.(${assignmentIds.join(',')}),action_type.not.in.(create_assignment,submit_application,cancel_application,update_user))`);
         }
         if (billIds.length > 0) {
           conditions.push(`and(entity_type.eq.billing,entity_id.in.(${billIds.join(',')}),action_type.not.in.(mark_billing_paid))`);
