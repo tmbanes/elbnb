@@ -7,7 +7,7 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card";
-import { ChevronLeft, Mail, MapPin, Pencil, Trash2, Calendar } from "lucide-react"
+import { ChevronLeft, Mail, MapPin, Pencil, Trash2, Calendar as CalendarIcon, CalendarArrowDown } from "lucide-react"
 
 import {
   Dialog,
@@ -17,7 +17,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import {
   processApplication,
   type Unit,
@@ -27,6 +41,7 @@ import {
   getApplicationById,
   sendApplicationInvoice,
 } from "@/lib/actions/admin-application-actions";
+import { cn } from "@/lib/utils";
 
 type InvoiceKind = "first_rental" | "security_deposit" | "reservation_fee" | "other";
 
@@ -299,7 +314,7 @@ export default function ReviewApplication({
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="text-[#44291B] hover:bg-[#e8e2d6] shrink-0"
+          className="text-[#264384] hover:bg-transparent hover:text-[#264384] hover:underline"
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
           Close
@@ -342,7 +357,7 @@ export default function ReviewApplication({
                 </span>
 
                 <span className="inline-flex items-center gap-1.5 bg-[#ebf2f4] border border-[#d1e3e8] rounded-full px-2.5 py-1 text-xs text-[#264384] max-w-full">
-                  <Calendar className="w-3 h-3 shrink-0" />
+                  <CalendarIcon className="w-3 h-3 shrink-0" />
                   <span className="truncate">Submitted: {data.submitted}</span>
                 </span>
 
@@ -407,18 +422,23 @@ export default function ReviewApplication({
               </div>
             </div>
 
-            <select
-              className="w-full border rounded-md p-2 text-sm mt-2"
-              value={selectedUnitId}
-              onChange={(e) => setSelectedUnitId(e.target.value)}
-            >
-              <option value="">Assign unit</option>
-              {appData?.availableUnits?.map((unit: any) => (
-                <option key={unit.unit_id} value={unit.unit_id}>
-                  {unit.unit_number}
-                </option>
-              ))}
-            </select>
+            <Select value={selectedUnitId} onValueChange={setSelectedUnitId}>
+              <SelectTrigger className="w-full mt-2 bg-[#FDFFF4] border-[#e8e2d6] text-[#44291B] font-medium rounded-xl h-10 shadow-sm focus:ring-[#264384]">
+                <SelectValue placeholder="Assign unit" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#FDFFF4] border-[#e8e2d6] rounded-xl shadow-lg z-[100]">
+                <SelectItem value="none" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Unassign Unit</SelectItem>
+                {appData?.availableUnits?.map((unit: any) => (
+                  <SelectItem
+                    key={unit.unit_id}
+                    value={unit.unit_id}
+                    className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer"
+                  >
+                    {unit.unit_number}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -441,8 +461,8 @@ export default function ReviewApplication({
 
                   <Button
                     size="sm"
-                    variant="outline"
                     onClick={() => setShowPreview(true)}
+                    className="bg-[#264384] hover:bg-[#1a2d5a] text-white font-bold rounded-md px-4 transition-all"
                   >
                     Preview
                   </Button>
@@ -567,14 +587,14 @@ export default function ReviewApplication({
             )}
 
             {confirmAction ? (
-              <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm space-y-4">
-                <p className="text-sm font-medium text-gray-700 text-center">
+              <div className="p-4 bg-[#FFCACA]/40 border border-red-200 rounded-xl shadow-sm space-y-4">
+                <p className="text-sm font-bold text-red-900 text-center">
                   Confirm rejection of this application?
                 </p>
                 <div className="flex gap-2">
                   <Button
-                    variant="outline"
-                    className="flex-1"
+                    variant="ghost"
+                    className="flex-1 bg-white/50 hover:bg-white/80 text-red-900 font-bold rounded-xl"
                     onClick={() => {
                       setConfirmAction(null);
                       setError(null);
@@ -584,7 +604,7 @@ export default function ReviewApplication({
                     Cancel
                   </Button>
                   <Button
-                    className="flex-1 text-white bg-red-600 hover:bg-red-700"
+                    className="flex-1 text-white bg-red-600 hover:bg-red-700 font-bold rounded-xl"
                     onClick={handleConfirm}
                     disabled={loading}
                   >
@@ -617,10 +637,10 @@ export default function ReviewApplication({
       </div>
 
       <Dialog open={isInvoiceModalOpen} onOpenChange={setIsInvoiceModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-[#FDFFF4] border-[#e8e2d6] text-[#44291B] rounded-2xl shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Send Invoice to User</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-[#44291B] font-[family-name:var(--font-archivo-black)] text-2xl tracking-tight">Send Invoice to User</DialogTitle>
+            <DialogDescription className="text-[#44291B]/70 font-medium">
               Add billing items manually (first rental, security deposit, reservation fee).
               At least one item must be marked as required to secure the slot.
               {data.status === "pending_admin"
@@ -632,22 +652,39 @@ export default function ReviewApplication({
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-600 uppercase">Due Date</label>
-                <input
-                  type="date"
-                  value={invoiceDueDate}
-                  onChange={(e) => setInvoiceDueDate(e.target.value)}
-                  className="w-full border rounded-md p-2 text-sm"
-                />
+                <label className="text-xs font-bold text-[#44291B]/50 uppercase tracking-widest pl-2">Due Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-medium rounded-xl border-[#e8e2d6] bg-white text-[#44291B] hover:bg-[#F6F8D5] h-10 shadow-sm",
+                        !invoiceDueDate && "text-[#44291B]/40"
+                      )}
+                    >
+                      <CalendarArrowDown className="mr-2 h-4 w-4 text-[#44291B]/50" />
+                      {invoiceDueDate ? format(new Date(invoiceDueDate), "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-[#FDFFF4] border-[#e8e2d6] rounded-xl shadow-xl z-[120]" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={invoiceDueDate ? new Date(invoiceDueDate) : undefined}
+                      onSelect={(date) => setInvoiceDueDate(date ? date.toISOString().split('T')[0] : "")}
+                      initialFocus
+                      className="bg-[#FDFFF4] text-[#44291B]"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-600 uppercase">Internal Note</label>
+                <label className="text-xs font-bold text-[#44291B]/50 uppercase tracking-widest pl-2">Internal Note</label>
                 <input
                   type="text"
                   value={invoiceNote}
                   onChange={(e) => setInvoiceNote(e.target.value)}
                   placeholder="Optional note"
-                  className="w-full border rounded-md p-2 text-sm"
+                  className="w-full border border-[#e8e2d6] rounded-xl p-2.5 text-sm bg-white text-[#44291B] placeholder:text-[#44291B]/40 outline-none focus:border-[#264384] h-10 shadow-sm transition-all"
                 />
               </div>
             </div>
@@ -656,22 +693,28 @@ export default function ReviewApplication({
               {invoiceItems.map((item, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-12 gap-2 items-center border rounded-md p-3 bg-slate-50"
+                  className="grid grid-cols-12 gap-2 items-center border border-[#e8e2d6] rounded-2xl p-4 bg-[#FDFFF4] shadow-sm"
                 >
                   <div className="col-span-4">
-                    <select
+                    <Select
                       value={item.kind}
-                      onChange={(e) =>
-                        updateInvoiceItem(index, "kind", e.target.value as InvoiceKind)
-                      }
-                      className="w-full border rounded-md p-2 text-sm bg-white"
+                      onValueChange={(val) => updateInvoiceItem(index, "kind", val as InvoiceKind)}
                     >
-                      {invoiceKindOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full bg-white border-[#e8e2d6] text-[#44291B] font-medium rounded-xl h-10 shadow-sm focus:ring-[#264384] pr-4">
+                        <SelectValue placeholder="Item type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#FDFFF4] border-[#e8e2d6] rounded-xl shadow-lg z-[110]">
+                        {invoiceKindOptions.map((option) => (
+                          <SelectItem
+                            key={option.value}
+                            value={option.value}
+                            className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer"
+                          >
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="col-span-3">
@@ -683,18 +726,19 @@ export default function ReviewApplication({
                       onChange={(e) =>
                         updateInvoiceItem(index, "amount", Number(e.target.value || 0))
                       }
-                      className="w-full border rounded-md p-2 text-sm bg-white"
+                      className="w-full border border-[#e8e2d6] rounded-xl p-2 text-sm bg-white text-[#44291B] outline-none focus:border-[#264384] h-10 shadow-sm"
                       placeholder="Amount"
                     />
                   </div>
 
-                  <label className="col-span-4 text-xs flex items-center gap-2 text-gray-700">
+                  <label className="col-span-4 text-xs flex items-center gap-2 text-[#44291B] font-bold pl-2">
                     <input
                       type="checkbox"
                       checked={item.required_to_secure_slot}
                       onChange={(e) =>
                         updateInvoiceItem(index, "required_to_secure_slot", e.target.checked)
                       }
+                      className="rounded border-[#e8e2d6] text-xs font-bold text-[#44291B]/50  focus:ring-[#264384]"
                     />
                     Required to secure slot
                   </label>
@@ -702,19 +746,24 @@ export default function ReviewApplication({
                   <div className="col-span-1 flex justify-end">
                     <Button
                       type="button"
-                      size="sm"
-                      variant="outline"
+                      size="icon"
+                      variant="ghost"
                       onClick={() => removeInvoiceItem(index)}
                       disabled={invoiceItems.length <= 1}
+                      className="h-8 w-8 rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                     >
-                      ×
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
 
-            <Button type="button" variant="outline" onClick={addInvoiceItem}>
+            <Button
+              type="button"
+              onClick={addInvoiceItem}
+              className="bg-[#264384] hover:bg-[#1a2d5a] text-white font-bold rounded-xl px-6 h-10 transition-all shadow-md"
+            >
               Add Item
             </Button>
 
@@ -725,16 +774,22 @@ export default function ReviewApplication({
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => setIsInvoiceModalOpen(false)}
               disabled={isSendingInvoice}
+              className="text-[#44291B]/60 font-bold hover:bg-[#e8e2d6]/30 rounded-xl"
             >
               Cancel
             </Button>
-            <Button type="button" onClick={handleSendInvoice} disabled={isSendingInvoice}>
+            <Button
+              type="button"
+              onClick={handleSendInvoice}
+              disabled={isSendingInvoice}
+              className="bg-[#78A24C] hover:bg-[#60833D] text-white font-bold rounded-xl px-8 h-10 transition-all shadow-md"
+            >
               {isSendingInvoice ? "Sending..." : appData?.invoiceDraft ? "Update Invoice" : "Send Invoice"}
             </Button>
           </DialogFooter>

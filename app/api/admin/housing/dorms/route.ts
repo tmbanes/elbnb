@@ -62,6 +62,9 @@ export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
         allowed_programs,
         term_type,
         separate_by_gender
+      ),
+      unit (
+        current_occupancy
       )
     `,
     )
@@ -69,8 +72,14 @@ export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
-});
+
+  const response = data?.map((item: any) => ({
+    ...item,
+    units: item.unit || []
+  }));
+
+  return NextResponse.json(response);
+}
 
 // POST /api/admin/housing/dorms
 export const POST = withRole(['housing_admin'], async (req: NextRequest) => {

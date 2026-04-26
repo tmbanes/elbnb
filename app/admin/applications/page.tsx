@@ -7,6 +7,7 @@ import {
     processApplication,
     type AdminAction,
 } from "@/lib/actions/admin-application-actions";
+import { cn } from "@/lib/utils";
 
 export default function Page() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -17,12 +18,12 @@ export default function Page() {
     const handleMouseMove = (e: MouseEvent) => {
         if (!isDragging) return;
 
-      const newWidth = (e.clientX / window.innerWidth) * 100;
+        const newWidth = (e.clientX / window.innerWidth) * 100;
 
-      // Limit resizing
-      if (newWidth > 40 && newWidth < 80) {
-          setLeftWidth(newWidth);
-      }
+        // Limit resizing
+        if (newWidth > 40 && newWidth < 80) {
+            setLeftWidth(newWidth);
+        }
     };
 
     const handleMouseUp = () => setIsDragging(false);
@@ -53,36 +54,33 @@ export default function Page() {
     };
 
     return (
-        <div className="h-[100dvh] flex overflow-hidden">
-        
-        {/* LEFT */}
-        <div
-            className={`
-              flex-1 transition-all duration-300 overflow-y-auto 
-              ${selectedId ? "px-12" : "px-24"}
-              py-4 bg-[#F6F8D5] text-[#44291B]
-              scrollbar-hide
-            `}
-        >
-            <ApplicationList onSelect={setSelectedId} />
-        </div>
+        <div className="min-h-screen py-8 px-5 md:px-12 lg:px-30 bg-[#F6F8D5] flex overflow-hidden font-[family-name:var(--font-archivo)]">
 
-        {/* RIGHT */}
-        {selectedId && (
-            <div className="
-              w-[400px] md:w-[500px] lg:w-[600px]
-              border-l border-[#e8e2d6]
-              bg-[#F6F8D5]
-              overflow-y-auto
-              h-full
-            ">
-            <ReviewApplication
-                applicationId={selectedId}
-                onClose={() => setSelectedId(null)}
-                onAction={handleApplicationAction}
-            />
+            {/* LEFT */}
+            <div className={cn(
+                "flex-1 min-w-0 overflow-y-auto transition-all duration-300",
+                selectedId ? "hidden lg:block" : "block"
+            )}>
+                <ApplicationList onSelect={setSelectedId} selectedId={selectedId} />
             </div>
-        )}
-      </div>
+
+            {/* RIGHT */}
+            {selectedId && (
+                <div className="
+                  w-full lg:w-[600px]
+                  border-l border-[#e8e2d6]
+                  bg-[#F6F8D5]
+                  overflow-y-auto
+                  flex flex-col
+                  transition-all duration-300
+                ">
+                    <ReviewApplication
+                        applicationId={selectedId}
+                        onClose={() => setSelectedId(null)}
+                        onAction={handleApplicationAction}
+                    />
+                </div>
+            )}
+        </div>
     );
 }

@@ -3,7 +3,7 @@ import { withRole } from "@/lib/auth/api-guard";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { createSupabaseServiceClient } from "@/lib/supabase/service-client";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 export const GET = withRole(['housing_admin'], async (_req: NextRequest) => {
   try {
@@ -18,14 +18,19 @@ export const GET = withRole(['housing_admin'], async (_req: NextRequest) => {
       .from("users").select("role").eq("user_id", user.id).single();
 
     if (!profile || profile.role !== "housing_admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ 
+        error: "Forbidden", 
+        details: `Role 'housing_admin' required. Current role: '${profile?.role || "none"}'` 
+      }, { status: 403 });
     }
 
-    // Use service client to bypass RLS — session client already verified auth + role above
-    const serviceSupabase = createSupabaseServiceClient();
+    // Use admin client to bypass RLS — session client already verified auth + role above
+    const serviceSupabase = supabaseAdmin;
 
-    // Fetch ALL assignments across ALL accommodations with full joins
-    const { data: assignments, error } = await serviceSupabase
+    const unitId = _req.nextUrl.searchParams.get("unit_id");
+
+    // Fetch assignments across accommodations with full joins
+    let query = serviceSupabase
       .from("accommodation_assignment")
       .select(`
         assignment_id,
@@ -45,8 +50,25 @@ export const GET = withRole(['housing_admin'], async (_req: NextRequest) => {
             accommodation_id, name, location
           )
         )
-      `)
+      `);
+
+    if (unitId) {
+      console.log("DEBUG: Fetching residents for unitId:", unitId);
+      // Basic UUID validation to prevent DB errors
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(unitId)) {
+        console.warn("DEBUG: Invalid unitId format:", unitId);
+        return NextResponse.json({ success: true, data: [] }); // Or handle as error
+      }
+      query = query.eq("unit_id", unitId);
+    }
+
+    const { data: assignments, error } = await query
       .order("move_in_date", { ascending: false });
+
+    if (unitId) {
+      console.log(`DEBUG: Found ${assignments?.length || 0} assignments for unit ${unitId}`);
+    }
 
     if (error) {
       console.error("Admin residents fetch error:", error.message);
@@ -76,8 +98,8 @@ export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Use service client to bypass RLS — session client already verified auth + role above
-    const serviceSupabase = createSupabaseServiceClient();
+    // Use admin client to bypass RLS — session client already verified auth + role above
+    const serviceSupabase = supabaseAdmin;
 
     const body = await req.json();
     const { assignment_id, action, date, details } = body as {
