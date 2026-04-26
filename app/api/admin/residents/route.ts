@@ -7,7 +7,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service-client";
 import { createActivityLog, getCurrentUserRole } from "@/services/activity_log/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
-export const GET = withRole(['housing_admin'], async (_req: NextRequest) => {
+export const GET = withRole(['housing_admin', 'admin'], async (_req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 
@@ -19,10 +19,10 @@ export const GET = withRole(['housing_admin'], async (_req: NextRequest) => {
     const { data: profile } = await supabase
       .from("users").select("role").eq("user_id", user.id).single();
 
-    if (!profile || profile.role !== "housing_admin") {
+    if (!profile || (profile.role !== "housing_admin" && profile.role !== "admin")) {
       return NextResponse.json({ 
         error: "Forbidden", 
-        details: `Role 'housing_admin' required. Current role: '${profile?.role || "none"}'` 
+        details: `Admin role required. Current role: '${profile?.role || "none"}'` 
       }, { status: 403 });
     }
 
@@ -84,7 +84,7 @@ export const GET = withRole(['housing_admin'], async (_req: NextRequest) => {
   }
 });
 
-export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
+export const PATCH = withRole(['housing_admin', 'admin'], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 
@@ -96,7 +96,7 @@ export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
     const { data: profile } = await supabase
       .from("users").select("role").eq("user_id", user.id).single();
 
-    if (!profile || profile.role !== "housing_admin") {
+    if (!profile || (profile.role !== "housing_admin" && profile.role !== "admin")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

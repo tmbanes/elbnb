@@ -241,9 +241,14 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
   const collectedToBilledRate = stats.totalBilled > 0 ? (stats.totalCollected / stats.totalBilled) * 100 : 0;
 
   const filteredProps = propertyOccupancy.filter(p => {
-    if (propFilter === "available") return p.availableSlots > 0;
+    // Check availability filter
+    const matchesFilter = propFilter === "available" ? p.availableSlots > 0 : true;
+    if (!matchesFilter) return false;
+
+    // Check search query
     const q = propSearch.trim().toLowerCase();
     if (!q) return true;
+    
     return (
       p.name.toLowerCase().includes(q) ||
       p.type.toLowerCase().includes(q) ||
