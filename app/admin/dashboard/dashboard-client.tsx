@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Building2, Home, Users, KeyRound, Scissors, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, Filter, MoreHorizontal, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Building2, Home, Users, KeyRound, Scissors, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, Filter, MoreHorizontal, Download, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { Archivo, Archivo_Black } from "next/font/google";
 
 const archivo = Archivo({ subsets: ["latin"] });
@@ -416,49 +416,57 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-10 duration-500 delay-500">
 
         {/* Recent Applications Table */}
-        <Card className="lg:col-span-2 shadow-sm border border-black/5 bg-white ring-0 p-5 flex flex-col gap-4 rounded-2xl h-full lg:min-h-[26rem]">
-          <h2 className={`${archivoBlack.className} text-lg text-[#1F2937]`}>Recent Applications</h2>
+        <Card className="lg:col-span-2 shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-4 rounded-2xl h-full lg:min-h-[26rem]">
+          <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Recent Applications</h2>
           <div className="relative">
-            <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#44291B]/40 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search applicant, property, type, or status..."
+              placeholder="Search applications..."
               value={applicationSearch}
               onChange={(e) => { setApplicationSearch(e.target.value); setAppPage(1); }}
-              className={`${archivo.className} w-full pl-9 pr-3 py-2.5 rounded-lg border border-[#E5E7EB] text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#4A5628]/20 focus:border-[#4A5628] transition-all`}
+              className={`${archivo.className} w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#cfd6e4] text-sm bg-[#FDFFF4] text-[#44291B] placeholder:text-[#44291B]/40 focus:outline-none focus:ring-2 focus:ring-[#78A24C]/20 focus:border-[#78A24C] transition-all h-10`}
             />
           </div>
           <div className="overflow-x-auto flex-1 min-h-0">
-            <table className="w-full">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#E5E7EB]">
-                  {["Student", "Property", "Type", "Date", "Status"].map(h => (
-                    <th key={h} className={`${archivoBlack.className} text-xs uppercase text-[#6B7280] tracking-wider pb-3 text-left px-3`}>{h}</th>
-                  ))}
+                <tr className="border-b border-[#cfd6e4] bg-[#FDFFF4]">
+                  <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Applicant</th>
+                  <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Property</th>
+                  <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Type</th>
+                  <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Date</th>
+                  <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredRecentApplications.slice((appPage - 1) * APP_PER_PAGE, appPage * APP_PER_PAGE).map(a => {
+                {filteredRecentApplications.length === 0 ? (
+                  <tr><td colSpan={5} className="py-12 text-center text-[#44291B]/40 font-bold">No applications found.</td></tr>
+                ) : filteredRecentApplications.slice((appPage - 1) * APP_PER_PAGE, appPage * APP_PER_PAGE).map(a => {
                   const u = unwrap(a.users);
                   const acc = unwrap(a.accommodation);
                   return (
-                    <tr key={a.application_id} className="hover:bg-slate-50 transition-colors border-b border-[#F3F4F6] last:border-b-0">
-                      <td className="py-3.5 px-3 flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#4A5628] to-[#6B7A3A] text-white flex items-center justify-center text-[11px] font-semibold shrink-0">{initials(u?.first_name ?? "", u?.last_name ?? "")}</div>
-                        <span className={`${archivo.className} font-semibold text-[#1F2937] text-base truncate max-w-[180px]`}>{u?.first_name ?? "—"} {u?.last_name ?? ""}</span>
+                    <tr key={a.application_id} className="hover:bg-[#F6F8D5] transition-colors border-b border-[#cfd6e4]/60 last:border-b-0 group">
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#44291B] to-[#734A35] text-white flex items-center justify-center text-[10px] font-bold shrink-0">{initials(u?.first_name ?? "", u?.last_name ?? "")}</div>
+                          <div>
+                            <p className="text-sm font-bold text-[#44291B]">{u?.first_name ?? "—"} {u?.last_name ?? ""}</p>
+                            <p className="text-[10px] text-[#44291B]/50 font-medium">ID: {a.application_id.slice(0, 8)}</p>
+                          </div>
+                        </div>
                       </td>
-                      <td className={`${archivo.className} py-3.5 px-3 text-base text-[#4B5563] truncate max-w-[140px]`}>{acc?.name ?? "—"}</td>
-                      <td className={`${archivo.className} py-3.5 px-3 text-base text-[#4B5563]`}>{a.preferred_unit_type ?? "—"}</td>
-                      <td className={`${archivo.className} py-3.5 px-3 text-base text-[#4B5563]`}>{a.date_submitted ? new Date(a.date_submitted).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}</td>
-                      <td className="py-3.5 px-3">
-                        <span className={`${archivoBlack.className} px-2.5 py-1 rounded-full text-xs uppercase tracking-wider ${statusBadge(a.application_status)}`}>
+                      <td className="py-3 px-3 text-sm font-bold text-[#44291B]">{acc?.name ?? "—"}</td>
+                      <td className="py-3 px-3 text-sm font-bold text-[#44291B] capitalize">{a.preferred_unit_type?.replace(/_/g, " ") ?? "—"}</td>
+                      <td className="py-3 px-3 text-xs font-bold text-[#44291B]">{a.date_submitted ? new Date(a.date_submitted).toLocaleDateString() : "—"}</td>
+                      <td className="py-3 px-3">
+                        <span className={`${archivoBlack.className} px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${statusBadge(a.application_status)}`}>
                           {a.application_status.replace(/_/g, " ")}
                         </span>
                       </td>
                     </tr>
                   );
                 })}
-                {filteredRecentApplications.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-base text-[#9CA3AF]">No applications found.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -477,7 +485,7 @@ export function DashboardClient({ stats, propertyOccupancy, recentApplications, 
           </div>
           <div className="relative w-3/4">
             <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input type="text" placeholder="Search students..." value={studentSearch} onChange={e => { setStudentSearch(e.target.value); setStudentPage(1); }} className={`${archivo.className} w-full pl-9 pr-3 py-2.5 rounded-lg border border-[#E5E7EB] text-sm focus:outline-none focus:ring-2 focus:ring-[#4A5628]/20 focus:border-[#4A5628] transition-all bg-slate-50`} />
+            <input type="text" placeholder="Search students..." value={studentSearch} onChange={e => { setStudentSearch(e.target.value); setStudentPage(1); }} className={`${archivo.className} w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#cfd6e4] text-sm focus:outline-none focus:ring-2 focus:ring-[#78A24C]/20 focus:border-[#78A24C] transition-all bg-[#FDFFF4] text-[#44291B] placeholder:text-[#44291B]/40 h-10`} />
           </div>
 
           {(() => {
