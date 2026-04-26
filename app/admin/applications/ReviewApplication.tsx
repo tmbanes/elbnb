@@ -61,6 +61,9 @@ export default function ReviewApplication({
   const [invoiceSuccess, setInvoiceSuccess] = useState<string | null>(null);
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
 
+  // Preview State
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -91,18 +94,16 @@ export default function ReviewApplication({
   useEffect(() => {
     async function getFileUrl() {
       if (appData?.file && appData?.application_id) {
-        const supabase = getSupabaseBrowserClient();
-        
-        // Signed URL for private bucket
-        const { data, error } = await supabase.storage
-          .from("application_documents")
-          .createSignedUrl(`${appData.application_id}/${appData.file}`, 1200);
-        
-        if (error) {
-          console.error("Error creating signed URL:", error);
-          setFileUrl(null);
-        } else {
+        try {
+          const path = `${appData.application_id}/${appData.file}`;
+          const res = await fetch(`/api/admin/applications/document-url?path=${encodeURIComponent(path)}`);
+          const data = await res.json();
+          
+          if (!res.ok) throw new Error(data.error);
           setFileUrl(data.signedUrl);
+        } catch (err) {
+          console.error("Error fetching document URL:", err);
+          setFileUrl(null);
         }
       } else {
         setFileUrl(null);
@@ -320,9 +321,9 @@ export default function ReviewApplication({
               <h1 className="text-xl font-bold text-[#44291B] truncate">
                 {data.firstName} {data.lastName}
               </h1>
-              <p className="text-xs font-bold text-[#44291B]/40 mb-3 uppercase tracking-tighter">
+              {/* <p className="text-xs font-bold text-[#44291B]/40 mb-3 uppercase tracking-tighter">
                 #{data.id.slice(0, 8)}
-              </p>
+              </p> */}
 
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 bg-[#ebf2f4] border border-[#d1e3e8] rounded-full px-2.5 py-1 text-[10px] font-bold text-[#264384]">
@@ -438,7 +439,7 @@ export default function ReviewApplication({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => doc.url && window.open(doc.url, "_blank")}
+                    onClick={() => setIsPreviewOpen(true)}
                     className="text-[#264384] font-bold hover:bg-[#ebf2f4] rounded-lg gap-2"
                   >
                     View
@@ -472,22 +473,40 @@ export default function ReviewApplication({
           </div>
         ) : data.status === "approved" || data.status === "pending_payment" ? (
           <div className="space-y-3">
-            <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-center">
-              <p className="text-xs font-extrabold text-emerald-600 uppercase tracking-widest">
-                {data.status === "approved" ? "✓ Fully Approved" : "✓ Provisionally Approved"}
+            <div className={cn(
+              "p-4 rounded-2xl text-center border",
+              data.status === "approved" 
+                ? "bg-emerald-50 border-emerald-100 text-emerald-600" 
+                : "bg-amber-50 border-amber-100 text-amber-600"
+            )}>
+              <p className="text-xs font-extrabold uppercase tracking-widest">
+                {data.status === "approved" ? "✓ Fully Approved" : "✓ Waiting for Payment"}
               </p>
             </div>
-            <Button
-              className="w-full bg-[#264384] hover:bg-[#1e3569] text-white font-bold rounded-xl h-12 shadow-lg transition-all gap-2"
-              onClick={() => {
-                setInvoiceError(null);
-                setInvoiceSuccess(null);
-                setIsInvoiceModalOpen(true);
-              }}
-            >
-              <Receipt className="w-4 h-4" />
-              {appData?.invoiceDraft ? "Manage Invoice" : "Create Invoice"}
-            </Button>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                className="bg-[#264384] hover:bg-[#1e3569] text-white font-bold rounded-xl h-12 shadow-lg transition-all gap-2"
+                onClick={() => {
+                  setInvoiceError(null);
+                  setInvoiceSuccess(null);
+                  setIsInvoiceModalOpen(true);
+                }}
+              >
+                <Receipt className="w-4 h-4" />
+                {appData?.invoiceDraft ? "Manage Invoice" : "Create Invoice"}
+              </Button>
+
+              {data.status === "pending_payment" && (
+                <Button
+                  disabled={appData?.invoiceDraft?.status !== "paid"}
+                  className="bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C] font-bold rounded-xl h-12 shadow-lg transition-all gap-2"
+                  onClick={() => setConfirmAction("pending_payment")}
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Finalize Approval
+                </Button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
@@ -512,6 +531,49 @@ export default function ReviewApplication({
         )}
       </div>
 
+      {/* APPROVE MODAL */}
+      <Dialog open={confirmAction === "approve" || confirmAction === "pending_payment"} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <DialogContent className="sm:max-w-[425px] rounded-3xl border-none bg-[#FDFFF4] p-0 overflow-hidden shadow-2xl">
+          <div className="p-8 text-[#44291B]">
+            <DialogHeader className="space-y-3 text-left">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2 shadow-inner bg-emerald-50 text-emerald-600">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <DialogTitle className="text-2xl font-bold tracking-tight">
+                Finalize Approval
+              </DialogTitle>
+              <DialogDescription className="text-sm font-medium text-[#44291B]/60 leading-relaxed">
+                Are you sure you want to finalize the approval for {data.firstName}'s application? The payment has been verified and the tenant will be officially assigned to their unit.
+              </DialogDescription>
+
+              {error && (
+                <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl mt-4">
+                  <p className="text-xs font-bold text-rose-600">{error}</p>
+                </div>
+              )}
+            </DialogHeader>
+
+            <DialogFooter className="mt-8 flex-col sm:flex-row gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setConfirmAction(null)}
+                className="flex-1 rounded-xl font-bold text-[#44291B]/60 hover:bg-gray-100 h-11"
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirm}
+                className="flex-1 rounded-xl font-bold text-white h-11 shadow-lg transition-all bg-emerald-600 hover:bg-emerald-700"
+                disabled={loading}
+              >
+                {loading ? "Processing..." : "Finalize Now"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* REJECT MODAL */}
       <Dialog open={confirmAction === "reject"} onOpenChange={(open) => !open && setConfirmAction(null)}>
         <DialogContent className="sm:max-w-[425px] rounded-3xl border-none bg-[#FDFFF4] p-0 overflow-hidden shadow-2xl">
@@ -524,8 +586,14 @@ export default function ReviewApplication({
                 Confirm Rejection
               </DialogTitle>
               <DialogDescription className="text-sm font-medium text-[#44291B]/60 leading-relaxed">
-                Are you sure you want to reject {data.firstName}'s application? This will notify the applicant and cannot be undone.
+                Are you sure you want to reject {data.firstName}'s application? This action cannot be undone.
               </DialogDescription>
+
+              {error && (
+                <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl mt-4">
+                  <p className="text-xs font-bold text-rose-600">{error}</p>
+                </div>
+              )}
             </DialogHeader>
 
             <DialogFooter className="mt-8 flex-col sm:flex-row gap-2">
@@ -698,6 +766,50 @@ export default function ReviewApplication({
                 {isSendingInvoice ? "Sending..." : "Confirm & Send"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* DOCUMENT PREVIEW MODAL */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl h-[90vh] bg-[#FDFFF4] border-none text-[#44291B] rounded-3xl shadow-2xl p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="p-6 border-b border-[#e8e2d6] flex-shrink-0">
+            <DialogTitle className="text-xl font-bold">Document Preview</DialogTitle>
+            <DialogDescription className="text-xs font-medium text-[#44291B]/60">
+              Viewing supporting document for {data.firstName} {data.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 bg-white relative overflow-auto scrollbar-hide">
+            {fileUrl ? (
+              appData.file?.toLowerCase().endsWith('.pdf') ? (
+                <iframe 
+                  src={`${fileUrl}#toolbar=0`} 
+                  className="w-full h-full border-none"
+                  title="PDF Preview"
+                />
+              ) : (
+                <div className="min-w-full min-h-full flex items-center justify-center p-4">
+                  <img 
+                    src={fileUrl} 
+                    alt="Document Preview" 
+                    className="max-w-full h-auto object-contain shadow-md rounded-lg"
+                  />
+                </div>
+              )
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <p className="text-sm font-bold text-[#44291B]/40">Loading document...</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="p-4 bg-[#FDFFF4] border-t border-[#e8e2d6] flex justify-end flex-shrink-0">
+            <Button 
+              onClick={() => setIsPreviewOpen(false)}
+              className="rounded-xl font-bold bg-[#264384] hover:bg-[#1e3569] text-white"
+            >
+              Close Preview
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

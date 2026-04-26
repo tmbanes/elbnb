@@ -40,7 +40,7 @@ export default function ApplicationsClient({ user, initialData }: ApplicationsCl
                 selectedId ? "lg:flex-[7]" : "flex-1"
             )}>
                 <div className={cn(
-                    "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500",
+                    "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
                     selectedId ? "px-6 lg:px-12" : "px-6 md:px-12 lg:px-24"
                 )}>
                     <ApplicationList onSelect={setSelectedId} selectedId={selectedId} initialData={initialData} />

@@ -12,12 +12,20 @@ export default async function ManagerApplicationsPage() {
 
   const supabase = await createSupabaseServerClient();
 
-  // 1. Get the accommodation assigned to this manager
-  const { data: accommodationData, error: managerError } = await supabase
-    .from("accommodation")
-    .select("accommodation_id, name")
-    .eq("manager_id", user.user_id)
+  // 1. Get the accommodation assigned to this manager via dormitory_manager table
+  const { data: managerAssignment, error: managerError } = await supabase
+    .from("dormitory_manager")
+    .select(`
+      accommodation_id,
+      accommodation (
+        accommodation_id,
+        name
+      )
+    `)
+    .eq("user_id", user.user_id)
     .single();
+
+  const accommodationData = (managerAssignment as any)?.accommodation;
 
   if (managerError || !accommodationData) {
     // If no accommodation, we'll pass empty data to the client to handle

@@ -7,12 +7,20 @@ export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req,
   try {
     const supabase = await createSupabaseServerClient();
 
-    // Get the accommodation assigned to this manager
-    const { data: accommodationData, error: managerError } = await supabase
-      .from("accommodation")
-      .select("accommodation_id, name")
-      .eq("manager_id", user.user_id) // user object from withRole has user_id
+    // Get the accommodation assigned to this manager via dormitory_manager table
+    const { data: managerAssignment, error: managerError } = await supabase
+      .from("dormitory_manager")
+      .select(`
+        accommodation_id,
+        accommodation (
+          accommodation_id,
+          name
+        )
+      `)
+      .eq("user_id", user.user_id)
       .single();
+
+    const accommodationData = (managerAssignment as any)?.accommodation;
 
     if (managerError) {
       console.error("DEBUG: managerError:", managerError);

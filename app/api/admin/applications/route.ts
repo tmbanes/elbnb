@@ -25,14 +25,14 @@ export const GET = withRole(["housing_admin", "admin"], async (req: NextRequest)
 
     // If an ID is provided, fetch just that one application
     if (id) {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("accommodation_application")
         .select(
           `
         *,
         users:user_id (first_name, last_name, email),
         accommodation:preferred_accommodation_id (accommodation_id, name, location),
-        units:unit_id (unit_number)
+        unit:unit_id (unit_number)
       `,
         )
         .eq("application_id", id)
