@@ -18,6 +18,8 @@ export const COLLEGE_DEGREE_MAP: Record<string, string[]> = {
 export const COLLEGES = ["CAS", "CEAT", "CAFS", "CVM", "CDC", "CEM", "CHE", "CFNR", "SESAM", "CPAf"] as const;
 export type College = typeof COLLEGES[number];
 export type DegreePrograms = "";
+export const SEX = ["M", "F"] as const;
+export type Sex = typeof SEX[number];
 
 interface UserCreationRequest {
   first_name: string;
@@ -54,7 +56,9 @@ interface HousingAdminCreationRequest extends UserCreationRequest {
 interface GuestCreationRequest extends UserCreationRequest {
   valid_id: string;
   purpose_visit: string;
-  occupancy_status: string; // ISO date string
+  emergency_person?: string;
+  emergency_contact?: string;
+  home_address?: string;
 }
 
 //---------RESPONSE TYPES---------

@@ -14,11 +14,12 @@ export async function createUserProfile<T extends UserCreationRequest>(userData:
   const supabase = await createSupabaseServerClient();
   const { email, password, ...userMetadata } = userData;
 
-  //test: set to inactive
-  const metadata = {
+  const metadata: any = {
     ...userMetadata,
     user_status: userData.user_status ?? "active",
   };
+
+  console.log("DEBUG: Creating user with metadata:", metadata);
 
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -55,7 +56,7 @@ export async function createUserProfile<T extends UserCreationRequest>(userData:
       p_user_id: data.user.id,
       p_action_type: "create_user",
       p_log_desc: `${userMetadata.first_name} ${userMetadata.last_name} created their account`,
-      p_entity_type: "user",
+      p_entity_type: "auth",
       p_entity_id: data.user.id,
       p_user_role: userMetadata.role || "guest",
     });
