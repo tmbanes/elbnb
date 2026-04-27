@@ -18,7 +18,7 @@ const roleConfig = {
   },
   guest: {
     table: 'guest',
-    allowedFields: ['valid_id', 'purpose_visit', 'occupancy_status'],
+    allowedFields: ['valid_id', 'purpose_visit', 'emergency_person', 'emergency_contact', 'home_address'],
   },
 } as const;
 
@@ -37,7 +37,7 @@ export const PATCH = withRole([...ALL_ROLES], async (req, { user }) => {
     if (!config) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
-    
+
     // 1. Separate updates for 'users' table and role-specific table
     const userUpdates: Record<string, any> = {};
     const roleUpdates: Record<string, any> = {};
@@ -61,15 +61,12 @@ export const PATCH = withRole([...ALL_ROLES], async (req, { user }) => {
     }
 
     // 2. Perform Database Updates
-    const { supabaseAdmin } = await import('@/lib/supabase/admin-client');
-
     if (Object.keys(userUpdates).length > 0) {
       const { error: userError } = await supabase
         .from('users')
         .update(userUpdates)
-        .eq('user_id', user.user_id)
-        .select('user_id');
-      
+        .eq('user_id', user.user_id);
+
       if (userError) {
         console.error("DEBUG: Users table update failed:", userError);
         throw userError;
@@ -77,12 +74,11 @@ export const PATCH = withRole([...ALL_ROLES], async (req, { user }) => {
     }
 
     if (Object.keys(roleUpdates).length > 0) {
-      const { error: roleError, count } = await supabaseAdmin
+      const { error: roleError } = await supabase
         .from(config.table)
         .update(roleUpdates)
-        .eq('user_id', user.user_id)
-        .select('user_id');
-      
+        .eq('user_id', user.user_id);
+
       if (roleError) {
         console.error("DEBUG: Role table update failed:", roleError);
         throw roleError;

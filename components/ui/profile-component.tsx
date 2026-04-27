@@ -110,7 +110,6 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
 
   const validId = metadata?.valid_id || 'N/A';
   const purposeVisit = metadata?.purpose_visit || 'N/A';
-  const occupancyStatus = metadata?.occupancy_status || 'N/A';
   const contactNum = metadata?.contact_number || metadata?.phone_number || 'N/A';
   const homeAddress = metadata?.home_address || 'N/A';
   const emergencyContact = metadata?.emergency_contact || 'N/A';
@@ -182,7 +181,6 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
               {isGuest && (
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
                   {renderValue(purposeVisit, 'Purpose of Visit')}
-                  {renderValue(occupancyStatus, 'Occupancy Status')}
                 </div>
               )}
               {isAdmin && (
@@ -243,10 +241,10 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                           {renderValue(college, 'College')}
                         </>
                       )}
-                      {isGuest && renderValue(validId, 'Valid ID Reference')}
+                  {isGuest && renderValue(validId, 'Valid ID Reference')}
                     </div>
                   </div>
-                  <div className={`md:col-span-${isStudent ? '9' : '12'}`}>
+                  <div className={`md:col-span-${(isStudent || isGuest) ? '9' : '12'}`}>
                     <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Contact Details</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                       {renderValue(user.email || 'N/A', 'Email Address')}
@@ -254,7 +252,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                       {renderValue(homeAddress, 'Home Address')}
                     </div>
                   </div>
-                  {isStudent && (
+                  {(isStudent || isGuest) && (
                     <div className="md:col-span-3">
                       <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Emergency Contacts</h4>
                       <div className="grid grid-cols-1 gap-6">

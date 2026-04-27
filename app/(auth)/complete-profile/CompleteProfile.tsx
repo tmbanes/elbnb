@@ -2,12 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, College, COLLEGES } from "@/types/user.types";
+import { User, College, COLLEGES, SEX } from "@/types/user.types";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils/ui-utils";
 
 ///ui components
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Card,
   CardContent,
@@ -48,6 +57,9 @@ type StudentRoleData = {
 type GuestRoleData = {
   valid_id: string;
   purpose_visit: string;
+  emergency_person: string;
+  emergency_contact: string;
+  home_address: string;
 };
 
 type ProfileCompletionRole = "student" | "guest";
@@ -65,6 +77,9 @@ const initialStudentData: StudentRoleData = {
 const initialGuestData: GuestRoleData = {
   valid_id: "",
   purpose_visit: "",
+  emergency_person: "",
+  emergency_contact: "",
+  home_address: ""
 };
 
 const enrollmentOptions = [
@@ -73,15 +88,29 @@ const enrollmentOptions = [
   { value: "awol", label: "AWOL" },
 ];
 
+const UPLB_PROGRAMS: Record<College, string[]> = {
+  CAS: ["BA Comm Arts", "BA Philosophy", "BA Sociology", "BS Applied Mathematics", "BS Applied Physics", "BS Biology", "BS Chemistry", "BS Computer Science", "BS Mathematics", "BS Mathematics and Science Teaching", "BS Statistics"],
+  CEAT: ["BS Agricultural and Biosystems Engineering", "BS Chemical Engineering", "BS Civil Engineering", "BS Electrical Engineering", "BS Industrial Engineering", "BS Mechanical Engineering"],
+  CAFS: ["BS Agriculture", "BS Food Technology", "BS Agricultural Chemistry", "BS Agricultural Biotechnology"],
+  CVM: ["Doctor of Veterinary Medicine"],
+  CDC: ["BS Development Communication"],
+  CEM: ["BS Agribusiness Management and Entrepreneurship", "BS Agricultural and Applied Economics", "BS Economics"],
+  CHE: ["BS Human Ecology", "BS Nutrition"],
+  CFNR: ["BS Forestry"],
+  SESAM: ["BS Environmental Science"],
+  CPAf: ["BS Development Management"]
+};
+
 // FUNCTION: Lets user complete profile
 // @params: user (User)
 // @returns: void
 export default function CompleteProfile({ user }: { user: User | null }) {
   const [personalDetails, setPersonalDetails] = useState({
-    // TBD is a placeholder
     first_name: user?.first_name === "TBD" ? "" : (user?.first_name || ""),
-    middle_name: user?.middle_name || "",
+    middle_name: "", // Initial value must be blank
     last_name: user?.last_name === "TBD" ? "" : (user?.last_name || ""),
+    sex: user?.sex,
+    birthdate: (user as any)?.birthdate ? new Date((user as any).birthdate) : undefined
   });
 
   const initialRole: ProfileCompletionRole | null =
@@ -90,7 +119,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
   const [selectedRole, setSelectedRole] = useState<ProfileCompletionRole | null>(initialRole);
 
   const [roleData, setRoleData] = useState<StudentRoleData | GuestRoleData>(
-    initialRole === "student" ? initialStudentData : initialGuestData
+    initialRole === "student" ? { ...initialStudentData, degree_program: UPLB_PROGRAMS[initialStudentData.college][0] } : initialGuestData
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,22 +132,90 @@ export default function CompleteProfile({ user }: { user: User | null }) {
     housing_admin: "/admin/dashboard",
   };
 
-  const handlePersonalFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handlePersonalFieldChange = (name: string, value: string) => {
     setPersonalDetails((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleRoleFieldChange = (name: string, value: string) => {
-    setRoleData((prev) => ({ ...prev, [name]: value }));
+    // If college changes, reset degree program to the first available for that college
+    if (name === "college") {
+      setRoleData((prev) => ({
+        ...prev,
+        college: value as College,
+        degree_program: UPLB_PROGRAMS[value as College][0]
+      }));
+    } else {
+      setRoleData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const validateForm = () => {
+    // 1. Personal Details Validation
+    if (!personalDetails.first_name.trim()) return "First name is required.";
+    if (!personalDetails.last_name.trim()) return "Last name is required.";
+    if (!personalDetails.sex) return "Sex is required.";
+    if (!personalDetails.birthdate) return "Birthdate is required.";
+
+    // 2. Role Specific Validation
+    if (!selectedRole) return "Please select a role.";
+
+    if (selectedRole === "student") {
+      const data = roleData as StudentRoleData;
+
+      // Basic empty checks
+      if (!data.student_num.trim()) return "Student number is required.";
+      if (!data.degree_program.trim()) return "Degree program is required.";
+      if (!data.college) return "College is required.";
+      if (!data.enrollment_status) return "Enrollment status is required.";
+      if (!data.home_address.trim()) return "Home address is required.";
+      if (!data.emergency_person.trim()) return "Emergency person name is required.";
+      if (!data.emergency_contact.trim()) return "Emergency contact number is required.";
+
+      // Format checks
+      if (!/^\d{9}$/.test(data.student_num)) {
+        return "Student number must be exactly 9 digits (e.g. 202312345).";
+      }
+      if (!/^09\d{9}$/.test(data.emergency_contact)) {
+        return "Emergency contact must be in the format 09XXXXXXXXX.";
+      }
+    }
+
+    if (selectedRole === "guest") {
+      const data = roleData as GuestRoleData;
+      if (!data.valid_id.trim()) return "Valid ID is required.";
+      if (!data.purpose_visit.trim()) return "Purpose of visit is required.";
+      if (!data.emergency_person.trim()) return "Emergency person name is required.";
+      if (!data.emergency_contact.trim()) return "Emergency contact number is required.";
+      if (!data.home_address.trim()) return "Home address is required.";
+
+      // Format check for guest too
+      if (!/^09\d{9}$/.test(data.emergency_contact)) {
+        return "Emergency contact must be in the format 09XXXXXXXXX.";
+      }
+    }
+
+    return null;
   };
 
   const handleContinue = async () => {
     if (!selectedRole) return;
 
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
+      // Format birthdate to YYYY-MM-DD string to avoid timezone shifts
+      const formattedDetails = {
+        ...personalDetails,
+        birthdate: personalDetails.birthdate ? format(personalDetails.birthdate, "yyyy-MM-dd") : undefined
+      };
+
       const response = await fetch("/api/auth/complete-profile", {
         method: "POST",
         headers: {
@@ -126,7 +223,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
         },
         body: JSON.stringify({
           role: selectedRole,
-          ...personalDetails,
+          ...formattedDetails,
           roleData
         }),
       });
@@ -161,7 +258,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
 
           {!user?.role && (
             <div className="space-y-2">
-              <Label className={label_style}>Role</Label>
+              <Label className={label_style}>Role <span className="text-red-500">*</span></Label>
               <Select
                 onValueChange={(value) => {
                   const role = value as ProfileCompletionRole;
@@ -187,12 +284,12 @@ export default function CompleteProfile({ user }: { user: User | null }) {
             <h3 className="text-lg font-bold text-[#F6F8D5] border-b border-[#F6F8D5]/20 pb-1">Personal Information</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label className={label_style}>First Name</Label>
+                <Label className={label_style}>First Name <span className="text-red-500">*</span></Label>
                 <Input
                   name="first_name"
                   className={field_style}
                   value={personalDetails.first_name}
-                  onChange={handlePersonalFieldChange}
+                  onChange={(e) => handlePersonalFieldChange("first_name", e.target.value)}
                   placeholder="First name"
                   required
                 />
@@ -203,21 +300,76 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   name="middle_name"
                   className={field_style}
                   value={personalDetails.middle_name}
-                  onChange={handlePersonalFieldChange}
+                  onChange={(e) => handlePersonalFieldChange("middle_name", e.target.value)}
                   placeholder="Middle name (optional)"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label className={label_style}>Last Name</Label>
+              <Label className={label_style}>Last Name <span className="text-red-500">*</span></Label>
               <Input
                 name="last_name"
                 className={full_width}
                 value={personalDetails.last_name}
-                onChange={handlePersonalFieldChange}
+                onChange={(e) => handlePersonalFieldChange("last_name", e.target.value)}
                 placeholder="Last name"
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label className={label_style}>Sex <span className="text-red-500">*</span></Label>
+              <Select
+                onValueChange={(value) =>
+                  handlePersonalFieldChange("sex", value as string)
+                }
+                defaultValue={personalDetails.sex}
+                required
+              >
+                <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
+                  {SEX.map((sex) => (
+                    <SelectItem key={sex} value={sex}>
+                      {sex}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Birthdate Field */}
+            <div className="space-y-2">
+              <Label className={label_style}>Birthdate <span className="text-red-500">*</span></Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal h-11 bg-[#fcf4d9] text-[#2d1a12] border-none rounded-full",
+                      !personalDetails.birthdate && "text-[#2d1a12]/30"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {personalDetails.birthdate ? format(personalDetails.birthdate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-[#fcf4d9] border-none" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={personalDetails.birthdate}
+                    onSelect={(date) => handlePersonalFieldChange("birthdate", date as any)}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                    captionLayout="dropdown"
+                    fromYear={1900}
+                    toYear={new Date().getFullYear()}
+                    initialFocus
+                    className="rounded-xl border-none"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -229,33 +381,42 @@ export default function CompleteProfile({ user }: { user: User | null }) {
               {selectedRole === "student" ? (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className={label_style}>Student Number</Label>
+                    <Label className={label_style}>Student Number <span className="text-red-500">*</span></Label>
                     <Input
                       className={field_style}
                       value={(roleData as StudentRoleData).student_num ?? ""}
                       onChange={(e) =>
                         handleRoleFieldChange("student_num", e.target.value)
                       }
-                      placeholder="20XX-XXXXX"
+                      placeholder="20XXXXXXXX (9 digits)"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className={label_style}>Degree Program</Label>
-                    <Input
-                      className={field_style}
-                      value={(roleData as StudentRoleData).degree_program ?? ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("degree_program", e.target.value)
+                    <Label className={label_style}>Degree Program <span className="text-red-500">*</span></Label>
+                    <Select
+                      onValueChange={(value) =>
+                        handleRoleFieldChange("degree_program", value)
                       }
-                      placeholder="e.g. BS Computer Science"
+                      value={(roleData as StudentRoleData).degree_program}
                       required
-                    />
+                    >
+                      <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
+                        {UPLB_PROGRAMS[(roleData as StudentRoleData).college].map((prog) => (
+                          <SelectItem key={prog} value={prog}>
+                            {prog}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className={label_style}>Enrollment Status</Label>
+                    <Label className={label_style}>Enrollment Status <span className="text-red-500">*</span></Label>
                     <Select
                       onValueChange={(value) =>
                         handleRoleFieldChange("enrollment_status", value)
@@ -277,7 +438,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className={label_style}>College</Label>
+                    <Label className={label_style}>College <span className="text-red-500">*</span></Label>
                     <Select
                       onValueChange={(value) =>
                         handleRoleFieldChange("college", value)
@@ -299,7 +460,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   </div>
 
                   <div className="space-y-2 sm:col-span-2">
-                    <Label className={label_style}>Home Address</Label>
+                    <Label className={label_style}>Home Address <span className="text-red-500">*</span></Label>
                     <Input
                       className={full_width}
                       value={(roleData as StudentRoleData).home_address ?? ""}
@@ -312,7 +473,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className={label_style}>Emergency Person</Label>
+                    <Label className={label_style}>Emergency Person <span className="text-red-500">*</span></Label>
                     <Input
                       className={field_style}
                       value={(roleData as StudentRoleData).emergency_person ?? ""}
@@ -325,7 +486,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className={label_style}>Emergency Contact #</Label>
+                    <Label className={label_style}>Emergency Contact # <span className="text-red-500">*</span></Label>
                     <Input
                       className={field_style}
                       value={(roleData as StudentRoleData).emergency_contact ?? ""}
@@ -340,7 +501,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
               ) : (
                 <div className="grid gap-4">
                   <div className="space-y-2">
-                    <Label className={label_style}>Valid ID</Label>
+                    <Label className={label_style}>Valid ID <span className="text-red-500">*</span></Label>
                     <Input
                       className={field_style}
                       value={(roleData as GuestRoleData).valid_id ?? ""}
@@ -353,7 +514,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className={label_style}>Purpose of Visit</Label>
+                    <Label className={label_style}>Purpose of Visit <span className="text-red-500">*</span></Label>
                     <Input
                       className={field_style}
                       value={(roleData as GuestRoleData).purpose_visit ?? ""}
@@ -361,6 +522,45 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                         handleRoleFieldChange("purpose_visit", e.target.value)
                       }
                       placeholder="e.g. Temporary stay, visiting family"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className={label_style}>Home Address <span className="text-red-500">*</span></Label>
+                    <Input
+                      className={full_width}
+                      value={(roleData as GuestRoleData).home_address ?? ""}
+                      onChange={(e) =>
+                        handleRoleFieldChange("home_address", e.target.value)
+                      }
+                      placeholder="Full Address"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className={label_style}>Emergency Person <span className="text-red-500">*</span></Label>
+                    <Input
+                      className={field_style}
+                      value={(roleData as GuestRoleData).emergency_person ?? ""}
+                      onChange={(e) =>
+                        handleRoleFieldChange("emergency_person", e.target.value)
+                      }
+                      placeholder="Name of emergency contact"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className={label_style}>Emergency Contact # <span className="text-red-500">*</span></Label>
+                    <Input
+                      className={field_style}
+                      value={(roleData as GuestRoleData).emergency_contact ?? ""}
+                      onChange={(e) =>
+                        handleRoleFieldChange("emergency_contact", e.target.value)
+                      }
+                      placeholder="09XXXXXXXXX"
                       required
                     />
                   </div>

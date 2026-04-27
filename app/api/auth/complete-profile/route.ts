@@ -9,7 +9,7 @@ const validRoles: UserRole[] = ["student", "guest"];
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { first_name, last_name, middle_name, role, roleData } = body;
+    const { first_name, last_name, middle_name, role, sex, birthdate, roleData } = body;
 
     if (!role || !validRoles.includes(role)) {
       return NextResponse.json({ success: false, error: "Invalid role selection." }, { status: 400 });
@@ -23,7 +23,9 @@ export async function POST(req: NextRequest) {
       role,
       first_name,
       last_name,
-      middle_name
+      middle_name,
+      sex,
+      birthdate
     };
 
     // 1. VALIDATE ROLE-SPECIFIC FIELDS
@@ -54,17 +56,21 @@ export async function POST(req: NextRequest) {
     }
 
     if (role === "guest") {
-      const { valid_id, purpose_visit } = roleData;
+      const { valid_id, purpose_visit, emergency_person, emergency_contact, home_address } = roleData;
 
-      if (!valid_id || !purpose_visit) {
+      if (!valid_id || !purpose_visit || !emergency_person || !emergency_contact || !home_address) {
         return NextResponse.json({ success: false, error: "Incomplete guest data. Please fill out all fields." }, { status: 400 });
       }
 
       metadataUpdates.valid_id = valid_id;
       metadataUpdates.purpose_visit = purpose_visit;
+      metadataUpdates.emergency_person = emergency_person;
+      metadataUpdates.emergency_contact = emergency_contact;
+      metadataUpdates.home_address = home_address;
     }
 
     // 2. AUTHENTICATE USER
+    const { supabaseAdmin } = await import("@/lib/supabase/admin-client");
     const supabase = await createSupabaseServerClient();
     const user = await getApiAuthenticatedUser();
 
@@ -72,40 +78,50 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Not authenticated." }, { status: 401 });
     }
 
-    // 3. UPDATE USERS TABLE
-    const profileUpdate = await supabase
+    // 3. UPDATE USERS TABLE (Requires RLS Policy: auth.uid() = user_id)
+    console.log("Completing profile for user:", user.user_id, "Data:", { first_name, last_name, role, sex });
+    const { error: userError } = await supabase
       .from("users")
       .update({
-        first_name: first_name,
-        last_name: last_name,
-        middle_name: middle_name,
-        role: role
+        first_name: metadataUpdates.first_name as string,
+        last_name: metadataUpdates.last_name as string,
+        middle_name: metadataUpdates.middle_name as string,
+        role: metadataUpdates.role as UserRole,
+        sex: metadataUpdates.sex as string,
+        birthdate: metadataUpdates.birthdate as string,
       })
       .eq("user_id", user.user_id);
 
-    if (profileUpdate.error) {
-      return NextResponse.json({ success: false, error: profileUpdate.error.message }, { status: 500 });
+    if (userError) {
+      console.error("CRITICAL: Users table update failed:", userError);
+      return NextResponse.json({ success: false, error: "Base profile update failed: " + userError.message }, { status: 500 });
     }
 
-    // 4. INSERT INTO SUB-TABLES
-    // Filter out top-level user fields for sub-table insertion
-    const subtableFields = ["role", "first_name", "last_name", "middle_name"];
-    const subtableData: Record<string, any> = {};
+    // 4. UPDATE ROLE TABLES (Requires RLS Policy: auth.uid() = user_id for INSERT/UPDATE)
+    // Fields that should ONLY go to the 'users' table
+    const userOnlyFields = ["role", "first_name", "last_name", "middle_name", "sex", "birthdate"];
+
+    const subtableData: Record<string, any> = {
+      user_id: user.user_id,
+      ...roleData // Include all role-specific data from the request
+    };
+
+    // Also include any other fields from metadataUpdates that are NOT in userOnlyFields
     Object.keys(metadataUpdates).forEach(key => {
-      if (!subtableFields.includes(key)) {
+      if (!userOnlyFields.includes(key)) {
         subtableData[key] = metadataUpdates[key];
       }
     });
 
-    const roleInsert = await supabase
+    console.log(`Updating ${role} table for ${user.user_id}:`, subtableData);
+    const { error: roleError } = await supabase
       .from(role)
       .update(subtableData)
-      .eq("user_id", user.user_id);
+      .eq('user_id', user.user_id);
 
-    if (roleInsert.error) {
-      // If insertion fails, it might be because it already exists, or the column doe snot exist in the schema. 
-      console.error(`Error inserting into ${role} table:`, roleInsert.error);
-      return NextResponse.json({ success: false, error: `Unable to save ${role} details: ` + roleInsert.error.message }, { status: 500 });
+    if (roleError) {
+      console.error(`CRITICAL: Role table (${role}) upsert failed:`, roleError);
+      return NextResponse.json({ success: false, error: `Role-specific data failed: ` + roleError.message }, { status: 500 });
     }
 
     // 5. UPDATE AUTH METADATA

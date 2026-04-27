@@ -73,7 +73,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
   const [error, setError] = useState<string | null>(null);
 
   // Editable fields
-  const [contactNum, setContactNum] = useState(metadata?.contact_number || '');
+  const [contactNum, setContactNum] = useState(user.contact_number || metadata?.contact_number || '');
   const [homeAddress, setHomeAddress] = useState(metadata?.home_address || '');
   const [emergencyContact, setEmergencyContact] = useState(metadata?.emergency_contact || '');
   
@@ -95,7 +95,6 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
   const [validId, setValidId] = useState(isCustomValidIdInit ? "Others" : initialValidId);
   const [customValidId, setCustomValidId] = useState(isCustomValidIdInit ? initialValidId : '');
   const [purposeVisit, setPurposeVisit] = useState(metadata?.purpose_visit || '');
-  const [occupancyStatus, setOccupancyStatus] = useState(metadata?.occupancy_status || '');
   
 
   const [adminId, setAdminId] = useState(metadata?.admin_id || '');
@@ -154,7 +153,6 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
         college: college === "Others" ? customCollege : college,
         valid_id: validId === "Others" ? customValidId : validId,
         purpose_visit: purposeVisit,
-        occupancy_status: occupancyStatus,
         admin_id: adminId,
         office_location: officeLocation,
         birthdate: birthdate,
@@ -486,17 +484,6 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                       onChange={(e) => setPurposeVisit(e.target.value)}
                       className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
                     placeholder="e.g. Conference"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Occupancy Status</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={occupancyStatus}
-                      onChange={(e) => setOccupancyStatus(e.target.value)}
-                      className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
-                    placeholder="e.g. Active"
                     />
                   </div>
                 </div>
