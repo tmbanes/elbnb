@@ -55,6 +55,7 @@ export const getApiAuthenticatedUser = cache(async (): Promise<User | null> => {
         profile_picture_url: metadata.profile_picture_url,
         student_number: metadata.student_number,
         phone_number: metadata.phone_number,
+        contact_number: metadata.contact_number,
     } as any;
 });
 

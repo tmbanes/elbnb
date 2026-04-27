@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
-import { ProfileUpload } from '@/app/dashboard/ProfileUpload';
-import { EditProfileDialog } from '@/app/dashboard/EditProfileDialog';
+import React, { useEffect, useState } from 'react';
+import { ProfileUpload } from '@/components/edit-profile/ProfileUpload';
+import { EditProfileDialog } from '@/components/edit-profile/EditProfileDialog';
 import { User } from '@/types/user.types';
-import { Home, Edit3, CircleUser, User as UserIcon, ShieldCheck, MapPinHouse, Building2 } from 'lucide-react';
+import { Home, Edit3, CircleUser, User as UserIcon, ShieldCheck, MapPinHouse, Building2, History } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,8 @@ import {
   SubheaderMd,
 } from '@/app/typography';
 
+import Link from 'next/link';
+
 const nunito = Nunito({
   subsets: ['latin'],
   weight: ['400', '600', '800', '900']
@@ -34,6 +36,30 @@ interface ProfileComponentProps {
 export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
   const [uploadPhotoOpen, setUploadPhotoOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'accommodations'>('personal');
+  const [currentAssignment, setCurrentAssignment] = useState<any>(null);
+  const [loadingAssignment, setLoadingAssignment] = useState(false);
+
+  useEffect(() => {
+    if (user.role === 'student') {
+      const fetchAssignment = async () => {
+        setLoadingAssignment(true);
+        try {
+          const res = await fetch('/api/student/assignments/history');
+          const result = await res.json();
+          if (result.success && result.data) {
+            // Find the most recent active assignment
+            const active = result.data.find((a: any) => a.assignment_status === 'active');
+            setCurrentAssignment(active);
+          }
+        } catch (err) {
+          console.error("Failed to fetch assignments:", err);
+        } finally {
+          setLoadingAssignment(false);
+        }
+      };
+      fetchAssignment();
+    }
+  }, [user.role]);
 
   const role = user.role;
   const isStudent = role === 'student';
@@ -57,7 +83,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
       "Work Information";
 
   // Role-specific metadata
-  const studentNum = metadata?.student_number || 'N/A';
+  const studentNum = metadata?.student_num || metadata?.student_number || 'N/A';
   const degreeProg = metadata?.degree_program || 'N/A';
   const college = metadata?.college || 'CAS';
   const officeLocation = metadata?.office_location || 'N/A';
@@ -65,10 +91,11 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
   const validId = metadata?.valid_id || 'N/A';
   const purposeVisit = metadata?.purpose_visit || 'N/A';
   const occupancyStatus = metadata?.occupancy_status || 'N/A';
-  const contactNum = metadata?.contact_number || 'N/A';
+  const contactNum = metadata?.contact_number || metadata?.phone_number || 'N/A';
   const homeAddress = metadata?.home_address || 'N/A';
   const emergencyContact = metadata?.emergency_contact || 'N/A';
-  const formattedBirthdate = user.birthdate || 'N/A';
+  const emergencyPerson = metadata?.emergency_person || 'N/A';
+  const formattedBirthdate = user?.birthdate || metadata?.birthdate || 'N/A';
 
   // Standard renderer: Greys out "N/A"
   const renderValue = (val: string, label: string) => (
@@ -92,7 +119,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
 
   const renderContent = () => {
     return (
-      <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full min-h-[280px] sm:min-h-[350px] md:min-h-[400px]">
+      <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full h-[500px] sm:h-[600px] md:h-[420px]">
         {/* Second Folder (Accommodations/Management) */}
         <div
           onClick={() => setActiveTab('accommodations')}
@@ -108,11 +135,29 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
             <div className="grid grid-cols-1 gap-y-8 w-full">
               {isStudent && (
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
-                  {renderValue('Eliazo Hall', 'Dormitory Name')}
-                  {renderValue('Room 101', 'Unit Number')}
-                  {renderValue('08/15/2023', 'Contract Start Date')}
-                  {renderValue('05/30/2024', 'Contract End Date')}
+                  {loadingAssignment ? (
+                    <div className="col-span-2 py-4 animate-pulse text-[#3E2723]/40 font-bold uppercase tracking-widest text-xs">Loading Assignment Data...</div>
+                  ) : currentAssignment ? (
+                    <>
+                      {renderValue(currentAssignment.accommodation?.accommodation_name || 'N/A', 'Dormitory Name')}
+                      {renderValue(currentAssignment.unit?.unit_number || 'N/A', 'Unit Number')}
+                      {renderValue(currentAssignment.move_in_date ? new Date(currentAssignment.move_in_date).toLocaleDateString() : 'N/A', 'Contract Start Date')}
+                      {renderValue(currentAssignment.target_move_out_date ? new Date(currentAssignment.target_move_out_date).toLocaleDateString() : 'N/A', 'Contract End Date')}
+                    </>
+                  ) : (
+                    <div className="col-span-2 py-4 text-[#3E2723]/40 font-bold uppercase tracking-widest text-xs">No Active Accommodation Found</div>
+                  )}
+                  <div className="absolute right-4 sm:right-6 md:right-8 bottom-12 sm:bottom-22 z-[60] pointer-events-auto">
+            <Link 
+              href="/student/history"
+              className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
+            >
+              <History size={14} strokeWidth={3} />
+              View Past Accommodations
+            </Link>
+          </div>
                 </div>
+        
               )}
               {isGuest && (
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
@@ -132,12 +177,13 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
               )}
             </div>
           </div>
+
         </div>
 
         {/* First Folder (Personal Information) */}
         <div
           onClick={() => setActiveTab('personal')}
-          className={`col-start-1 row-start-1 w-full self-end cursor-pointer relative z-40 bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 mt-[60px] sm:mt-[80px] transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'personal' ? 'rounded-tl-[40px] rounded-tr-[150px] sm:rounded-tr-[300px] rounded-b-[40px]' : 'rounded-[40px] hover:bg-[#8bc453] hover:shadow-lg'}`}
+          className={`col-start-1 row-start-1 w-full self-end cursor-pointer relative z-40 bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 mt-[260px] sm:mt-[320px] transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'personal' ? 'rounded-tl-[40px] rounded-tr-[150px] sm:rounded-tr-[300px] rounded-b-[40px]' : 'rounded-[40px] hover:bg-[#8bc453] hover:shadow-lg'}`}
           style={activeTab === 'personal' ? { filter: 'url(#grain)', backgroundBlendMode: 'multiply' } : {}}
         >
           <div className={`flex items-center gap-3 text-[#3E2723] transition-all duration-500 ${activeTab === 'personal' ? 'pt-8 mb-4' : 'py-5 sm:py-6'}`}>
@@ -162,7 +208,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                       {isGuest && renderValue(validId, 'Valid ID Reference')}
                     </div>
                   </div>
-                  <div className="md:col-span-9">
+                  <div className={`md:col-span-${isStudent ? '9' : '12'}`}>
                     <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Contact Details</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                       {renderValue(user.email || 'N/A', 'Email Address')}
@@ -170,12 +216,14 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                       {renderValue(homeAddress, 'Home Address')}
                     </div>
                   </div>
-                  <div className="md:col-span-3">
-                    <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Emergency Contacts</h4>
-                    <div className="grid grid-cols-1 gap-6">
-                      {renderValue(emergencyContact, 'Emergency Contact')}
+                  {isStudent && (
+                    <div className="md:col-span-3">
+                      <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Emergency Contacts</h4>
+                      <div className="grid grid-cols-1 gap-6">
+                        {renderValue(emergencyContact, emergencyPerson)}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -250,7 +298,10 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
           </div>
 
           <div className="absolute right-4 md:right-6 bottom-6 flex gap-3 z-50">
-            <EditProfileDialog user={user} metadata={metadata} />
+            <EditProfileDialog 
+              user={user} 
+              metadata={metadata} 
+            />
           </div>
         </div>
       </div>
