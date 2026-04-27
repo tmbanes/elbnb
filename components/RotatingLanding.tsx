@@ -517,8 +517,8 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
       {/* ─── FOOTER ─── */}
       <footer className="bg-[#7EB647] py-16 px-6 pb-32 text-white relative z-10" style={{ filter: 'url(#grain)' }}>
         <div className="max-w-5xl mx-auto space-y-12 relative z-10">
-          <div className="flex flex-col lg:flex-row justify-between gap-12">
-            <div className="space-y-4 max-w-xs">
+          <div className="flex flex-col items-center text-center gap-12">
+            <div className="space-y-4 max-w-xs flex flex-col items-center">
               <div className="flex items-center gap-3">
                 <img src="/logo/logo_house.png" alt="ELBNB" className="h-8 w-auto brightness-0 invert" />
                 <span className={`${HeaderSm} text-2xl tracking-tighter font-black`}>ELBNB</span>
@@ -527,7 +527,7 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
               <p className="text-white/40 text-xs italic font-bold">"From Elbi, For Elbi."</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-10 md:gap-16">
+            {/* <div className="grid grid-cols-2 md:grid-cols-3 gap-10 md:gap-16">
               {FOOTER_COLS.map((col, i) => (
                 <div key={i} className="space-y-4">
                   <p className="text-white/40 uppercase tracking-[0.15em] text-xs font-bold">{col.label}</p>
@@ -542,18 +542,18 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
                   </ul>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
 
-          <div className="pt-8 border-t border-white/20 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-white/40 text-xs font-semibold">© 2024 ELBNB. All rights reserved.</p>
-            <div className="flex items-center gap-6">
+          <div className="pt-8 border-t border-white/20 flex flex-col md:flex-row justify-end items-center gap-6">
+            <p className="text-white/40 text-xs font-semibold">© 2026 ELBNB. All rights reserved.</p>
+            {/* <div className="flex items-center gap-6">
               {['Facebook', 'Instagram', 'TikTok'].map((s) => (
                 <Link key={s} href="#" className="text-white/50 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">
                   {s}
                 </Link>
               ))}
-            </div>
+            </div> */}
           </div>
         </div>
       </footer>
