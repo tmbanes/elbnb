@@ -17,6 +17,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
+import { ChevronLeft } from "lucide-react";
 //style constants
 const button_style = "w-full h-11 rounded-full bg-[#fbbc05] text-[#2d1a12] font-semibold hover:bg-[#f9d776]";
 
@@ -63,8 +64,15 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
               <CardHeader>
                 <CardTitle className="text-3xl font-bold text-[#F6F8D5]">Continue with Google</CardTitle>
                 <CardDescription className="text-[#F6F8D5]">
-                  Enter your credentials to continue
+                  Sign in with your Google account
                 </CardDescription>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => router.push('/onboarding')}
+                  className="absolute top-4 right-4 text-[#F6F8D5] hover:bg-white/10 hover:text-white rounded-full h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
 
                 <Button
                   type="button"
@@ -75,6 +83,16 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
                 </Button>
               </CardHeader>
             </Card>
+            <div className="mt-8 flex justify-center">
+              <Button 
+                variant="link" 
+                onClick={() => router.push('/onboarding')}
+                className="text-[#F6F8D5]/60 hover:text-[#F6F8D5] flex items-center gap-1 no-underline font-semibold"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Go back
+              </Button>
+            </div>
           </div>
         )}
 

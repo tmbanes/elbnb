@@ -24,6 +24,25 @@ export default async function HousingPage() {
     `)
     .eq("manager_id", user.user_id);
 
+  if (error) {
+    console.error("Housing Fetch Error:", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
+  }
+  console.log(`Housing Page: Fetched ${properties?.length || 0} properties for manager ${user.user_id}`);
+
+  if (error) {
+    return (
+      <div className="p-8 bg-red-50 text-red-700 font-mono">
+        <h1 className="text-xl font-bold mb-4">Housing Fetch Error</h1>
+        <pre className="whitespace-pre-wrap">{JSON.stringify(error, null, 2)}</pre>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen p-8 bg-[#F6F8D5]">
       <div className="max-w-7xl mx-auto space-y-8">

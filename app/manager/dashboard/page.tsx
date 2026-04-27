@@ -43,20 +43,26 @@ export default async function DormitoryManagerDashboardPage() {
     const [unitsRes, waitlistRes, recentAppsRes] = await Promise.all([
       supabase.from('unit').select('*').eq('accommodation_id', accom.accommodation_id),
       supabase.from('accommodation_application')
-        .select('*, users:user_id(first_name, last_name, profile_picture_url)')
+        .select('*, users!user_id(first_name, last_name, profile_picture_url)')
         .eq('preferred_accommodation_id', accom.accommodation_id)
         .eq('application_status', 'approved')
         .order('date_submitted', { ascending: true }),
       supabase.from('accommodation_application')
-        .select('*, users:user_id(first_name, last_name, profile_picture_url)')
+        .select('*, users!user_id(first_name, last_name, profile_picture_url)')
         .eq('preferred_accommodation_id', accom.accommodation_id)
         .order('date_submitted', { ascending: false })
         .limit(5)
     ]);
 
     units = unitsRes.data || [];
-    waitlist = waitlistRes.data || [];
-    recentApplications = recentAppsRes.data || [];
+    waitlist = (waitlistRes.data || []).map((app: any) => ({
+      ...app,
+      users: Array.isArray(app.users) ? app.users[0] : app.users
+    }));
+    recentApplications = (recentAppsRes.data || []).map((app: any) => ({
+      ...app,
+      users: Array.isArray(app.users) ? app.users[0] : app.users
+    }));
 
     if (units.length > 0) {
       const unitIds = units.map(u => u.unit_id);
@@ -66,7 +72,12 @@ export default async function DormitoryManagerDashboardPage() {
         .from('accommodation_assignment')
         .select(`
           *,
-          users:user_id (first_name, last_name, profile_picture_url),
+          users:user_id (
+            first_name, 
+            last_name, 
+            profile_picture_url,
+            student:student (student_number, college)
+          ),
           unit:unit_id (unit_number)
         `)
         .eq('assignment_status', 'active')

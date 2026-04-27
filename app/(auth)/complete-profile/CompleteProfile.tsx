@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, College, COLLEGES } from "@/types/user.types";
+import { User, College, COLLEGES, COLLEGE_DEGREE_MAP } from "@/types/user.types";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+import { LogOut } from "lucide-react";
 
 ///ui components
 import { Input } from "@/components/ui/input";
@@ -95,6 +97,14 @@ export default function CompleteProfile({ user }: { user: User | null }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const supabase = getSupabaseBrowserClient();
+
+  const handleSignOut = async () => {
+    setLoading(true);
+    await supabase.auth.signOut();
+    router.refresh();
+    router.push("/onboarding");
+  };
 
   const targetRoute: Record<string, string> = {
     student: "/student/dashboard",
@@ -119,6 +129,27 @@ export default function CompleteProfile({ user }: { user: User | null }) {
     setError(null);
 
     try {
+      // Manual Validation
+      if (!personalDetails.first_name || !personalDetails.last_name) {
+        setError("Please provide your first and last name.");
+        setLoading(false);
+        return;
+      }
+
+      if (selectedRole === "student") {
+        const d = roleData as StudentRoleData;
+        if (!d.student_num || d.student_num.length !== 9) {
+          setError("Student number must be exactly 9 digits.");
+          setLoading(false);
+          return;
+        }
+        if (!d.college || !d.degree_program || !d.home_address || !d.emergency_contact) {
+          setError("Please fill out all student details.");
+          setLoading(false);
+          return;
+        }
+      }
+
       const response = await fetch("/api/auth/complete-profile", {
         method: "POST",
         headers: {
@@ -130,6 +161,15 @@ export default function CompleteProfile({ user }: { user: User | null }) {
           roleData
         }),
       });
+
+      // Handle non-JSON responses (SyntaxError prevention)
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Server returned non-JSON response:", text);
+        setError("Server error. Please try again later.");
+        return;
+      }
 
       const data = await response.json();
 
@@ -231,27 +271,41 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   <div className="space-y-2">
                     <Label className={label_style}>Student Number</Label>
                     <Input
+                      type="text"
                       className={field_style}
-                      value={(roleData as StudentRoleData).student_num ?? ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("student_num", e.target.value)
-                      }
-                      placeholder="20XX-XXXXX"
-                      required
+                      value={(roleData as StudentRoleData).student_num || ""}
+                      placeholder="202314986"
+                      maxLength={9}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, "");
+                        handleRoleFieldChange("student_num", val);
+                      }}
                     />
+                    <p className="text-[10px] text-[#2d1a12]/60 font-semibold pl-1">Format: 9 digits (e.g. 202314986)</p>
                   </div>
 
                   <div className="space-y-2">
                     <Label className={label_style}>Degree Program</Label>
-                    <Input
-                      className={field_style}
-                      value={(roleData as StudentRoleData).degree_program ?? ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("degree_program", e.target.value)
+                    <Select
+                      onValueChange={(value) =>
+                        handleRoleFieldChange("degree_program", value)
                       }
-                      placeholder="e.g. BS Computer Science"
+                      value={(roleData as StudentRoleData).degree_program || ""}
                       required
-                    />
+                      disabled={!(roleData as StudentRoleData).college}
+                    >
+                      <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
+                        <SelectValue placeholder="Select Degree" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
+                        {COLLEGE_DEGREE_MAP[(roleData as StudentRoleData).college]?.map((deg) => (
+                          <SelectItem key={deg} value={deg}>
+                            {deg}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="Others">Others</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -279,9 +333,10 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   <div className="space-y-2">
                     <Label className={label_style}>College</Label>
                     <Select
-                      onValueChange={(value) =>
-                        handleRoleFieldChange("college", value)
-                      }
+                      onValueChange={(value) => {
+                        handleRoleFieldChange("college", value);
+                        handleRoleFieldChange("degree_program", "");
+                      }}
                       defaultValue={(roleData as StudentRoleData).college}
                       required
                     >
@@ -327,8 +382,9 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   <div className="space-y-2">
                     <Label className={label_style}>Emergency Contact #</Label>
                     <Input
+                      type="text"
                       className={field_style}
-                      value={(roleData as StudentRoleData).emergency_contact ?? ""}
+                      value={(roleData as StudentRoleData).emergency_contact || ""}
                       onChange={(e) =>
                         handleRoleFieldChange("emergency_contact", e.target.value)
                       }
@@ -342,13 +398,13 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   <div className="space-y-2">
                     <Label className={label_style}>Valid ID</Label>
                     <Input
+                      type="text"
                       className={field_style}
-                      value={(roleData as GuestRoleData).valid_id ?? ""}
+                      value={(roleData as GuestRoleData).valid_id || ""}
                       onChange={(e) =>
                         handleRoleFieldChange("valid_id", e.target.value)
                       }
                       placeholder="ID Number / Type"
-                      required
                     />
                   </div>
 
@@ -370,13 +426,25 @@ export default function CompleteProfile({ user }: { user: User | null }) {
           )}
 
           {/* Actions */}
-          <Button
-            onClick={handleContinue}
-            disabled={loading || !selectedRole}
-            className={button_style}
-          >
-            {loading ? "Saving..." : "Finish Setup"}
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={handleContinue}
+              disabled={loading || !selectedRole}
+              className={button_style}
+            >
+              {loading && !error ? "Saving..." : "Finish Setup"}
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              disabled={loading}
+              className="w-full h-11 rounded-full border-2 border-[#F6F8D5]/40 text-[#F6F8D5] hover:bg-[#F6F8D5]/10 hover:text-[#F6F8D5]"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out & Cancel
+            </Button>
+          </div>
 
           {error && (
             <p className="text-sm bg-red-500/20 text-red-100 p-3 rounded-full text-center">{error}</p>
