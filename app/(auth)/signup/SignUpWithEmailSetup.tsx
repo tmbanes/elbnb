@@ -115,6 +115,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
     setLoading(true);
 
     try {
+      
       // Manual Validation
       if (!payload.email || !payload.email.includes("@")) {
         setStatus("Please enter a valid email address.");
@@ -127,7 +128,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
         return;
       }
 
-      const response = await fetch("/api/auth/signup", {
+      const response = await fetch("/api/auth/signUp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

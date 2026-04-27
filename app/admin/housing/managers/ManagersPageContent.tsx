@@ -24,6 +24,7 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
     try {
       const res = await fetch("/api/admin/housing/managers");
       const data = await res.json();
+      
       if (!res.ok) throw new Error(data.error);
       setManagers(data);
     } catch (err: any) {
@@ -134,6 +135,7 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
     );
   }
 
+  fetchManagers() 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden bg-[#F6F8D5]">
       {/* LEFT: Managers List */}
@@ -145,6 +147,7 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
           ${selectedId ? "hidden lg:block" : "block"}
         `}
       >
+       
         <ManagersList
           managers={managers}
           onBackToHousing={handleBackToHousing}
