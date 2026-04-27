@@ -53,7 +53,7 @@ export function AccommodationFilters({
 }: AccommodationFiltersProps) {
   return (
 
-    <div className="rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 px-6 py-5 mb-10 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]" style={{ backgroundColor: '#FDFFF4' }}>
+    <div className="rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 px-4 md:px-6 py-5 mb-10 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]" style={{ backgroundColor: '#FDFFF4' }}>
       <div className="flex flex-col md:flex-row md:items-center gap-6">
         
         {/* Filters Group */}

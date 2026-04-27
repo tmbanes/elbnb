@@ -55,11 +55,11 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
 
   async function handleAction(id: string, action: ManagerAction, unitId?: string) {
     await updateApplicationStatus(id, action, unitId);
-    
+
     // Update local state so the UI reflects the change immediately
-    setApplications((prev) => prev.map((a) => 
-      a.application_id === id 
-        ? { ...a, application_status: action === "forward" ? "pending_admin" : "rejected" } 
+    setApplications((prev) => prev.map((a) =>
+      a.application_id === id
+        ? { ...a, application_status: action === "forward" ? "pending_admin" : "rejected" }
         : a
     ));
   }
@@ -113,7 +113,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
 
   return (
     <div className="h-[100dvh] flex overflow-hidden bg-[#F6F8D5] font-[family-name:var(--font-archivo)]">
-      
+
       {/* LEFT SIDE (LIST) */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out",
@@ -147,7 +147,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                 className="w-full px-3 py-1.5 bg-transparent text-sm outline-none text-[#44291B] placeholder:text-[#44291B]/50 font-medium"
               />
             </div>
-            
+
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest px-2">
                 {filteredApps.length} Total
@@ -178,7 +178,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                       const applicantName = `${app.users?.first_name} ${app.users?.last_name}`;
                       const isSelected = app.application_id === selectedAppId;
                       return (
-                        <tr 
+                        <tr
                           key={app.application_id}
                           onClick={() => setSelectedAppId(app.application_id)}
                           className={cn(
@@ -201,9 +201,9 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                             {getStatusBadge(app.application_status)}
                           </td>
                           <td className="py-4 px-5 text-right">
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
+                            <Button
+                              size="sm"
+                              variant="ghost"
                               className={cn(
                                 "p-2 rounded-xl h-9 w-9 p-0 flex items-center justify-center ml-auto transition-all",
                                 isSelected ? "bg-[#264384] text-white" : "text-slate-500 bg-slate-100/50 hover:text-[#264384] hover:bg-[#AFBFE1]"
