@@ -50,7 +50,7 @@ export default function ReviewApplication({
       if (application.file && application.application_id) {
         try {
           const path = `${application.application_id}/${application.file}`;
-          const res = await fetch(`/api/admin/applications/document-url?path=${encodeURIComponent(path)}`);
+          const res = await fetch(`/api/applications/document-url?path=${encodeURIComponent(path)}`);
           const data = await res.json();
           
           if (!res.ok) throw new Error(data.error);

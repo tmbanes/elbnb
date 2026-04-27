@@ -4,8 +4,10 @@ import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
 export async function GET(req: NextRequest) {
   const user = await getApiAuthenticatedUser();
-  if (!user || (user.role !== "housing_admin" && user.role !== "dorm_manager")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  
+  const allowedRoles = ["housing_admin", "dormitory_manager", "admin"];
+  if (!user || !allowedRoles.includes(user.role)) {
+    return NextResponse.json({ error: `Forbidden: role ${user?.role} not allowed` }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
