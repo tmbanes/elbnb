@@ -508,7 +508,7 @@ export default function SearchAccommodationsPage() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-6 xl:px-6 py-6">
           {/* Header */}
           <div className="mb-8">
-            <h1 className={`${archivoBlack.className} text-4xl md:text-5xl mb-2`} style={{ color: '#44291B' }}>
+            <h1 className={`${archivoBlack.className} pt-9 text-4xl md:text-5xl mb-2`} style={{ color: '#44291B' }}>
               Search Accommodations
             </h1>
             <p className="text-sm md:text-base font-medium" style={{ color: '#44291B' }}>Find your perfect housing option</p>
