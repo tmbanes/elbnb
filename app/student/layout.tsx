@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth/session";
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SidebarContentWrapper } from "@/components/sidebar-content-wrapper";
 
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
     await requireRole(["student"]);
@@ -14,12 +15,14 @@ export default async function StudentLayout({ children }: { children: React.Reac
 
                 <AppSidebar role="student" />
 
-                <main className="flex-1">
-                    {/* optional trigger button */}
+                <SidebarContentWrapper>
+                    <main className="flex-1">
+                        {/* optional trigger button */}
 
 
-                    {children}
-                </main>
+                        {children}
+                    </main>
+                </SidebarContentWrapper>
 
             </SidebarProvider>
         </TooltipProvider>
