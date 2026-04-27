@@ -1,37 +1,25 @@
-"use client";
-import { useState } from "react";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
+import { RotatingLanding } from "@/components/RotatingLanding";
 
-export default function Home() {
-  const [count, setCount] = useState(0);
-  return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-6">
-      <div className="max-w-3xl text-center space-y-8">
-        {/* Logo or Brand Name */}
-        <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter text-slate-900">
-          Elbnb<span className="text-blue-600">.</span>
-        </h1>
+export default async function LandingPage() {
+  // Check if user is logged in
+  const user = await getApiAuthenticatedUser();
 
-        {/* Subtitle */}
-        <p className="text-xl md:text-2xl text-slate-600 font-medium max-w-xl mx-auto">
-          Coming Soon!
-        </p>
+  // If user is logged in but profile is incomplete
+  if (user != null && (!user.role || !user.first_name || user.first_name === "TBD")) {
+    redirect("/complete-profile");
+  }
 
-        {/* Counter Widget */}
-        <div className="flex flex-col items-center gap-4 pt-4">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-all active:scale-95"
-          >
-            Add to Counter
-          </button>
-          <p className="text-slate-500 font-medium">
-            Clicks: <span className="text-slate-900 font-bold">{count}</span>
-          </p>
-        </div>
+  // user is logged in and has role and complete profile
+  if (user && user.role) {
+    if (user.role === "student") redirect("/student/dashboard");
+    if (user.role === "housing_admin") redirect("/admin/dashboard");
+    if (user.role === "dormitory_manager") redirect("/manager/dashboard");
+    if (user.role === "guest") redirect("/guest/dashboard");
+  }
 
-        {/* Small decorative divider */}
-        <div className="w-16 h-1 bg-blue-600 mx-auto rounded-full mt-8"></div>
-      </div>
-    </main>
-  );
+  // We DO NOT call redirectByRole here because it has a built-in redirect to /onboarding
+
+  return <RotatingLanding initialUser={user} />;
 }
