@@ -15,7 +15,7 @@ export default async function ManagersPage() {
   const { data: managers, error } = await supabase
     .from("dormitory_manager")
     .select("*, users(user_id, first_name, last_name, email)")
-    .order("manager_id", { ascending: true });
+    .order("employee_id", { ascending: true });
 
   const mappedManagers = (managers || []).map((m: any) => ({
     ...m,
