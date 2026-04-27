@@ -13,7 +13,7 @@ export function Carousel({ children }: CarouselProps) {
   // Hover-based scroll state
   const isScrollingRef = useRef<boolean>(false)
   const scrollDirectionRef = useRef<'left' | 'right' | null>(null)
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number | null>(null)
 
   const scrollLoop = useCallback(() => {
     if (!isScrollingRef.current || !scrollContainerRef.current) return

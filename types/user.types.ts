@@ -76,6 +76,9 @@ export interface User {
   sex: string;
   birthdate: string; // ISO date string
   profile_picture_url?: string | null;
+  contact_number?: string;
+  phone_number?: string;
+  student_number?: string;
 }
 
 export type {

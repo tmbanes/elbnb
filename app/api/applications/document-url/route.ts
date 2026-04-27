@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const user = await getApiAuthenticatedUser();
   
   const allowedRoles = ["housing_admin", "dormitory_manager", "admin"];
-  if (!user || !allowedRoles.includes(user.role)) {
+  if (!user || !user.role || !allowedRoles.includes(user.role)) {
     return NextResponse.json({ error: `Forbidden: role ${user?.role} not allowed` }, { status: 403 });
   }
 

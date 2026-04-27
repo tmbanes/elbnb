@@ -207,7 +207,7 @@ export default function NotificationDropdown({ user }: NotificationDropdownProps
         router.push(`/${role}/accommodations/`);
         break;
       case "billing":
-        router.push(`/${role}/application/${id}`);
+        router.push(`/${role}/application/${notification.entity_id}`);
         break;
       case "assignment":
         router.push(`/${role}/applications/`);

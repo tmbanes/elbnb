@@ -7,7 +7,7 @@ const ALL_ROLES = ['student', 'guest', 'housing_admin', 'dormitory_manager'] as 
 // GET — fetch billing tile information for the authenticated user
 export const GET = withRole([...ALL_ROLES], async (_req, { user }) => {
   try {
-    const billingInfo = await getBillingInformation(user.user_id, user.role);
+    const billingInfo = await getBillingInformation(user.user_id, user.role!);
     return NextResponse.json({ billingInfo });
   } catch (error) {
     console.error('Error fetching billing information:', error);

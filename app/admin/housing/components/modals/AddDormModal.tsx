@@ -398,7 +398,7 @@ export default function AddDormModal({
                 <SelectContent>
                   {managers.map((m) => {
                     const assignedAcc = m.accommodation?.[0]?.name;
-                    const isAssignedElsewhere = assignedAcc && m.users.user_id !== existingDorm?.manager_id;
+                    const isAssignedElsewhere = !!(assignedAcc && m.users.user_id !== existingDorm?.manager_id);
                     
                     return (
                       <SelectItem 
@@ -580,7 +580,7 @@ export default function AddDormModal({
               <SelectContent>
                 {managers.map((m) => {
                   const assignedAcc = m.accommodation?.[0]?.name;
-                  const isAssignedElsewhere = assignedAcc && m.users.user_id !== existingDorm?.manager_id;
+                  const isAssignedElsewhere = !!(assignedAcc && m.users.user_id !== existingDorm?.manager_id);
 
                   return (
                     <SelectItem 

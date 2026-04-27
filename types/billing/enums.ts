@@ -55,3 +55,43 @@ export enum BillingPeriodType {
   SEMESTRAL = "semestral",
   YEARLY = "yearly",
 }
+
+export enum TransactionStatus {
+  PENDING = "pending",
+  SUCCEEDED = "succeeded",
+  FAILED = "failed",
+  CANCELLED = "cancelled",
+  POSTED = "posted",
+}
+
+export enum TransactionType {
+  PAYMENT = "payment",
+  REFUND = "refund",
+  PAYOUT = "payout",
+  CHARGE = "charge",
+}
+
+export enum PayoutStatus {
+  SCHEDULED = "scheduled",
+  PENDING = "pending",
+  IN_TRANSIT = "in_transit",
+  PAID = "paid",
+  FAILED = "failed",
+  CANCELLED = "cancelled",
+}
+
+export enum RefundStatus {
+  PENDING = "pending",
+  PROCESSED = "processed",
+  SUCCEEDED = "succeeded",
+  FAILED = "failed",
+  CANCELLED = "cancelled",
+}
+
+export enum RefundReason {
+  DUPLICATE = "duplicate",
+  FRAUDULENT = "fraudulent",
+  REQUESTED_BY_CUSTOMER = "requested_by_customer",
+  ACCOMMODATION_UNAVAILABLE = "accommodation_unavailable",
+  OTHER = "other",
+}

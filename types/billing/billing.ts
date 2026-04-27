@@ -36,3 +36,15 @@ export interface BillingInformation {
   internal_notes?: string | null;
   reminded_at?: Date | null;
 }
+
+export interface Billing {
+  id: string;
+  tenant_id: string;
+  invoice_id?: string;
+  billing_number: string;
+  due_date: string;
+  paid_amount: number;
+  discount_amount: number;
+  penalty_amount: number;
+  notes?: string | null;
+}
