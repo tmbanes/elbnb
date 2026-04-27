@@ -23,6 +23,7 @@ import { Plus } from "lucide-react";
 interface Manager {
   employee_id: string;
   users: { user_id: string; first_name: string; last_name: string };
+  accommodation?: { name: string }[];
 }
 
 interface DormForm {
@@ -395,11 +396,20 @@ export default function AddDormModal({
                   <SelectValue placeholder="Select a manager" />
                 </SelectTrigger>
                 <SelectContent>
-                  {managers.map((m) => (
-                    <SelectItem key={m.employee_id} value={m.users.user_id}>
-                      {m.users.first_name} {m.users.last_name}
-                    </SelectItem>
-                  ))}
+                  {managers.map((m) => {
+                    const assignedAcc = m.accommodation?.[0]?.name;
+                    const isAssignedElsewhere = assignedAcc && m.users.user_id !== existingDorm?.manager_id;
+                    
+                    return (
+                      <SelectItem 
+                        key={m.employee_id} 
+                        value={m.users.user_id}
+                        disabled={isAssignedElsewhere}
+                      >
+                        {m.users.first_name} {m.users.last_name}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </Field>
@@ -568,11 +578,20 @@ export default function AddDormModal({
                 <SelectValue placeholder="Select a manager" />
               </SelectTrigger>
               <SelectContent>
-                {managers.map((m) => (
-                  <SelectItem key={m.employee_id} value={m.users.user_id}>
-                    {m.users.first_name} {m.users.last_name}
-                  </SelectItem>
-                ))}
+                {managers.map((m) => {
+                  const assignedAcc = m.accommodation?.[0]?.name;
+                  const isAssignedElsewhere = assignedAcc && m.users.user_id !== existingDorm?.manager_id;
+
+                  return (
+                    <SelectItem 
+                      key={m.employee_id} 
+                      value={m.users.user_id}
+                      disabled={isAssignedElsewhere}
+                    >
+                      {m.users.first_name} {m.users.last_name}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </Field>

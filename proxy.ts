@@ -90,8 +90,13 @@ export async function proxy(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (pathname.startsWith("/api/admin") && user.user_metadata?.role !== "housing_admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (pathname.startsWith("/api/admin")) {
+      const role = user.user_metadata?.role;
+      const isDocumentUrl = pathname === "/api/admin/applications/document-url";
+      
+      if (role !== "housing_admin" && !(isDocumentUrl && role === "dormitory_manager")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
   }
 

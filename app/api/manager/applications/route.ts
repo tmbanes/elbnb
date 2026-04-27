@@ -50,11 +50,10 @@ export const GET = withRole(['dormitory_manager', 'housing_admin'], async (_req,
           )
         `)
         .eq("preferred_accommodation_id", accommodationId)
-        .eq("application_status", "pending_dorm_manager")
         .order("date_submitted", { ascending: false }),
       supabase
         .from("unit")
-        .select("unit_id, unit_number")
+        .select("unit_id, unit_number, unit_type")
         .eq("accommodation_id", accommodationId)
     ]);
 

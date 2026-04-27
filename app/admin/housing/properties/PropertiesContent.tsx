@@ -175,7 +175,7 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
     name: p.name,
     type: p.accommodation_type === "dormitory" ? "Dorm" : "Rental",
     location: p.location,
-    manager: p.dormitory_manager
+    manager: p.dormitory_manager?.users 
       ? `${p.dormitory_manager.users.first_name} ${p.dormitory_manager.users.last_name}`
       : "—",
     status: p.accommodation_status,
