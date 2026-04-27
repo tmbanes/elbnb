@@ -17,7 +17,7 @@ function mapInvoiceKindToBillingType(kind: ManualInvoiceItem["kind"]) {
   return "room_rent";
 }
 
-export const GET = withRole(["housing_admin"], async (req: NextRequest) => {
+export const GET = withRole(["housing_admin", "admin"], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
     const { searchParams } = new URL(req.url);
@@ -25,14 +25,14 @@ export const GET = withRole(["housing_admin"], async (req: NextRequest) => {
 
     // If an ID is provided, fetch just that one application
     if (id) {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("accommodation_application")
         .select(
           `
         *,
         users:user_id (first_name, last_name, email),
         accommodation:preferred_accommodation_id (accommodation_id, name, location),
-        units:unit_id (unit_number)
+        unit:unit_id (unit_number)
       `,
         )
         .eq("application_id", id)
@@ -147,7 +147,7 @@ export const GET = withRole(["housing_admin"], async (req: NextRequest) => {
   }
 });
 
-export const PATCH = withRole(["housing_admin"], async (req: NextRequest) => {
+export const PATCH = withRole(["housing_admin", "admin"], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 
@@ -174,13 +174,21 @@ export const PATCH = withRole(["housing_admin"], async (req: NextRequest) => {
 
     if (action === "reject") {
       // Simply reject — no assignment created
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("accommodation_application")
         .update({ application_status: "rejected" })
         .eq("application_id", application_id)
-        .eq("application_status", "pending_admin");
+        .in("application_status", ["pending_dorm_manager", "pending_admin", "pending_payment", "waitlisted"])
+        .select();
 
       if (error) throw new Error(error.message);
+      
+      if (!data || data.length === 0) {
+        return NextResponse.json(
+          { error: "Application could not be rejected. It may have already been processed or is in a final state." },
+          { status: 400 }
+        );
+      }
 
       const actor = await getCurrentUserRole();
       if (actor) {
@@ -445,7 +453,7 @@ export const PATCH = withRole(["housing_admin"], async (req: NextRequest) => {
   }
 });
 
-export const POST = withRole(["housing_admin"], async (req: NextRequest) => {
+export const POST = withRole(["housing_admin", "admin"], async (req: NextRequest) => {
   try {
     const supabase = await createSupabaseServerClient();
 

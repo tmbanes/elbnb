@@ -2,6 +2,7 @@
 import { Suspense } from "react";
 import ManagersContent from "./ManagersPageContent";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { getApiAuthenticatedUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 
@@ -12,7 +13,8 @@ export default async function ManagersPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data: managers, error } = await supabase
+  // Use supabaseAdmin to bypass RLS and ensure the admin can see all managers
+  const { data: managers, error } = await supabaseAdmin
     .from("dormitory_manager")
     .select("*, users(user_id, first_name, last_name, email)")
     .order("employee_id", { ascending: true });

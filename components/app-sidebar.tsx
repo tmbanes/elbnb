@@ -30,6 +30,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils/ui-utils"
 
 type Role = "student" | "admin" | "manager" | "guest"
 
@@ -87,9 +88,10 @@ export function AppSidebar({
   const [userData, setUserData] = React.useState({
     name: "Loading...",
     email: "",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: "",
   })
   const [hasMounted, setHasMounted] = React.useState(false)
+  const [isTriggerVisible, setIsTriggerVisible] = React.useState(false)
 
   React.useEffect(() => {
     setHasMounted(true)
@@ -111,27 +113,36 @@ export function AppSidebar({
           setUserData({
             name: `${userProfile.first_name || ""} ${userProfile.last_name || ""}`.trim() || user.email?.split("@")[0] || "User",
             email: userProfile.email || user.email || "",
-            avatar: userProfile.profile_picture_url || "/avatars/shadcn.jpg",
+            avatar: userProfile.profile_picture_url || "",
           })
         } else {
           setUserData({
             name: user.email?.split("@")[0] || "User",
             email: user.email || "",
-            avatar: "/avatars/shadcn.jpg",
+            avatar: "",
           })
         }
       } else {
         setUserData({
           name: "Not logged in",
           email: "",
-          avatar: "/avatars/shadcn.jpg",
+          avatar: "",
         })
       }
     }
     fetchUser()
   }, [supabase])
 
-  const { toggleSidebar, state, setOpen } = useSidebar()
+  const { toggleSidebar, state, setOpen, isMobile } = useSidebar()
+
+  React.useEffect(() => {
+    if (state === "collapsed" && hasMounted) {
+      const timer = setTimeout(() => setIsTriggerVisible(true), 300)
+      return () => clearTimeout(timer)
+    } else {
+      setIsTriggerVisible(false)
+    }
+  }, [state, hasMounted])
 
   if (!hasMounted) {
     return <div className="w-[var(--sidebar-width)] bg-[#8ba665] h-screen" />;
@@ -140,9 +151,9 @@ export function AppSidebar({
   return (
     <>
       {/* Click-away overlay for explicitly closing the sidebar when it is expanded */}
-      {state === "expanded" && (
+      {state === "expanded" && isMobile && (
         <div
-          className="fixed inset-0 z-30 bg-black/5 backdrop-blur-sm cursor-pointer"
+          className="fixed inset-0 z-30 bg-black/5 backdrop-blur-sm cursor-pointer md:hidden"
           onClick={() => setOpen ? setOpen(false) : toggleSidebar()}
         />
       )}
@@ -180,7 +191,10 @@ export function AppSidebar({
         <button
           id="custom-sidebar-trigger"
           onClick={toggleSidebar}
-          className="fixed -bottom-20 -left-6 w-40 h-40 bg-[#8ba665] rounded-full z-30 transition-transform duration-500 ease-out hover:-translate-y-6 outline-none shadow-2xl cursor-pointer group"
+          className={cn(
+            "fixed -left-6 w-40 h-40 bg-[#9DB67B] rounded-full z-30 transition-all duration-800 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-6 outline-none shadow-2xl cursor-pointer group",
+            isTriggerVisible ? "-bottom-20 opacity-100" : "-bottom-60 opacity-0"
+          )}
           title="Open Sidebar"
         >
           <img
@@ -188,6 +202,9 @@ export function AppSidebar({
             alt="Open Sidebar"
             className="absolute -top-2 right-10 w-16 h-auto drop-shadow-lg transition-transform duration-500 ease-out group-hover:scale-110 group-hover:-translate-y-2 group-hover:rotate-3"
           />
+          <span className="absolute top-8 left-30 bg-[#3E2723] px-3 py-1 rounded-full text-[#F4F5E1] font-black text-[10px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:translate-x-2 shadow-lg whitespace-nowrap">
+            Navigation
+          </span>
         </button>
       )}
     </>

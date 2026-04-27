@@ -58,11 +58,11 @@ export default async function ManagerApplicationsPage() {
         )
       `)
       .eq("preferred_accommodation_id", accommodationId)
-      .eq("application_status", "pending_dorm_manager")
+      .in("application_status", ["pending_dorm_manager", "rejected"])
       .order("date_submitted", { ascending: false }),
     supabase
       .from("unit")
-      .select("unit_id, unit_number")
+      .select("unit_id, unit_number, unit_type")
       .eq("accommodation_id", accommodationId)
   ]);
 
@@ -74,6 +74,5 @@ export default async function ManagerApplicationsPage() {
     })),
     units: unitsRes.data || []
   };
-
   return <ManagerApplicationsClient user={user} initialData={initialData as any} />;
 }

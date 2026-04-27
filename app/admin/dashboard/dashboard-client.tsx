@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useRealtimeSync } from "@/lib/realtime-sync";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,8 +11,12 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
+import { useRealtimeSync } from "@/lib/realtime-sync";
 import { Building2, Home, Users, KeyRound, Scissors, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, Filter, MoreHorizontal, Download, ChevronLeft, ChevronRight, Eye, Bell } from "lucide-react";
 import { Archivo, Archivo_Black } from "next/font/google";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
@@ -63,11 +65,11 @@ const initials = (f: string, l: string) => `${f?.[0] ?? ""}${l?.[0] ?? ""}`.toUp
 
 const statusBadge = (s: string) => {
   const map: Record<string, string> = {
-    pending_admin: "bg-[#FEF9C3] text-[#F2C908] border-[#FDE68A]", 
+    pending_admin: "bg-[#FEF9C3] text-[#F2C908] border-[#FDE68A]",
     pending_dorm_manager: "bg-[#FEF9C3] text-[#F2C908] border-[#FDE68A]",
-    pending_payment: "bg-[#fbecd7] text-[#EB8A0B] border-[#f5d0a1]", 
+    pending_payment: "bg-[#fbecd7] text-[#EB8A0B] border-[#f5d0a1]",
     approved: "bg-[#DFF2E8] text-[#78A24C] border-[#b8e2cb]",
-    rejected: "bg-red-50 text-[#DF3538] border-red-100", 
+    rejected: "bg-red-50 text-[#DF3538] border-red-100",
     cancelled: "bg-gray-50 text-gray-400 border-gray-100",
   };
   return map[s] ?? "bg-gray-50 text-gray-500 border-gray-100";
@@ -109,7 +111,7 @@ function DonutChart({ value, size = 120, label, color = "#78A24C" }: { value: nu
   // Dynamic font sizing based on the chart size
   const pctSize = size >= 120 ? "text-xl" : size >= 100 ? "text-lg" : "text-sm";
   const labelSize = size >= 120 ? "text-[8px]" : "text-[7px]";
-  
+
   return (
     <div className="relative flex items-center justify-center rounded-full bg-white/50 shadow-sm ring-1 ring-[#cfd6e4]/50" style={{ width: size, height: size }}>
       <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
@@ -134,10 +136,90 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
   const [studentTab, setStudentTab] = useState<"housed" | "waiting">("housed");
   const [studentSearch, setStudentSearch] = useState("");
   const [studentPage, setStudentPage] = useState(1);
-  
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState(initialNotifications);
   const router = useRouter();
+
+  const generatePDF = (title: string, columns: string[], data: any[][], fileName: string, headerColor: [number, number, number]) => {
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.setTextColor(68, 41, 27);
+    doc.text(title, 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated on: ${new Date().toLocaleDateString("en-US", { month: 'long', day: 'numeric', year: 'numeric' })}`, 14, 30);
+    doc.text(`Admin: ${profile?.first_name} ${profile?.last_name}`, 14, 35);
+    doc.line(14, 40, 196, 40);
+
+    autoTable(doc, {
+      startY: 48,
+      head: [columns],
+      body: data,
+      theme: 'striped',
+      headStyles: { fillColor: headerColor },
+      styles: { fontSize: 9 }
+    });
+
+    doc.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const handleExportCSV = () => {
+    const csvRows = [];
+
+    // Section 1: Dashboard Stats
+    csvRows.push(["--- DASHBOARD SUMMARY ---"]);
+    csvRows.push(["Metric", "Value"]);
+    Object.entries(stats).forEach(([key, value]) => {
+      const label = key.replace(/([A-Z])/g, ' $1').trim();
+      const formattedValue = typeof value === 'number' && key.toLowerCase().includes('rate') ? `${value.toFixed(1)}%` : value;
+      csvRows.push([label, formattedValue]);
+    });
+    csvRows.push([]);
+
+    // Section 2: Property Occupancy
+    csvRows.push(["--- PROPERTY OCCUPANCY ---"]);
+    csvRows.push(["Name", "Type", "Status", "Total Units", "Capacity", "Current Occupancy", "Available Slots", "Occupancy Rate (%)"]);
+    propertyOccupancy.forEach(p => {
+      csvRows.push([p.name, p.type, p.status, p.totalUnits, p.totalCapacity, p.currentOccupancy, p.availableSlots, p.rate.toFixed(1)]);
+    });
+    csvRows.push([]);
+
+    // Section 3: Pending Applications
+    csvRows.push(["--- PENDING APPLICATIONS ---"]);
+    csvRows.push(["Applicant", "Unit Type", "Date Submitted", "Status"]);
+    pendingApplications.forEach(a => {
+      const user = unwrap(a.users);
+      csvRows.push([
+        user ? `${user.first_name} ${user.last_name}` : "Unknown",
+        a.preferred_unit_type || "N/A",
+        new Date(a.date_submitted).toLocaleDateString(),
+        a.application_status
+      ]);
+    });
+
+    const csvContent = csvRows.map(e => e.map(String).map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `dashboard_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleMarkAllAsRead = () => {
+    if (typeof window !== 'undefined') {
+      const existingReadIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+      const currentIds = notifications.map(n => n.id);
+      const allIds = Array.from(new Set([...existingReadIds, ...currentIds]));
+      localStorage.setItem('read_notifications', JSON.stringify(allIds));
+    }
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -159,9 +241,14 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
   const collectedToBilledRate = stats.totalBilled > 0 ? (stats.totalCollected / stats.totalBilled) * 100 : 0;
 
   const filteredProps = propertyOccupancy.filter(p => {
-    if (propFilter === "available") return p.availableSlots > 0;
+    // Check availability filter
+    const matchesFilter = propFilter === "available" ? p.availableSlots > 0 : true;
+    if (!matchesFilter) return false;
+
+    // Check search query
     const q = propSearch.trim().toLowerCase();
     if (!q) return true;
+    
     return (
       p.name.toLowerCase().includes(q) ||
       p.type.toLowerCase().includes(q) ||
@@ -221,8 +308,8 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
               <div className="absolute right-0 top-full mt-3 w-80 bg-white rounded-2xl shadow-xl border border-black/5 overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200">
                 <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                   <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
-                  <button 
-                    onClick={() => setNotifications(prev => prev.map(n => ({...n, is_read: true})))}
+                  <button
+                    onClick={handleMarkAllAsRead}
                     className="text-[10px] font-bold text-[#78A24C] uppercase tracking-wider hover:text-[#5C7E3A] transition-colors"
                   >
                     Mark all as read
@@ -231,8 +318,8 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                 <div className="max-h-[350px] overflow-y-auto">
                   {notifications.length > 0 ? (
                     notifications.map((n, i) => (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer group"
                         onClick={() => {
                           const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
@@ -240,7 +327,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                             readIds.push(n.id);
                             localStorage.setItem('read_notifications', JSON.stringify(readIds));
                           }
-                          setNotifications(prev => prev.map((notif, idx) => 
+                          setNotifications(prev => prev.map((notif, idx) =>
                             idx === i ? { ...notif, is_read: true } : notif
                           ));
                           if (n.link) router.push(n.link);
@@ -270,7 +357,11 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
             )}
           </div>
 
-          <Button variant="outline" className={`${archivo.className} text-xs font-semibold rounded-xl bg-white shadow-sm h-10 px-4`}>
+          <Button
+            variant="outline"
+            className={`${archivo.className} text-xs font-semibold rounded-xl bg-white shadow-sm h-10 px-4`}
+            onClick={handleExportCSV}
+          >
             <Download className="w-4 h-4 mr-1.5" /> Export CSV
           </Button>
         </div>
@@ -438,7 +529,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           <div className="w-full flex items-center justify-between">
             <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Financial Summary</h2>
           </div>
-          
+
           <div className="flex-1 flex flex-col gap-6 justify-between">
             <div className="flex items-center justify-center gap-8 py-2">
               <DonutChart value={stats.occupancyRate} label="Occupancy" size={130} color="#F2C908" />
@@ -478,10 +569,10 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                   .map(([status, count]) => {
                     const pctVal = totalInInvoices > 0 ? (count / totalInInvoices) * 100 : 0;
                     const label = status.replace(/_/g, " ");
-                    
+
                     // Color Mapping based on brand palette
-                    let colorClass = "bg-[#cfd6e4]/20 text-[#44291B] border-[#cfd6e4]/40"; 
-                    
+                    let colorClass = "bg-[#cfd6e4]/20 text-[#44291B] border-[#cfd6e4]/40";
+
                     if (status === "paid" || status === "paid_late") {
                       colorClass = status === "paid" ? "bg-[#DFF2E8] text-[#78A24C] border-[#b8e2cb]" : "bg-[#fbecd7] text-[#EB8A0B] border-[#f5d0a1]";
                     } else if (status === "unpaid" || status === "overdue" || status === "voided") {
@@ -670,14 +761,97 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Quick Reports</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {[
-              { label: "Dormitories with occupancy rates", icon: House, color: "#78A24C" },
-              { label: "Available vs occupied units", icon: BarChart3, color: "#264384" },
-              { label: "Students currently housed", icon: UserCheck, color: "#5591AB" },
-              { label: "Students on waiting list", icon: Clock3, color: "#F2C908" },
-              { label: "Revenue summary per property", icon: Wallet, color: "#EB8A0B" },
-              { label: "Overdue & unpaid fees", icon: FileText, color: "#DF3538" },
+              {
+                label: "Dormitories with occupancy rates",
+                icon: House,
+                color: "#78A24C",
+                action: () => generatePDF(
+                  "Dormitory Occupancy Report",
+                  ["Dormitory", "Type", "Units", "Occupancy", "Rate"],
+                  propertyOccupancy.map(p => [p.name, p.type, p.totalUnits, p.currentOccupancy, `${p.rate.toFixed(1)}%`]),
+                  "Occupancy_Report",
+                  [120, 162, 76]
+                )
+              },
+              {
+                label: "Available vs occupied units",
+                icon: BarChart3,
+                color: "#264384",
+                action: () => generatePDF(
+                  "Units Distribution Report",
+                  ["Property", "Total Units", "Occupied", "Available"],
+                  propertyOccupancy.map(p => [p.name, p.totalUnits, p.currentOccupancy, p.availableSlots]),
+                  "Units_Report",
+                  [38, 67, 132]
+                )
+              },
+              {
+                label: "Students currently housed",
+                icon: UserCheck,
+                color: "#5591AB",
+                action: () => generatePDF(
+                  "Current Residents List",
+                  ["Name", "Property", "Unit", "Move-in Date"],
+                  housedStudents.map(s => {
+                    const u = unwrap(s.users);
+                    const unit = s.unit;
+                    const accName = unit ? (Array.isArray(unit.accommodation) ? unit.accommodation[0]?.name : unit.accommodation?.name) : "N/A";
+                    return [`${u?.first_name} ${u?.last_name}`, accName, unit?.unit_number || "N/A", new Date(s.move_in_date).toLocaleDateString()];
+                  }),
+                  "Residents_List",
+                  [85, 145, 171]
+                )
+              },
+              {
+                label: "Students on waiting list",
+                icon: Clock3,
+                color: "#F2C908",
+                action: () => generatePDF(
+                  "Waiting List Report",
+                  ["Applicant", "Unit Type", "Submitted On"],
+                  pendingApplications.map(a => {
+                    const u = unwrap(a.users);
+                    return [`${u?.first_name} ${u?.last_name}`, a.preferred_unit_type || "N/A", new Date(a.date_submitted).toLocaleDateString()];
+                  }),
+                  "Waiting_List",
+                  [242, 201, 8]
+                )
+              },
+              {
+                label: "Revenue summary per property",
+                icon: Wallet,
+                color: "#EB8A0B",
+                action: () => generatePDF(
+                  "Financial Overview",
+                  ["Metric", "Value"],
+                  [
+                    ["Total Revenue (MTD)", fmt(stats.revenueThisMonth)],
+                    ["Total Collected", fmt(stats.totalCollected)],
+                    ["Total Billed", fmt(stats.totalBilled)],
+                    ["Collection Rate", `${stats.collectionRate.toFixed(1)}%`]
+                  ],
+                  "Financial_Summary",
+                  [235, 138, 11]
+                )
+              },
+              {
+                label: "Overdue & unpaid fees",
+                icon: FileText,
+                color: "#DF3538",
+                action: () => generatePDF(
+                  "Overdue Payments Report",
+                  ["Status", "Count"],
+                  Object.entries(billingStatusCounts).filter(([k]) => ["overdue", "unpaid"].includes(k)).map(([k, v]) => [k.replace(/_/g, " "), v]),
+                  "Overdue_Report",
+                  [223, 53, 56]
+                )
+              },
             ].map((report, i) => (
-              <div key={i} className="flex items-center gap-3 p-4 rounded-xl border border-[#cfd6e4]/50 bg-white/50 hover:bg-[#F6F8D5] hover:border-[#cfd6e4] transition-all group cursor-pointer">
+              <div
+                key={i}
+                onClick={report.action}
+                className="flex items-center gap-3 p-4 rounded-xl border border-[#cfd6e4]/50 bg-white/50 hover:bg-[#F6F8D5] hover:border-[#cfd6e4] transition-all group cursor-pointer"
+              >
                 <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-all shadow-sm" style={{ backgroundColor: `${report.color}15`, color: report.color }}>
                   <report.icon className="w-5 h-5" />
                 </div>

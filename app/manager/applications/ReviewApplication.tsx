@@ -43,23 +43,21 @@ export default function ReviewApplication({
   const [error, setError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     async function getFileUrl() {
       if (application.file && application.application_id) {
-        const supabase = getSupabaseBrowserClient();
-        
-        console.log("DEBUG: Requesting signed URL for path:", `${application.application_id}/${application.file}`);
-        const { data, error } = await supabase.storage
-          .from("application_documents")
-          .createSignedUrl(`${application.application_id}/${application.file}`, 1200);
-        
-        if (error) {
-          console.error("Error creating signed URL:", error);
-          setFileUrl(null);
-        } else {
-          console.log("DEBUG: Signed URL generated successfully");
+        try {
+          const path = `${application.application_id}/${application.file}`;
+          const res = await fetch(`/api/applications/document-url?path=${encodeURIComponent(path)}`);
+          const data = await res.json();
+          
+          if (!res.ok) throw new Error(data.error);
           setFileUrl(data.signedUrl);
+        } catch (err) {
+          console.error("Error fetching document URL:", err);
+          setFileUrl(null);
         }
       } else {
         setFileUrl(null);
@@ -165,9 +163,9 @@ export default function ReviewApplication({
               <h1 className="text-xl font-bold text-[#44291B] truncate">
                 {data.firstName} {data.lastName}
               </h1>
-              <p className="text-xs font-bold text-[#44291B]/40 mb-3 uppercase tracking-tighter">
+              {/* <p className="text-xs font-bold text-[#44291B]/40 mb-3 uppercase tracking-tighter">
                 #{data.id.slice(0, 8)}
-              </p>
+              </p> */}
 
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 bg-[#ebf2f4] border border-[#d1e3e8] rounded-full px-2.5 py-1 text-[10px] font-bold text-[#264384]">
@@ -237,7 +235,7 @@ export default function ReviewApplication({
                 <option value="">Select a unit...</option>
                 {units.map((unit) => (
                   <option key={unit.unit_id} value={unit.unit_id}>
-                    Unit {unit.unit_number}
+                    Unit {unit.unit_number} ({unit.unit_type})
                   </option>
                 ))}
               </select>
@@ -269,7 +267,7 @@ export default function ReviewApplication({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => doc.url && window.open(doc.url, "_blank")}
+                    onClick={() => setIsPreviewOpen(true)}
                     className="text-[#264384] font-bold hover:bg-[#ebf2f4] rounded-lg gap-2"
                   >
                     View
@@ -296,21 +294,38 @@ export default function ReviewApplication({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            className="bg-[#264384] hover:bg-[#1e3569] text-white font-bold rounded-xl h-12 shadow-lg transition-all"
-            onClick={() => setConfirmAction("forward")}
-          >
-            Forward to Admin
-          </Button>
-          <Button
-            variant="outline"
-            className="bg-[#FEE2E2] hover:bg-[#FCA5A5] text-rose-600 border-none font-bold rounded-xl h-12 transition-all"
-            onClick={() => setConfirmAction("reject")}
-          >
-            Reject
-          </Button>
-        </div>
+        {application.application_status === "pending_dorm_manager" ? (
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              className="bg-[#264384] hover:bg-[#1e3569] text-white font-bold rounded-xl h-12 shadow-lg transition-all"
+              onClick={() => setConfirmAction("forward")}
+            >
+              Forward to Admin
+            </Button>
+            <Button
+              variant="outline"
+              className="bg-[#FEE2E2] hover:bg-[#FCA5A5] text-rose-600 border-none font-bold rounded-xl h-12 transition-all"
+              onClick={() => setConfirmAction("reject")}
+            >
+              Reject
+            </Button>
+          </div>
+        ) : (
+          <div className={cn(
+            "p-4 rounded-2xl border text-center transition-all animate-in zoom-in-95 duration-300",
+            application.application_status === "rejected" 
+              ? "bg-rose-50 border-rose-100 text-rose-600" 
+              : "bg-emerald-50 border-emerald-100 text-emerald-600"
+          )}>
+            <p className="text-xs font-extrabold uppercase tracking-widest">
+              {application.application_status === "rejected" 
+                ? "Application Rejected" 
+                : application.application_status === "pending_admin" 
+                  ? "Forwarded to Admin" 
+                  : `Application ${application.application_status.replace(/_/g, ' ')}`}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* FORWARD CONFIRMATION MODAL */}
@@ -353,8 +368,8 @@ export default function ReviewApplication({
               </Button>
               <Button
                 onClick={handleConfirm}
-                className="flex-1 rounded-xl font-bold text-white h-11 shadow-lg transition-all bg-[#264384] hover:bg-[#1e3569]"
-                disabled={loading}
+                className="flex-1 rounded-xl font-bold text-white h-11 shadow-lg transition-all bg-[#264384] hover:bg-[#1e3569] disabled:bg-gray-300 disabled:shadow-none"
+                disabled={loading || !selectedUnitId}
               >
                 {loading ? "Processing..." : "Forward Application"}
               </Button>
@@ -396,6 +411,50 @@ export default function ReviewApplication({
                 {loading ? "Processing..." : "Confirm Rejection"}
               </Button>
             </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* DOCUMENT PREVIEW MODAL */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl h-[90vh] bg-[#FDFFF4] border-none text-[#44291B] rounded-3xl shadow-2xl p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="p-6 border-b border-[#e8e2d6] flex-shrink-0">
+            <DialogTitle className="text-xl font-bold">Document Preview</DialogTitle>
+            <DialogDescription className="text-xs font-medium text-[#44291B]/60">
+              Viewing supporting document for {data.firstName} {data.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 bg-white relative overflow-auto scrollbar-hide">
+            {fileUrl ? (
+              application.file?.toLowerCase().endsWith('.pdf') ? (
+                <iframe 
+                  src={`${fileUrl}#toolbar=0`} 
+                  className="w-full h-full border-none"
+                  title="PDF Preview"
+                />
+              ) : (
+                <div className="min-w-full min-h-full flex items-center justify-center p-4">
+                  <img 
+                    src={fileUrl} 
+                    alt="Document Preview" 
+                    className="max-w-full h-auto object-contain shadow-md rounded-lg"
+                  />
+                </div>
+              )
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <p className="text-sm font-bold text-[#44291B]/40">Loading document...</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="p-4 bg-[#FDFFF4] border-t border-[#e8e2d6] flex justify-end flex-shrink-0">
+            <Button 
+              onClick={() => setIsPreviewOpen(false)}
+              className="rounded-xl font-bold bg-[#264384] hover:bg-[#1e3569] text-white"
+            >
+              Close Preview
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -296,16 +296,16 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
       const userRole = isUserRole(profile?.role) ? profile.role : "guest";
       // accommodationIdFromQuery
 
-      if (profile?.user_id) {
-        await createActivityLog({
-          p_user_id: profile.user_id,
-          p_action_type: "submit_application",
-          p_log_desc: `${profile.first_name} ${profile.last_name}  submitted application`,
-          p_entity_type: "accommodation",
-          p_entity_id: accommodationIdFromQuery,
-          p_user_role: userRole,
-        })
-      }
+      // if (profile?.user_id) {
+      //   await createActivityLog({
+      //     p_user_id: profile.user_id,
+      //     p_action_type: "submit_application",
+      //     p_log_desc: `${profile.first_name} ${profile.last_name}  submitted application`,
+      //     p_entity_type: "accommodation",
+      //     p_entity_id: accommodationIdFromQuery,
+      //     p_user_role: userRole,
+      //   })
+      // }
 
       setShowSuccess(true);
     } catch (error) {

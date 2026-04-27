@@ -11,240 +11,27 @@ import {
 } from "@/lib/actions/manager-application-actions";
 import { Unit } from "@/types/accommodation_units";
 import { useRealtimeSync } from "@/lib/realtime-sync";
+import { cn } from "@/lib/utils/ui-utils";
+import { Search, Filter, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-// ─── ApplicationRow ───────────────────────────────────────────────────────────
-function ApplicationRow({
-  app,
-  units,
-  onAction,
-  onClick,
-  isSelected,
-}: {
-  app: Application;
-  units: Unit[];
-  onAction: (
-    id: string,
-    action: ManagerAction,
-    unitId?: string,
-  ) => Promise<void>;
-  onClick?: () => void;
-  isSelected?: boolean;
-}) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [confirmAction, setConfirmAction] = useState<ManagerAction | null>(
-    null,
-  );
-  const [selectedUnitId, setSelectedUnitId] = useState<string>("");
-
-  async function handleConfirm() {
-    if (!confirmAction) return;
-
-    if (confirmAction === "forward" && !selectedUnitId) {
-      setError("Please select a unit before forwarding.");
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      await onAction(
-        app.application_id,
-        confirmAction,
-        confirmAction === "forward" ? selectedUnitId : undefined,
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Action failed.");
-    } finally {
-      setLoading(false);
-      setConfirmAction(null);
-    }
-  }
-
-  return (
-    <div
-      onClick={onClick}
-      className={`rounded-lg p-4 flex flex-col gap-3 cursor-pointer transition-all duration-200 border
-        ${isSelected
-          ? "bg-[#f3f6dc] border-[#44291B] shadow-md"
-          : "bg-[#FDFFF4] border-gray-200 hover:bg-[#F6F8D5] hover:shadow-md hover:border-[#c9c3a8]"
-        }
-      `}
-    >
-      {/* Applicant */}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-lg font-semibold text-[#44291B]">
-            {app.users?.first_name || "Unknown"}{" "}
-            {app.users?.last_name || "User"}
-          </p>
-          <p className="text-xs text-[#44291B]/70">
-            {app.users?.email || "No email provided"}
-          </p>
-        </div>
-        <span className="text-xs font-medium px-2 py-0.5 rounded bg-yellow-100 text-yellow-700 whitespace-nowrap">
-          Pending Review
-        </span>
-      </div>
-
-      {/* Details grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-[#44291B]">
-        <div>
-          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
-            Unit Type
-          </span>
-          <span className="capitalize">{app.preferred_unit_type}</span>
-        </div>
-        <div>
-          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
-            Check-in
-          </span>
-          <span>{app.check_in}</span>
-        </div>
-        <div>
-          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
-            Check-out
-          </span>
-          <span>{app.check_out}</span>
-        </div>
-        <div>
-          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
-            Duration
-          </span>
-          <span>
-            {app.duration_of_stay} month
-            {Number(app.duration_of_stay) !== 1 ? "s" : ""}
-          </span>
-        </div>
-        <div>
-          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
-            Companions
-          </span>
-          <span>{app.number_of_companions}</span>
-        </div>
-        <div>
-          <span className="block text-[#44291B] uppercase tracking-wide mb-0.5">
-            Date Submitted
-          </span>
-          <span>{app.date_submitted}</span>
-        </div>
-      </div>
-
-      {/* Confirm prompt */}
-      {confirmAction && (
-        <div
-          className={`p-4 bg-white border border-gray-200 rounded-lg shadow-sm space-y-4 ${confirmAction === "forward"
-              ? "bg-green-50 border border-green-200 text-green-800"
-              : "bg-red-50 border border-red-200 text-red-800"
-            }`}
-        >
-          <div className="text-sm font-medium text-gray-700 text-center">
-            <span>
-              {confirmAction === "forward"
-                ? "Forward this application to the admin for final approval?"
-                : "Reject this application? This cannot be undone."}
-            </span>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setConfirmAction(null);
-                  setSelectedUnitId(""); // Reset unit on cancel
-                  setError(null);
-                }}
-                disabled={loading}
-                className="px-2 py-1 rounded border border-gray-300 bg-white text-[#44291B] hover:bg-[#F6F8D5] cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirm}
-                disabled={loading}
-                className={`px-2 py-1 rounded text-white cursor-pointer disabled:opacity-50 ${confirmAction === "forward"
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-red-600 hover:bg-red-700"
-                  }`}
-              >
-                {loading ? "..." : "Confirm"}
-              </button>
-            </div>
-          </div>
-
-          {confirmAction === "forward" && (
-            <div className="flex items-center gap-2 pt-2 border-t border-green-200/50 mt-1">
-              <label className="font-medium text-green-900">Assign Unit:</label>
-              <select
-                value={selectedUnitId}
-                onChange={(e) => {
-                  setSelectedUnitId(e.target.value);
-                  setError(null); // Clear error when they select something
-                }}
-                disabled={loading}
-                className="text-xs border border-gray-300 rounded px-2 py-1.5 bg-white text-[#44291B] flex-1 max-w-[200px]"
-              >
-                <option value="">-- Choose a unit --</option>
-                {units.map((unit) => (
-                  <option key={unit.unit_id} value={unit.unit_id}>
-                    {unit.unit_number}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Actions */}
-      {!confirmAction && (
-        <div className="flex gap-2">
-          <button
-            onClick={() => setConfirmAction("forward")}
-            disabled={loading}
-            className="px-3 py-1.5 text-xs font-medium bg-green-100 border-green-20 hover:bg-green-200 disabled:opacity-50 text-green-700 rounded transition-colors cursor-pointer"
-          >
-            Forward to Admin
-          </button>
-          <button
-            onClick={() => setConfirmAction("reject")}
-            disabled={loading}
-            className="px-3 py-1.5 text-xs font-medium bg-[#FEE2E2] hover:bg-[#FCA5A5] disabled:opacity-50 text-red-600 rounded transition-colors cursor-pointer"
-          >
-            Reject
-          </button>
-        </div>
-      )}
-
-      {error && (
-        <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
-          {error}
-        </p>
-      )}
-    </div>
-
-  );
-}
-
-interface ManagerApplicationsClientProps {
-  user: any;
-  initialData: ManagerApplicationsResponse;
-}
-
-// ─── Main Component ────────────────────────────────────────────────────────────────
-export default function ManagerApplicationsClient({ user, initialData }: ManagerApplicationsClientProps) {
+export default function ManagerApplicationsClient({ user, initialData }: { user: any, initialData: ManagerApplicationsResponse }) {
   const [applications, setApplications] = useState<Application[]>(initialData.applications);
   const [accommodationName, setAccommodationName] = useState(initialData.accommodation.name);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [units, setUnits] = useState<Unit[]>(initialData.units);
-  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
+  const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+
+  // Filter States
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 5;
 
   const load = useCallback(async () => {
-    // We only show loading state on manual refreshes or realtime syncs
-    // to avoid flickering the whole page
-    setError(null);
-
     try {
       const { accommodation, applications: apps, units: fetchedUnits } =
         await fetchManagerApplications();
-
       setAccommodationName(accommodation.name);
       setApplications(apps);
       setUnits(fetchedUnits);
@@ -253,14 +40,9 @@ export default function ManagerApplicationsClient({ user, initialData }: Manager
     }
   }, []);
 
-  // Sync applications in real-time
   useRealtimeSync('accommodation_application', undefined, '*', () => {
     load();
   });
-
-  const pagePadding = selectedApp
-    ? "px-10 sm:px-12"   // split view
-    : "px-24";           // full view
 
   useEffect(() => {
     load();
@@ -268,81 +50,217 @@ export default function ManagerApplicationsClient({ user, initialData }: Manager
 
   async function handleAction(id: string, action: ManagerAction, unitId?: string) {
     await updateApplicationStatus(id, action, unitId);
-    // Remove from list immediately since it's no longer pending_dorm_manager
-    setApplications((prev) => prev.filter((a) => a.application_id !== id));
+    
+    // Update local state so the UI reflects the change immediately
+    setApplications((prev) => prev.map((a) => 
+      a.application_id === id 
+        ? { ...a, application_status: action === "forward" ? "pending_admin" : "rejected" } 
+        : a
+    ));
   }
 
+  // Filtering
+  const filteredApps = applications.filter(app => {
+    const name = `${app.users?.first_name} ${app.users?.last_name}`.toLowerCase();
+    return name.includes(search.toLowerCase()) || app.application_id.toLowerCase().includes(search.toLowerCase());
+  });
+
+  const paginated = filteredApps.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const totalPages = Math.ceil(filteredApps.length / rowsPerPage);
+
+  const selectedApp = applications.find(a => a.application_id === selectedAppId) || null;
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending_dorm_manager":
+        return (
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap bg-amber-50 text-amber-700 border-amber-100 animate-pulse">
+            Pending Review
+          </span>
+        );
+      case "pending_admin":
+      case "pending_payment":
+        return (
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap bg-sky-50 text-sky-700 border-sky-100">
+            Pending Admin
+          </span>
+        );
+      case "rejected":
+        return (
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap bg-rose-50 text-rose-700 border-rose-100">
+            Rejected
+          </span>
+        );
+      case "approved":
+        return (
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap bg-emerald-50 text-emerald-700 border-emerald-100">
+            Approved
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap bg-gray-50 text-gray-700 border-gray-100">
+            {status.replace(/_/g, ' ')}
+          </span>
+        );
+    }
+  };
+
   return (
-    <div className="h-[100dvh] flex overflow-hidden bg-[#F6F8D5]">
-
+    <div className="h-[100dvh] flex overflow-hidden bg-[#F6F8D5] font-[family-name:var(--font-archivo)]">
+      
       {/* LEFT SIDE (LIST) */}
-      <div className={`flex-[7] overflow-y-auto py-10 flex flex-col gap-6 ${pagePadding}`}>
-
-        {/* Header */}
-        <div className="border-b border-gray-200 pb-4">
-          <h1 className="text-[32px] font-bold text-[#44291B]">
-            Applications for Review
-          </h1>
-          <p className="text-sm text-[#44291B]/70">
-            {accommodationName
-              ? `${accommodationName} — pending your review`
-              : "Loading your assigned accommodation..."}
-          </p>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded px-4 py-3">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
-
-        {loading && (
-          <p className="text-center text-[#44291B] py-20 text-sm">
-            Loading applications...
-          </p>
-        )}
-
-        {!loading && !error && applications.length === 0 && (
-          <div className="text-center py-20 text-[#44291B]">
-            <p className="text-sm">No applications pending your review.</p>
-          </div>
-        )}
-
-        {!loading && applications.length > 0 && (
-          <>
-            <p className="text-sm text-[#44291B]/70">
-              {applications.length} application
-              {applications.length !== 1 ? "s" : ""} pending review
+      <div className={cn(
+        "flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out",
+        selectedAppId ? "lg:flex-[7]" : "flex-1"
+      )}>
+        <div className={cn(
+          "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500",
+          selectedAppId ? "px-6 lg:px-12" : "px-6 md:px-12 lg:px-24"
+        )}>
+          {/* Header */}
+          <div className="space-y-1 flex-shrink-0">
+            <h1 className="text-4xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
+              Applications
+            </h1>
+            <p className="text-sm text-[#44291B] font-medium mt-1">
+              Managing applications for <span className="text-[#264384] font-bold">{accommodationName || "your assigned property"}</span>.
             </p>
+          </div>
 
-            <div className="flex flex-col gap-3">
-              {applications.map((app) => (
-                <ApplicationRow
-                  key={app.application_id}
-                  units={units}
-                  app={app}
-                  onAction={handleAction}
-                  onClick={() => setSelectedApp(app)}
-                  isSelected={selectedApp?.application_id === app.application_id}
-                />
-              ))}
+          {/* Search/Filter Bar */}
+          <div className="flex items-center justify-between gap-4 bg-[#FDFFF4] p-3 rounded-2xl border border-[#e8e2d6] shadow-sm flex-shrink-0">
+            <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md bg-white focus-within:ring-2 focus-within:ring-[#264384]/10 transition-all">
+              <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
+                <Search className="w-3.5 h-3.5" />
+              </div>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                placeholder="Search tenant name or ID..."
+                className="w-full px-3 py-1.5 bg-transparent text-sm outline-none text-[#44291B] placeholder:text-[#44291B]/50 font-medium"
+              />
             </div>
-          </>
-        )}
+            
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest px-2">
+                {filteredApps.length} Total
+              </span>
+            </div>
+          </div>
+
+          {/* Applications Table - Fixed Height Container */}
+          <div className="flex-1 bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-hidden shadow-sm flex flex-col min-h-0">
+            <div className="flex-1 overflow-auto scrollbar-hide">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-[#FDFFF4] z-10 shadow-sm">
+                  <tr className="border-b border-[#e8e2d6]">
+                    <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Tenant / ID</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Stay Duration</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Application Date</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Status</th>
+                    <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginated.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-[#44291B]/40 font-bold">No applications found.</td>
+                    </tr>
+                  ) : (
+                    paginated.map((app) => {
+                      const applicantName = `${app.users?.first_name} ${app.users?.last_name}`;
+                      const isSelected = app.application_id === selectedAppId;
+                      return (
+                        <tr 
+                          key={app.application_id}
+                          onClick={() => setSelectedAppId(app.application_id)}
+                          className={cn(
+                            "border-b border-[#e8e2d6]/60 last:border-0 cursor-pointer transition-colors",
+                            isSelected ? "bg-[#F6F8D5]" : "hover:bg-[#F6F8D5]"
+                          )}
+                        >
+                          <td className="py-4 px-5">
+                            <p className="text-sm font-bold text-[#44291B]">{applicantName}</p>
+                            <p className="text-[10px] font-bold text-[#44291B]/50 uppercase tracking-tighter">#{app.application_id.slice(0, 8)}</p>
+                          </td>
+                          <td className="py-4 px-3">
+                            <p className="text-xs text-[#44291B] font-bold">{app.duration_of_stay} Months</p>
+                            <p className="text-[10px] text-[#44291B]/50 font-medium capitalize">{app.preferred_unit_type.replace(/_/g, ' ')}</p>
+                          </td>
+                          <td className="py-4 px-3 text-xs text-[#44291B] font-medium">
+                            {new Date(app.date_submitted).toLocaleDateString()}
+                          </td>
+                          <td className="py-4 px-3">
+                            {getStatusBadge(app.application_status)}
+                          </td>
+                          <td className="py-4 px-5 text-right">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className={cn(
+                                "p-2 rounded-xl h-9 w-9 p-0 flex items-center justify-center ml-auto transition-all",
+                                isSelected ? "bg-[#264384] text-white" : "text-slate-500 bg-slate-100/50 hover:text-[#264384] hover:bg-[#AFBFE1]"
+                              )}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Footer - Fixed at bottom of table container */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-6 py-4 bg-[#FDFFF4] border-t border-[#e8e2d6] flex-shrink-0">
+              <p className="text-xs font-bold text-slate-500">
+                Showing {paginated.length} of {filteredApps.length} applications
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  variant="ghost"
+                  className="h-8 rounded-lg font-bold text-xs"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Prev
+                </Button>
+                <div className="flex items-center px-3 text-xs font-bold text-slate-700">
+                  {page} / {totalPages || 1}
+                </div>
+                <Button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages || totalPages === 0}
+                  variant="ghost"
+                  className="h-8 rounded-lg font-bold text-xs"
+                >
+                  Next <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* RIGHT SIDE (DETAIL PANEL) */}
-      {selectedApp && (
-        <div className="flex-[3] border-l border-gray-200 overflow-y-auto">
+      <div className={cn(
+        "bg-white border-l border-[#e8e2d6] transition-all duration-500 ease-in-out flex flex-col shadow-2xl z-20",
+        selectedAppId ? "flex-[3] w-full" : "w-0 flex-[0] pointer-events-none opacity-0"
+      )}>
+        {selectedApp && (
           <ReviewApplication
             application={selectedApp}
             applicationId={selectedApp.application_id}
             units={units}
             onAction={handleAction}
-            onClose={() => setSelectedApp(null)}
+            onClose={() => setSelectedAppId(null)}
           />
-        </div>
-      )}
+        )}
+      </div>
 
     </div>
   );
