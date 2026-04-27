@@ -16,6 +16,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
+import { ChevronLeft } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -110,8 +111,22 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
     setLoading(true);
 
     const payload = getPayload();
+    setStatus("");
+    setLoading(true);
 
     try {
+      // Manual Validation
+      if (!payload.email || !payload.email.includes("@")) {
+        setStatus("Please enter a valid email address.");
+        setLoading(false);
+        return;
+      }
+      if (!payload.password || payload.password.length < 6) {
+        setStatus("Password must be at least 6 characters long.");
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
@@ -119,6 +134,17 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
         },
         body: JSON.stringify(payload),
       });
+
+      // Handle non-JSON responses (SyntaxError prevention)
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Server returned non-JSON response:", text);
+        setStatus("Server error during signup. Please try again.");
+        setLoading(false);
+        return;
+      }
+
       const data = await response.json();
 
       if (!response.ok || !data.success) {
@@ -128,7 +154,6 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
       }
 
       setStatus("Signup successful! Redirecting...");
-      // Redirect to the profile completion page
       router.push("/complete-profile");
 
     } catch (error) {
@@ -150,6 +175,13 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
           <CardDescription className="text-[#F6F8D5]">
             Choose your role and credentials to begin
           </CardDescription>
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push('/onboarding')}
+            className="absolute top-4 right-4 text-[#F6F8D5] hover:bg-white/10 hover:text-white rounded-full h-8 w-8 p-0"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
         </CardHeader>
 
         <CardContent>
@@ -205,7 +237,6 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="name@up.edu.ph"
-                  required
                 />
               </div>
 
@@ -218,8 +249,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
                   type="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Choose a secure password"
-                  required
+                  placeholder="Enter your password"
                 />
               </div>
             </div>
@@ -235,6 +265,16 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
             </Button>
 
           </form>
+          <div className="mt-6 flex justify-center">
+            <Button 
+              variant="link" 
+              onClick={() => router.push('/onboarding')}
+              className="text-[#F6F8D5]/60 hover:text-[#F6F8D5] flex items-center gap-1 no-underline"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Go back
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
