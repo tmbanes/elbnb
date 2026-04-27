@@ -54,7 +54,7 @@ export default async function PropertiesPage() {
     supabase.from("dormitory_manager").select("employee_id")
   ]);
 
-  const processProperties = (data: any[]) => 
+  const processProperties = (data: any[]) =>
     (data || []).map(item => ({
       ...item,
       units: item.unit || [],
