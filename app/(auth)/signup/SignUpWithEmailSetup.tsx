@@ -121,7 +121,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
     setLoading(true);
 
     try {
-      
+
       // Manual Validation
       if (!payload.email || !payload.email.includes("@")) {
         setStatus("Please enter a valid email address.");
@@ -134,7 +134,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
         return;
       }
 
-      const response = await fetch("/api/auth/signUp", {
+      const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -182,8 +182,8 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
           <CardDescription className="text-[#F6F8D5]">
             Choose your role and credentials to begin
           </CardDescription>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.push('/onboarding')}
             className="absolute top-4 right-4 text-[#F6F8D5] hover:bg-white/10 hover:text-white rounded-full h-8 w-8 p-0"
           >
@@ -273,8 +273,8 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
 
           </form>
           <div className="mt-6 flex justify-center">
-            <Button 
-              variant="link" 
+            <Button
+              variant="link"
               onClick={() => router.push('/onboarding')}
               className="text-[#F6F8D5]/60 hover:text-[#F6F8D5] flex items-center gap-1 no-underline"
             >
