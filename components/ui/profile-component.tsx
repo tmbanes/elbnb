@@ -38,6 +38,8 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
   const [activeTab, setActiveTab] = useState<'personal' | 'accommodations'>('personal');
   const [currentAssignment, setCurrentAssignment] = useState<any>(null);
   const [loadingAssignment, setLoadingAssignment] = useState(false);
+  const [managerAccommodation, setManagerAccommodation] = useState<any>(null);
+  const [loadingManagerAccom, setLoadingManagerAccom] = useState(false);
 
   useEffect(() => {
     if (user.role === 'student') {
@@ -58,6 +60,24 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
         }
       };
       fetchAssignment();
+    }
+
+    if (user.role === 'dormitory_manager') {
+      const fetchManagerAccom = async () => {
+        setLoadingManagerAccom(true);
+        try {
+          const res = await fetch('/api/manager/dashboard');
+          const result = await res.json();
+          if (result.accommodation) {
+            setManagerAccommodation(result.accommodation);
+          }
+        } catch (err) {
+          console.error("Failed to fetch manager accommodation:", err);
+        } finally {
+          setLoadingManagerAccom(false);
+        }
+      };
+      fetchManagerAccom();
     }
   }, [user.role]);
 
@@ -87,7 +107,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
   const degreeProg = metadata?.degree_program || 'N/A';
   const college = metadata?.college || 'CAS';
   const officeLocation = metadata?.office_location || 'N/A';
-  const primaryManagementArea = metadata?.management_area || 'N/A';
+
   const validId = metadata?.valid_id || 'N/A';
   const purposeVisit = metadata?.purpose_visit || 'N/A';
   const occupancyStatus = metadata?.occupancy_status || 'N/A';
@@ -172,7 +192,25 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
               )}
               {isManager && (
                 <div className="grid grid-cols-1 gap-y-5 w-full">
-                  {renderLargeValue(primaryManagementArea, "Primary Management Area")}
+                  {loadingManagerAccom ? (
+                    <div className="py-4 animate-pulse text-[#3E2723]/40 font-bold uppercase tracking-widest text-xs">Loading Management Data...</div>
+                  ) : (
+                    <>
+                      {renderLargeValue(managerAccommodation?.name || 'No Assigned Dormitory', "Assigned Accommodation")}
+                      {renderValue(officeLocation, "Office Location")}
+                      
+                      <div className="-mt-2 flex justify-end">
+                        <Link 
+                          href="/manager/housing"
+                          className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                        >
+                          <Building2 size={14} strokeWidth={3} />
+                          Manage Housing
+                        </Link>
+                      </div>
+                    </>
+                    
+                  )}
                 </div>
               )}
             </div>

@@ -192,7 +192,7 @@ export function AppSidebar({
           id="custom-sidebar-trigger"
           onClick={toggleSidebar}
           className={cn(
-            "fixed -left-6 w-40 h-40 bg-[#9DB67B] rounded-full z-30 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-6 outline-none shadow-2xl cursor-pointer group",
+            "fixed -left-6 w-40 h-40 bg-[#9DB67B] rounded-full z-30 transition-all duration-800 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-6 outline-none shadow-2xl cursor-pointer group",
             isTriggerVisible ? "-bottom-20 opacity-100" : "-bottom-60 opacity-0"
           )}
           title="Open Sidebar"
@@ -202,7 +202,7 @@ export function AppSidebar({
             alt="Open Sidebar"
             className="absolute -top-2 right-10 w-16 h-auto drop-shadow-lg transition-transform duration-500 ease-out group-hover:scale-110 group-hover:-translate-y-2 group-hover:rotate-3"
           />
-          <span className="absolute top-8 left-30 bg-[#9DB67B] px-3 py-1 rounded-full text-white font-black text-[10px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:translate-x-2 shadow-lg whitespace-nowrap">
+          <span className="absolute top-8 left-30 bg-[#3E2723] px-3 py-1 rounded-full text-[#F4F5E1] font-black text-[10px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:translate-x-2 shadow-lg whitespace-nowrap">
             Navigation
           </span>
         </button>

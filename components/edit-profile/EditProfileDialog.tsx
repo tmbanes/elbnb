@@ -97,7 +97,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
   const [purposeVisit, setPurposeVisit] = useState(metadata?.purpose_visit || '');
   const [occupancyStatus, setOccupancyStatus] = useState(metadata?.occupancy_status || '');
   
-  const [employeeId, setEmployeeId] = useState(metadata?.employee_id || '');
+
   const [adminId, setAdminId] = useState(metadata?.admin_id || '');
   const [officeLocation, setOfficeLocation] = useState(metadata?.office_location || '');
   const [birthdate, setBirthdate] = useState(user.birthdate || '');
@@ -155,7 +155,6 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
         valid_id: validId === "Others" ? customValidId : validId,
         purpose_visit: purposeVisit,
         occupancy_status: occupancyStatus,
-        employee_id: employeeId,
         admin_id: adminId,
         office_location: officeLocation,
         birthdate: birthdate,
@@ -277,45 +276,47 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
             </div>
 
             {/* 2. Emergency Contact */}
-            <div className="space-y-4">
-              <h3 className="uppercase tracking-widest text-xs font-black text-[#7EB647] flex items-center gap-2">
-                Emergency Contact <div className="h-[2px] w-full bg-[#7EB647]/30 rounded-full" />
-              </h3>
+            {(user.role === 'student' || user.role === 'guest') && (
+              <div className="space-y-4">
+                <h3 className="uppercase tracking-widest text-xs font-black text-[#7EB647] flex items-center gap-2">
+                  Emergency Contact <div className="h-[2px] w-full bg-[#7EB647]/30 rounded-full" />
+                </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Emergency Person</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={emergencyPerson}
-                    onChange={(e) => setEmergencyPerson(e.target.value)}
-                    className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
-                    placeholder="Full name"
-                  />
-                </div>
-                <div className="space-y-1" ref={emergencyRef}>
-                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Emergency Contact</label>
-                  <input 
-                    type="tel" 
-                    required
-                    maxLength={11}
-                    value={emergencyContact}
-                    onChange={(e) => {
-                      setEmergencyContact(e.target.value.replace(/[^0-9]/g, ''));
-                      if (fieldErrors.emergency_contact) setFieldErrors(prev => ({ ...prev, emergency_contact: '' }));
-                    }}
-                    className={`w-full bg-white border-[3px] ${fieldErrors.emergency_contact ? 'border-red-400' : 'border-[#3E2723]/10'} focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors`}
-                    placeholder="e.g. 09123456789"
-                  />
-                  {fieldErrors.emergency_contact ? (
-                    <p className="text-[10px] text-red-500 font-bold pl-1">{fieldErrors.emergency_contact}</p>
-                  ) : (
-                    <p className="text-[10px] text-[#3E2723]/60 font-semibold pl-1">Format: 11 digits (e.g. 09123456789)</p>
-                  )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Emergency Person</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={emergencyPerson}
+                      onChange={(e) => setEmergencyPerson(e.target.value)}
+                      className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
+                      placeholder="Full name"
+                    />
+                  </div>
+                  <div className="space-y-1" ref={emergencyRef}>
+                    <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Emergency Contact</label>
+                    <input 
+                      type="tel" 
+                      required
+                      maxLength={11}
+                      value={emergencyContact}
+                      onChange={(e) => {
+                        setEmergencyContact(e.target.value.replace(/[^0-9]/g, ''));
+                        if (fieldErrors.emergency_contact) setFieldErrors(prev => ({ ...prev, emergency_contact: '' }));
+                      }}
+                      className={`w-full bg-white border-[3px] ${fieldErrors.emergency_contact ? 'border-red-400' : 'border-[#3E2723]/10'} focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors`}
+                      placeholder="e.g. 09123456789"
+                    />
+                    {fieldErrors.emergency_contact ? (
+                      <p className="text-[10px] text-red-500 font-bold pl-1">{fieldErrors.emergency_contact}</p>
+                    ) : (
+                      <p className="text-[10px] text-[#3E2723]/60 font-semibold pl-1">Format: 11 digits (e.g. 09123456789)</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             
             {/* 3. Student Records */}
             {user.role === 'student' && (
@@ -502,26 +503,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
               </div>
             )}
 
-            {user.role === 'dormitory_manager' && (
-              <div className="space-y-4">
-                <h3 className="uppercase tracking-widest text-xs font-black text-[#7EB647] flex items-center gap-2">
-                  Management Info <div className="h-[2px] w-full bg-[#7EB647]/30 rounded-full" />
-                </h3>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Employee ID</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={employeeId}
-                      onChange={(e) => setEmployeeId(e.target.value)}
-                      className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
-                      placeholder="e.g. EMP-12345"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+
 
             {user.role === 'housing_admin' && (
               <div className="space-y-4">
