@@ -47,7 +47,7 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F6F8D5' }}>
       {/* Back Button */}
       <div className="py-6 px-10 sm:px-20 sticky top-0 z-20 bg-[#F6F8D5]/80 backdrop-blur-md">
-        <button 
+        <button
           onClick={onBack}
           className="group flex items-center gap-4 text-[#44291B] font-archivo font-black text-xs uppercase tracking-widest hover:text-[#264384] transition-all duration-500 ease-in-out"
         >
@@ -62,15 +62,15 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
 
       {/* Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10 p-8 sm:p-12 lg:p-20 flex-1">
-        
+
         {/* LEFT COLUMN */}
         <div className="min-w-0 flex flex-col gap-8">
           {/* Main Gallery */}
           <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl bg-gray-200 group">
             {accommodation.image ? (
-              <img 
-                src={accommodation.image} 
-                alt={accommodation.name} 
+              <img
+                src={accommodation.image}
+                alt={accommodation.name}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
@@ -94,36 +94,35 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
               Available Unit Types
             </h2>
             <div className="grid grid-cols-1 gap-4">
-                {unitTypeStats.map((stat, idx) => (
-                    <div 
-                        key={idx} 
-                        onClick={() => userRole !== 'student' && onUnitTypeClick?.(stat.sampleUnit)}
-                        className={`flex items-center justify-between p-5 bg-[#F6F8D5] rounded-2xl border border-[#44291B]/5 transition-all ${
-                            userRole !== 'student' ? 'cursor-pointer' : 'cursor-default'
-                        }`}
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-[#e8ebba] flex items-center justify-center text-[#264384] transition-colors">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                </svg>
-                            </div>
-                            <div>
-                                <span className="block text-sm font-black text-[#44291B] uppercase tracking-tight">
-                                    {stat.type.replace('wholeunit', 'Whole Unit')}
-                                </span>
-                                <span className="text-[10px] font-bold text-[#44291B]/50 uppercase tracking-widest">
-                                    {stat.count} Units Available
-                                </span>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <span className="text-[10px] font-black text-[#44291B]/40 uppercase tracking-tighter">
-                                Capacity: {stat.capacity} Pax
-                            </span>
-                        </div>
+              {unitTypeStats.map((stat, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => userRole !== 'student' && onUnitTypeClick?.(stat.sampleUnit)}
+                  className={`flex items-center justify-between p-5 bg-[#F6F8D5] rounded-2xl border border-[#44291B]/5 transition-all ${userRole !== 'student' ? 'cursor-pointer' : 'cursor-default'
+                    }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#e8ebba] flex items-center justify-center text-[#264384] transition-colors">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
                     </div>
-                ))}
+                    <div>
+                      <span className="block text-sm font-black text-[#44291B] uppercase tracking-tight">
+                        {stat.type.replace('wholeunit', 'Whole Unit')}
+                      </span>
+                      <span className="text-[10px] font-bold text-[#44291B]/50 uppercase tracking-widest">
+                        {stat.count} Units Available
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-black text-[#44291B]/40 uppercase tracking-tighter">
+                      Capacity: {stat.capacity} Pax
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -171,17 +170,16 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
             )}
 
             <div className="mt-auto flex flex-col gap-3">
-              <button 
-                className={`w-full py-5 text-white font-archivo font-black text-sm rounded-2xl shadow-lg transition-all uppercase tracking-widest ${
-                  !accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)
+              <button
+                className={`w-full py-5 text-white font-archivo font-black text-sm rounded-2xl shadow-lg transition-all uppercase tracking-widest ${!accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)
                     ? 'bg-gray-400 cursor-not-allowed opacity-60'
                     : 'bg-[#264384] shadow-[#264384]/30 hover:scale-[1.02] hover:bg-[#1f3a7a] active:scale-[0.98]'
-                }`}
+                  }`}
                 onClick={onApply}
                 disabled={!accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)}
               >
-                {!accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application) 
-                  ? 'Applications Closed' 
+                {!accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)
+                  ? 'Applications Closed'
                   : 'Apply Now'}
               </button>
             </div>

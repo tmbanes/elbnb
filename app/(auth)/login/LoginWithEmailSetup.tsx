@@ -18,6 +18,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
+import { ChevronLeft } from "lucide-react";
 
 
 //style constants
@@ -90,6 +91,13 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
               <CardDescription className="text-[#F6F8D5]">
                 Enter your credentials to continue
               </CardDescription>
+              <Button 
+                variant="ghost" 
+                onClick={() => router.push('/onboarding')}
+                className="absolute top-4 right-4 text-[#F6F8D5] hover:bg-white/10 hover:text-white rounded-full h-8 w-8 p-0"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
             </CardHeader>
 
             <form onSubmit={handleSubmit}>
@@ -116,7 +124,7 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
                     type="password"
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="••••••••"
+                    placeholder="Enter your password"
                     required
                   />
                 </div>
@@ -131,7 +139,17 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
 
               </CardContent>
             </form>
-          </Card>
+            <div className="flex justify-center flex-col items-center gap-4">
+          <Button 
+            variant="link" 
+            onClick={() => router.push('/onboarding')}
+            className="text-[#F6F8D5]/60 hover:text-[#F6F8D5] flex items-center gap-1 no-underline"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Go back
+          </Button>
+        </div>
+      </Card>
         )}
 
         {/* Session Card */}

@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCallback, useEffect, useState } from "react";
-import { Archivo } from "next/font/google";
+import { Archivo, Archivo_Black } from "next/font/google";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,6 +55,7 @@ import { createActivityLog, getCurrentUserFromApi, isUserRole } from "@/services
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 const archivo = Archivo({ subsets: ["latin"] });
+const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 const unitTypes: [UnitType, ...UnitType[]] = ["room", "bedspace", "wholeunit"];
 
@@ -296,16 +297,16 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
       const userRole = isUserRole(profile?.role) ? profile.role : "guest";
       // accommodationIdFromQuery
 
-      if (profile?.user_id) {
-        await createActivityLog({
-          p_user_id: profile.user_id,
-          p_action_type: "submit_application",
-          p_log_desc: `${profile.first_name} ${profile.last_name}  submitted application`,
-          p_entity_type: "accommodation",
-          p_entity_id: accommodationIdFromQuery,
-          p_user_role: userRole,
-        })
-      }
+      // if (profile?.user_id) {
+      //   await createActivityLog({
+      //     p_user_id: profile.user_id,
+      //     p_action_type: "submit_application",
+      //     p_log_desc: `${profile.first_name} ${profile.last_name}  submitted application`,
+      //     p_entity_type: "accommodation",
+      //     p_entity_id: accommodationIdFromQuery,
+      //     p_user_role: userRole,
+      //   })
+      // }
 
       setShowSuccess(true);
     } catch (error) {
@@ -403,7 +404,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
       >
         <div className="flex items-center gap-3 mb-2">
           <CheckCircle className="h-7 w-7 text-[#78A24C]" />
-          <h1 className="text-[31px] font-black tracking-widest text-[#3d2000]">
+          <h1 className={`${archivoBlack.className} text-3xl sm:text-4xl uppercase text-[#3d2000]`}>
             Application Summary
           </h1>
         </div>
@@ -511,7 +512,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
     <div
       className={`${archivo.className} min-h-[calc(100vh-4rem)] bg-[#F6F8D5] py-6 px-6 md:px-[1.5in] overflow-y-auto`}
     >
-      <h1 className="text-[31px] font-black tracking-widest text-[#3d2000] mb-1">
+      <h1 className={`${archivoBlack.className} pt-10 text-4xl md:text-5xl text-[#3d2000] mb-1`}>
         Apply for Accommodation
       </h1>
       <p className="text-sm text-[#5a4a2a] mb-5">

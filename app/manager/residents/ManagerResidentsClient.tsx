@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import {
-  Search, Filter, History, ArrowLeft, AlertCircle,
-  CheckCircle2, Clock, ShieldAlert, CalendarArrowDown, CalendarArrowUp,
-  Loader2, ChevronLeft, ChevronRight, MapPin, Mail, Building2,
-} from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, Filter, Mail, MapPin, Search, ArrowLeft, History, CheckCircle2 } from "lucide-react";
+import { Archivo, Archivo_Black } from "next/font/google";
+import { useCallback, useEffect, useState } from "react";
 import { useRealtimeSync } from "@/lib/realtime-sync";
+
+const archivo = Archivo({ subsets: ["latin"] });
+const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,12 +44,12 @@ const cn = (...classes: (string | boolean | undefined)[]) =>
   classes.filter(Boolean).join(" ");
 
 const STATUS_MAP: Record<AssignmentStatus, { label: string; dot: string; badge: string }> = {
-  active:          { label: "Active",           dot: "bg-[#78A24C]", badge: "bg-[#E7FAD3] text-[#78A24C]" },
-  completed:       { label: "Completed",        dot: "bg-[#0369A1]", badge: "bg-[#E0F2FE] text-[#0369A1]" },
-  cancelled:       { label: "Cancelled",        dot: "bg-gray-400",  badge: "bg-[#F3F4F6] text-[#6B7280]" },
-  terminated:      { label: "Terminated",       dot: "bg-[#B91C1C]", badge: "bg-[#FEF2F2] text-[#B91C1C]" },
-  waiting_payment: { label: "Waiting Payment",  dot: "bg-[#EA580C]", badge: "bg-[#FFF7ED] text-[#EA580C]" },
-  pending:         { label: "Pending Approval", dot: "bg-[#4F46E5]", badge: "bg-[#EEF2FF] text-[#4F46E5]" },
+  active: { label: "Active", dot: "bg-[#78A24C]", badge: "bg-[#E7FAD3] text-[#78A24C]" },
+  completed: { label: "Completed", dot: "bg-[#0369A1]", badge: "bg-[#E0F2FE] text-[#0369A1]" },
+  cancelled: { label: "Cancelled", dot: "bg-gray-400", badge: "bg-[#F3F4F6] text-[#6B7280]" },
+  terminated: { label: "Terminated", dot: "bg-[#B91C1C]", badge: "bg-[#FEF2F2] text-[#B91C1C]" },
+  waiting_payment: { label: "Waiting Payment", dot: "bg-[#EA580C]", badge: "bg-[#FFF7ED] text-[#EA580C]" },
+  pending: { label: "Pending Approval", dot: "bg-[#4F46E5]", badge: "bg-[#EEF2FF] text-[#4F46E5]" },
 };
 
 const PER_PAGE = 10;
@@ -104,9 +104,9 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
     const matchAccom = accomFilter === "all" || r.unit.accommodation.accommodation_id === accomFilter;
     const matchStatus =
       statusFilter === "all" ? true :
-      statusFilter === "awaiting" ? ["waiting_payment", "pending"].includes(r.assignment_status) :
-      statusFilter === "active" ? r.assignment_status === "active" :
-      ["completed", "terminated", "cancelled"].includes(r.assignment_status);
+        statusFilter === "awaiting" ? ["waiting_payment", "pending"].includes(r.assignment_status) :
+          statusFilter === "active" ? r.assignment_status === "active" :
+            ["completed", "terminated", "cancelled"].includes(r.assignment_status);
     return matchSearch && matchAccom && matchStatus;
   });
 
@@ -161,14 +161,17 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
 
       {/* ── LEFT: List panel ───────────────────────────────────────────────── */}
       <div className={cn(
-        "flex-1 min-w-0 overflow-y-auto transition-all duration-300",
-        selectedId ? "hidden lg:block" : "block"
+        "flex-1 min-w-0 transition-all duration-500 ease-in-out",
+        selectedId ? "hidden lg:flex lg:flex-[7]" : "flex-1"
       )}>
-        <div className="p-4 md:p-6 space-y-4">
+        <div className={cn(
+          "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
+          selectedId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
+        )}>
 
           {/* Header */}
           <div>
-            <h1 className="text-3xl md:text-5xl font-bold text-[#44291B] tracking-tight">
+            <h1 className={`${archivoBlack.className} pt-6 text-3xl md:text-5xl text-[#44291B] tracking-tight`}>
               Resident Management
             </h1>
             <p className="text-sm text-[#44291B]/60 font-medium mt-2">
@@ -404,7 +407,7 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
                   )}
                 </div>
               ) : (
-                <div className={cn("bg-[#FDFFF4] border rounded-2xl p-5 shadow-lg space-y-4", 
+                <div className={cn("bg-[#FDFFF4] border rounded-2xl p-5 shadow-lg space-y-4",
                   confirmAction === "record-move-in" ? "border-[#78A24C]" : "border-[#264384]")}>
                   <p className="text-sm font-bold text-[#44291B]">
                     {confirmAction === "record-move-in" ? "Confirm Move-In" : "Confirm Move-Out"}
@@ -417,7 +420,7 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
                   />
                   <div className="flex gap-2">
                     <button onClick={() => setConfirmAction(null)} className="flex-1 text-xs font-bold text-[#44291B]/60">Cancel</button>
-                    <button onClick={handleAction} disabled={actionLoading} className={cn("flex-1 py-2 rounded-xl text-white font-bold text-xs", 
+                    <button onClick={handleAction} disabled={actionLoading} className={cn("flex-1 py-2 rounded-xl text-white font-bold text-xs",
                       confirmAction === "record-move-in" ? "bg-[#78A24C]" : "bg-[#264384]")}>
                       {actionLoading ? "..." : "Confirm"}
                     </button>

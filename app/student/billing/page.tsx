@@ -33,11 +33,11 @@ export default async function StudentBillingPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 bg-[#F3F6D0]">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="mb-8">
-          <h1 className={`${archivoBlack.className} text-3xl font-bold text-slate-900 tracking-tight`}>Billing & Payments</h1>
-          <p className={`${archivo.className} text-slate-500 mt-1 mb-4 text-sm`}>Manage your invoices and view your payment history.</p>
+    <main className="min-h-screen pt-10 pb-16 bg-[#F3F6D0]" style={{ color: '#44291B' }}>
+      <div className="max-w-7xl mx-auto px-4 md:px-8 space-y-8">
+        <div className="mb-2">
+          <h1 className={`${archivoBlack.className} pt-7 text-4xl md:text-5xl mb-1`}>Billing & Payments</h1>
+          <p className="text-sm md:text-md font-medium pt-1 pb-7">Manage your invoices and view your payment history.</p>
         </div>
 
         <BillingClient

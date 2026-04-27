@@ -37,11 +37,11 @@ export default function ApplicationsClient({ user, initialData }: ApplicationsCl
             {/* LEFT SIDE (LIST) */}
             <div className={cn(
                 "flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out",
-                selectedId ? "lg:flex-[7]" : "flex-1"
+                selectedId ? "hidden lg:flex lg:flex-[7]" : "flex-1"
             )}>
                 <div className={cn(
                     "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
-                    selectedId ? "px-6 lg:px-12" : "px-6 md:px-12 lg:px-24"
+                    selectedId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
                 )}>
                     <ApplicationList onSelect={setSelectedId} selectedId={selectedId} initialData={initialData} />
                 </div>
@@ -50,7 +50,7 @@ export default function ApplicationsClient({ user, initialData }: ApplicationsCl
             {/* RIGHT SIDE (DETAIL PANEL) */}
             <div className={cn(
                 "bg-[#F6F8D5] border-l border-[#e8e2d6] transition-all duration-500 ease-in-out flex flex-col z-20 overflow-hidden",
-                selectedId ? "flex-[3] w-full" : "w-0 flex-[0] pointer-events-none opacity-0"
+                selectedId ? "flex-1 lg:flex-[3] w-full h-full" : "w-0 flex-[0] pointer-events-none opacity-0"
             )}>
                 {selectedId && (
                     <ReviewApplication

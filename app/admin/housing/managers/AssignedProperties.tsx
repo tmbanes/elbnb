@@ -122,7 +122,7 @@ export default function AssignedProperties({ managerId }: AssignedPropertiesProp
         const all = [...(dorms || []), ...(rentals || [])];
         setProperties(all.filter((property: any) => property.manager_id === managerId));
       } catch (err: any) {
-        setError(err?.message || "Unable to load assigned properties.");
+        setError(err?.message || "Unable to load assigned property.");
       } finally {
         setLoading(false);
       }
@@ -135,7 +135,7 @@ export default function AssignedProperties({ managerId }: AssignedPropertiesProp
     <div className="space-y-4">
       <div className="flex items-center justify-between px-1 pr-2 pl-2">
         <h2 className="text-sm font-bold text-[#44291B] tracking-wide">
-          Assigned Properties
+          Assigned Property
         </h2>
         <p className="text-xs text-[#44291B]">
           {properties.length} {properties.length === 1 ? 'Property' : 'Properties'}

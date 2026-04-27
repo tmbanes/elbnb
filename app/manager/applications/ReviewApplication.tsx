@@ -189,7 +189,7 @@ export default function ReviewApplication({
             Stay Details
           </h3>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <p className="text-[10px] font-extrabold text-[#44291B]/40 uppercase tracking-widest">Duration</p>
               <p className="text-sm font-bold text-[#44291B]">{data.stay.duration}</p>
@@ -295,7 +295,7 @@ export default function ReviewApplication({
         )}
 
         {application.application_status === "pending_dorm_manager" ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Button
               className="bg-[#264384] hover:bg-[#1e3569] text-white font-bold rounded-xl h-12 shadow-lg transition-all"
               onClick={() => setConfirmAction("forward")}

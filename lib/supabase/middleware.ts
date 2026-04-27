@@ -10,7 +10,7 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY!;
 
-  const supabase = createServerClient(
+  const supabase = createServerClient( // not needed anymore ?
     supabaseUrl,
     supabaseKey,
     {

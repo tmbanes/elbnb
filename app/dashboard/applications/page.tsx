@@ -79,7 +79,7 @@ function ApplicationTile({ enriched, onCancel, cancelling }: ApplicationTileProp
           </p>
           <p className="text-xs text-gray-500 mt-0.5 truncate">{accommodation?.location ?? '—'}</p>
         </div>
-        <span className={`shrink-0 inline-block px-2.5 py-1 rounded-full text-xs font-medium ${status.bg} ${status.text}`}>
+        <span className={`shrink-0 inline-block px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.bg} ${status.text}`}>
           {status.label}
         </span>
       </div>

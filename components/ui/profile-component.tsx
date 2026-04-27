@@ -138,7 +138,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
 
   const renderContent = () => {
     return (
-      <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full h-[500px] sm:h-[600px] md:h-[420px]">
+      <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full h-[600px] sm:h-[700px] md:h-[500px]">
         {/* Second Folder (Accommodations/Management) */}
         <div
           onClick={() => setActiveTab('accommodations')}
@@ -150,7 +150,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
             <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>{secondFolderLabel}</h3>
           </div>
 
-          <div className="pb-6 pt-3 pl-4 sm:pl-10 md:pl-[180px] pr-4 sm:pr-6 md:pr-12">
+          <div className="pb-6 pt-3 pl-4 sm:pl-10 md:pl-[180px] pr-4 sm:pr-6 md:pr-12 mt-20">
             <div className="grid grid-cols-1 gap-y-8 w-full">
               {isStudent && (
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
@@ -219,7 +219,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
         {/* First Folder (Personal Information) */}
         <div
           onClick={() => setActiveTab('personal')}
-          className={`col-start-1 row-start-1 w-full self-end cursor-pointer relative z-40 bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 mt-[260px] sm:mt-[320px] transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'personal' ? 'rounded-tl-[40px] rounded-tr-[150px] sm:rounded-tr-[300px] rounded-b-[40px]' : 'rounded-[40px] hover:bg-[#8bc453] hover:shadow-lg'}`}
+          className={`col-start-1 row-start-1 w-full self-end cursor-pointer relative z-40 bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 mt-[300px] sm:mt-[400px] transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'personal' ? 'rounded-tl-[40px] rounded-tr-[150px] sm:rounded-tr-[300px] rounded-b-[40px]' : 'rounded-[40px] hover:bg-[#8bc453] hover:shadow-lg'}`}
           style={activeTab === 'personal' ? { filter: 'url(#grain)', backgroundBlendMode: 'multiply' } : {}}
         >
           <div className={`flex items-center gap-3 text-[#3E2723] transition-all duration-500 ${activeTab === 'personal' ? 'pt-8 mb-4' : 'py-5 sm:py-6'}`}>
@@ -244,16 +244,18 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                   {isGuest && renderValue(validId, 'Valid ID Reference')}
                     </div>
                   </div>
-                  <div className={`md:col-span-${(isStudent || isGuest) ? '9' : '12'}`}>
+                  <div className={isStudent ? "md:col-span-8" : "md:col-span-12"}>
                     <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Contact Details</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       {renderValue(user.email || 'N/A', 'Email Address')}
                       {renderValue(contactNum, 'Contact Number')}
-                      {renderValue(homeAddress, 'Home Address')}
+                      <div className="sm:col-span-2">
+                        {renderValue(homeAddress, 'Home Address')}
+                      </div>
                     </div>
                   </div>
-                  {(isStudent || isGuest) && (
-                    <div className="md:col-span-3">
+                  {isStudent && (
+                    <div className="md:col-span-4">
                       <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>Emergency Contacts</h4>
                       <div className="grid grid-cols-1 gap-6">
                         {renderValue(emergencyContact, emergencyPerson)}

@@ -15,6 +15,11 @@ import { cn } from "@/lib/utils/ui-utils";
 import { Search, Filter, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { Archivo, Archivo_Black } from "next/font/google";
+
+const archivo = Archivo({ subsets: ["latin"] });
+const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
+
 export default function ManagerApplicationsClient({ user, initialData }: { user: any, initialData: ManagerApplicationsResponse }) {
   const [applications, setApplications] = useState<Application[]>(initialData.applications);
   const [accommodationName, setAccommodationName] = useState(initialData.accommodation.name);
@@ -50,11 +55,11 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
 
   async function handleAction(id: string, action: ManagerAction, unitId?: string) {
     await updateApplicationStatus(id, action, unitId);
-    
+
     // Update local state so the UI reflects the change immediately
-    setApplications((prev) => prev.map((a) => 
-      a.application_id === id 
-        ? { ...a, application_status: action === "forward" ? "pending_admin" : "rejected" } 
+    setApplications((prev) => prev.map((a) =>
+      a.application_id === id
+        ? { ...a, application_status: action === "forward" ? "pending_admin" : "rejected" }
         : a
     ));
   }
@@ -108,19 +113,19 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
 
   return (
     <div className="h-[100dvh] flex overflow-hidden bg-[#F6F8D5] font-[family-name:var(--font-archivo)]">
-      
+
       {/* LEFT SIDE (LIST) */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out",
-        selectedAppId ? "lg:flex-[7]" : "flex-1"
+        selectedAppId ? "hidden lg:flex lg:flex-[7]" : "flex-1"
       )}>
         <div className={cn(
-          "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500",
-          selectedAppId ? "px-6 lg:px-12" : "px-6 md:px-12 lg:px-24"
+          "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
+          selectedAppId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
         )}>
           {/* Header */}
           <div className="space-y-1 flex-shrink-0">
-            <h1 className="text-4xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
+            <h1 className={`${archivoBlack.className} pt-6 text-4xl md:text-5xl text-[#44291B] tracking-tight`}>
               Applications
             </h1>
             <p className="text-sm text-[#44291B] font-medium mt-1">
@@ -142,7 +147,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                 className="w-full px-3 py-1.5 bg-transparent text-sm outline-none text-[#44291B] placeholder:text-[#44291B]/50 font-medium"
               />
             </div>
-            
+
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest px-2">
                 {filteredApps.length} Total
@@ -173,7 +178,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                       const applicantName = `${app.users?.first_name} ${app.users?.last_name}`;
                       const isSelected = app.application_id === selectedAppId;
                       return (
-                        <tr 
+                        <tr
                           key={app.application_id}
                           onClick={() => setSelectedAppId(app.application_id)}
                           className={cn(
@@ -196,9 +201,9 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                             {getStatusBadge(app.application_status)}
                           </td>
                           <td className="py-4 px-5 text-right">
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
+                            <Button
+                              size="sm"
+                              variant="ghost"
                               className={cn(
                                 "p-2 rounded-xl h-9 w-9 p-0 flex items-center justify-center ml-auto transition-all",
                                 isSelected ? "bg-[#264384] text-white" : "text-slate-500 bg-slate-100/50 hover:text-[#264384] hover:bg-[#AFBFE1]"

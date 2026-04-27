@@ -82,7 +82,7 @@ export default function ApplicationList({
         }
         fetchApplications();
         setPage(1);
-    }, [status, accommodation, period, search]);
+    }, [status, accommodation, period]); // Removed 'search' from dependencies to use client-side filtering
 
     async function fetchApplications() {
         setLoading(true);
@@ -136,11 +136,6 @@ export default function ApplicationList({
             }
         }
 
-        // Search Filter (ID only for now as per original code, could be extended)
-        if (search.trim() !== "") {
-            query = query.ilike("application_id", `%${search}%`);
-        }
-
         const { data, error } = await query.order("date_submitted", { ascending: false });
 
         if (error) {
@@ -161,8 +156,23 @@ export default function ApplicationList({
         setLoading(false);
     }
 
-    // Derived State for Pagination
-    const filteredApplication = applications; // Filtering is done server-side now
+    // Derived State for Pagination - Client-side search for better UX (Name, Student ID, App ID)
+    const filteredApplication = applications.filter(app => {
+        if (!search.trim()) return true;
+        const s = search.toLowerCase();
+        const firstName = app.users?.first_name?.toLowerCase() || "";
+        const lastName = app.users?.last_name?.toLowerCase() || "";
+        const fullName = `${firstName} ${lastName}`;
+        const studentNum = (app.users?.student as any)?.student_num?.toLowerCase() || "";
+        const appId = app.application_id?.toLowerCase() || "";
+        
+        return fullName.includes(s) || 
+               firstName.includes(s) || 
+               lastName.includes(s) || 
+               studentNum.includes(s) || 
+               appId.includes(s);
+    });
+
     const paginated = filteredApplication.slice(
         (page - 1) * rowsPerPage,
         page * rowsPerPage

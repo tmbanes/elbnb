@@ -28,6 +28,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Archivo } from "next/font/google";
 import { useRouter } from "next/navigation";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -148,16 +151,19 @@ export default function ManagerDashboardUI({
         }));
     });
     const [waitlistStudents] = useState(() => {
-        return initialData.waitlist.map((app: any) => ({
-            type: 'waitlist' as const,
-            id: app.user_id,
-            application_id: app.application_id,
-            name: `${app.users?.first_name || ''} ${app.users?.last_name || ''}`.trim(),
-            student_number: 'N/A',
-            college: 'N/A',
-            date_submitted: app.date_submitted,
-            preferred_unit_type: app.preferred_unit_type,
-        }));
+        return initialData.waitlist.map((app: any) => {
+            const u = app.users || {};
+            return {
+                type: 'waitlist' as const,
+                id: app.user_id,
+                application_id: app.application_id,
+                name: `${u.first_name || ''} ${u.last_name || ''}`.trim(),
+                student_number: u.student?.student_number || u.student?.[0]?.student_number || 'N/A',
+                college: u.student?.college || u.student?.[0]?.college || 'N/A',
+                date_submitted: app.date_submitted,
+                preferred_unit_type: app.preferred_unit_type,
+            };
+        });
     });
     const [activeTab, setActiveTab] = useState<'residents' | 'waitlist'>('residents');
     const [tableSearch, setTableSearch] = useState("");
@@ -185,6 +191,7 @@ export default function ManagerDashboardUI({
 
     // --- Activity Log ---
     const [activityLog] = useState(initialData.activityLog);
+    const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
 
     // --- Recent Applications ---
     const [recentApplications] = useState(initialData.recentApplications);
@@ -260,6 +267,43 @@ export default function ManagerDashboardUI({
         return '#5591AB';
     };
 
+    const generateActivityPDF = () => {
+        const doc = new jsPDF();
+        
+        // Add Header
+        doc.setFontSize(22);
+        doc.setTextColor(11, 58, 100); // #0B3A64
+        doc.text("Activity Archive Report", 14, 22);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString('en-PH')}`, 14, 30);
+        doc.text(`Facility: ${dormName}`, 14, 35);
+        doc.text(`Managed by: ${managerName}`, 14, 40);
+        
+        // Add Table
+        const tableData = activityLog.map(log => [
+            new Date(log.timestamp).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            log.action_type?.replace(/_/g, ' ').toUpperCase() || 'GENERAL',
+            log.description
+        ]);
+
+        autoTable(doc, {
+            startY: 50,
+            head: [['Timestamp', 'Category', 'Description']],
+            body: tableData,
+            headStyles: { fillColor: [11, 58, 100], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+            bodyStyles: { fontSize: 9, textColor: [44, 44, 44] },
+            alternateRowStyles: { fillColor: [249, 251, 253] },
+            margin: { top: 50 },
+            styles: { cellPadding: 5 }
+        });
+
+        // Save PDF
+        doc.save(`Activity_Archive_${dormName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
+
     if (!hasMounted) return <div className={`flex h-screen bg-[#F6F5ED] overflow-hidden ${archivo.className}`} />;
 
     if (!hasMounted) return <div className={`flex h-screen bg-[#F6F8D5] overflow-hidden ${archivo.className}`} />;
@@ -295,8 +339,15 @@ export default function ManagerDashboardUI({
                                         <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
                                             <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
                                             <button
-                                                className="text-[10px] font-bold text-[#5D6BDE] uppercase tracking-wider hover:underline"
-                                                onClick={() => setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))}
+                                                className="text-[10px] font-bold text-[#5D6BDE] uppercase tracking-wider hover:underline transition-colors"
+                                                onClick={() => {
+                                                    if (typeof window !== 'undefined') {
+                                                        const existingIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+                                                        const allIds = Array.from(new Set([...existingIds, ...notifications.map(n => n.id)]));
+                                                        localStorage.setItem('read_notifications', JSON.stringify(allIds));
+                                                    }
+                                                    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                                                }}
                                             >
                                                 Mark all as read
                                             </button>
@@ -338,6 +389,12 @@ export default function ManagerDashboardUI({
                                                 </div>
                                             )}
                                         </div>
+                                        <button
+                                            className="w-full py-3 text-[11px] font-bold text-slate-500 hover:text-[#5D6BDE] transition-colors border-t border-slate-50"
+                                            onClick={() => { setShowNotifications(false); router.push('/manager/notifications'); }}
+                                        >
+                                            View All Activity
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -408,7 +465,7 @@ export default function ManagerDashboardUI({
                                             </p>
                                         </div>
                                     </div>
-                                    <Link href="/manager/dashboard">
+                                    <Link href="/manager/housing">
                                         <button className="px-5 py-2 border border-slate-200 text-[#0B3A64] text-[11px] font-bold rounded-lg hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] transition-all uppercase tracking-wider">Manage Dorm</button>
                                     </Link>
                                 </div>
@@ -522,13 +579,18 @@ export default function ManagerDashboardUI({
                                     </div>
 
                                     {/* Recent Activity — moved here from below */}
-                                    <div className="bg-white rounded-[20px] p-6 shadow-sm border border-slate-100/50 flex flex-col">
+                                    <div className="bg-white rounded-[20px] p-6 shadow-sm border border-slate-100/50 flex flex-col h-[280px]">
                                         <div className="flex justify-between items-center mb-5">
                                             <h3 className="text-[13px] font-extrabold text-[#0B3A64] uppercase tracking-wide">Recent Activity</h3>
-                                            <button className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest flex items-center gap-1 transition-colors">Archive <ChevronRight className="w-3.5 h-3.5" /></button>
+                                            <button 
+                                                onClick={() => setIsArchiveModalOpen(true)}
+                                                className="text-[10px] font-bold text-slate-400 hover:text-[#5591AB] hover:bg-slate-50 px-2 py-1 rounded transition-all uppercase tracking-widest flex items-center gap-1"
+                                            >
+                                                Archive <ChevronRight className="w-3.5 h-3.5" />
+                                            </button>
                                         </div>
                                         {activityLog.length > 0 ? (
-                                            <div className="space-y-4 flex-1 overflow-y-auto">
+                                            <div className="space-y-3 flex-1 overflow-y-auto">
                                                 {activityLog.map((log: any) => {
                                                     return (
                                                         <div key={log.log_id} className="flex items-start justify-between gap-3">
@@ -618,7 +680,6 @@ export default function ManagerDashboardUI({
                                             <thead>
                                                 <tr className="bg-[#F9F7EF] border-b border-slate-100">
                                                     <th className="py-4 px-8 text-[11px] font-extrabold text-[#443322] uppercase tracking-[0.1em]">Student / Property</th>
-                                                    <th className="py-4 px-2 text-[11px] font-extrabold text-[#443322] uppercase tracking-[0.1em]">Student Number</th>
                                                     {activeTab === 'residents' ? (
                                                         <>
                                                             <th className="py-4 px-2 text-[11px] font-extrabold text-[#443322] uppercase tracking-[0.1em]">Room / College</th>
@@ -645,7 +706,7 @@ export default function ManagerDashboardUI({
                                                                     </div>
                                                                 </div>
                                                             </td>
-                                                            <td className="py-5 px-2"><span className="text-[13px] font-bold text-slate-600">{student.student_number}</span></td>
+
                                                             {activeTab === 'residents' ? (
                                                                 <>
                                                                     <td className="py-5 px-2">
@@ -655,7 +716,7 @@ export default function ManagerDashboardUI({
                                                                         </div>
                                                                     </td>
                                                                     <td className="py-5 px-2 text-right">
-                                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${student.payment_status === 'Cleared' ? 'bg-[#EEF4E7] text-[#4A7A2A]' : student.payment_status === 'Overdue' ? 'bg-[#FDECEB] text-[#DE7A6A]' : 'bg-[#FFF9E6] text-[#B08E2E]'}`}>
+                                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full whitespace-nowrap ${student.payment_status === 'Cleared' ? 'bg-[#EEF4E7] text-[#4A7A2A]' : student.payment_status === 'Overdue' ? 'bg-[#FDECEB] text-[#DE7A6A]' : 'bg-[#FFF9E6] text-[#B08E2E]'}`}>
                                                                             {student.payment_status}
                                                                         </span>
                                                                     </td>
@@ -680,7 +741,7 @@ export default function ManagerDashboardUI({
                                                     );
                                                 }) : (
                                                     <tr>
-                                                        <td colSpan={5} className="py-16 text-center text-slate-400 text-sm font-bold uppercase tracking-widest">No records found matching your selection.</td>
+                                                        <td colSpan={4} className="py-16 text-center text-slate-400 text-sm font-bold uppercase tracking-widest">No records found matching your selection.</td>
                                                     </tr>
                                                 )}
                                             </tbody>
@@ -716,10 +777,10 @@ export default function ManagerDashboardUI({
                                                 <thead>
                                                     <tr className="bg-[#F9F7EF] border-b border-slate-100">
                                                         <th className="py-5 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Student / Property</th>
-                                                        <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Student Number</th>
                                                         <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em]">Date Applied</th>
                                                         <th className="py-5 px-4 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em] text-right">Status</th>
                                                         <th className="py-5 px-6 text-[10px] font-extrabold text-[#443322] uppercase tracking-[0.2em] text-right">History</th>
+
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -736,6 +797,11 @@ export default function ManagerDashboardUI({
                                                         const statusColor = status === 'approved' ? 'bg-[#EEF4E7] text-[#4A7A2A]'
                                                             : status === 'rejected' ? 'bg-[#FDECEB] text-[#DE7A6A]'
                                                                 : 'bg-[#FFF9E6] text-[#B08E2E]';
+                                                        
+                                                        // Ensure student_number is extracted correctly if nested
+                                                        const studentNumber = app.student_number || u.student?.student_number || u.student?.[0]?.student_number || 'N/A';
+                                                        const dateSubmitted = app.date_submitted || app.date || null;
+
                                                         return (
                                                             <tr key={app.application_id} className="border-b border-slate-50 last:border-0 hover:bg-[#F9FBFD] transition-colors">
                                                                 <td className="py-4 px-6">
@@ -748,19 +814,13 @@ export default function ManagerDashboardUI({
                                                                     </div>
                                                                 </td>
                                                                 <td className="py-4 px-4">
-                                                                    <span className="text-[12px] font-bold text-slate-600">{app.student_number}</span>
-                                                                </td>
-                                                                <td className="py-4 px-4">
                                                                     <span className="text-[11px] text-slate-400 font-bold">
-                                                                        {new Date(app.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                                        {dateSubmitted ? new Date(dateSubmitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
                                                                     </span>
                                                                 </td>
                                                                 <td className="py-4 px-6 text-right">
-                                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${app.status?.toLowerCase() === 'approved' ? 'bg-[#EEF4E7] text-[#4A7A2A]' :
-                                                                        app.status?.toLowerCase() === 'rejected' ? 'bg-[#FDECEB] text-[#DE7A6A]' :
-                                                                            'bg-[#FFF9E6] text-[#B08E2E]'
-                                                                        }`}>
-                                                                        {app.status}
+                                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap ${statusColor}`}>
+                                                                        {statusLabel}
                                                                     </span>
                                                                 </td>
                                                                 <td className="py-4 px-6 text-right">
@@ -774,7 +834,7 @@ export default function ManagerDashboardUI({
                                                         );
                                                     }) : (
                                                         <tr>
-                                                            <td colSpan={3} className="py-10 text-center text-slate-300 text-[11px] font-bold uppercase tracking-widest">No recent applications</td>
+                                                            <td colSpan={4} className="py-10 text-center text-slate-300 text-[11px] font-bold uppercase tracking-widest">No recent applications</td>
                                                         </tr>
                                                     )}
                                                 </tbody>
@@ -1024,6 +1084,85 @@ export default function ManagerDashboardUI({
                         <button onClick={() => setIsRoomModalOpen(false)} className="w-full mt-8 py-4 bg-[#F2C908] hover:bg-[#EBC207] text-[#0B3A64] font-black text-[13px] rounded-2xl transition-all shadow-md active:scale-[0.98] uppercase tracking-widest">
                             Close View
                         </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* ARCHIVE ACTIVITY DIALOG */}
+            <Dialog open={isArchiveModalOpen} onOpenChange={setIsArchiveModalOpen}>
+                <DialogContent 
+                    showCloseButton={false}
+                    className="max-w-2xl bg-[#F6F8D5] border-none rounded-[32px] p-0 overflow-hidden shadow-2xl"
+                >
+                    <DialogTitle className="sr-only">Activity Archive</DialogTitle>
+                    <div className="p-8">
+                        <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-6">
+                            <div>
+                                <h2 className="text-[20px] font-black text-[#0B3A64] uppercase tracking-wide">Activity Archive</h2>
+                                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-1">Full history of facility and student updates</p>
+                            </div>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-100 shadow-sm">
+                                <Clock className="w-4 h-4 text-[#5591AB]" />
+                                <span className="text-[11px] font-black text-[#0B3A64]">{activityLog.length} History Logs</span>
+                            </div>
+                        </div>
+
+                        <div className="max-h-[500px] overflow-y-auto pr-2 space-y-4">
+                            {activityLog.length > 0 ? (
+                                activityLog.map((log: any, idx: number) => (
+                                    <div key={log.log_id || idx} className="bg-white rounded-2xl p-5 border border-slate-100 hover:border-[#5591AB]/30 transition-all group shadow-sm">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex items-start gap-4">
+                                                <div className="mt-1.5 w-2.5 h-2.5 rounded-full ring-4 ring-slate-50 flex-shrink-0" style={{ backgroundColor: activityColor(log.action_type) }}></div>
+                                                <div>
+                                                    <p className="text-[14px] font-black text-[#0B3A64] leading-snug group-hover:text-[#5591AB] transition-colors">{log.description}</p>
+                                                    <div className="flex items-center gap-3 mt-2">
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded">
+                                                            {log.action_type?.replace(/_/g, ' ')}
+                                                        </span>
+                                                        <span className="text-[10px] text-[#5591AB] font-bold">
+                                                            {new Date(log.timestamp).toLocaleString('en-PH', { 
+                                                                month: 'short', day: 'numeric', year: 'numeric',
+                                                                hour: '2-digit', minute: '2-digit' 
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {log.user_id && (
+                                                <div className="flex flex-col items-end">
+                                                     <span className="text-[9px] font-black text-slate-300 uppercase tracking-tighter mb-1">Triggered By</span>
+                                                     <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">ID</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="py-20 flex flex-col items-center justify-center text-center">
+                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center border border-slate-100 mb-4 shadow-sm">
+                                        <History className="w-8 h-8 text-slate-200" />
+                                    </div>
+                                    <p className="text-slate-400 text-sm font-extrabold uppercase tracking-widest">No Archived logs</p>
+                                    <p className="text-slate-300 text-[11px] mt-1 font-bold">New facility activities will appear here</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-8 flex flex-col gap-3">
+                            <button 
+                                onClick={generateActivityPDF}
+                                className="w-full py-4 bg-white border-2 border-[#0B3A64] text-[#0B3A64] font-black text-[11px] rounded-2xl hover:bg-slate-50 transition-all shadow-md active:scale-[0.98] uppercase tracking-[0.2em] flex items-center justify-center gap-2"
+                            >
+                                <FileText className="w-4 h-4" /> Download PDF Report
+                            </button>
+                            <button 
+                                onClick={() => setIsArchiveModalOpen(false)}
+                                className="w-full py-4 bg-[#0B3A64] text-white font-black text-[11px] rounded-2xl hover:bg-[#082d4f] transition-all shadow-lg active:scale-[0.98] uppercase tracking-[0.2em]"
+                            >
+                                Close Archive
+                            </button>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>

@@ -124,6 +124,14 @@ export default function CompleteProfile({ user }: { user: User | null }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const supabase = getSupabaseBrowserClient();
+
+  const handleSignOut = async () => {
+    setLoading(true);
+    await supabase.auth.signOut();
+    router.refresh();
+    router.push("/onboarding");
+  };
 
   const targetRoute: Record<string, string> = {
     student: "/student/dashboard",
@@ -227,6 +235,15 @@ export default function CompleteProfile({ user }: { user: User | null }) {
           roleData
         }),
       });
+
+      // Handle non-JSON responses (SyntaxError prevention)
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Server returned non-JSON response:", text);
+        setError("Server error. Please try again later.");
+        return;
+      }
 
       const data = await response.json();
 
@@ -383,6 +400,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   <div className="space-y-2">
                     <Label className={label_style}>Student Number <span className="text-red-500">*</span></Label>
                     <Input
+                      type="text"
                       className={field_style}
                       value={(roleData as StudentRoleData).student_num ?? ""}
                       onChange={(e) =>
@@ -391,6 +409,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                       placeholder="20XXXXXXXX (9 digits)"
                       required
                     />
+                    <p className="text-[10px] text-[#2d1a12]/60 font-semibold pl-1">Format: 9 digits (e.g. 202314986)</p>
                   </div>
 
                   <div className="space-y-2">
@@ -440,9 +459,10 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   <div className="space-y-2">
                     <Label className={label_style}>College <span className="text-red-500">*</span></Label>
                     <Select
-                      onValueChange={(value) =>
-                        handleRoleFieldChange("college", value)
-                      }
+                      onValueChange={(value) => {
+                        handleRoleFieldChange("college", value);
+                        handleRoleFieldChange("degree_program", "");
+                      }}
                       defaultValue={(roleData as StudentRoleData).college}
                       required
                     >
@@ -488,8 +508,9 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   <div className="space-y-2">
                     <Label className={label_style}>Emergency Contact # <span className="text-red-500">*</span></Label>
                     <Input
+                      type="text"
                       className={field_style}
-                      value={(roleData as StudentRoleData).emergency_contact ?? ""}
+                      value={(roleData as StudentRoleData).emergency_contact || ""}
                       onChange={(e) =>
                         handleRoleFieldChange("emergency_contact", e.target.value)
                       }
@@ -503,13 +524,13 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                   <div className="space-y-2">
                     <Label className={label_style}>Valid ID <span className="text-red-500">*</span></Label>
                     <Input
+                      type="text"
                       className={field_style}
-                      value={(roleData as GuestRoleData).valid_id ?? ""}
+                      value={(roleData as GuestRoleData).valid_id || ""}
                       onChange={(e) =>
                         handleRoleFieldChange("valid_id", e.target.value)
                       }
                       placeholder="ID Number / Type"
-                      required
                     />
                   </div>
 
@@ -570,13 +591,25 @@ export default function CompleteProfile({ user }: { user: User | null }) {
           )}
 
           {/* Actions */}
-          <Button
-            onClick={handleContinue}
-            disabled={loading || !selectedRole}
-            className={button_style}
-          >
-            {loading ? "Saving..." : "Finish Setup"}
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={handleContinue}
+              disabled={loading || !selectedRole}
+              className={button_style}
+            >
+              {loading && !error ? "Saving..." : "Finish Setup"}
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              disabled={loading}
+              className="w-full h-11 rounded-full border-2 border-[#F6F8D5]/40 text-[#F6F8D5] hover:bg-[#F6F8D5]/10 hover:text-[#F6F8D5]"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out & Cancel
+            </Button>
+          </div>
 
           {error && (
             <p className="text-sm bg-red-500/20 text-red-100 p-3 rounded-full text-center">{error}</p>
