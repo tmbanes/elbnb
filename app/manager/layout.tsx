@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth/session";
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SidebarContentWrapper } from "@/components/sidebar-content-wrapper";
 
 export default async function ManagerLayout({ children }: { children: React.ReactNode }) {
     await requireRole(["dormitory_manager"]);
@@ -13,9 +14,11 @@ export default async function ManagerLayout({ children }: { children: React.Reac
             <SidebarProvider>
                 <AppSidebar role="manager" />
 
-                <main className="flex-1">
-                    {children}
-                </main>
+                <SidebarContentWrapper>
+                    <main className="flex-1">
+                        {children}
+                    </main>
+                </SidebarContentWrapper>
             </SidebarProvider>
         </TooltipProvider>
     );
