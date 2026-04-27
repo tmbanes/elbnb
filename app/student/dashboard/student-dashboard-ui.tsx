@@ -225,7 +225,19 @@ export default function StudentDashboardUI({
                                 <div className="absolute right-0 top-full mt-4 w-80 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[60] overflow-hidden">
                                     <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
                                         <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
-                                        <span className="text-[10px] font-bold text-[#668E42] uppercase tracking-wider">Mark all as read</span>
+                                        <button
+                                            className="text-[10px] font-bold text-[#668E42] uppercase tracking-wider hover:text-[#557F44] transition-colors"
+                                            onClick={() => {
+                                                if (typeof window !== 'undefined') {
+                                                    const existingIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+                                                    const allIds = Array.from(new Set([...existingIds, ...notifications.map(n => n.id)]));
+                                                    localStorage.setItem('read_notifications', JSON.stringify(allIds));
+                                                }
+                                                setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                                            }}
+                                        >
+                                            Mark all as read
+                                        </button>
                                     </div>
                                     <div className="max-h-[350px] overflow-y-auto">
                                         {notifications.length > 0 ? (
@@ -264,7 +276,10 @@ export default function StudentDashboardUI({
                                             </div>
                                         )}
                                     </div>
-                                    <button className="w-full py-3 text-[11px] font-bold text-slate-500 hover:text-[#668E42] transition-colors border-t border-slate-50">
+                                    <button
+                                        className="w-full py-3 text-[11px] font-bold text-slate-500 hover:text-[#668E42] transition-colors border-t border-slate-50"
+                                        onClick={() => { setShowNotifications(false); router.push('/student/notifications'); }}
+                                    >
                                         View All Activity
                                     </button>
                                 </div>

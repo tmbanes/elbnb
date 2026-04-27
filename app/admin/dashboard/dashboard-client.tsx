@@ -354,6 +354,12 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                       </div>
                     )}
                   </div>
+                  <button
+                    className="w-full py-3 text-[11px] font-bold text-slate-500 hover:text-[#78A24C] transition-colors border-t border-slate-50"
+                    onClick={() => { setShowNotifications(false); router.push('/admin/notifications'); }}
+                  >
+                    View All Activity
+                  </button>
                 </div>
               )}
             </div>
