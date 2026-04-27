@@ -162,11 +162,11 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
       {/* ── LEFT: List panel ───────────────────────────────────────────────── */}
       <div className={cn(
         "flex-1 min-w-0 transition-all duration-500 ease-in-out",
-        selectedId ? "hidden lg:flex lg:flex-[7]" : "flex-1"
+        selectedId ? "hidden lg:block lg:flex-[7]" : "flex-1"
       )}>
         <div className={cn(
           "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
-          selectedId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
+          selectedId ? "pl-4 lg:pl-40 pr-4 lg:pr-8" : "px-4 md:px-10 lg:px-12 xl:px-16"
         )}>
 
           {/* Header */}
@@ -181,8 +181,7 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
 
           {/* Filter bar */}
           <div className="flex flex-col sm:flex-row gap-3 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm">
-            {/* Search */}
-            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-white flex-1 max-w-sm">
+            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-white flex-1">
               <Search className="w-4 h-4 ml-3 text-[#44291B]/40 shrink-0" />
               <input
                 type="text"
@@ -193,7 +192,6 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
               />
             </div>
 
-            {/* Accommodation filter */}
             {accommodations.length > 1 && (
               <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
                 <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
@@ -210,7 +208,6 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
               </div>
             )}
 
-            {/* Status filter */}
             <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
               <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
               <select
@@ -227,67 +224,57 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
           </div>
 
           {/* Table */}
-          <div className="bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-hidden shadow-sm">
-            {paginated.length > 0 ? (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-[#e8e2d6] bg-[#F6F8D5]/80">
-                    <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Resident</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Accommodation</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginated.map(r => {
-                    const st = STATUS_MAP[r.assignment_status] || STATUS_MAP.pending;
-                    const isSelected = r.assignment_id === selectedId;
-                    return (
-                      <tr
-                        key={r.assignment_id}
-                        onClick={() => selectResident(r.assignment_id)}
-                        className={cn(
-                          "border-b border-[#e8e2d6]/60 last:border-0 cursor-pointer transition-colors",
-                          isSelected ? "bg-[#F0F4FF]" : "hover:bg-[#F6F8D5]"
-                        )}
-                      >
-                        <td className="py-4 px-5">
-                          <p className={cn("text-sm font-bold text-[#44291B]", isSelected && "text-[#264384]")}>
-                            {r.users?.first_name || 'Unknown'} {r.users?.last_name || 'User'}
-                          </p>
-                          <div className="flex items-center gap-1 mt-0.5 text-[#44291B]/50">
-                            <Mail className="w-3 h-3 shrink-0" />
-                            <p className="text-xs truncate max-w-[180px]">{r.users?.email || 'N/A'}</p>
-                          </div>
-                        </td>
-                        <td className="py-4 px-3">
-                          <p className="text-sm font-bold text-[#44291B]">{r.unit?.accommodation?.name || 'N/A'}</p>
-                          <div className="flex items-center gap-1 mt-0.5 text-[#44291B]/50">
-                            <MapPin className="w-3 h-3 shrink-0" />
-                            <p className="text-xs">Unit {r.unit?.unit_number || 'N/A'}</p>
-                          </div>
-                        </td>
-                        <td className="py-4 px-3">
-                          <span className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                            st.badge
-                          )}>
-                            <span className={cn("w-1.5 h-1.5 rounded-full", st.dot)} />
-                            {st.label}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ) : (
-              <div className="py-20 text-center">
-                <p className="text-sm font-bold text-[#44291B]/40">No residents found</p>
-              </div>
-            )}
+          <div className="bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-x-auto shadow-sm flex flex-col">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[#e8e2d6] bg-[#F6F8D5]/80">
+                  <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[30%]">Resident</th>
+                  <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Accommodation</th>
+                  <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[20%]">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.map(r => {
+                  const st = STATUS_MAP[r.assignment_status] || STATUS_MAP.pending;
+                  return (
+                    <tr
+                      key={r.assignment_id}
+                      onClick={() => selectResident(r.assignment_id)}
+                      className={cn(
+                        "border-b border-[#e8e2d6]/60 cursor-pointer transition-colors",
+                        r.assignment_id === selectedId ? "bg-[#F0F4FF]" : "hover:bg-[#F6F8D5]"
+                      )}
+                    >
+                      <td className="py-4 px-5">
+                        <p className={cn("text-sm font-bold text-[#44291B]", r.assignment_id === selectedId && "text-[#264384]")}>
+                          {r.users?.first_name || 'Unknown'} {r.users?.last_name || 'User'}
+                        </p>
+                        <div className="flex items-center gap-1 mt-0.5 text-[#44291B]/50">
+                          <Mail className="w-3 h-3 shrink-0" />
+                          <p className="text-xs">{r.users?.email || 'N/A'}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-3">
+                        <p className="text-sm font-bold text-[#44291B]">{r.unit?.accommodation?.name || 'N/A'}</p>
+                        <div className="flex items-center gap-1 mt-0.5 text-[#44291B]/50">
+                          <MapPin className="w-3 h-3 shrink-0" />
+                          <p className="text-xs">Unit {r.unit?.unit_number || 'N/A'}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-3">
+                        <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider", st.badge)}>
+                          <span className={cn("w-1.5 h-1.5 rounded-full", st.dot)} />
+                          {st.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between px-5 py-3 border-t border-[#e8e2d6]/60 bg-[#FDFFF4]">
+            <div className="mt-auto flex items-center justify-between px-5 py-3 border-t border-[#e8e2d6]/60 bg-[#FDFFF4]">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
@@ -310,8 +297,8 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
 
       {/* ── RIGHT: Detail panel ────────────────────────────────────────────── */}
       <div className={cn(
-        "w-full lg:w-[420px] border-l border-[#e8e2d6] bg-[#F6F8D5] overflow-y-auto flex flex-col transition-all duration-300",
-        selectedId ? "block" : "hidden lg:flex"
+        "w-full lg:w-[380px] border-l border-[#e8e2d6] bg-[#F6F8D5] overflow-y-auto flex flex-col transition-all duration-300",
+        selectedId ? "" : "hidden lg:flex"
       )}>
         {selected ? (
           <div className="flex flex-col h-full">
