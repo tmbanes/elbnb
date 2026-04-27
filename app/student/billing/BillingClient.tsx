@@ -294,12 +294,12 @@ export default function BillingClient({
   const getStatusColor = (status?: string) => {
     switch (status) {
       case BillingStatus.PAID: return "bg-green-100 text-green-700 border-green-200";
-      case BillingStatus.UNPAID: return "bg-slate-100 text-slate-700 border-slate-200";
+      case BillingStatus.UNPAID: return "bg-slate-100 text-[#44291B]/80 border-slate-200";
       case BillingStatus.PENDING_VERIFICATION: return "bg-amber-100 text-amber-700 border-amber-200";
       case BillingStatus.PENDING: return "bg-amber-100 text-amber-700 border-amber-200";
       case BillingStatus.OVERDUE: return "bg-red-100 text-red-700 border-red-200";
       case BillingStatus.FAILED: return "bg-rose-100 text-rose-700 border-rose-200";
-      default: return "bg-slate-100 text-slate-700 border-slate-200";
+      default: return "bg-slate-100 text-[#44291B]/80 border-slate-200";
     }
   };
 
@@ -524,8 +524,8 @@ export default function BillingClient({
           <CardHeader className="pb-3">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div>
-                <CardTitle className="text-lg font-bold text-slate-900">My Invoices</CardTitle>
-                <div className="text-sm text-slate-500">Review bills, download statements, and upload receipts.</div>
+                <CardTitle className="text-lg font-bold text-[#44291B]">My Invoices</CardTitle>
+                <div className="text-sm text-[#44291B]/70">Review bills, download statements, and upload receipts.</div>
               </div>
               <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
                 <div className="flex bg-white border border-[#e8e2d6] shadow-sm transition hover:shadow-md hover:border-[#44291B]/30 rounded-xl overflow-hidden flex-1 md:w-[250px] items-center">
@@ -546,7 +546,7 @@ export default function BillingClient({
 
           <CardContent className="pt-0">
             <Separator className="mb-4" />
-            <Table className="text-slate-700">
+            <Table className="text-[#44291B]/80">
               <TableHeader>
                 <TableRow className="bg-slate-50/80">
                   <TableHead className="px-4 py-3 font-semibold">Invoice / Period</TableHead>
@@ -563,14 +563,14 @@ export default function BillingClient({
                   return (
                     <TableRow key={billId} className="hover:bg-slate-50/60 transition-colors">
                       <TableCell className="px-4 py-4">
-                        <div className="font-semibold text-slate-900">
+                        <div className="font-semibold text-[#44291B]">
                           {bill?.billing_period_date
                             ? `Rent - ${safeDateLabel(bill.billing_period_date, "MMM yyyy", "N/A")}`
                             : "Student Invoice"}
                         </div>
-                        <div className="text-xs text-slate-500">{String(billId).split("-")[0]}</div>
+                        <div className="text-xs text-[#44291B]/70">{String(billId).split("-")[0]}</div>
                       </TableCell>
-                      <TableCell className="px-4 py-4 font-bold text-slate-900">
+                      <TableCell className="px-4 py-4 font-bold text-[#44291B]">
                         ₱{formatPeso(bill?.amount)}
                       </TableCell>
                       <TableCell className="px-4 py-4">{safeDateLabel(bill?.due_date, "MMM dd, yyyy")}</TableCell>
@@ -610,10 +610,10 @@ export default function BillingClient({
             {/* PAGINATION BAR FOR INVOICES */}
             {searchedBills.length > 0 && (
               <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100">
-                <p className="text-sm text-slate-500">
-                  Showing <span className="font-semibold text-slate-700">{startInvoiceIndex + 1}</span> to{" "}
-                  <span className="font-semibold text-slate-700">{Math.min(startInvoiceIndex + invoicesPerPage, searchedBills.length)}</span> of{" "}
-                  <span className="font-semibold text-slate-700">{searchedBills.length}</span> results
+                <p className="text-sm text-[#44291B]/70">
+                  Showing <span className="font-semibold text-[#44291B]/80">{startInvoiceIndex + 1}</span> to{" "}
+                  <span className="font-semibold text-[#44291B]/80">{Math.min(startInvoiceIndex + invoicesPerPage, searchedBills.length)}</span> of{" "}
+                  <span className="font-semibold text-[#44291B]/80">{searchedBills.length}</span> results
                 </p>
 
                 <div className="flex items-center gap-1">
@@ -661,7 +661,7 @@ export default function BillingClient({
         <Card className="bg-white/90 ring-1 ring-black/5 rounded-2xl shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <CardTitle className="text-lg font-bold text-slate-900">Transaction History</CardTitle>
+              <CardTitle className="text-lg font-bold text-[#44291B]">Transaction History</CardTitle>
               <div className="flex bg-white border border-[#e8e2d6] shadow-sm transition hover:shadow-md hover:border-[#44291B]/30 rounded-xl overflow-hidden flex-1 max-w-xs items-center">
                 <div className="pl-3 flex items-center justify-center text-slate-400">
                   <Search className="w-4 h-4" />
@@ -679,7 +679,7 @@ export default function BillingClient({
           <CardContent className="pt-0">
             <Separator className="mb-4" />
             {searchedHistory.length > 0 && (
-              <Table className="text-slate-700">
+              <Table className="text-[#44291B]/80">
                 <TableHeader>
                   <TableRow className="bg-slate-50/80">
                     <TableHead className="px-4 py-3 font-semibold">Date</TableHead>
@@ -722,10 +722,10 @@ export default function BillingClient({
             {/* PAGINATION BAR FOR HISTORY */}
             {searchedHistory.length > 0 && (
               <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100">
-                <p className="text-sm text-slate-500">
-                  Showing <span className="font-semibold text-slate-700">{startHistoryIndex + 1}</span> to{" "}
-                  <span className="font-semibold text-slate-700">{Math.min(startHistoryIndex + historyPerPage, searchedHistory.length)}</span> of{" "}
-                  <span className="font-semibold text-slate-700">{searchedHistory.length}</span> results
+                <p className="text-sm text-[#44291B]/70">
+                  Showing <span className="font-semibold text-[#44291B]/80">{startHistoryIndex + 1}</span> to{" "}
+                  <span className="font-semibold text-[#44291B]/80">{Math.min(startHistoryIndex + historyPerPage, searchedHistory.length)}</span> of{" "}
+                  <span className="font-semibold text-[#44291B]/80">{searchedHistory.length}</span> results
                 </p>
 
                 <div className="flex items-center gap-1">
@@ -789,19 +789,19 @@ export default function BillingClient({
                   <div className="grid grid-cols-2 gap-x-12 gap-y-6">
                     <div>
                       <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Invoice ID</div>
-                      <div className="font-semibold text-slate-900">{String(focusedBill?.billing_id || "Unknown").split("-")[0]}</div>
+                      <div className="font-semibold text-[#44291B]">{String(focusedBill?.billing_id || "Unknown").split("-")[0]}</div>
                     </div>
                     <div>
                       <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Billing Period</div>
-                      <div className="font-semibold text-slate-900">{focusedBill?.billing_period_date ? safeDateLabel(focusedBill.billing_period_date, "MMMM yyyy", "N/A") : "N/A"}</div>
+                      <div className="font-semibold text-[#44291B]">{focusedBill?.billing_period_date ? safeDateLabel(focusedBill.billing_period_date, "MMMM yyyy", "N/A") : "N/A"}</div>
                     </div>
                     <div>
                       <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Due Date</div>
-                      <div className="font-semibold text-slate-900">{safeDateLabel(focusedBill?.due_date, "MMM dd, yyyy")}</div>
+                      <div className="font-semibold text-[#44291B]">{safeDateLabel(focusedBill?.due_date, "MMM dd, yyyy")}</div>
                     </div>
                     <div>
                       <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Amount</div>
-                      <div className="font-semibold text-slate-900">₱{formatPeso(focusedBill?.summary?.total ?? focusedBill?.amount ?? 0)}</div>
+                      <div className="font-semibold text-[#44291B]">₱{formatPeso(focusedBill?.summary?.total ?? focusedBill?.amount ?? 0)}</div>
                     </div>
                   </div>
                   <div>
@@ -832,14 +832,14 @@ export default function BillingClient({
                     getInvoiceLineItems(focusedBill).map((item: any, i: number) => (
                       <div key={i} className="flex items-center justify-between text-sm">
                         <div className="text-slate-600 capitalize">{String(item.label || "").replace(/_/g, " ")}</div>
-                        <div className="font-medium text-slate-900">₱{Math.abs(toCurrencyNumber(item?.amount)).toLocaleString()}</div>
+                        <div className="font-medium text-[#44291B]">₱{Math.abs(toCurrencyNumber(item?.amount)).toLocaleString()}</div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-sm text-slate-500">No line items found for this invoice.</div>
+                    <div className="text-sm text-[#44291B]/70">No line items found for this invoice.</div>
                   )}
                   <Separator className="my-3" />
-                  <div className="flex items-center justify-between font-extrabold text-slate-900">
+                  <div className="flex items-center justify-between font-extrabold text-[#44291B]">
                     <div>Total Balance Due</div>
                     <div className="text-lg">₱{formatPeso(focusedBill?.summary?.total ?? focusedBill?.amount ?? 0)}</div>
                   </div>
@@ -853,7 +853,7 @@ export default function BillingClient({
                   </div>
 
                   {isLoadingReceiptPreview ? (
-                    <div className="text-sm text-slate-500 flex items-center gap-2 py-2">
+                    <div className="text-sm text-[#44291B]/70 flex items-center gap-2 py-2">
                       <Clock className="w-4 h-4 animate-spin" /> Loading receipt...
                     </div>
                   ) : receiptPreviewUrl ? (
@@ -891,7 +891,7 @@ export default function BillingClient({
                             type="file"
                             accept="image/*"
                             onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                            className="flex-1 min-w-0 block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white file:text-slate-700 hover:file:bg-slate-50 transition cursor-pointer shadow-sm border border-slate-200"
+                            className="flex-1 min-w-0 block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white file:text-[#44291B]/80 hover:file:bg-slate-50 transition cursor-pointer shadow-sm border border-slate-200"
                           />
                           <Button
                             disabled={!uploadFile || isUploading || USE_DUMMY_BILLING_DATA}
@@ -908,7 +908,7 @@ export default function BillingClient({
                         {uploadError && <div className="mt-2 text-sm text-red-600">{uploadError}</div>}
                       </div>
                     ) : (
-                      <div className="text-sm text-slate-500 italic py-2">
+                      <div className="text-sm text-[#44291B]/70 italic py-2">
                         Receipt upload is not required for this invoice.
                       </div>
                     )
@@ -932,23 +932,23 @@ export default function BillingClient({
         <div id="invoice-print-root" className="hidden print:block font-sans text-black bg-white p-4 text-sm w-full">
           <div className="flex justify-between items-end border-b-2 border-slate-900 pb-3 mb-4">
             <div>
-              <h1 className="text-4xl font-extrabold text-slate-900 uppercase tracking-tighter">INVOICE</h1>
-              <p className="text-slate-500 mt-1 font-mono">#{focusedBill?.billing_id || "N/A"}</p>
+              <h1 className="text-4xl font-extrabold text-[#44291B] uppercase tracking-tighter">INVOICE</h1>
+              <p className="text-[#44291B]/70 mt-1 font-mono">#{focusedBill?.billing_id || "N/A"}</p>
             </div>
             <div className="text-right">
               <p className="font-bold text-slate-800 text-xl">ELbnb Housing</p>
-              <p className="text-slate-500">Student Residence Account</p>
+              <p className="text-[#44291B]/70">Student Residence Account</p>
             </div>
           </div>
 
           <div className="flex justify-between mb-5">
             <div>
-              <p className="text-slate-500 font-bold mb-1">BILLED TO:</p>
+              <p className="text-[#44291B]/70 font-bold mb-1">BILLED TO:</p>
               <p className="font-semibold text-lg">{focusedBill?.accommodation_assignment?.users ? `${focusedBill.accommodation_assignment.users.first_name} ${focusedBill.accommodation_assignment.users.last_name}` : "Student Resident"}</p>
               <p className="text-slate-600">ID: {userId}</p>
             </div>
             <div className="text-right">
-              <p className="text-slate-500 font-bold mb-1">DETAILS:</p>
+              <p className="text-[#44291B]/70 font-bold mb-1">DETAILS:</p>
               <p><span className="font-semibold">Billed Date:</span> {safeDateLabel(focusedBill?.created_at, "MM/dd/yyyy")}</p>
               <p><span className="font-semibold">Due Date:</span> {safeDateLabel(focusedBill?.due_date, "MM/dd/yyyy")}</p>
               <p className="mt-2"><span className="font-bold">Status:</span> {getStatusFormat(focusedBill?.status).toUpperCase()}</p>
@@ -958,15 +958,15 @@ export default function BillingClient({
           <table className="w-full text-left border-collapse mb-5">
             <thead>
               <tr className="border-b border-slate-300">
-                <th className="py-3 font-bold uppercase text-xs text-slate-500 w-2/3">Item Description</th>
-                <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right w-1/3">Amount</th>
+                <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70 w-2/3">Item Description</th>
+                <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70 text-right w-1/3">Amount</th>
               </tr>
             </thead>
             <tbody>
               {getInvoiceLineItems(focusedBill).length > 0 ? (
                 getInvoiceLineItems(focusedBill).map((item: any, i: number) => (
                   <tr key={i} className="border-b border-slate-100">
-                    <td className="py-3 capitalize text-slate-700">{String(item.label || "").replace(/_/g, " ")}</td>
+                    <td className="py-3 capitalize text-[#44291B]/80">{String(item.label || "").replace(/_/g, " ")}</td>
                     <td className="py-3 text-right">₱{formatPeso(item?.amount)}</td>
                   </tr>
                 ))
@@ -998,23 +998,23 @@ export default function BillingClient({
         <div id="invoice-print-root" className="hidden print:block font-sans text-black bg-white p-4 text-sm w-full">
           <div className="flex justify-between items-end border-b-2 border-slate-900 pb-3 mb-4">
             <div>
-              <h1 className="text-4xl font-extrabold text-slate-900 uppercase tracking-tighter">INVOICE HISTORY</h1>
-              <p className="text-slate-500 mt-1">All billing records for this account</p>
+              <h1 className="text-4xl font-extrabold text-[#44291B] uppercase tracking-tighter">INVOICE HISTORY</h1>
+              <p className="text-[#44291B]/70 mt-1">All billing records for this account</p>
             </div>
             <div className="text-right">
               <p className="font-bold text-slate-800 text-xl">ELbnb Housing</p>
-              <p className="text-slate-500">Student Residence Account</p>
+              <p className="text-[#44291B]/70">Student Residence Account</p>
             </div>
           </div>
 
           <div className="flex justify-between mb-5">
             <div>
-              <p className="text-slate-500 font-bold mb-1">BILLED TO:</p>
+              <p className="text-[#44291B]/70 font-bold mb-1">BILLED TO:</p>
               <p className="font-semibold text-lg">{normalizedBills[0]?.accommodation_assignment?.users ? `${normalizedBills[0].accommodation_assignment.users.first_name} ${normalizedBills[0].accommodation_assignment.users.last_name}` : "Student Resident"}</p>
               <p className="text-slate-600">ID: {userId}</p>
             </div>
             <div className="text-right">
-              <p className="text-slate-500 font-bold mb-1">SUMMARY:</p>
+              <p className="text-[#44291B]/70 font-bold mb-1">SUMMARY:</p>
               <p><span className="font-semibold">Invoices:</span> {normalizedBills.length}</p>
               <p><span className="font-semibold">Paid:</span> ₱{formatPeso(displaySummary?.paid)}</p>
               <p><span className="font-semibold">Balance:</span> ₱{formatPeso(displaySummary?.balance)}</p>
@@ -1024,11 +1024,11 @@ export default function BillingClient({
           <table className="w-full text-left border-collapse mb-5">
             <thead>
               <tr className="border-b border-slate-300">
-                <th className="py-3 font-bold uppercase text-xs text-slate-500">Invoice</th>
-                <th className="py-3 font-bold uppercase text-xs text-slate-500">Period</th>
-                <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Amount</th>
-                <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Due Date</th>
-                <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Status</th>
+                <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70">Invoice</th>
+                <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70">Period</th>
+                <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70 text-right">Amount</th>
+                <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70 text-right">Due Date</th>
+                <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70 text-right">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -1046,14 +1046,14 @@ export default function BillingClient({
 
           {normalizedPaymentHistory.length > 0 && (
             <>
-              <div className="mb-3 font-bold uppercase text-xs text-slate-500">Payment History</div>
+              <div className="mb-3 font-bold uppercase text-xs text-[#44291B]/70">Payment History</div>
               <table className="w-full text-left border-collapse mb-5">
                 <thead>
                   <tr className="border-b border-slate-300">
-                    <th className="py-3 font-bold uppercase text-xs text-slate-500">Date</th>
-                    <th className="py-3 font-bold uppercase text-xs text-slate-500">Invoice</th>
-                    <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Amount</th>
-                    <th className="py-3 font-bold uppercase text-xs text-slate-500 text-right">Status</th>
+                    <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70">Date</th>
+                    <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70">Invoice</th>
+                    <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70 text-right">Amount</th>
+                    <th className="py-3 font-bold uppercase text-xs text-[#44291B]/70 text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody>

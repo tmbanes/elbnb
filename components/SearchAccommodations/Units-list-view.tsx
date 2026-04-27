@@ -43,11 +43,11 @@ export function UnitsListView({
           return (
             <div
               key={unit.unit_id}
-              className="bg-[#FDFFF4] shadow-md rounded-2xl flex gap-1 overflow-hidden"
+              className="bg-[#FDFFF4] shadow-md rounded-2xl flex flex-col sm:flex-row gap-1 overflow-hidden"
               style={{ animation: 'pageSlideIn 0.3s ease-out both', animationDelay: `${index * 0.05}s` }}
             >
               {/* IMAGE SIDE */}
-              <div className="w-[200px] relative overflow-hidden flex-shrink-0 bg-gray-200">
+              <div className="w-full sm:w-[200px] h-48 sm:h-auto relative overflow-hidden flex-shrink-0 bg-gray-200">
                 {(unit as any).image ? (
                   <img
                     src={(unit as any).image}
@@ -87,7 +87,7 @@ export function UnitsListView({
 
               {/* CONTENT SIDE */}
               <div className="flex-1 min-w-0 p-6">
-                <div className="flex justify-between gap-4">
+                <div className="flex flex-col sm:flex-row justify-between gap-4">
                   <h2 className="font-archivo font-extrabold text-2xl uppercase text-[#44291B] truncate">
                     {basePath === "/guest/accommodations" 
                       ? (unit.unit_type === "wholeunit" ? "WHOLE UNIT" : String(unit.unit_type || '').toUpperCase())
@@ -165,7 +165,7 @@ export function UnitsListView({
                   A comfortable and well-maintained unit featuring secure facilities and easy access to essential amenities.
                 </p>
 
-                <div className="flex gap-3 mt-4">
+                <div className="flex flex-col sm:flex-row gap-3 mt-4">
                   {/* VIEW UNIT BUTTON */}
                   <button
                     onClick={() => onDetailsClick?.(unit)}

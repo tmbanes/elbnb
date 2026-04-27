@@ -347,7 +347,7 @@ export default function ReviewApplication({
             Stay & Dormitory
           </h3>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1 col-span-2">
               <p className="text-[10px] font-extrabold text-[#44291B]/40 uppercase tracking-widest">Dormitory</p>
               <div className="flex items-center gap-2 text-sm font-bold text-[#44291B]">
@@ -483,7 +483,7 @@ export default function ReviewApplication({
                 {data.status === "approved" ? "✓ Fully Approved" : "✓ Waiting for Payment"}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button
                 className="bg-[#264384] hover:bg-[#1e3569] text-white font-bold rounded-xl h-12 shadow-lg transition-all gap-2"
                 onClick={() => {
@@ -509,7 +509,7 @@ export default function ReviewApplication({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Button
               className="bg-[#264384] hover:bg-[#1e3569] text-white font-bold rounded-xl h-12 shadow-lg transition-all"
               onClick={() => {
@@ -642,7 +642,7 @@ export default function ReviewApplication({
 
             <div className="space-y-6">
               {/* Due Date & Unit Selection */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-extrabold text-[#44291B]/40 uppercase tracking-widest block pl-1">Payment Due Date</label>
                   <input
@@ -689,7 +689,7 @@ export default function ReviewApplication({
                   {invoiceItems.map((item, index) => (
                     <div key={index} className="p-4 bg-white border border-[#e8e2d6] rounded-2xl shadow-sm flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                       <div className="flex-1 space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <select
                             className="bg-[#F6F8D5]/50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-[#44291B] outline-none"
                             value={item.kind}
