@@ -29,6 +29,8 @@ import { submitExtensionRequest } from "./actions";
 import { createActivityLog } from "@/services/activity_log";
 
 import { useRealtimeSync } from "@/lib/realtime-sync";
+import { ViewAccommodation } from "@/components/SearchAccommodations";
+import { Accommodation, Unit } from "@/types/accommodation_units";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -74,6 +76,11 @@ export default function StudentDashboardUI({
     }, [initialNotifications]);
 
     const [isSubmittingExtension, setIsSubmittingExtension] = useState(false);
+    
+    // Detailed View State
+    const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null);
+    const [accommodationUnits, setAccommodationUnits] = useState<Unit[]>([]);
+    const [isLoadingUnits, setIsLoadingUnits] = useState(false);
 
     const supabase = getSupabaseBrowserClient();
     const router = useRouter();
@@ -107,8 +114,25 @@ export default function StudentDashboardUI({
     // Navigation handlers
     const goToHistory = () => router.push("/student/history");
     const goToAccommodations = () => router.push("/student/accommodations");
+    //const goToAccommodationDetails = (id: string) => router.push(`/student/accommodations`);
     const goToBilling = () => router.push("/student/billing");
     const goToApplications = () => router.push("/student/applications");
+
+    const handleViewDetails = async (accommodation: Accommodation) => {
+        setSelectedAccommodation(accommodation);
+        setIsLoadingUnits(true);
+        try {
+            const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setAccommodationUnits(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch units:", err);
+        } finally {
+            setIsLoadingUnits(false);
+        }
+    };
 
     // Renewal Logic
     const renewalStart = currentResidency?.unit?.accommodation?.renewal_start_date;
@@ -160,6 +184,20 @@ export default function StudentDashboardUI({
 
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
+    if (selectedAccommodation) {
+        return (
+            <div className={`min-h-screen bg-[#F6F8D5] ${archivo.className}`}>
+                <ViewAccommodation
+                    accommodation={selectedAccommodation}
+                    units={accommodationUnits}
+                    onBack={() => setSelectedAccommodation(null)}
+                    onApply={() => router.push(`/student/accommodations/application?id=${selectedAccommodation.accommodation_id}`)}
+                    userRole="student"
+                />
+            </div>
+        );
+    }
+
     return (
         <div className={`min-h-screen bg-[#F6F8D5] py-6 px-6 lg:py-10 lg:px-[1in] text-slate-800 flex flex-col items-center ${archivo.className}`}>
 
@@ -194,16 +232,6 @@ export default function StudentDashboardUI({
                             />
                         </div>
 
-                        {/* TEST MODE TOGGLE */}
-                        <div className="flex items-center gap-2 bg-white/50 px-4 py-2 rounded-full border border-[#eef1d6]">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Test Renewal</span>
-                            <button
-                                onClick={() => setTestMode(!testMode)}
-                                className={`w-8 h-4 rounded-full transition-colors relative ${testMode ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                            >
-                                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${testMode ? 'left-4.5' : 'left-0.5'}`}></div>
-                            </button>
-                        </div>
                     </div>
 
                     <div className="flex items-center gap-6 self-end md:self-auto">
@@ -355,6 +383,17 @@ export default function StudentDashboardUI({
                                 <Building2 className="w-6 h-6 text-[#8BAE90] stroke-[1.5]" />
                             </div>
 
+                            {currentResidency?.unit?.accommodation?.image && (
+                                <div className="absolute inset-0 z-0 opacity-10">
+                                    <Image 
+                                        src={currentResidency.unit.accommodation.image} 
+                                        alt="Background" 
+                                        fill 
+                                        className="object-cover"
+                                    />
+                                </div>
+                            )}
+
                             <h2 className="text-2xl md:text-[28px] font-bold text-[#2A3F2D] mb-1 leading-tight">
                                 {dormName}{roomNumber ? `, ${roomNumber}` : ""}
                             </h2>
@@ -479,9 +518,18 @@ export default function StudentDashboardUI({
                                 <div key={i} className="bg-[#F9FBEC] rounded-[32px] overflow-hidden border border-slate-100/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] group hover:shadow-2xl hover:shadow-[#709849]/5 transition-all duration-500">
                                     <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
                                         <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center">
-                                            <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                            {dorm.image ? (
+                                                <Image 
+                                                    src={dorm.image} 
+                                                    alt={dorm.name} 
+                                                    fill 
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                            )}
                                         </div>
-                                        <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg">
+                                        <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg z-10">
                                             Available
                                         </div>
                                     </div>
@@ -489,7 +537,7 @@ export default function StudentDashboardUI({
                                         <h4 className="text-[18px] font-bold text-[#2A3F2D] mb-1.5">{dorm.name}</h4>
                                         <p className="text-[10px] font-extrabold text-[#709849] uppercase tracking-[0.15em] mb-6">{dorm.accommodation_type === 'dormitory' ? 'UP RESIDENCE HALL' : (dorm.property_type || 'PRIVATE STAY')}</p>
                                         <button
-                                            onClick={goToAccommodations}
+                                            onClick={() => handleViewDetails(dorm)}
                                             className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-2xl transition-all active:scale-[0.98] shadow-md shadow-[#6492A7]/10"
                                         >
                                             Details

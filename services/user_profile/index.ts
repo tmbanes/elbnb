@@ -266,7 +266,8 @@ not yet tested
             name,
             location,
             renewal_start_date,
-            renewal_end_date
+            renewal_end_date,
+            image
           )
         )
       `)

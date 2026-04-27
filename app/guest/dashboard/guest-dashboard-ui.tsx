@@ -13,6 +13,8 @@ import { AccommodationHistory } from "@/types/accomodation/accomodationHistory";
 import { useRouter } from "next/navigation";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+import { ViewAccommodation } from "@/components/SearchAccommodations";
+import { Unit } from "@/types/accommodation_units";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -59,6 +61,22 @@ export default function GuestDashboardUI({
         await supabase.auth.signOut();
         window.location.href = "/";
     };
+
+    const handleViewDetails = async (accommodation: Accommodation) => {
+        setSelectedAccommodation(accommodation);
+        setIsLoadingUnits(true);
+        try {
+            const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setAccommodationUnits(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch units:", err);
+        } finally {
+            setIsLoadingUnits(false);
+        }
+    };
     const [activeResidency, setActiveResidency] = useState<any>(initialActiveResidency);
     const [isLoadingResidency, setIsLoadingResidency] = useState(false);
     const [applications, setApplications] = useState<any[]>(initialApplications);
@@ -71,6 +89,11 @@ export default function GuestDashboardUI({
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [bills, setBills] = useState<any[]>(initialBills);
     const [isLoadingBills, setIsLoadingBills] = useState(false);
+    
+    // Detailed View State
+    const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null);
+    const [accommodationUnits, setAccommodationUnits] = useState<Unit[]>([]);
+    const [isLoadingUnits, setIsLoadingUnits] = useState(false);
     
 
     useEffect(() => {
@@ -94,6 +117,20 @@ export default function GuestDashboardUI({
 
     const userInitials = profile ? `${profile.first_name?.[0] ?? ""}${profile.last_name?.[0] ?? ""}`.toUpperCase() : "G";
     const userName = profile ? `${profile.first_name} ${profile.last_name}` : "Guest";
+
+    if (selectedAccommodation) {
+        return (
+            <div className={`min-h-screen bg-[#F6F8D5] ${archivo.className}`}>
+                <ViewAccommodation
+                    accommodation={selectedAccommodation}
+                    units={accommodationUnits}
+                    onBack={() => setSelectedAccommodation(null)}
+                    onApply={() => router.push(`/guest/accommodations/application?id=${selectedAccommodation.accommodation_id}`)}
+                    userRole="guest"
+                />
+            </div>
+        );
+    }
 
     return (
         <div className={`min-h-screen bg-[#F6F8D5] p-6 lg:p-10 text-slate-800 flex flex-col items-center ${archivo.className}`}>
@@ -248,6 +285,17 @@ export default function GuestDashboardUI({
                                 </span>
                                 <Building2 className="w-6 h-6 text-[#8BAE90] stroke-[1.5]" />
                             </div>
+
+                            {activeResidency?.accommodation?.image && (
+                                <div className="absolute inset-0 z-0 opacity-10">
+                                    <Image 
+                                        src={activeResidency.accommodation.image} 
+                                        alt="Background" 
+                                        fill 
+                                        className="object-cover"
+                                    />
+                                </div>
+                            )}
     
                             <h2 className="text-2xl md:text-[28px] font-bold text-[#2A3F2D] mb-1 leading-tight flex items-center gap-2">
                                 {activeResidency ? (
@@ -362,9 +410,18 @@ export default function GuestDashboardUI({
                             <div key={i} className="bg-[#F9FBEC] rounded-[32px] overflow-hidden border border-slate-100/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] group hover:shadow-2xl hover:shadow-[#709849]/5 transition-all duration-500">
                                 <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
                                     <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center">
-                                        <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                        {accommodation.image ? (
+                                            <Image 
+                                                src={accommodation.image} 
+                                                alt={accommodation.name} 
+                                                fill 
+                                                className="object-cover"
+                                            />
+                                        ) : (
+                                            <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                        )}
                                     </div>
-                                    <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg">
+                                    <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg z-10">
                                         {accommodation.min_price && accommodation.max_price
                                             ? `₱${accommodation.min_price} - ₱${accommodation.max_price}`
                                             : accommodation.min_price
@@ -377,11 +434,12 @@ export default function GuestDashboardUI({
                                 <div className="p-8">
                                     <h4 className="text-[18px] font-bold text-[#2A3F2D] mb-1.5">{accommodation.name}</h4>
                                     <p className="text-[10px] font-extrabold text-[#709849] uppercase tracking-[0.15em] mb-6">{accommodation.accommodation_type}</p>
-                                    <Link href="/guest/accommodations">
-                                        <button className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-2xl transition-all active:scale-[0.98] shadow-md shadow-[#6492A7]/10">
-                                            Details
-                                        </button>
-                                    </Link>
+                                    <button 
+                                        onClick={() => handleViewDetails(accommodation)}
+                                        className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-2xl transition-all active:scale-[0.98] shadow-md shadow-[#6492A7]/10"
+                                    >
+                                        Details
+                                    </button>
                                 </div>
                             </div>
                         ))}

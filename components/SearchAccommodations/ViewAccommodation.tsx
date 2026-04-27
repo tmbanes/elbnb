@@ -71,7 +71,7 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
               <img
                 src={accommodation.image}
                 alt={accommodation.name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 z-10"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
@@ -84,7 +84,7 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
               </svg>
               <span className="mt-4 text-sm text-gray-400 font-bold uppercase tracking-widest opacity-50">No Property Image</span>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none z-20" />
           </div>
 
 
