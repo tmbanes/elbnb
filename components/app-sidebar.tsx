@@ -87,7 +87,7 @@ export function AppSidebar({
   const [userData, setUserData] = React.useState({
     name: "Loading...",
     email: "",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: "",
   })
   const [hasMounted, setHasMounted] = React.useState(false)
 
@@ -111,20 +111,20 @@ export function AppSidebar({
           setUserData({
             name: `${userProfile.first_name || ""} ${userProfile.last_name || ""}`.trim() || user.email?.split("@")[0] || "User",
             email: userProfile.email || user.email || "",
-            avatar: userProfile.profile_picture_url || "/avatars/shadcn.jpg",
+            avatar: userProfile.profile_picture_url || "",
           })
         } else {
           setUserData({
             name: user.email?.split("@")[0] || "User",
             email: user.email || "",
-            avatar: "/avatars/shadcn.jpg",
+            avatar: "",
           })
         }
       } else {
         setUserData({
           name: "Not logged in",
           email: "",
-          avatar: "/avatars/shadcn.jpg",
+          avatar: "",
         })
       }
     }

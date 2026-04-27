@@ -452,7 +452,7 @@ export default function ManagerDashboardUI({
                                             </p>
                                         </div>
                                     </div>
-                                    <Link href="/manager/dashboard">
+                                    <Link href="/manager/housing">
                                         <button className="px-5 py-2 border border-slate-200 text-[#0B3A64] text-[11px] font-bold rounded-lg hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] transition-all uppercase tracking-wider">Manage Dorm</button>
                                     </Link>
                                 </div>
