@@ -15,6 +15,11 @@ import { cn } from "@/lib/utils/ui-utils";
 import { Search, Filter, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { Archivo, Archivo_Black } from "next/font/google";
+
+const archivo = Archivo({ subsets: ["latin"] });
+const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
+
 export default function ManagerApplicationsClient({ user, initialData }: { user: any, initialData: ManagerApplicationsResponse }) {
   const [applications, setApplications] = useState<Application[]>(initialData.applications);
   const [accommodationName, setAccommodationName] = useState(initialData.accommodation.name);
@@ -112,15 +117,15 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
       {/* LEFT SIDE (LIST) */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out",
-        selectedAppId ? "lg:flex-[7]" : "flex-1"
+        selectedAppId ? "hidden lg:flex lg:flex-[7]" : "flex-1"
       )}>
         <div className={cn(
-          "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500",
-          selectedAppId ? "px-6 lg:px-12" : "px-6 md:px-12 lg:px-24"
+          "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
+          selectedAppId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
         )}>
           {/* Header */}
           <div className="space-y-1 flex-shrink-0">
-            <h1 className="text-4xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
+            <h1 className={`${archivoBlack.className} pt-6 text-4xl md:text-5xl text-[#44291B] tracking-tight`}>
               Applications
             </h1>
             <p className="text-sm text-[#44291B] font-medium mt-1">
