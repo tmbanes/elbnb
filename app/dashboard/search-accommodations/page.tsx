@@ -48,6 +48,9 @@ export default function SearchAccommodationsPage() {
     accommodationType: '',
   })
 
+  const [accommodationSortBy, setAccommodationSortBy] = useState('name-asc')
+  const [unitSortBy, setUnitSortBy] = useState('name-asc')
+
   // Loading & Error states
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -57,8 +60,8 @@ export default function SearchAccommodationsPage() {
 
   // Apply accommodation filters
   const applyAccommodationFilters = useCallback(
-    (list: Accommodation[], allUnits: Unit[], filters: AccommodationFiltersType, search: string = '') => {
-      let filtered = list
+    (list: Accommodation[], allUnits: Unit[], filters: AccommodationFiltersType, search: string = '', sortBy: string = 'name-asc') => {
+      let filtered = [...list]
 
       if (filters.accommodationType) {
         filtered = filtered.filter((a) => a.accommodation_type === filters.accommodationType)
@@ -87,6 +90,14 @@ export default function SearchAccommodationsPage() {
         )
       }
 
+      // Apply sorting
+      filtered.sort((a, b) => {
+        if (sortBy === 'name-asc') return a.name.localeCompare(b.name)
+        if (sortBy === 'name-desc') return b.name.localeCompare(a.name)
+        // Note: Price sorting might require more logic if price varies by unit
+        return 0
+      })
+
       setFilteredAccommodations(filtered)
     },
     []
@@ -94,8 +105,8 @@ export default function SearchAccommodationsPage() {
 
   // Apply unit filters
   const applyUnitFilters = useCallback(
-    (list: Unit[], filters: UnitFiltersType, accomList: Accommodation[], search: string = '') => {
-      let filtered = list
+    (list: Unit[], filters: UnitFiltersType, accomList: Accommodation[], search: string = '', sortBy: string = 'name-asc') => {
+      let filtered = [...list]
 
       if (filters.unitType) {
         filtered = filtered.filter((u) => u.unit_type === filters.unitType)
@@ -138,6 +149,23 @@ export default function SearchAccommodationsPage() {
         filtered = filtered.filter((u) => matchingAccomIds.has(u.accommodation_id))
       }
 
+      // Apply sorting
+      filtered.sort((a, b) => {
+        if (sortBy === 'name-asc') {
+          const accomA = accomList.find(acc => acc.accommodation_id === a.accommodation_id)?.name || ''
+          const accomB = accomList.find(acc => acc.accommodation_id === b.accommodation_id)?.name || ''
+          return accomA.localeCompare(accomB)
+        }
+        if (sortBy === 'price-asc') return a.rental_fee - b.rental_fee
+        if (sortBy === 'price-desc') return b.rental_fee - a.rental_fee
+        if (sortBy === 'vacant-desc') {
+          const vA = a.max_occupancy - a.current_occupancy
+          const vB = b.max_occupancy - b.current_occupancy
+          return vB - vA
+        }
+        return 0
+      })
+
       setFilteredUnits(filtered)
     },
     []
@@ -163,8 +191,8 @@ export default function SearchAccommodationsPage() {
         setAccommodations(accomData)
         setUnits(unitsData)
 
-        applyAccommodationFilters(accomData, unitsData, accommodationFilters, searchQuery)
-        applyUnitFilters(unitsData, unitFilters, accomData, searchQuery)
+        applyAccommodationFilters(accomData, unitsData, accommodationFilters, searchQuery, accommodationSortBy)
+        applyUnitFilters(unitsData, unitFilters, accomData, searchQuery, unitSortBy)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred')
       } finally {
@@ -180,9 +208,9 @@ export default function SearchAccommodationsPage() {
     (updates: Partial<AccommodationFiltersType>) => {
       const newFilters = { ...accommodationFilters, ...updates }
       setAccommodationFilters(newFilters)
-      applyAccommodationFilters(accommodations, units, newFilters, searchQuery)
+      applyAccommodationFilters(accommodations, units, newFilters, searchQuery, accommodationSortBy)
     },
-    [accommodations, units, accommodationFilters, applyAccommodationFilters, searchQuery]
+    [accommodations, units, accommodationFilters, applyAccommodationFilters, searchQuery, accommodationSortBy]
   )
 
   // Handle unit filter changes
@@ -190,9 +218,9 @@ export default function SearchAccommodationsPage() {
     (updates: Partial<UnitFiltersType>) => {
       const newFilters = { ...unitFilters, ...updates }
       setUnitFilters(newFilters)
-      applyUnitFilters(units, newFilters, accommodations, searchQuery)
+      applyUnitFilters(units, newFilters, accommodations, searchQuery, unitSortBy)
     },
-    [units, accommodations, unitFilters, applyUnitFilters, searchQuery]
+    [units, accommodations, unitFilters, applyUnitFilters, searchQuery, unitSortBy]
   )
 
   // Reset accommodation filters
@@ -203,8 +231,8 @@ export default function SearchAccommodationsPage() {
       availability: 'all',
     }
     setAccommodationFilters(defaults)
-    applyAccommodationFilters(accommodations, units, defaults, searchQuery)
-  }, [accommodations, units, applyAccommodationFilters, searchQuery])
+    applyAccommodationFilters(accommodations, units, defaults, searchQuery, accommodationSortBy)
+  }, [accommodations, units, applyAccommodationFilters, searchQuery, accommodationSortBy])
 
   // Reset unit filters
   const resetUnitFilters = useCallback(() => {
@@ -216,8 +244,8 @@ export default function SearchAccommodationsPage() {
       accommodationType: '',
     }
     setUnitFilters(defaults)
-    applyUnitFilters(units, defaults, accommodations, searchQuery)
-  }, [units, accommodations, applyUnitFilters, searchQuery])
+    applyUnitFilters(units, defaults, accommodations, searchQuery, unitSortBy)
+  }, [units, accommodations, applyUnitFilters, searchQuery, unitSortBy])
 
   const showPropertyTypeInAccommodations =
     accommodationFilters.accommodationType === 'renting_space' ||
@@ -253,8 +281,8 @@ export default function SearchAccommodationsPage() {
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value)
-                  applyAccommodationFilters(accommodations, units, accommodationFilters, e.target.value)
-                  applyUnitFilters(units, unitFilters, accommodations, e.target.value)
+                  applyAccommodationFilters(accommodations, units, accommodationFilters, e.target.value, accommodationSortBy)
+                  applyUnitFilters(units, unitFilters, accommodations, e.target.value, unitSortBy)
                 }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-gray-900 placeholder-gray-500"
                 style={{
@@ -336,6 +364,11 @@ export default function SearchAccommodationsPage() {
               resultCount={filteredAccommodations.length}
               loading={loading}
               showPropertyType={showPropertyTypeInAccommodations}
+              sortBy={accommodationSortBy}
+              onSortByChange={(v) => {
+                setAccommodationSortBy(v)
+                applyAccommodationFilters(accommodations, units, accommodationFilters, searchQuery, v)
+              }}
             />
 
             {/* Results Section */}
@@ -397,6 +430,11 @@ export default function SearchAccommodationsPage() {
               onResetFilters={resetUnitFilters}
               resultCount={filteredUnits.length}
               loading={loading}
+              sortBy={unitSortBy}
+              onSortByChange={(v) => {
+                setUnitSortBy(v)
+                applyUnitFilters(units, unitFilters, accommodations, searchQuery, v)
+              }}
             />
 
             {/* Results Section */}

@@ -7,7 +7,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 export default async function HousingPage() {
   const user = await getApiAuthenticatedUser();
 
-  if (!user || !["dormitory_manager", "housing_admin"].includes(user.role)) {
+  if (!user || !user.role || !["dormitory_manager", "housing_admin"].includes(user.role)) {
     redirect("/onboarding");
   }
 

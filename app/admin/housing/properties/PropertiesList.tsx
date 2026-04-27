@@ -67,15 +67,13 @@ function StatCard({
   value,
   icon,
   accentColor,
-  iconBg,
   description
 }: {
   label: string;
   value: number;
   icon: React.ReactNode;
   accentColor: string;
-  iconBg: string;
-  description: string
+  description?: string;
 }) {
   return (
     //Stat Card UI
@@ -153,28 +151,24 @@ export default function PropertiesList({
           value={stats.totalDorms}
           icon={<Building2 className="text-white w-5 h-5" />}
           accentColor="#5591AB"
-          iconBg="#ebf2f4"
         />
         <StatCard
           label="Rental Spaces"
           value={stats.totalRentalSpaces}
           icon={<Home className="text-white w-5 h-5" />}
           accentColor="#EB8A0B"
-          iconBg="#fbecd7"
         />
         <StatCard
           label="Managers"
           value={stats.totalManagers}
           icon={<Users className="text-white w-5 h-5" />}
           accentColor="#F2C908"
-          iconBg="#f2c70823"
         />
         <StatCard
           label="Total Capacity"
           value={stats.totalUnits}
           icon={<Bed className="text-white w-5 h-5" />}
           accentColor="#264384"
-          iconBg="#e6e8ef"
         />
       </div>
 

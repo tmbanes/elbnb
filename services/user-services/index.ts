@@ -229,7 +229,7 @@ export async function ensureInitialInvoicesForPendingPaymentApplications() {
   const created: string[] = [];
 
   for (const uid of userIds) {
-    const result = await ensureInitialInvoicesForUser(uid);
+    const result = await ensureInitialInvoicesForUser(uid as string);
     if (result.error) continue;
     if (Array.isArray(result.data)) {
       created.push(...result.data);
@@ -1039,7 +1039,7 @@ export async function ensureInitialInvoicesForPendingPaymentApplications() {
   const created: string[] = [];
 
   for (const uid of userIds) {
-    const result = await ensureInitialInvoicesForUser(uid);
+    const result = await ensureInitialInvoicesForUser(uid as string);
     if (result.error) continue;
     if (Array.isArray(result.data)) {
       created.push(...result.data);
@@ -1197,7 +1197,7 @@ export async function getStudentBillsDetailed(user_id: string) {
 
     if (itemsError) return { data: null, error: itemsError };
 
-    itemsByBillingId = (itemRows ?? []).reduce((acc, row: any) => {
+    itemsByBillingId = (itemRows ?? []).reduce((acc: Map<string, { type: string; amount: number }[]>, row: any) => {
       const key = String(row.billing_id);
       const curr = acc.get(key) ?? [];
       curr.push({

@@ -152,11 +152,11 @@ export default function SearchAccommodationsPage() {
       }
 
       if (filters.minPrice !== '') {
-        filtered = filtered.filter((a) => a.min_price !== undefined && a.min_price !== null && a.min_price >= filters.minPrice)
+        filtered = filtered.filter((a) => a.min_price !== undefined && a.min_price !== null && a.min_price >= (filters.minPrice as number))
       }
 
       if (filters.maxPrice !== '') {
-        filtered = filtered.filter((a) => a.min_price !== undefined && a.min_price !== null && a.min_price <= filters.maxPrice)
+        filtered = filtered.filter((a) => a.min_price !== undefined && a.min_price !== null && a.min_price <= (filters.maxPrice as number))
       }
 
       if (filters.availability === 'vacant') {
