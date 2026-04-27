@@ -12,15 +12,17 @@ export async function POST(req: NextRequest) {
     const result = await createUserProfile(body);
 
     if (!result.success) {
-      return NextResponse.json({ success: false, error: result.error }, { status: 400 });
+      return NextResponse.json({ success: false, error: (result as any).error }, { status: 400 });
     }
+
+    const successData = result as any;
 
     // Return id and session (if available)
     return NextResponse.json({
       success: true,
-      userId: result.userId,
-      session: result.session,
-      emailVerificationRequired: result.emailVerificationRequired,
+      userId: successData.userId,
+      session: successData.session,
+      emailVerificationRequired: successData.emailVerificationRequired,
     });
   } catch (err: any) {
     console.error("Server route error:", err);
