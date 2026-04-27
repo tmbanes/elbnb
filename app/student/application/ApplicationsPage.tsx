@@ -15,9 +15,12 @@ import {
 } from "@/components/ui/table";
 import { CancelApplicationModal } from "./CancelModal";
 import { AccommodationApplication } from "@/types/user_profile";
-import { Check, Clock, X, ChevronLeft, ChevronRight} from "lucide-react";
+import { Check, Clock, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils/ui-utils";
 import { PaymentModal } from "./PaymentModal";
+import { Archivo_Black } from "next/font/google";
+
+const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 interface ApplicationsPageProps {
   records: AccommodationApplication[];
@@ -54,7 +57,7 @@ function formatDate(dateString: string | undefined | null, fallback = "—") {
   const date = new Date(dateString);
   // If it's somehow an invalid date, just return the original string or fallback
   if (isNaN(date.getTime())) return dateString;
-  
+
   // Using 'en-US' guarantees the M/D/YYYY format with slashes
   // Using UTC time zone prevents dates from shifting backwards by 1 day due to local timezones
   return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
@@ -100,12 +103,12 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
   return (
     <div className="min-h-screen w-full py-8" style={{ backgroundColor: '#F6F8D5' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        
+
         {/* SECTION 1: ACTIVE APPLICATIONS */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-1.5 h-8 bg-[#264384] rounded-full" />
-            <h2 className="text-2xl font-bold text-[#44291B]">Active Applications</h2>
+            <h2 className={`${archivoBlack.className} text-xl md:text-2xl text-[#44291B] tracking-tight`}>Active Applications</h2>
           </div>
 
           {activeApplications.length > 0 ? (
@@ -118,11 +121,11 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                       <CardContent className="p-0 h-full">
                         <div className="flex flex-col md:flex-row items-stretch h-full">
                           <div className={cn("w-2 hidden md:block", statusConfig[app.application_status]?.class.split(' ')[0] || "bg-gray-300")} />
-                          
+
                           <div className="flex-1 p-6 flex flex-col gap-6">
                             {/* Top Section: Info (Left) and Actions (Right) */}
                             <div className="flex flex-col md:flex-row justify-between items-start gap-6">
-                              
+
                               {/* Left Info Group */}
                               <div className="space-y-1">
                                 <p className="text-[#44291B]/50 text-[10px] uppercase font-extrabold tracking-widest">
@@ -130,7 +133,7 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                                 </p>
                                 <p className="font-bold text-[#44291B] text-xl leading-tight">{app.accommodation?.name || "N/A"}</p>
                                 <p className="font-medium text-[#44291B]/80 text-sm">{formatUnitType(app.preferred_unit_type)}</p>
-                                
+
                                 <div className="pt-2">
                                   <span className={cn(
                                     "inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tight",
@@ -146,10 +149,10 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                               <div className="flex flex-col items-start md:items-end gap-3 min-w-[200px] w-full md:w-auto">
                                 {app.application_status === 'pending_payment' && (
                                   <div className="w-full [&>button]:w-full">
-                                    <PaymentModal 
-                                      applicationId={app.application_id} 
-                                      accommodation={app.accommodation?.name || "Unknown Dormitory"} 
-                                      unit={app.unit?.unit_number || "Unknown Unit"} 
+                                    <PaymentModal
+                                      applicationId={app.application_id}
+                                      accommodation={app.accommodation?.name || "Unknown Dormitory"}
+                                      unit={app.unit?.unit_number || "Unknown Unit"}
                                     />
                                   </div>
                                 )}
@@ -182,13 +185,13 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
               ) : (
                 // 2 OR 3 ACTIVE APPS: Render the vertical cards in a dynamic grid
                 <div className={cn(
-                  "grid gap-6 items-stretch", 
+                  "grid gap-6 items-stretch",
                   displayedApps.length === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
                 )}>
                   {displayedApps.map((app) => (
                     <Card key={app.application_id} className="bg-[#FDFFF4] border-[#e8e2d6] shadow-sm hover:shadow-lg hover:scale-[1.02] transform transition-all duration-300 flex flex-col h-full relative overflow-hidden">
                       <div className={cn("absolute top-0 left-0 w-full h-1.5", statusConfig[app.application_status]?.class.split(' ')[0] || "bg-gray-300")} />
-                      
+
                       <CardContent className="p-6 pt-7 flex flex-col flex-1 gap-5">
                         <div className="flex justify-between items-start gap-2">
                           <div className="space-y-1 pr-2">
@@ -197,7 +200,7 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                             </p>
                             <p className="font-bold text-[#44291B] text-lg leading-tight">{app.accommodation?.name || "N/A"}</p>
                             <p className="font-medium text-[#44291B]/80 text-sm">{formatUnitType(app.preferred_unit_type)}</p>
-                            
+
                             <div className="pt-2">
                               <span className={cn(
                                 "inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tight",
@@ -223,10 +226,10 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
 
                         <div className="flex flex-col gap-2 pt-2">
                           {app.application_status === 'pending_payment' && (
-                            <PaymentModal 
-                              applicationId={app.application_id} 
-                              accommodation={app.accommodation?.name || "Unknown Dormitory"} 
-                              unit={app.unit?.unit_number || "Unknown Unit"} 
+                            <PaymentModal
+                              applicationId={app.application_id}
+                              accommodation={app.accommodation?.name || "Unknown Dormitory"}
+                              unit={app.unit?.unit_number || "Unknown Unit"}
                             />
                           )}
                           {app.application_status.includes('pending') && (
@@ -252,11 +255,11 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
 
         {/* SECTION 2: HISTORY */}
         <section className="space-y-4">
-          
+
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-3">
               <div className="w-1.5 h-8 bg-[#44291B]/20 rounded-full" />
-              <h2 className="text-2xl font-bold text-[#44291B]">Application History</h2>
+              <h2 className={`${archivoBlack.className} text-xl md:text-2xl text-[#44291B] tracking-tight`}>Application History</h2>
             </div>
 
             {/* Filter styled to match the Admin Client */}
@@ -279,11 +282,11 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
 
           {/* TABLE CONTAINER - Styled from AdminBillingClient */}
           <div className="bg-white border text-sm border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            
+
             {/* Note: Kept your custom blue header as it houses your specific submission log assets */}
             <div className="relative bg-[#264384] py-4 px-6 overflow-hidden">
               <div className="flex justify-between items-center relative z-10">
-                <span className="text-white text-sm font-bold uppercase tracking-widest">Submission Log</span>
+                <span className={`${archivoBlack.className} text-white text-sm uppercase tracking-widest`}>Submission Log</span>
                 <span className="text-white/60 text-xs font-medium">{filteredHistoricalRecords.length} Records Found</span>
               </div>
               <img src="/assets/left_roof.png" className="absolute left-0 top-0 h-full object-contain pointer-events-none opacity-20" alt="" />
@@ -324,8 +327,8 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                         </TableCell>
                         <TableCell className="px-6 py-4 text-right text-xs text-slate-500 font-medium">
                           {formatDate(
-                            Array.isArray(record.accommodation_assignment) 
-                              ? record.accommodation_assignment[0]?.actual_move_out_date 
+                            Array.isArray(record.accommodation_assignment)
+                              ? record.accommodation_assignment[0]?.actual_move_out_date
                               : record.accommodation_assignment?.actual_move_out_date
                           )}
                         </TableCell>
@@ -341,14 +344,14 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
                 </TableBody>
               </Table>
             </div>
-            
+
             {/* PAGINATION - Styled from AdminBillingClient */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-white">
                 <span className="text-xs text-slate-500 font-medium">
                   Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredHistoricalRecords.length)} of {filteredHistoricalRecords.length}
                 </span>
-                
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
