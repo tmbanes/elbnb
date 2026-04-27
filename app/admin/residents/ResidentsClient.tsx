@@ -106,16 +106,24 @@ export default function ResidentsClient({
       setLoading(false);
     }
   }, []);
+  
+  useEffect(() => {
+    fetchResidents();
+  }, [fetchResidents]);
 
   // ── Derived data ───────────────────────────────────────────────────────────
   const accommodations = Array.from(
-    new Map(residents.map(r => [r.unit.accommodation.accommodation_id, r.unit.accommodation])).values()
+    new Map(
+      residents
+        .filter(r => r.unit?.accommodation)
+        .map(r => [r.unit.accommodation.accommodation_id, r.unit.accommodation])
+    ).values()
   );
 
   const filtered = residents.filter(r => {
-    const name = `${r.users.first_name} ${r.users.last_name}`.toLowerCase();
-    const matchSearch = name.includes(search.toLowerCase()) || r.users.email.toLowerCase().includes(search.toLowerCase());
-    const matchAccom = accomFilter === "all" || r.unit.accommodation.accommodation_id === accomFilter;
+    const name = `${r.users?.first_name || ''} ${r.users?.last_name || ''}`.toLowerCase();
+    const matchSearch = name.includes(search.toLowerCase()) || (r.users?.email || '').toLowerCase().includes(search.toLowerCase());
+    const matchAccom = accomFilter === "all" || r.unit?.accommodation?.accommodation_id === accomFilter;
     const matchStatus =
       statusFilter === "all" ? true :
         statusFilter === "awaiting" ? ["waiting_payment", "pending"].includes(r.assignment_status) :
@@ -285,18 +293,18 @@ export default function ResidentsClient({
                       >
                         <td className="py-4 px-5">
                           <p className="text-sm font-bold text-[#44291B]">
-                            {r.users.first_name} {r.users.last_name}
+                            {r.users?.first_name || 'Unknown'} {r.users?.last_name || ''}
                           </p>
                           <div className="flex items-center gap-1 mt-0.5 text-[#44291B]/50">
                             <Mail className="w-3 h-3 shrink-0" />
-                            <p className="text-xs truncate max-w-[180px]">{r.users.email}</p>
+                            <p className="text-xs truncate max-w-[180px]">{r.users?.email || 'No email'}</p>
                           </div>
                         </td>
                         <td className="py-4 px-3">
-                          <p className="text-sm font-bold text-[#44291B]">{r.unit.accommodation.name}</p>
+                          <p className="text-sm font-bold text-[#44291B]">{r.unit?.accommodation?.name || 'Unassigned'}</p>
                           <div className="flex items-center gap-1 mt-0.5 text-[#44291B]/50">
                             <MapPin className="w-3 h-3 shrink-0" />
-                            <p className="text-xs">Unit {r.unit.unit_number}</p>
+                            <p className="text-xs">Unit {r.unit?.unit_number || 'N/A'}</p>
                           </div>
                         </td>
                         <td className="py-4 px-3">
