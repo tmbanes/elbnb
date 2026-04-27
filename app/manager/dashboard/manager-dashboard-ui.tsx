@@ -339,8 +339,15 @@ export default function ManagerDashboardUI({
                                         <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
                                             <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
                                             <button
-                                                className="text-[10px] font-bold text-[#5D6BDE] uppercase tracking-wider hover:underline"
-                                                onClick={() => setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))}
+                                                className="text-[10px] font-bold text-[#5D6BDE] uppercase tracking-wider hover:underline transition-colors"
+                                                onClick={() => {
+                                                    if (typeof window !== 'undefined') {
+                                                        const existingIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+                                                        const allIds = Array.from(new Set([...existingIds, ...notifications.map(n => n.id)]));
+                                                        localStorage.setItem('read_notifications', JSON.stringify(allIds));
+                                                    }
+                                                    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                                                }}
                                             >
                                                 Mark all as read
                                             </button>
@@ -382,6 +389,12 @@ export default function ManagerDashboardUI({
                                                 </div>
                                             )}
                                         </div>
+                                        <button
+                                            className="w-full py-3 text-[11px] font-bold text-slate-500 hover:text-[#5D6BDE] transition-colors border-t border-slate-50"
+                                            onClick={() => { setShowNotifications(false); router.push('/manager/notifications'); }}
+                                        >
+                                            View All Activity
+                                        </button>
                                     </div>
                                 )}
                             </div>

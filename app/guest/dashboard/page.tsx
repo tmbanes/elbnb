@@ -22,7 +22,8 @@ export default async function GuestDashboardPage() {
     applicationsRes,
     historyRes,
     documentsRes,
-    billsRes
+    billsRes,
+    notificationsRes
   ] = await Promise.all([
     userProfileService.getProfile(user.user_id),
     supabase
@@ -42,7 +43,8 @@ export default async function GuestDashboardPage() {
       .order('date_submitted', { ascending: false }),
     userProfileService.getAccommodationHistory(user.user_id),
     userProfileService.getDocuments(user.user_id),
-    getStudentBillsDetailed(user.user_id)
+    getStudentBillsDetailed(user.user_id),
+    userProfileService.getNotifications(user.user_id)
   ]);
 
   return (
@@ -53,6 +55,8 @@ export default async function GuestDashboardPage() {
       initialHistory={historyRes.data || []}
       initialDocuments={documentsRes.data || []}
       initialBills={billsRes.data || []}
+      notifications={notificationsRes.data || []}
     />
   );
 }
+

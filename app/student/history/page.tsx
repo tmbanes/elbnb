@@ -18,11 +18,13 @@ export default async function HistoryPage() {
     const [
         { data: profile },
         { data: currentResidency },
-        { data: history }
+        { data: history },
+        { data: notifications }
     ] = await Promise.all([
         userProfileService.getProfile(user.user_id),
         userProfileService.getCurrentAccommodation(user.user_id),
-        userProfileService.getAccommodationHistory(user.user_id)
+        userProfileService.getAccommodationHistory(user.user_id),
+        userProfileService.getNotifications(user.user_id)
     ]);
 
     return (
@@ -30,6 +32,7 @@ export default async function HistoryPage() {
             user={profile}
             currentResidency={currentResidency}
             history={history || []}
+            notifications={notifications || []}
         />
     );
 }

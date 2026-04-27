@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { 
@@ -8,6 +8,7 @@ import {
   Download, ArrowRight, LogOut, ChevronLeft,
   CheckCircle2, XCircle, Clock, Folder, X
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Archivo } from "next/font/google";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
@@ -17,12 +18,27 @@ interface HistoryUIProps {
   user: any;
   currentResidency: any;
   history: any[];
+  notifications?: any[];
 }
 
-export default function HistoryUI({ user, currentResidency, history }: HistoryUIProps) {
+export default function HistoryUI({ user, currentResidency, history, notifications: initialNotifications = [] }: HistoryUIProps) {
   const [showLogout, setShowLogout] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState(initialNotifications);
+  const router = useRouter();
   const supabase = getSupabaseBrowserClient();
+
+  // Sync read state from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+      setNotifications(initialNotifications.map(n => ({
+        ...n,
+        is_read: n.is_read || readIds.includes(n.id)
+      })));
+    }
+  }, [initialNotifications]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -56,10 +72,83 @@ export default function HistoryUI({ user, currentResidency, history }: HistoryUI
             />
           </div>
           <div className="flex items-center gap-6 self-end md:self-auto">
-            <button className="relative text-slate-700 hover:text-slate-900 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#A05C5C] rounded-full ring-2 ring-[#FDFBF7]"></span>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
+              >
+                <Bell className="w-5 h-5" />
+                {notifications.filter(n => !n.is_read).length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#A05C5C] text-white text-[9px] font-bold rounded-full ring-2 ring-[#FDFBF7] flex items-center justify-center">
+                    {notifications.filter(n => !n.is_read).length}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 top-full mt-4 w-80 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[60] overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
+                    <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
+                    <button
+                      className="text-[10px] font-bold text-[#668E42] uppercase tracking-wider hover:text-[#557F44] transition-colors"
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          const existingIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+                          const allIds = Array.from(new Set([...existingIds, ...notifications.map(n => n.id)]));
+                          localStorage.setItem('read_notifications', JSON.stringify(allIds));
+                        }
+                        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                      }}
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
+                  <div className="max-h-[350px] overflow-y-auto">
+                    {notifications.length > 0 ? (
+                      notifications.map((n, i) => (
+                        <div
+                          key={i}
+                          className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer group"
+                          onClick={() => {
+                            const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+                            if (!readIds.includes(n.id)) {
+                              readIds.push(n.id);
+                              localStorage.setItem('read_notifications', JSON.stringify(readIds));
+                            }
+                            setNotifications(prev => prev.map((notif, idx) =>
+                              idx === i ? { ...notif, is_read: true } : notif
+                            ));
+                            if (n.link) router.push(n.link);
+                          }}
+                        >
+                          <div className="flex gap-3">
+                            <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-[#668E42]' : 'bg-transparent'}`}></div>
+                            <div>
+                              <p className="text-[13px] font-bold text-slate-900 mb-1 group-hover:text-[#668E42] transition-colors">{n.title}</p>
+                              <p className="text-[12px] text-slate-500 leading-relaxed mb-1.5">{n.message}</p>
+                              <p className="text-[10px] text-slate-400 font-medium">{new Date(n.created_at || Date.now()).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-10 text-center">
+                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <Bell className="w-5 h-5 text-slate-300" />
+                        </div>
+                        <p className="text-slate-400 text-xs italic">No notifications yet.</p>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    className="w-full py-3 text-[11px] font-bold text-slate-500 hover:text-[#668E42] transition-colors border-t border-slate-50"
+                    onClick={() => { setShowNotifications(false); router.push('/student/notifications'); }}
+                  >
+                    View All Activity
+                  </button>
+                </div>
+              )}
+            </div>
             
             <div className="relative">
               <div 
