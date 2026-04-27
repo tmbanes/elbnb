@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, College, COLLEGES, SEX } from "@/types/user.types";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils/ui-utils";
 
 ///ui components
@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 //style constants
 const label_style = "block text-xs font-semibold uppercase tracking-wider text-slate-300"
