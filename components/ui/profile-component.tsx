@@ -110,7 +110,6 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
 
   const validId = metadata?.valid_id || 'N/A';
   const purposeVisit = metadata?.purpose_visit || 'N/A';
-  const occupancyStatus = metadata?.occupancy_status || 'N/A';
   const contactNum = metadata?.contact_number || metadata?.phone_number || 'N/A';
   const homeAddress = metadata?.home_address || 'N/A';
   const emergencyContact = metadata?.emergency_contact || 'N/A';
@@ -182,7 +181,6 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
               {isGuest && (
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
                   {renderValue(purposeVisit, 'Purpose of Visit')}
-                  {renderValue(occupancyStatus, 'Occupancy Status')}
                 </div>
               )}
               {isAdmin && (
@@ -243,7 +241,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                           {renderValue(college, 'College')}
                         </>
                       )}
-                      {isGuest && renderValue(validId, 'Valid ID Reference')}
+                  {isGuest && renderValue(validId, 'Valid ID Reference')}
                     </div>
                   </div>
                   <div className={isStudent ? "md:col-span-8" : "md:col-span-12"}>

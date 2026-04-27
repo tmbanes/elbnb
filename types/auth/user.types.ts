@@ -41,7 +41,9 @@ interface HousingAdminCreationRequest extends UserCreationRequest {
 interface GuestCreationRequest extends UserCreationRequest {
   valid_id: string;
   purpose_visit: string;
-  occupancy_status: string; // ISO date string
+  emergency_person: string;
+  emergency_contact: string;
+  home_address: string;
 }
 
 //---------RESPONSE TYPES---------

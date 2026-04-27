@@ -93,16 +93,22 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
 
 
   const getPayload = () => {
-    return {
+    const payload: any = {
       email: formData.email,
       password: formData.password,
       role: formData.role,
       user_status: "active",
-      // We send empty strings for required fields in the backend if any, 
-      // but names will be updated in the next step.
       first_name: "TBD",
       last_name: "TBD",
     };
+
+    // Add role-specific defaults to satisfy potential DB triggers
+    if (formData.role === "guest") {
+      payload.valid_id = "TBD";
+      payload.purpose_visit = "TBD";
+    }
+
+    return payload;
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {

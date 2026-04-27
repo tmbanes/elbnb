@@ -40,11 +40,11 @@ export class AssignmentService {
       .from("accommodation_assignment")
       .select(`
         *,
-        accommodation:accommodation_id (
-          *
-        ),
         unit:unit_id (
-          *
+          *,
+          accommodation:accommodation_id (
+            *
+          )
         )
       `)
       .eq("user_id", userId)
@@ -54,9 +54,15 @@ export class AssignmentService {
       throw new Error(`Failed to fetch accommodation history: ${error.message}`);
     }
 
-    console.log("Fetched Accommodation History from Service:", data);
+    // Flatten the nested structure to match the expected interface
+    const flattenedData = (data || []).map((item: any) => ({
+      ...item,
+      accommodation: item.unit?.accommodation || null
+    }));
 
-    return (data || []) as AccommodationHistory[];
+    console.log("Fetched Accommodation History from Service:", flattenedData);
+
+    return flattenedData as AccommodationHistory[];
   }
 
   /** Fetch a single assignment by ID. */
