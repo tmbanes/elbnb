@@ -1,16 +1,10 @@
 // app/admin/applications/page.tsx
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
+import { requireRole } from "@/lib/auth/session";
 import ApplicationsClient from "./ApplicationsClient";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 
 export default async function Page() {
-    const user = await getApiAuthenticatedUser();
-
-    if (!user || user.role !== "housing_admin") {
-        redirect("/onboarding");
-    }
-
+    const user = await requireRole(['housing_admin', 'admin']);
     const supabase = await createSupabaseServerClient();
     
     // Initial fetch for parallelization

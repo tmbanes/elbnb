@@ -32,7 +32,7 @@ export default async function HousingPage() {
       code: error.code
     });
   }
-  console.log(`Housing Page: Fetched ${properties?.length || 0} properties for manager ${user.user_id}`);
+  // console.log(`Housing Page: Fetched ${properties?.length || 0} properties for manager ${user.user_id}`);
 
   if (error) {
     return (

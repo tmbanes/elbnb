@@ -64,7 +64,7 @@ interface ApplicationTileProps {
 
 function ApplicationTile({ enriched, onCancel, cancelling }: ApplicationTileProps) {
   const { application, accommodation, unit } = enriched
-  console.log('STATUS VALUE:', application.application_status)
+  // console.log('STATUS VALUE:', application.application_status)
   const status = STATUS_STYLES[application.application_status]
   const isCancellable = (CANCELLABLE_STATUSES as string[]).includes(application.application_status)
 

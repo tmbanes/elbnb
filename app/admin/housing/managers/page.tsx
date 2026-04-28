@@ -1,16 +1,11 @@
-// app/admin/housing/managers/page.tsx
 import { Suspense } from "react";
 import ManagersContent from "./ManagersPageContent";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
+import { requireRole } from "@/lib/auth/session";
 
 export default async function ManagersPage() {
-  const user = await getApiAuthenticatedUser();
-  if (!user || user.role !== "housing_admin") {
-    redirect("/onboarding");
-  }
+  const user = await requireRole(['housing_admin', 'admin']);
 
   const supabase = await createSupabaseServerClient();
   // Use supabaseAdmin to bypass RLS and ensure the admin can see all managers
