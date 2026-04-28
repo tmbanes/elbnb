@@ -78,7 +78,7 @@ export interface User {
   profile_picture_url?: string | null;
   contact_number?: string;
   phone_number?: string;
-  student_number?: string;
+  student_num?: string;
 }
 
 export type {
