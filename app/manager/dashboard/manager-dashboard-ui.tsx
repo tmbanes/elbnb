@@ -67,6 +67,18 @@ export default function ManagerDashboardUI({
     const [notifications, setNotifications] = useState(initialNotifications);
     const [hasMounted, setHasMounted] = useState(false);
     const router = useRouter();
+    const [internalIsLoggingOut, setInternalIsLoggingOut] = useState(false);
+
+    const handleLogout = async () => {
+        if (onLogout) {
+            onLogout();
+            return;
+        }
+        setInternalIsLoggingOut(true);
+        const supabase = getSupabaseBrowserClient();
+        await supabase.auth.signOut();
+        window.location.href = "/onboarding";
+    };
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -421,12 +433,12 @@ export default function ManagerDashboardUI({
                                 {showLogout && (
                                     <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-slate-100 p-2 z-50">
                                         <button
-                                            onClick={onLogout}
-                                            disabled={isLoggingOut}
+                                            onClick={handleLogout}
+                                            disabled={isLoggingOut || internalIsLoggingOut}
                                             className="w-full flex items-center gap-2 text-left px-3 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                                         >
                                             <LogOut className="w-4 h-4" />
-                                            {isLoggingOut ? "Exiting..." : "Log out"}
+                                            {(isLoggingOut || internalIsLoggingOut) ? "Exiting..." : "Log out"}
                                         </button>
                                     </div>
                                 )}
