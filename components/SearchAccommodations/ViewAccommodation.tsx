@@ -153,6 +153,34 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
                 <label className="text-[10px] font-black uppercase text-white/60 tracking-widest">Total Capacity</label>
                 <span className="text-sm font-bold text-[#44291B]">{displayCapacity} Pax</span>
               </div>
+              <div className="flex flex-col gap-1 col-span-2">
+                <label className="text-[10px] font-black uppercase text-white/60 tracking-widest">Sex Allowed</label>
+                <div className="flex items-center gap-1.5 text-sm font-bold text-[#44291B]">
+                  {(!accommodation.accomm_sex || accommodation.accomm_sex.toLowerCase() === 'all' || accommodation.accomm_sex.toLowerCase() === 'coed') && (
+                    <>
+                      <svg className="w-4 h-4 text-purple-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="9" cy="15" r="5" />
+                        <path d="M9 20v3M7 22h4" />
+                        <circle cx="15" cy="9" r="5" />
+                        <path d="M18.5 5.5L22 2M17 2h5v5" />
+                      </svg>
+                      <span>COED</span>
+                    </>
+                  )}
+                  {(accommodation.accomm_sex?.toLowerCase() === 'female' || accommodation.accomm_sex?.toLowerCase() === 'f') && (
+                    <>
+                      <svg className="w-4 h-4 text-pink-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6"/><path d="M12 16v6M9 19h6"/></svg>
+                      <span>Female only</span>
+                    </>
+                  )}
+                  {(accommodation.accomm_sex?.toLowerCase() === 'male' || accommodation.accomm_sex?.toLowerCase() === 'm') && (
+                    <>
+                      <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6"/><path d="M14.243 9.757L21 3M16 3h5v5"/></svg>
+                      <span>Male only</span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
 
             {accommodation.allowed_application && (
