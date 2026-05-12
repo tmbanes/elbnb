@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-    Search, Bell, Building2, History, FileText,
+    Bell, Building2, History, FileText,
     Folder, Download, Plus, ArrowRight, LogOut
 } from "lucide-react";
 import { Archivo } from "next/font/google";
@@ -136,15 +136,7 @@ export default function GuestDashboardUI({
         <div className={`min-h-screen bg-[#F6F8D5] p-6 lg:p-10 text-slate-800 flex flex-col items-center ${archivo.className}`}>
             <div className="w-full max-w-[1100px]">
                 {/* TOP BAR */}
-                <header className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center w-full mb-12 gap-4">
-                    <div className="relative w-full md:w-[350px]">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                        <input
-                            type="text"
-                            placeholder="Search data, guests, or rooms..."
-                            className="w-full pl-11 pr-4 py-3 bg-slate-100/80 rounded-full text-sm border-none focus:ring-2 focus:ring-slate-300 outline-none font-medium placeholder:text-slate-400"
-                        />
-                    </div>
+                <header className="flex flex-col-reverse md:flex-row justify-end items-start md:items-center w-full mb-12 gap-4">
                     <div className="flex items-center gap-6 self-end md:self-auto">
                         {/* NOTIFICATIONS BELL */}
                         <div className="relative">
@@ -446,8 +438,8 @@ export default function GuestDashboardUI({
                     </div>
                 </section>
 
-                {/* BOTTOM THREE CARDS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {/* BOTTOM TWO CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {/* BILLING CARD */}
                     <div className="bg-[#FDFFF4] rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
                         <div>
@@ -489,42 +481,6 @@ export default function GuestDashboardUI({
                         </Link>
                     </div>
 
-                    {/* DOCUMENTS CARD */}
-                    <div className="bg-[#FDFFF4] rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
-                        <div>
-                            <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-[17px] font-extrabold text-[#2A3F2D]">Documents</h2>
-                                <Folder className="w-5 h-5 text-[#8BAE90] stroke-[1.5]" />
-                            </div>
-
-                            <div className="space-y-3 mb-8">
-                                {isLoadingDocuments ? (
-                                    <p className="text-[11px] text-slate-400">Loading documents...</p>
-                                ) : documents.length === 0 ? (
-                                    <p className="text-[11px] text-slate-400">No documents found.</p>
-                                ) : (
-                                    documents.slice(0, 3).map((doc) => (
-                                        <div key={doc.id} className="bg-[#F8F9EC] rounded-[14px] p-3 pl-4 flex justify-between items-center border border-[#eef1d6] group hover:bg-[#f3f5e1] transition-colors cursor-pointer">
-                                            <div className="flex items-center gap-3.5">
-                                                <div className="w-8 h-8 bg-white border border-[#e2e7c3] rounded-[9px] flex items-center justify-center text-[#2C5282] shadow-sm">
-                                                    <FileText className="w-4 h-4" strokeWidth={2.5} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[13px] font-bold text-slate-900 mb-0.5 truncate max-w-[120px]">{doc.file_name}</p>
-                                                    <p className="text-[9px] font-bold text-[#668E42] tracking-wider uppercase">
-                                                        {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : 'VERIFIED'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-[#a5b487] group-hover:text-[#668E42] transition-colors pr-2">
-                                                <Download className="w-4 h-4 stroke-[2.5]" />
-                                            </a>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    </div>
 
                     {/* APPLICATIONS CARD */}
                     <div className="bg-[#FDFFF4] rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
