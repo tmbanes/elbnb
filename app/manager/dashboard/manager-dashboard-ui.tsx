@@ -485,16 +485,16 @@ export default function ManagerDashboardUI({
                                 {/* METRICS GRID */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
                                     {/* Total Rooms */}
-                                    <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100/50 flex flex-col justify-between h-[180px]">
-                                        <h3 className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">Total Rooms</h3>
+                                    <div className="bg-[#eb8b0d] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] text-white">
+                                        <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase">Total Rooms</h3>
                                         <div>
-                                            <p className="text-[38px] font-black text-[#0B3A64] leading-none mb-1">{totalRooms}</p>
-                                            <p className="text-[11px] text-slate-500 font-medium">Certified Living Units</p>
+                                            <p className="text-[38px] font-black text-white leading-none mb-1">{totalRooms}</p>
+                                            <p className="text-[11px] text-white/80 font-medium">Certified Living Units</p>
                                         </div>
                                     </div>
 
                                     {/* Occupancy */}
-                                    <div className="bg-[#5D84A6] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] relative overflow-hidden text-white">
+                                    <div className="bg-[#79a34e] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] relative overflow-hidden text-white">
                                         <div className="absolute -right-4 -bottom-4 opacity-10"><BarChart2 className="w-32 h-32" /></div>
                                         <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase relative z-10">Occupancy</h3>
                                         <div className="relative z-10">
@@ -510,14 +510,14 @@ export default function ManagerDashboardUI({
                                     </div>
 
                                     {/* Pending Assignment */}
-                                    <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100/50 flex flex-col justify-between h-[180px]">
+                                    <div className="bg-[#5b93ad] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] text-white">
                                         <div className="flex justify-between items-center">
-                                            <h3 className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">Pending Assignment</h3>
-                                            <span className="bg-[#5591AB]/10 text-[#5591AB] text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Waitlist</span>
+                                            <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase">Pending Assignment</h3>
+                                            <span className="bg-white/20 text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Waitlist</span>
                                         </div>
                                         <div>
-                                            <p className="text-[38px] font-black text-[#5591AB] leading-none mb-1">{waitlistCount}</p>
-                                            <p className="text-[11px] text-slate-500 font-medium">Approved Students Waiting</p>
+                                            <p className="text-[38px] font-black text-white leading-none mb-1">{waitlistCount}</p>
+                                            <p className="text-[11px] text-white/80 font-medium">Approved Students Waiting</p>
                                         </div>
                                     </div>
 
@@ -1199,25 +1199,25 @@ function PendingApprovalsCard() {
     const urgentCount = pendingApps.length;
 
     return (
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100/50 flex flex-col h-[180px]">
+        <div className="bg-[#284485] rounded-[20px] p-5 shadow-sm flex flex-col h-[180px] text-white">
             <div className="flex justify-between items-center mb-3">
-                <h3 className="text-[10px] font-bold text-[#0B3A64] tracking-[0.1em] uppercase">Pending Approvals</h3>
+                <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase">Pending Approvals</h3>
                 {urgentCount > 0 && (
                     <span className="bg-[#D03027] text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">{urgentCount} Urgent</span>
                 )}
             </div>
             <div className="flex-1 flex flex-col gap-2 overflow-y-auto pr-1">
                 {loading ? (
-                    <p className="text-[11px] text-slate-300 font-bold uppercase tracking-widest mt-auto mb-auto text-center">Loading...</p>
+                    <p className="text-[11px] text-white/40 font-bold uppercase tracking-widest mt-auto mb-auto text-center">Loading...</p>
                 ) : pendingApps.length === 0 ? (
-                    <p className="text-[11px] text-slate-300 font-bold uppercase tracking-widest mt-auto mb-auto text-center">No pending approvals</p>
+                    <p className="text-[11px] text-white/40 font-bold uppercase tracking-widest mt-auto mb-auto text-center">No pending approvals</p>
                 ) : pendingApps.slice(0, 3).map((app: any) => {
                     return (
-                        <div key={app.application_id} className="bg-[#F6F8E8] rounded-lg p-2 flex items-start gap-2.5">
-                            <div className="text-[#7A9D54] mt-0.5"><UserPlus className="w-3.5 h-3.5" /></div>
+                        <div key={app.application_id} className="bg-white/10 rounded-lg p-2 flex items-start gap-2.5">
+                            <div className="text-white/70 mt-0.5"><UserPlus className="w-3.5 h-3.5" /></div>
                             <div className="overflow-hidden">
-                                <p className="text-[11px] font-bold text-[#0B3A64] leading-tight mb-0.5 truncate">Application Review</p>
-                                <p className="text-[9px] text-slate-500 font-medium truncate">
+                                <p className="text-[11px] font-bold text-white leading-tight mb-0.5 truncate">Application Review</p>
+                                <p className="text-[9px] text-white/60 font-medium truncate">
                                     {app.users?.first_name} {app.users?.last_name}
                                 </p>
                             </div>
