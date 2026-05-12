@@ -125,7 +125,7 @@ export default function GuestDashboardUI({
                     accommodation={selectedAccommodation}
                     units={accommodationUnits}
                     onBack={() => setSelectedAccommodation(null)}
-                    onApply={() => router.push(`/guest/accommodations/application?id=${selectedAccommodation.accommodation_id}`)}
+                    onApply={() => router.push(`/guest/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}`)}
                     userRole="guest"
                 />
             </div>
