@@ -128,7 +128,7 @@ export default function ManagerDashboardUI({
                 id: asg.user_id,
                 assignment_id: asg.assignment_id,
                 name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
-                student_number: 'N/A', // Would need additional student fetch if needed
+                student_number: 'Not provided', // Would need additional student fetch if needed
                 move_in_date: asg.move_in_date,
                 payment_status: 'Unknown',
                 avatar: asg.users?.profile_picture_url || null,
@@ -155,9 +155,9 @@ export default function ManagerDashboardUI({
             id: asg.user_id,
             assignment_id: asg.assignment_id,
             name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
-            student_number: 'N/A',
-            college: 'N/A',
-            room_number: asg.unit?.unit_number || 'N/A',
+            student_number: 'Not provided',
+            college: 'Not specified',
+            room_number: asg.unit?.unit_number || 'Unassigned',
             move_in_date: asg.move_in_date,
             payment_status: 'Unknown',
         }));
@@ -736,7 +736,7 @@ export default function ManagerDashboardUI({
                                                             ) : (
                                                                 <td className="py-5 px-2 text-right">
                                                                     <span className="text-[13px] font-bold text-slate-600">
-                                                                        {student.date_submitted ? new Date(student.date_submitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                                                        {student.date_submitted ? new Date(student.date_submitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date'}
                                                                     </span>
                                                                 </td>
                                                             )}

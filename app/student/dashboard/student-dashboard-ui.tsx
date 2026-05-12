@@ -176,11 +176,11 @@ export default function StudentDashboardUI({
 
     // Active Residency Details
     const dormName = currentResidency?.unit?.accommodation?.name || "No Active Residency";
-    const dormAddress = currentResidency?.unit?.accommodation?.location || "N/A";
+    const dormAddress = currentResidency?.unit?.accommodation?.location || "No location details available yet";
     const roomNumber = currentResidency?.unit?.unit_number ? `Room ${currentResidency.unit.unit_number}` : "";
-    const checkInDate = currentResidency?.move_in_date ? new Date(currentResidency.move_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A";
-    const status = currentResidency?.assignment_status ? (currentResidency.assignment_status.charAt(0).toUpperCase() + currentResidency.assignment_status.slice(1).replace('_', ' ')) : "N/A";
-    const unitType = currentResidency?.unit?.unit_type ? (currentResidency.unit.unit_type.charAt(0).toUpperCase() + currentResidency.unit.unit_type.slice(1)) : "N/A";
+    const checkInDate = currentResidency?.move_in_date ? new Date(currentResidency.move_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Not yet scheduled";
+    const status = currentResidency?.assignment_status ? (currentResidency.assignment_status.charAt(0).toUpperCase() + currentResidency.assignment_status.slice(1).replace('_', ' ')) : "No active residency yet";
+    const unitType = currentResidency?.unit?.unit_type ? (currentResidency.unit.unit_type.charAt(0).toUpperCase() + currentResidency.unit.unit_type.slice(1)) : "No unit assigned yet";
 
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -462,7 +462,7 @@ export default function StudentDashboardUI({
                                 <History className="w-5 h-5 text-white/70" />
                             </div>
 
-                            <div className="space-y-4 mb-6">
+                            <div className="space-y-4 mb-6 px-1">
                                 {history.length > 0 ? (
                                     history.slice(0, 3).map((item, i) => (
                                         <div key={i} className="border-l-2 border-white/20 pl-4 py-0.5">
@@ -607,7 +607,7 @@ export default function StudentDashboardUI({
                                 <Folder className="w-5 h-5 text-[#8BAE90] stroke-[1.5]" />
                             </div>
 
-                            <div className="space-y-3 mb-8">
+                            <div className="space-y-3 mb-8 px-1">
                                 {documents.length > 0 ? (
                                     documents.slice(0, 2).map((doc, i) => (
                                         <div key={i} className="bg-[#F8F9EC] rounded-[14px] p-3 pl-4 flex justify-between items-center border border-[#eef1d6] group hover:bg-[#f3f5e1] transition-colors cursor-pointer">
@@ -626,9 +626,7 @@ export default function StudentDashboardUI({
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-100">
-                                        <p className="text-slate-400 text-xs italic">No documents uploaded yet.</p>
-                                    </div>
+                                    <p className="text-xs text-slate-400 italic">No documents uploaded yet.</p>
                                 )}
                             </div>
                         </div>

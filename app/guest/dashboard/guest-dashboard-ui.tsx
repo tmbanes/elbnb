@@ -316,7 +316,7 @@ export default function GuestDashboardUI({
                                 <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
                                     <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
                                     <p className="text-[15px] font-bold text-slate-900">
-                                        {activeResidency?.move_in_date ? new Date(activeResidency.move_in_date).toLocaleDateString() : "---"}
+                                        {activeResidency?.move_in_date ? new Date(activeResidency.move_in_date).toLocaleDateString() : "To be determined"}
                                     </p>
                                 </div>
                                 <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
@@ -328,7 +328,7 @@ export default function GuestDashboardUI({
                                 <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
                                     <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Roommate</p>
                                     <p className="text-[15px] font-bold text-slate-900">
-                                        {activeResidency?.unit?.unit_type || "---"}
+                                        {activeResidency?.unit?.unit_type || "No unit assigned yet"}
                                     </p>
                                 </div>
                             </div>
@@ -497,11 +497,11 @@ export default function GuestDashboardUI({
                                 <Folder className="w-5 h-5 text-[#8BAE90] stroke-[1.5]" />
                             </div>
 
-                            <div className="space-y-3 mb-8">
+                            <div className="space-y-3 mb-8 px-1">
                                 {isLoadingDocuments ? (
                                     <p className="text-[11px] text-slate-400">Loading documents...</p>
                                 ) : documents.length === 0 ? (
-                                    <p className="text-[11px] text-slate-400">No documents found.</p>
+                                    <p className="text-[11px] text-slate-400 italic">No documents uploaded yet.</p>
                                 ) : (
                                     documents.slice(0, 3).map((doc) => (
                                         <div key={doc.id} className="bg-[#F8F9EC] rounded-[14px] p-3 pl-4 flex justify-between items-center border border-[#eef1d6] group hover:bg-[#f3f5e1] transition-colors cursor-pointer">
@@ -538,7 +538,7 @@ export default function GuestDashboardUI({
                                 {isLoadingApplications ? (
                                     <p className="text-[11px] text-slate-400">Loading applications...</p>
                                 ) : applications.length === 0 ? (
-                                    <p className="text-[11px] text-slate-400">No applications found.</p>
+                                    <p className="text-[11px] text-slate-400 italic">No recent applications found.</p>
                                 ) : (
                                     applications.slice(0, 3).map((app) => (
                                         <div key={app.application_id} className="relative pl-6">
