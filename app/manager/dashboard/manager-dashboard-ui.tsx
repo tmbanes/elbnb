@@ -603,25 +603,21 @@ export default function ManagerDashboardUI({
                                         </div>
                                         {activityLog.length > 0 ? (
                                             <div className="space-y-3 flex-1 overflow-y-auto pr-2">
-                                                {activityLog.map((log: any) => {
-                                                    return (
-                                                        <div key={log.log_id} className="flex items-start justify-between gap-3">
-                                                            <div className="flex items-start gap-3">
-                                                                <div className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: activityColor(log.action_type) }}></div>
-                                                                <div>
-                                                                    <p className="text-[12px] font-bold text-[#0B3A64] leading-snug">
-                                                                        {log.action_type?.replace(/_/g, ' ').replace(/\w/g, (c: string) => c.toUpperCase())}
-                                                                        {log.user_role && <span className="text-slate-400 font-medium"> by {log.user_role}</span>}
-                                                                    </p>
-                                                                    {log.log_desc && <p className="text-[10px] text-slate-400 mt-0.5">{log.log_desc}</p>}
-                                                                </div>
+                                                {activityLog.map((log: any) => (
+                                                    <div key={log.log_id} className="flex items-start justify-between gap-3">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: activityColor(log.action_type) }}></div>
+                                                            <div>
+                                                                <p className="text-[12px] font-bold text-[#0B3A64] leading-snug">
+                                                                    {log.log_desc || log.action_type?.replace(/_/g, ' ').replace(/ \w/g, (c: string) => c.toUpperCase())}
+                                                                </p>
                                                             </div>
-                                                            <span className="text-[10px] text-slate-300 font-bold flex-shrink-0">
-                                                                {new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
-                                                            </span>
                                                         </div>
-                                                    );
-                                                })}
+                                                        <span className="text-[10px] text-slate-300 font-bold flex-shrink-0">
+                                                            {new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                             </div>
                                         ) : (
                                             <div className="flex-1 flex items-center justify-center">
