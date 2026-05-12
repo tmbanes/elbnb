@@ -352,7 +352,7 @@ export default function ManagerDashboardUI({
                                                 Mark all as read
                                             </button>
                                         </div>
-                                        <div className="max-h-[350px] overflow-y-auto">
+                                        <div className="max-h-[350px] overflow-y-auto pr-2">
                                             {notifications.length > 0 ? (
                                                 notifications.map((n, i) => (
                                                     <div
@@ -549,7 +549,7 @@ export default function ManagerDashboardUI({
                                                 }
                                             </div>
                                         ) : (
-                                            <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+                                            <div className="flex-1 overflow-y-auto space-y-2 mb-4 pr-2">
                                                 {rooms.map(room => {
                                                     return (
                                                         <div key={room.unit_id}
@@ -590,7 +590,7 @@ export default function ManagerDashboardUI({
                                             </button>
                                         </div>
                                         {activityLog.length > 0 ? (
-                                            <div className="space-y-3 flex-1 overflow-y-auto">
+                                            <div className="space-y-3 flex-1 overflow-y-auto pr-2">
                                                 {activityLog.map((log: any) => {
                                                     return (
                                                         <div key={log.log_id} className="flex items-start justify-between gap-3">
