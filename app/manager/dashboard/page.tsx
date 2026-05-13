@@ -20,7 +20,7 @@ export default async function DormitoryManagerDashboardPage() {
     userProfileService.getProfile(user.user_id),
     userProfileService.getNotifications(user.user_id),
     supabase.from('accommodation').select('*').eq('manager_id', user.user_id).single(),
-    supabase.from('activity_log').select('*').order('timestamp', { ascending: false }).limit(10)
+    supabase.from('activity_log').select('*').neq('entity_type', 'auth').order('timestamp', { ascending: false }).limit(10)
   ]);
 
   const profile = profileRes.data;
