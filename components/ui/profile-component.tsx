@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ProfileUpload } from '@/components/edit-profile/ProfileUpload';
 import { EditProfileDialog } from '@/components/edit-profile/EditProfileDialog';
 import { User } from '@/types/user.types';
-import { Home, Edit3, CircleUser, User as UserIcon, ShieldCheck, MapPinHouse, Building2, History } from 'lucide-react';
+import { Home, Edit3, CircleUser, User as UserIcon, ShieldCheck, MapPinHouse, Building2, History, ChevronDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -148,6 +148,10 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
           <div className="flex items-center justify-end gap-3 text-[#3E2723] pt-6 mb-4">
             <SecondFolderIcon className="w-6 h-6 stroke-[2.5]" />
             <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>{secondFolderLabel}</h3>
+            <ChevronDown 
+              className={`w-6 h-6 transition-transform duration-300 ease-in-out ${activeTab === 'accommodations' ? 'rotate-180' : ''}`} 
+              strokeWidth={2.5}
+            />
           </div>
 
           <div className="pb-6 pt-3 pl-4 sm:pl-10 md:pl-[180px] pr-4 sm:pr-6 md:pr-12 mt-20">
@@ -167,16 +171,16 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                     <div className="col-span-2 py-4 text-[#3E2723]/40 font-bold uppercase tracking-widest text-xs">No Active Accommodation Found</div>
                   )}
                   <div className="absolute right-4 sm:right-6 md:right-8 bottom-12 sm:bottom-22 z-[60] pointer-events-auto">
-            <Link 
-              href="/student/history"
-              className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
-            >
-              <History size={14} strokeWidth={3} />
-              View Past Accommodations
-            </Link>
-          </div>
+                    <Link
+                      href="/student/history"
+                      className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                    >
+                      <History size={14} strokeWidth={3} />
+                      View Past Accommodations
+                    </Link>
+                  </div>
                 </div>
-        
+
               )}
               {isGuest && (
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
@@ -196,9 +200,9 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                     <>
                       {renderLargeValue(managerAccommodation?.name || 'No Assigned Dormitory', "Assigned Accommodation")}
                       {renderValue(officeLocation, "Office Location")}
-                      
+
                       <div className="-mt-2 flex justify-end">
-                        <Link 
+                        <Link
                           href="/manager/housing"
                           className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
                         >
@@ -207,7 +211,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                         </Link>
                       </div>
                     </>
-                    
+
                   )}
                 </div>
               )}
@@ -225,6 +229,10 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
           <div className={`flex items-center gap-3 text-[#3E2723] transition-all duration-500 ${activeTab === 'personal' ? 'pt-8 mb-4' : 'py-5 sm:py-6'}`}>
             <CircleUser className="w-6 h-6 stroke-[2.5]" />
             <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Personal Information</h3>
+            <ChevronDown 
+              className={`w-6 h-6 transition-transform duration-300 ease-in-out ${activeTab === 'personal' ? 'rotate-180' : ''}`} 
+              strokeWidth={2.5}
+            />
           </div>
           <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'personal' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
             <div className="min-h-0 overflow-hidden">
@@ -241,7 +249,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                           {renderValue(college, 'College')}
                         </>
                       )}
-                  {isGuest && renderValue(validId, 'Valid ID Reference')}
+                      {isGuest && renderValue(validId, 'Valid ID Reference')}
                     </div>
                   </div>
                   <div className={isStudent ? "md:col-span-8" : "md:col-span-12"}>
@@ -336,9 +344,9 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
           </div>
 
           <div className="absolute right-4 md:right-6 bottom-6 flex gap-3 z-50">
-            <EditProfileDialog 
-              user={user} 
-              metadata={metadata} 
+            <EditProfileDialog
+              user={user}
+              metadata={metadata}
             />
           </div>
         </div>
