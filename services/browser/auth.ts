@@ -20,11 +20,12 @@ async function signUpWithEmail(userData: UserCreationRequest) {
     password,
     options: {
       emailRedirectTo: `${window.location.origin}/welcome`,
-      data: {     
-        ...userMetadata }, // pass all metadata including its subclass
+      data: {
+        ...userMetadata
+      }, // pass all metadata including its subclass
     },
   });
-  console.log("Supabase response:", { data, error }); // [DEBUGGING LOG] to check the response from Supabase
+  // console.log("Supabase response:", { data, error }); // [DEBUGGING LOG] to check the response from Supabase
   if (error) return { success: false, error: error.message };
 
   if (data.user && data.user.identities?.length === 0) {
@@ -75,7 +76,7 @@ async function signInWithEmail({
     email,
     password,
   });
-  console.log("Supabase response:", { data, error }); // [DEBUGGING LOG] to check the response from Supabase
+  // console.log("Supabase response:", { data, error }); // [DEBUGGING LOG] to check the response from Supabase
   if (error) return { success: false, error: error.message };
 
   // Log the action for successful sign-in.
@@ -85,13 +86,13 @@ async function signInWithEmail({
     const metadata = signedInUser.user_metadata || {};
     const userRole = metadata.role || "guest";
     const firstName = metadata.first_name || "User";
-  
+
     // Log activity for successful sign-in.
     await createActivityLog({
       p_user_id: signedInUser.id,
       p_action_type: "login",
       p_log_desc: `${firstName} logged in`,
-      p_entity_type: "auth", 
+      p_entity_type: "auth",
       p_entity_id: signedInUser.id,
       p_user_role: userRole as UserRole,
     });

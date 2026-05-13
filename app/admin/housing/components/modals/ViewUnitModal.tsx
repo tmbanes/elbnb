@@ -56,20 +56,20 @@ export default function ViewUnitModal({ isOpen, onClose, unit: initialUnit, acce
     setLoading(true);
     setError(null);
     try {
-      console.log(`Fetching data for unit: ${unitId}`);
+      // console.log(`Fetching data for unit: ${unitId}`);
       const [unitRes, occupantsRes] = await Promise.all([
         fetch(`/api/admin/housing/units?id=${unitId}`),
         fetch(`/api/admin/residents?unit_id=${unitId}`)
       ]);
 
-      console.log(`Unit Res Status: ${unitRes.status}, Occupants Res Status: ${occupantsRes.status}`);
+      // console.log(`Unit Res Status: ${unitRes.status}, Occupants Res Status: ${occupantsRes.status}`);
 
       if (!unitRes.ok) {
         let errMsg = "Failed to fetch unit details";
         try {
           const errData = await unitRes.json();
           errMsg = errData.error || errMsg;
-        } catch (e) {}
+        } catch (e) { }
         throw new Error(`${errMsg} (${unitRes.status})`);
       }
 
@@ -78,14 +78,14 @@ export default function ViewUnitModal({ isOpen, onClose, unit: initialUnit, acce
         try {
           const errData = await occupantsRes.json();
           errMsg = errData.details || errData.error || errMsg;
-        } catch (e) {}
+        } catch (e) { }
         throw new Error(`${errMsg} (${occupantsRes.status})`);
       }
 
       const unitData = await unitRes.json();
       const occupantsData = await occupantsRes.json();
-      console.log("Fetched unit data:", unitData);
-      console.log("Fetched occupants data:", occupantsData);
+      // console.log("Fetched unit data:", unitData);
+      // console.log("Fetched occupants data:", occupantsData);
 
       setUnit(unitData);
       setOccupants(occupantsData.data || []);
@@ -208,7 +208,7 @@ export default function ViewUnitModal({ isOpen, onClose, unit: initialUnit, acce
               occupants.map((occ) => {
                 const userData = Array.isArray(occ.users) ? occ.users[0] : occ.users;
                 if (!userData) return null;
-                
+
                 return (
                   <div key={occ.assignment_id} className="flex items-center gap-3 px-4 py-3 border-b border-[#e2e4c0] last:border-0">
                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 overflow-hidden">

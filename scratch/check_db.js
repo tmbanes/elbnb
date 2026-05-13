@@ -11,11 +11,11 @@ async function checkTables() {
   for (const table of tables) {
     const { data, error } = await supabase.from(table).select('*').limit(1);
     if (error) {
-      console.log(`Table ${table}: Error - ${error.message}`);
+      // console.log(`Table ${table}: Error - ${error.message}`);
     } else {
-      console.log(`Table ${table}: OK - ${data.length > 0 ? 'Has data' : 'Empty'}`);
+      // console.log(`Table ${table}: OK - ${data.length > 0 ? 'Has data' : 'Empty'}`);
       if (data.length > 0) {
-          console.log(`Columns in ${table}: ${Object.keys(data[0]).join(', ')}`);
+        // console.log(`Columns in ${table}: ${Object.keys(data[0]).join(', ')}`);
       }
     }
   }
