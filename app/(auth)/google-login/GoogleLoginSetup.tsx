@@ -42,18 +42,8 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
     return () => listener?.subscription.unsubscribe();
   }, [supabase]);
 
-  useEffect(() => {
-    if (currentUser) {
-      const role = (currentUser as any).user_metadata?.role;
-      const firstName = (currentUser as any).user_metadata?.first_name;
-      
-      if (!role || !firstName || firstName === "TBD") setTimeout(() => router.push('/complete-profile'), 800);
-      else if (role === "student") setTimeout(() => router.push('/student/dashboard'), 800);
-      else if (role === "dormitory_manager") setTimeout(() => router.push('/manager/dashboard'), 800);
-      else if (role === "housing_admin") setTimeout(() => router.push('/admin/dashboard'), 800);
-      else setTimeout(() => router.push('/'), 800);
-    }
-  }, [currentUser, router]);
+  // Removed the useEffect watching currentUser to avoid client-side bouncing.
+  // The Google OAuth callback will automatically redirect to /auth-callback.
 
   async function handleGoogleLogin() {
     await signInWithGoogle("/complete-profile");

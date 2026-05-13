@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
   // 1. Quick bypass for public/auth routes BEFORE expensive Auth logic
   if (
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/unauthorized") ||
     pathname.startsWith("/signup") ||
     pathname === "/"
   ) {
@@ -80,22 +81,22 @@ export async function middleware(req: NextRequest) {
     if (isAdminRoute && role !== "housing_admin") {
       return isApiRequest
         ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
-        : NextResponse.redirect(new URL("/onboarding", req.url));
+        : NextResponse.redirect(new URL("/unauthorized", req.url));
     }
     if (isManagerRoute && role !== "dormitory_manager") {
       return isApiRequest
         ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
-        : NextResponse.redirect(new URL("/onboarding", req.url));
+        : NextResponse.redirect(new URL("/unauthorized", req.url));
     }
     if (isStudentRoute && role !== "student") {
       return isApiRequest
         ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
-        : NextResponse.redirect(new URL("/onboarding", req.url));
+        : NextResponse.redirect(new URL("/unauthorized", req.url));
     }
     if (isGuestRoute && role !== "guest") {
       return isApiRequest
         ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
-        : NextResponse.redirect(new URL("/onboarding", req.url));
+        : NextResponse.redirect(new URL("/unauthorized", req.url));
     }
   }
 

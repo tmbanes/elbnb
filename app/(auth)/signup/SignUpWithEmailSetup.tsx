@@ -75,19 +75,8 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
     return () => listener?.subscription.unsubscribe();
   }, [supabase]);
 
-  useEffect(() => {
-    if (currentUser) {
-      const role = (currentUser as any).user_metadata?.role;
-      const firstName = (currentUser as any).user_metadata?.first_name;
-      
-      if (!role || !firstName || firstName === "TBD") router.push("/complete-profile");
-      else if (role === "student") router.push("/student/dashboard");
-      else if (role === "housing_admin") router.push("/admin/dashboard");
-      else if (role === "dormitory_manager") router.push("/manager/dashboard");
-      else if (role === "guest") router.push("/guest/dashboard");
-      else router.push("/");
-    }
-  }, [currentUser, router]);
+  // Removed the useEffect watching currentUser to avoid client-side bouncing.
+  // The server-side /auth-callback route will handle the routing.
 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,7 +158,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
       }
 
       setStatus("Signup successful! Redirecting...");
-      router.push("/complete-profile");
+      router.push("/auth-callback");
 
     } catch (error) {
       setStatus("Unable to complete signup. Please try again later.");
