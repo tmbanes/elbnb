@@ -450,7 +450,7 @@ export default function StudentDashboardUI({
                                 <div className="bg-[#F8F9EC]/80 rounded-[18px] p-5 flex flex-col md:flex-row items-start md:items-center justify-between border border-[#eef1d6] gap-5">
                                     <div className="flex items-start md:items-center gap-4">
                                         <p className="text-[13px] text-slate-600 font-medium italic leading-relaxed max-w-[90%]">
-                                            You are not currently assigned to any accommodation. Browse our available options to find your next home.
+                                            You are not currently assigned to any accommodation. Browse our available options to find your next stay.
                                         </p>
                                     </div>
                                     <Button
