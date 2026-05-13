@@ -18,7 +18,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 
 
 //style constants
@@ -42,6 +42,7 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -118,15 +119,24 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
 
                 <div className="space-y-2">
                   <Label className={label_style}>Password</Label>
-                  <Input
-                    className={field_style}
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Enter your password"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      className={`${field_style} pr-10`}
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Enter your password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2d1a12]/50 hover:text-[#2d1a12]"
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                 </div>
 
                 {status && (

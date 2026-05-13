@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -67,6 +67,7 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
   const [formData, setFormData] = useState<SignupFormData>(initialFormData);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -249,15 +250,24 @@ export default function SignUpWithEmailSetup({ user: initialUser }: { user: User
 
               <div className="grid gap-2">
                 <Label htmlFor="password" className={label_style}>Password</Label>
-                <Input
-                  className={field_style}
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter your password"
-                />
+                <div className="relative">
+                  <Input
+                    className={`${field_style} pr-10`}
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2d1a12]/50 hover:text-[#2d1a12]"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
             </div>
 
