@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. UPDATE USERS TABLE (Requires RLS Policy: auth.uid() = user_id)
-    console.log("Completing profile for user:", user.user_id, "Data:", { first_name, last_name, role, sex });
+    // console.log("Completing profile for user:", user.user_id, "Data:", { first_name, last_name, role, sex });
     const { error: userError } = await supabase
       .from("users")
       .update({
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    console.log(`Updating ${role} table for ${user.user_id}:`, subtableData);
+    // console.log(`Updating ${role} table for ${user.user_id}:`, subtableData);
     const { error: roleError } = await supabase
       .from(role)
       .update(subtableData)

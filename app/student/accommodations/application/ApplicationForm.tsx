@@ -322,25 +322,22 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const userProfile = await getCurrentUserFromApi();
 
-        if (userProfile && userProfile.role) {
-          setUserId(userProfile.user_id);
-          setUserRole(userProfile.role);
+        const res = await fetch("/api/user/profile");
+        const userProfile = await res.json();
 
-          const studentId = authUser?.student_number || "";
-          const contactNumber = authUser?.phone_number || "";
-
+        if (userProfile) {
           setUserInfo({
             firstName: userProfile.first_name || "",
             lastName: userProfile.last_name || "",
             email: userProfile.email || "",
-            contactNumber: contactNumber,
-            studentId: studentId,
+            contactNumber: userProfile.contact_number || "",
+            studentId: userProfile.student_num || "",
             role: userProfile.role || "",
             sex: userProfile.sex || "",
           });
         }
+
       } catch (err) {
         console.error("Auth error:", err);
       }
@@ -431,7 +428,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">Student ID</p>
-              <p className="text-base text-[#3d2000] font-bold">{userInfo.studentId || "N/A"}</p>
+              <p className="text-base text-[#3d2000] font-bold">{userInfo.studentId || "--"}</p>
             </div>
             <div>
               <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">Contact Number</p>
@@ -682,7 +679,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                   </Field>
                 </div>
                 <Field label="Student ID">
-                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.studentId || "N/A"} />
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.studentId || "--"} />
                 </Field>
                 <Field label="Contact Number">
                   <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.contactNumber || "--"} />

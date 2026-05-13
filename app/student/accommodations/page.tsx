@@ -132,6 +132,16 @@ export default function SearchAccommodationsPage() {
     });
   }, [accommodations]);
 
+  const normalizeSexValue = (value?: string | null) => {
+    const sex = value?.toLowerCase()
+
+    if (sex === 'f' || sex === 'female') return 'female'
+    if (sex === 'm' || sex === 'male') return 'male'
+    if (sex === 'coed') return 'coed'
+
+    return sex ?? ''
+  }
+
   // Apply accommodation filters
   const applyAccommodationFilters = useCallback(
     (list: Accommodation[], allUnits: Unit[], filters: AccommodationFiltersType, search: string = '') => {
@@ -148,7 +158,17 @@ export default function SearchAccommodationsPage() {
       }
 
       if (filters.sexFilter) {
-        filtered = filtered.filter((a) => a.accomm_sex?.toLowerCase() === filters.sexFilter?.toLowerCase())
+        const selectedSex = normalizeSexValue(filters.sexFilter)
+
+        filtered = filtered.filter((a) => {
+          const dormSex = normalizeSexValue(a.accomm_sex)
+
+          if (selectedSex === 'male' || selectedSex === 'female') {
+            return dormSex === selectedSex || dormSex === 'coed'
+          }
+
+          return dormSex === selectedSex
+        })
       }
 
       if (filters.minPrice !== '') {
