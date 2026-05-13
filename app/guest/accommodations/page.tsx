@@ -80,6 +80,7 @@ export default function SearchAccommodationsPage() {
   const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null)
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
   const [accommodationUnits, setAccommodationUnits] = useState<Unit[]>([])
+  const [isFetchingAccommodationUnits, setIsFetchingAccommodationUnits] = useState(false)
   const [isViewingUnit, setIsViewingUnit] = useState(false)
   const [unitViewSource, setUnitViewSource] = useState<'accommodation' | 'search'>('accommodation')
 
@@ -391,8 +392,9 @@ export default function SearchAccommodationsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
 
     // Fetch all units for this accommodation to show real data
+    setIsFetchingAccommodationUnits(true)
     try {
-      const res = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
+      const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
       if (res.ok) {
         const data = await res.json()
         setAccommodationUnits(data)
@@ -400,6 +402,8 @@ export default function SearchAccommodationsPage() {
     } catch (err) {
       console.error('Failed to fetch accommodation units:', err)
       setAccommodationUnits([])
+    } finally {
+      setIsFetchingAccommodationUnits(false)
     }
   }
 
@@ -433,7 +437,7 @@ export default function SearchAccommodationsPage() {
 
       // Also fetch units context if needed
       try {
-        const res = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
+        const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
         if (res.ok) {
           const data = await res.json()
           setAccommodationUnits(data)
@@ -501,6 +505,7 @@ export default function SearchAccommodationsPage() {
             accommodation={selectedAccommodation}
             units={accommodationUnits}
             userRole="guest"
+            isFetchingUnits={isFetchingAccommodationUnits}
             onUnitTypeClick={(unit) => {
                 setSelectedUnit(unit)
                 setIsViewingUnit(true)

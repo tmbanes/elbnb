@@ -10,6 +10,7 @@ interface ViewAccommodationProps {
   onApply?: () => void
   onUnitTypeClick?: (unit: Unit) => void
   userRole?: 'student' | 'guest'
+  isFetchingUnits?: boolean
 }
 
 export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
@@ -19,6 +20,7 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
   onApply,
   onUnitTypeClick,
   userRole = 'student',
+  isFetchingUnits = false,
 }) => {
   // Use the first unit's type as the general room type if not specified
   const mainUnitType = units[0]?.unit_type || 'N/A'
@@ -94,7 +96,13 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
               Available Unit Types
             </h2>
             <div className="grid grid-cols-1 gap-4">
-              {unitTypeStats.map((stat, idx) => (
+              {isFetchingUnits ? (
+                <>
+                  <div className="h-[92px] bg-gray-200 rounded-2xl animate-pulse"></div>
+                  <div className="h-[92px] bg-gray-200 rounded-2xl animate-pulse"></div>
+                  <div className="h-[92px] bg-gray-200 rounded-2xl animate-pulse"></div>
+                </>
+              ) : unitTypeStats.map((stat, idx) => (
                 <div
                   key={idx}
                   onClick={() => userRole !== 'student' && onUnitTypeClick?.(stat.sampleUnit)}

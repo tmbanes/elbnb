@@ -374,6 +374,10 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
         const types = Array.from(new Set(dataUnits.map(u => u.unit_type)));
         setDynamicUnitTypes(types);
 
+        if (types.length === 1 && !unitIdFromQuery) {
+          setValue("preferred_unit_type", types[0], { shouldValidate: true });
+        }
+
         if (unitIdFromQuery) {
           const matchedUnit =
             dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
@@ -640,9 +644,14 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                   </div>
                 ) : (
                   <div className="border-t border-[#78A24C]/20 pt-6">
-                    <p className="text-xs text-[#6a5a3a] italic">
-                      No specific unit selected
-                    </p>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest">
+                        Unit Assignment
+                      </p>
+                      <p className="text-sm text-[#3d2000] font-medium italic">
+                        To be assigned by Dorm Manager upon approval.
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
