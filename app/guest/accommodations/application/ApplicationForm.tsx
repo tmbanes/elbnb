@@ -225,7 +225,6 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
     lastName: "",
     email: "",
     contactNumber: "",
-    studentId: "",
     role: "",
     sex: "",
   });
@@ -344,20 +343,15 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const userProfile = await getCurrentUserFromApi();
+        const res = await fetch("/api/user/profile");
+        const userProfile = await res.json();
+
         if (userProfile) {
-          setUserId(userProfile.user_id);
-          setUserRole(userProfile.role || "");
-
-          const contactNumber = authUser?.phone_number || "";
-          const studentId = authUser?.student_number || "";
-
           setUserInfo({
             firstName: userProfile.first_name || "",
             lastName: userProfile.last_name || "",
             email: userProfile.email || "",
-            contactNumber: contactNumber,
-            studentId: studentId,
+            contactNumber: userProfile.contact_number || "",
             role: userProfile.role || "",
             sex: userProfile.sex || "",
           });
@@ -431,8 +425,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
               ["First Name", userInfo.firstName],
               ["Last Name", userInfo.lastName],
               ["Email Address", userInfo.email],
-              ["Student ID", userInfo.studentId || "N/A"],
-              ["Contact Number", userInfo.contactNumber || "N/A"],
+              ["Contact Number", userInfo.contactNumber || "--"],
               ["Applicant Type", userInfo.role.replace("_", " ")],
               ["Gender", userInfo.sex],
             ].map(([label, value]) => (
@@ -633,9 +626,6 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                     <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.email || "--"} />
                   </Field>
                 </div>
-                <Field label="Student ID">
-                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.studentId || "N/A"} />
-                </Field>
                 <Field label="Contact Number">
                   <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.contactNumber || "--"} />
                 </Field>

@@ -1,17 +1,11 @@
-// app/admin/housing/page.tsx
 import { Suspense } from "react";
 import PropertiesContent from "./properties/PropertiesContent";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
-
+import { requireRole } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 export default async function PropertiesPage() {
-  const user = await getApiAuthenticatedUser();
-  if (!user || user.role !== "housing_admin") {
-    redirect("/onboarding");
-  }
+  const user = await requireRole(['housing_admin', 'admin']);
 
   const supabase = supabaseAdmin;
 

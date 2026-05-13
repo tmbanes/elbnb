@@ -1,15 +1,10 @@
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import ManagerResidentsClient from "./ManagerResidentsClient";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 
 export default async function ManagerResidentsPage() {
-  const user = await getApiAuthenticatedUser();
-
-  if (!user || !user.role || !["dormitory_manager", "housing_admin"].includes(user.role)) {
-    redirect("/onboarding");
-  }
-
+  const user = await requireRole(['dormitory_manager', 'housing_admin', 'admin']);
   const supabase = await createSupabaseServerClient();
 
   // 1. Get ALL accommodations managed by this user

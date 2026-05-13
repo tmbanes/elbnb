@@ -2,15 +2,11 @@ import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { redirect } from "next/navigation";
 import { DashboardClient } from "./dashboard-client";
 import { userProfileService } from "@/services/user_profile";
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/session";
 
 export default async function AdminDashboardPage() {
+  const session = await requireRole(['housing_admin', 'admin']);
   const supabase = await createSupabaseServerClient();
-  const session = await getApiAuthenticatedUser();
-
-  if (!session) {
-    redirect("/onboarding");
-  }
 
   // Fetch all data in parallel to significantly reduce loading time
   const [
