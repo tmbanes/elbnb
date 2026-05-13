@@ -228,6 +228,26 @@ not yet tested
       return { data: null, error };
     }
 
+    // Also update the billing status to cancelled if it exists
+    const { data: assignment, error: assignmentError } = await client
+      .from("accommodation_assignment")
+      .select("assignment_id")
+      .eq("application_id", application_id)
+      .maybeSingle();
+
+    if (!assignmentError && assignment?.assignment_id) {
+      await supabaseAdmin
+        .from("billing")
+        .delete()
+        .eq("assignment_id", assignment.assignment_id)
+        .in("status", ["unpaid", "pending", "pending_verification", "overdue"]);
+
+      await supabaseAdmin
+        .from("accommodation_assignment")
+        .update({ assignment_status: "cancelled" })
+        .eq("assignment_id", assignment.assignment_id);
+    }
+
     return { data, error: null };
   },
 

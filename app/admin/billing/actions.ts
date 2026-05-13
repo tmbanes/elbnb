@@ -1,6 +1,6 @@
 "use server";
 
-import { updateAdminInvoiceDetails, approveReceipt, rejectReceipt, createBillingWithItems, updateAdminInvoiceWithItems } from "@/services/user-services";
+import { updateAdminInvoiceDetails, approveReceipt, rejectReceipt, createBillingWithItems, updateAdminInvoiceWithItems, getExistingInvoiceForAssignment } from "@/services/user-services";
 import { revalidatePath } from "next/cache";
 import { BillingCreation } from "@/types/billing";
 import { BillingItemType, BillingStatus } from "@/types/billing/enums";
@@ -104,10 +104,36 @@ export async function adminCreateBillAction(
   billingData: BillingCreation,
   items: { type: BillingItemType; amount: number }[]
 ) {
+  // First, check if an invoice already exists for this assignment
+  if (billingData.assignment_id) {
+    const existingResult = await getExistingInvoiceForAssignment(billingData.assignment_id);
+    
+    if (existingResult?.data?.billing_id) {
+      // Invoice already exists, update it instead of creating a new one
+      const updateResult = await updateAdminInvoiceWithItems("admin", existingResult.data.billing_id, {
+        internal_notes: billingData.internal_notes || undefined,
+        due_date: billingData.due_date?.toISOString(),
+        payment_method: billingData.payment_method,
+      }, items);
+      
+      if (!updateResult?.error) {
+        (updateResult as any).mode = "updated";
+        revalidatePath("/admin/dashboard/billing");
+        revalidatePath("/admin/billing");
+        revalidatePath("/student/billing");
+        revalidatePath("/guest/billing");
+        return updateResult;
+      }
+    }
+  }
+
+  // No existing invoice, try to create a new one
   const result = await createBillingWithItems("admin", billingData, items);
+  
   if (result?.error) {
     throw new Error(toErrorMessage(result.error));
   }
+
   revalidatePath("/admin/dashboard/billing");
   revalidatePath("/admin/billing");
   revalidatePath("/student/billing");

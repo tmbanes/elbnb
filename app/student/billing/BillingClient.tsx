@@ -24,6 +24,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { useRealtimeSync } from "@/lib/realtime-sync";
 
@@ -48,7 +58,10 @@ export default function BillingClient({
   const [uploadError, setUploadError] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null);
+  const [receiptPreviewType, setReceiptPreviewType] = useState<"image" | "pdf" | "unknown">("unknown");
+  const [isReceiptPreviewBroken, setIsReceiptPreviewBroken] = useState(false);
   const [isLoadingReceiptPreview, setIsLoadingReceiptPreview] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const USE_DUMMY_BILLING_DATA = false;
 
@@ -245,17 +258,31 @@ export default function BillingClient({
   useEffect(() => {
     const receiptPath = selectedBill?.transaction_reference || selectedBill?.receipt_files?.[selectedBill?.receipt_files?.length - 1];
 
+    const getReceiptPreviewType = (path: string): "image" | "pdf" | "unknown" => {
+      const normalizedPath = String(path || "").split("?")[0].toLowerCase();
+      if (normalizedPath.endsWith(".pdf")) return "pdf";
+      if ([".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".heic", ".heif"].some((ext) => normalizedPath.endsWith(ext))) {
+        return "image";
+      }
+      return "unknown";
+    };
+
     if (!receiptPath) {
       setReceiptPreviewUrl(null);
+      setReceiptPreviewType("unknown");
+      setIsReceiptPreviewBroken(false);
       return;
     }
+
+    setReceiptPreviewType(getReceiptPreviewType(receiptPath));
+    setIsReceiptPreviewBroken(false);
 
     let cancelled = false;
 
     const loadPreview = async () => {
       setIsLoadingReceiptPreview(true);
       try {
-        const response = await fetch(`/api/admin/billing/receipt-url?path=${encodeURIComponent(receiptPath)}`);
+        const response = await fetch(`/api/shared/receipt-url?path=${encodeURIComponent(receiptPath)}`);
         const payload = await response.json().catch(() => ({}));
 
         if (response.ok && payload.signedUrl && !cancelled) {
@@ -367,9 +394,8 @@ export default function BillingClient({
   const handleCancelReceipt = async () => {
     if (!focusedBill?.billing_id) return;
 
-    if (!confirm("Cancel the uploaded receipt? You can reupload a new one after this.")) return;
-
     setIsCancellingReceipt(true);
+    setIsCancelDialogOpen(false);
     setUploadError("");
 
     try {
@@ -857,11 +883,29 @@ export default function BillingClient({
                       <Clock className="w-4 h-4 animate-spin" /> Loading receipt...
                     </div>
                   ) : receiptPreviewUrl ? (
-                    <div className="flex flex-col sm:flex-row gap-3 items-start bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0">
-                        <img src={receiptPreviewUrl} alt="Receipt preview" className="w-full h-full object-cover" />
+                    <div className="space-y-3 bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                      <div className="w-full rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
+                        {(receiptPreviewType !== "pdf" && !isReceiptPreviewBroken) ? (
+                          <img
+                            src={receiptPreviewUrl}
+                            alt="Receipt preview"
+                            className="w-full max-h-[360px] object-contain bg-white"
+                            onError={() => setIsReceiptPreviewBroken(true)}
+                          />
+                        ) : (
+                          <object
+                            data={receiptPreviewUrl}
+                            type="application/pdf"
+                            className="w-full h-[360px] bg-white"
+                          >
+                            <div className="h-[220px] flex flex-col items-center justify-center text-slate-500 text-sm gap-2">
+                              <FileText className="w-5 h-5" />
+                              <span>Unable to render receipt preview.</span>
+                            </div>
+                          </object>
+                        )}
                       </div>
-                      <div className="flex-1 space-y-2">
+                      <div className="space-y-2">
                         <div className="text-sm text-slate-600">
                           {focusedBill?.status !== BillingStatus.PAID && focusedBill?.status !== BillingStatus.PAID_LATE
                             ? "A receipt has been uploaded for this invoice and is currently under review by the management."
@@ -871,7 +915,7 @@ export default function BillingClient({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={handleCancelReceipt}
+                            onClick={() => setIsCancelDialogOpen(true)}
                             disabled={isCancellingReceipt}
                             className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
                           >
@@ -882,7 +926,28 @@ export default function BillingClient({
                     </div>
                   ) : (
                     (focusedBill?.status === BillingStatus.UNPAID || focusedBill?.status === BillingStatus.OVERDUE || focusedBill?.status === BillingStatus.FAILED) ? (
-                      <div className="rounded-xl border border-dashed border-[#769C51]/40 bg-[#769C51]/5 p-4">
+                      (focusedBill?.transaction_reference || (focusedBill?.receipt_files && focusedBill.receipt_files.length > 0)) ? (
+                        <div className="flex flex-col sm:flex-row gap-3 items-start bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0 flex items-center justify-center text-slate-400 text-xs text-center p-2">
+                            Receipt Uploaded
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <div className="text-sm text-slate-600">
+                              A receipt has been uploaded for this invoice and is currently under review by the management.
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setIsCancelDialogOpen(true)}
+                              disabled={isCancellingReceipt}
+                              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                            >
+                              {isCancellingReceipt ? "Cancelling..." : "Cancel Upload"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-dashed border-[#769C51]/40 bg-[#769C51]/5 p-4">
                         <div className="text-sm text-slate-600 mb-3">
                           If you paid via cash at the management office, upload a clear photo of your receipt for verification.
                         </div>
@@ -907,6 +972,7 @@ export default function BillingClient({
                         </div>
                         {uploadError && <div className="mt-2 text-sm text-red-600">{uploadError}</div>}
                       </div>
+                      )
                     ) : (
                       <div className="text-sm text-[#44291B]/70 italic py-2">
                         Receipt upload is not required for this invoice.
@@ -926,6 +992,27 @@ export default function BillingClient({
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Receipt Upload?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove your uploaded payment receipt and reset your invoice status. You will need to upload a new receipt. Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancellingReceipt}>Keep Upload</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelReceipt}
+              className="bg-red-600 hover:bg-red-700 text-white focus:ring-red-600"
+              disabled={isCancellingReceipt}
+            >
+              {isCancellingReceipt ? "Removing..." : "Remove Receipt"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Printable View (Hidden in normal screen, block in print) */}
       {printMode === "bill" && focusedBill && (
