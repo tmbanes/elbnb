@@ -35,7 +35,7 @@ export function useRealtimeSync(
                     filter
                 },
                 (payload) => {
-                    console.log(`[RealtimeSync] Change detected in ${table}:`, payload);
+                    // console.log(`[RealtimeSync] Change detected in ${table}:`, payload);
                     router.refresh();
                     if (onRefresh) onRefresh();
                 }

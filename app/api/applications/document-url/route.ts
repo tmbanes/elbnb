@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
+import { withRole } from "@/lib/auth/api-guard";
 
-export async function GET(req: NextRequest) {
-  const user = await getApiAuthenticatedUser();
-  
-  const allowedRoles = ["housing_admin", "dormitory_manager", "admin"];
-  if (!user || !user.role || !allowedRoles.includes(user.role)) {
-    return NextResponse.json({ error: `Forbidden: role ${user?.role} not allowed` }, { status: 403 });
-  }
-
+export const GET = withRole(['housing_admin', 'dormitory_manager', 'admin'], async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const path = searchParams.get("path");
 
@@ -26,4 +19,4 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ signedUrl: data.signedUrl });
-}
+});

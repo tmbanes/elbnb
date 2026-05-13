@@ -135,7 +135,6 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
     );
   }
 
-  fetchManagers() 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden bg-[#F6F8D5]">
       {/* LEFT: Managers List */}

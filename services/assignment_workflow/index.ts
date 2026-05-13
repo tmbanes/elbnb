@@ -26,7 +26,7 @@ export class AssignmentService {
     if (error) {
       throw new Error(`Failed to fetch assignments: ${error.message}`)
     }
-    console.log("Fetched Assignments from Service: " + data)
+    // console.log("Fetched Assignments from Service: " + data)
     return data || []
   }
 
@@ -60,7 +60,7 @@ export class AssignmentService {
       accommodation: item.unit?.accommodation || null
     }));
 
-    console.log("Fetched Accommodation History from Service:", flattenedData);
+    // console.log("Fetched Accommodation History from Service:", flattenedData);
 
     return flattenedData as AccommodationHistory[];
   }

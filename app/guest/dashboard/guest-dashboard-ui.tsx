@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-    Search, Bell, Building2, History, FileText,
+    Bell, Building2, History, FileText,
     Folder, Download, Plus, ArrowRight, LogOut
 } from "lucide-react";
 import { Archivo } from "next/font/google";
@@ -125,7 +125,7 @@ export default function GuestDashboardUI({
                     accommodation={selectedAccommodation}
                     units={accommodationUnits}
                     onBack={() => setSelectedAccommodation(null)}
-                    onApply={() => router.push(`/guest/accommodations/application?id=${selectedAccommodation.accommodation_id}`)}
+                    onApply={() => router.push(`/guest/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}`)}
                     userRole="guest"
                 />
             </div>
@@ -136,15 +136,7 @@ export default function GuestDashboardUI({
         <div className={`min-h-screen bg-[#F6F8D5] p-6 lg:p-10 text-slate-800 flex flex-col items-center ${archivo.className}`}>
             <div className="w-full max-w-[1100px]">
                 {/* TOP BAR */}
-                <header className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center w-full mb-12 gap-4">
-                    <div className="relative w-full md:w-[350px]">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                        <input
-                            type="text"
-                            placeholder="Search data, guests, or rooms..."
-                            className="w-full pl-11 pr-4 py-3 bg-slate-100/80 rounded-full text-sm border-none focus:ring-2 focus:ring-slate-300 outline-none font-medium placeholder:text-slate-400"
-                        />
-                    </div>
+                <header className="flex flex-col-reverse md:flex-row justify-end items-start md:items-center w-full mb-12 gap-4">
                     <div className="flex items-center gap-6 self-end md:self-auto">
                         {/* NOTIFICATIONS BELL */}
                         <div className="relative">
@@ -469,7 +461,7 @@ export default function GuestDashboardUI({
                     </div>
                 </section>
 
-                {/* BOTTOM CARDS */}
+                {/* BOTTOM TWO CARDS */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {/* BILLING CARD */}
                     <div className="bg-[#FDFFF4] rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
@@ -511,6 +503,7 @@ export default function GuestDashboardUI({
                             </button>
                         </Link>
                     </div>
+
 
                     {/* APPLICATIONS CARD */}
                     <div className="bg-[#FDFFF4] rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">

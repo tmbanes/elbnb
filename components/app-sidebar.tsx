@@ -167,11 +167,11 @@ export function AppSidebar({
         <SidebarContent className="bg-[#8ba665] text-white">
 
           <SidebarHeader className="pt-8 pb-8 px-6 group-data-[collapsible=icon]:px-2 flex items-center justify-center overflow-hidden">
-            <Link href="/" className="flex items-center justify-center gap-2 group w-full">
+            <Link href="/" className="flex items-center justify-center gap-2 group/logo w-full">
               <img
                 src="/logo/logo_text.png"
                 alt="ELbnb Logo"
-                className="h-12 w-auto object-contain transition-all duration-300 ease-out group-hover:scale-105 group-hover:opacity-90 drop-shadow-sm group-data-[collapsible=icon]:hidden"
+                className="h-12 w-auto object-contain transition-all duration-300 ease-out group-hover/logo:scale-105 group-hover/logo:opacity-90 drop-shadow-sm group-data-[collapsible=icon]:hidden"
               />
             </Link>
           </SidebarHeader>
@@ -184,7 +184,7 @@ export function AppSidebar({
           <NavUser user={userData} role={role} />
         </SidebarFooter>
 
-        <SidebarRail />
+
       </Sidebar>
 
       {/* Custom Bottom-Left Trigger */}

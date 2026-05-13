@@ -17,7 +17,7 @@ export async function getUserWithRole(): Promise<UserWithRole | null> {
         .eq("user_id", user.id)
         .single();
 
-    console.log(user_profile, error);
+    // console.log(user_profile, error);
     if (error || !user_profile) redirect("/auth/auth-code-error"); // keep error handling
 
     return {

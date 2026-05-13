@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withRole } from "@/lib/auth/api-guard";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { randomInt, randomUUID } from "node:crypto";
 import { sendManagerAccountCreatedEmail } from "@/services/notification/email_service";
@@ -53,18 +54,7 @@ async function cleanupDormManagerByUserId(userId: string) {
   await supabaseAdmin.auth.admin.deleteUser(userId);
 }
 
-export async function POST(req: NextRequest) {
-  // TO DO: Protect this API route. Make this only accessible to admin (if admin lang talaga pwede maka-access nito).
-  // const auth = await requireApiRole(['housing_admin']);
-
-  // if ("error" in auth) {
-  //   return NextResponse.json(
-  //     { error: auth.error },
-  //     { status: auth.status }
-  //   );
-  // }
-
-  // const user = auth.user;
+export const POST = withRole(['housing_admin', 'admin'], async (req: NextRequest) => {
   const { first_name, last_name, email, office_location } = await req.json();
   const normalizedEmail = String(email ?? "").trim().toLowerCase();
 
@@ -176,4 +166,4 @@ export async function POST(req: NextRequest) {
     },
     { status: 201 }
   );
-}
+});

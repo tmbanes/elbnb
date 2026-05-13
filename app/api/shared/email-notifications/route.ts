@@ -7,7 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin-client';
 const ALL_ROLES = ['student', 'guest', 'housing_admin', 'dormitory_manager'] as const;
 
 export const GET = withRole([...ALL_ROLES], async () => {
-  console.log('Thunder test email triggered');
+  // console.log('Thunder test email triggered');
 
   const { data: user, error: fetchError } = await supabaseAdmin
     .from('users')

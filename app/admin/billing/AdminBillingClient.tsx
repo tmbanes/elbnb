@@ -230,7 +230,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     if (editItems.length === 0) return showFeedback("warning", "Add at least one invoice line item.");
     if (editItems.some(item => item.amount <= 0)) return showFeedback("warning", "All line items must have an amount greater than 0.");
 
-    console.log('Saving invoice:', editingBill.billing_id, 'Items:', editItems, 'Amount:', editItems.reduce((s, i) => s + i.amount, 0));
+    // console.log('Saving invoice:', editingBill.billing_id, 'Items:', editItems, 'Amount:', editItems.reduce((s, i) => s + i.amount, 0));
 
     setIsSaving(true);
     try {

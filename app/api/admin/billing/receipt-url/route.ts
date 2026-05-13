@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
+import { withRole } from "@/lib/auth/api-guard";
 
-export async function GET(req: NextRequest) {
+export const GET = withRole(['housing_admin', 'admin'], async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const path = searchParams.get("path");
 
@@ -18,4 +19,4 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ signedUrl: data.signedUrl });
-}
+});
