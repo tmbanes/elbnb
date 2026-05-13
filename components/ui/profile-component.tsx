@@ -141,7 +141,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
       <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full h-[600px] sm:h-[700px] md:h-[500px]">
         {/* Second Folder (Accommodations/Management) */}
         <div
-          onClick={() => setActiveTab('accommodations')}
+          onClick={() => setActiveTab(activeTab === 'accommodations' ? 'personal' : 'accommodations')}
           className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 rounded-tl-[200px] sm:rounded-tl-[400px] md:rounded-tl-[700px] rounded-tr-[40px] sm:rounded-tr-[60px] md:rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations' ? 'h-full' : 'hover:bg-[#8bc453] hover:shadow-lg'}`}
           style={{ filter: 'url(#grain)', backgroundBlendMode: 'multiply' }}
         >
@@ -167,16 +167,16 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                     <div className="col-span-2 py-4 text-[#3E2723]/40 font-bold uppercase tracking-widest text-xs">No Active Accommodation Found</div>
                   )}
                   <div className="absolute right-4 sm:right-6 md:right-8 bottom-12 sm:bottom-22 z-[60] pointer-events-auto">
-            <Link 
-              href="/student/history"
-              className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
-            >
-              <History size={14} strokeWidth={3} />
-              View Past Accommodations
-            </Link>
-          </div>
+                    <Link
+                      href="/student/history"
+                      className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                    >
+                      <History size={14} strokeWidth={3} />
+                      View Past Accommodations
+                    </Link>
+                  </div>
                 </div>
-        
+
               )}
               {isGuest && (
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
@@ -196,9 +196,9 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                     <>
                       {renderLargeValue(managerAccommodation?.name || 'No Assigned Dormitory', "Assigned Accommodation")}
                       {renderValue(officeLocation, "Office Location")}
-                      
+
                       <div className="-mt-2 flex justify-end">
-                        <Link 
+                        <Link
                           href="/manager/housing"
                           className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
                         >
@@ -207,7 +207,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                         </Link>
                       </div>
                     </>
-                    
+
                   )}
                 </div>
               )}
@@ -241,7 +241,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                           {renderValue(college, 'College')}
                         </>
                       )}
-                  {isGuest && renderValue(validId, 'Valid ID Reference')}
+                      {isGuest && renderValue(validId, 'Valid ID Reference')}
                     </div>
                   </div>
                   <div className={isStudent ? "md:col-span-8" : "md:col-span-12"}>
@@ -336,9 +336,9 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
           </div>
 
           <div className="absolute right-4 md:right-6 bottom-6 flex gap-3 z-50">
-            <EditProfileDialog 
-              user={user} 
-              metadata={metadata} 
+            <EditProfileDialog
+              user={user}
+              metadata={metadata}
             />
           </div>
         </div>
