@@ -50,11 +50,8 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
     return () => listener?.subscription.unsubscribe();
   }, [supabase]);
 
-  useEffect(() => {
-    if (currentUser) {
-      router.push("/");
-    }
-  }, [currentUser, router]);
+  // Removed the useEffect watching currentUser to avoid client-side bouncing.
+  // The server-side /auth-callback route will handle the routing.
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -71,7 +68,8 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
       return;
     }
 
-    router.push("/");
+    setStatus("Login successful! Redirecting...");
+    router.push("/auth-callback");
   }
 
   const handleLogout = async () => {
@@ -91,8 +89,8 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
               <CardDescription className="text-[#F6F8D5]">
                 Enter your credentials to continue
               </CardDescription>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => router.push('/onboarding')}
                 className="absolute top-4 right-4 text-[#F6F8D5] hover:bg-white/10 hover:text-white rounded-full h-8 w-8 p-0"
               >
@@ -140,16 +138,16 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
               </CardContent>
             </form>
             <div className="flex justify-center flex-col items-center gap-4">
-          <Button 
-            variant="link" 
-            onClick={() => router.push('/onboarding')}
-            className="text-[#F6F8D5]/60 hover:text-[#F6F8D5] flex items-center gap-1 no-underline"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Go back
-          </Button>
-        </div>
-      </Card>
+              <Button
+                variant="link"
+                onClick={() => router.push('/onboarding')}
+                className="text-[#F6F8D5]/60 hover:text-[#F6F8D5] flex items-center gap-1 no-underline"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Go back
+              </Button>
+            </div>
+          </Card>
         )}
 
         {/* Session Card */}
