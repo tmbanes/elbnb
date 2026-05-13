@@ -73,17 +73,17 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="h-14 px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center text-white/80 hover:bg-white/10 hover:text-white data-[state=open]:bg-white/20 data-[state=open]:text-white transition-all duration-300 ease-out rounded-lg group cursor-pointer border-none outline-none"
+              className="h-14 px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center text-white/80 hover:bg-white/10 hover:text-white data-[state=open]:bg-white/20 data-[state=open]:text-white transition-all duration-300 ease-out rounded-lg group/user cursor-pointer border-none outline-none"
             >
-              <Avatar className="h-9 w-9 rounded-lg transition-transform duration-300 group-hover:scale-105 shadow-sm">
+              <Avatar className="h-9 w-9 rounded-full transition-transform duration-300 group-hover/user:scale-105 shadow-sm">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg bg-white/20 text-white font-medium">CN</AvatarFallback>
+                <AvatarFallback className="rounded-full bg-white/20 text-white font-medium">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight ml-1 group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold text-white tracking-wide">{user.name}</span>
                 <span className="truncate text-xs text-white/70">{user.email}</span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4 opacity-80 group-hover:opacity-100 transition-all duration-300 group-data-[collapsible=icon]:hidden" />
+              <ChevronsUpDown className="ml-auto size-4 opacity-80 group-hover/user:opacity-100 transition-all duration-300 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -94,9 +94,9 @@ export function NavUser({
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
+                <Avatar className="h-8 w-8 rounded-full">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg bg-[#7EB647]/10 text-[#3E2723] font-black uppercase">
+                  <AvatarFallback className="rounded-full bg-[#7EB647]/10 text-[#3E2723] font-black uppercase">
                     {user.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
