@@ -52,7 +52,15 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
 
   useEffect(() => {
     if (currentUser) {
-      router.push("/");
+      const role = (currentUser as any).user_metadata?.role;
+      const firstName = (currentUser as any).user_metadata?.first_name;
+      
+      if (!role || !firstName || firstName === "TBD") router.push("/complete-profile");
+      else if (role === "student") router.push("/student/dashboard");
+      else if (role === "housing_admin") router.push("/admin/dashboard");
+      else if (role === "dormitory_manager") router.push("/manager/dashboard");
+      else if (role === "guest") router.push("/guest/dashboard");
+      else router.push("/");
     }
   }, [currentUser, router]);
 
@@ -71,7 +79,8 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
       return;
     }
 
-    router.push("/");
+    // Let the useEffect handle the routing based on currentUser updates
+    // to ensure we have the role data
   }
 
   const handleLogout = async () => {
@@ -91,8 +100,8 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
               <CardDescription className="text-[#F6F8D5]">
                 Enter your credentials to continue
               </CardDescription>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => router.push('/onboarding')}
                 className="absolute top-4 right-4 text-[#F6F8D5] hover:bg-white/10 hover:text-white rounded-full h-8 w-8 p-0"
               >
@@ -140,16 +149,16 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
               </CardContent>
             </form>
             <div className="flex justify-center flex-col items-center gap-4">
-          <Button 
-            variant="link" 
-            onClick={() => router.push('/onboarding')}
-            className="text-[#F6F8D5]/60 hover:text-[#F6F8D5] flex items-center gap-1 no-underline"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Go back
-          </Button>
-        </div>
-      </Card>
+              <Button
+                variant="link"
+                onClick={() => router.push('/onboarding')}
+                className="text-[#F6F8D5]/60 hover:text-[#F6F8D5] flex items-center gap-1 no-underline"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Go back
+              </Button>
+            </div>
+          </Card>
         )}
 
         {/* Session Card */}

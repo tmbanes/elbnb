@@ -9,7 +9,7 @@ export default async function AdminProfilePage() {
     redirect("/");
   }
 
-  if (user.role !== "housing_admin") redirect("/dashboard");
+  if (user.role !== "housing_admin") redirect("/");
 
   const supabase = await createSupabaseServerClient();
   const { data: dbMetadata } = await supabase

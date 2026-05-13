@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
   // 1. Quick bypass for public/auth routes BEFORE expensive Auth logic
@@ -15,10 +15,6 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Optimization: Check for session cookie existence before calling getUser()
-  // This avoids a network trip to Supabase for truly unauthenticated requests on protected routes
-  const hasSession = req.cookies.get("sb-access-token") || req.cookies.get("supabase-auth-token");
-  
   let res = NextResponse.next({
     request: {
       headers: req.headers,
@@ -32,7 +28,7 @@ export async function proxy(req: NextRequest) {
       cookies: {
         getAll: () => req.cookies.getAll(),
         setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             req.cookies.set(name, value)
           );
           cookiesToSet.forEach(({ name, value, options }) =>
@@ -44,10 +40,12 @@ export async function proxy(req: NextRequest) {
   );
 
   // 3. Refresh session and get user
-  // This is only called for routes that aren't public
   const { data: { user } } = await supabase.auth.getUser();
 
-  // 4. Protected UI Routes
+  // Helper to determine if request is an API request
+  const isApiRequest = pathname.startsWith("/api/") || req.method !== "GET";
+
+  // 4. Protected Routes
   const isProtectedUIRoute =
     pathname.startsWith("/manage") ||
     pathname.startsWith("/accommodations") ||
@@ -59,6 +57,9 @@ export async function proxy(req: NextRequest) {
 
   if (isProtectedUIRoute) {
     if (!user) {
+      if (isApiRequest) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
       const onboardingUrl = new URL("/onboarding", req.url);
       onboardingUrl.searchParams.set("next", pathname);
       const redirectRes = NextResponse.redirect(onboardingUrl);
@@ -70,33 +71,31 @@ export async function proxy(req: NextRequest) {
 
     const role = user.user_metadata?.role;
 
-    if (pathname.startsWith("/admin") && role !== "housing_admin") {
-      return NextResponse.redirect(new URL("/onboarding", req.url));
-    }
-    if (pathname.startsWith("/manager") && role !== "dormitory_manager") {
-      return NextResponse.redirect(new URL("/onboarding", req.url));
-    }
-    if (pathname.startsWith("/student") && role !== "student") {
-      return NextResponse.redirect(new URL("/onboarding", req.url));
-    }
-    if (pathname.startsWith("/guest") && role !== "guest") {
-      return NextResponse.redirect(new URL("/onboarding", req.url));
-    }
-  }
+    // Fix: Ensure we check paths securely regardless of nesting (e.g. /dashboard/admin)
+    const isAdminRoute = pathname.startsWith("/admin") || pathname.includes("/admin/");
+    const isManagerRoute = pathname.startsWith("/manager") || pathname.includes("/manager/");
+    const isStudentRoute = pathname.startsWith("/student") || pathname.includes("/student/");
+    const isGuestRoute = pathname.startsWith("/guest") || pathname.includes("/guest/");
 
-  // 5. Protected API Routes
-  if (pathname.startsWith("/api/admin") || pathname.startsWith("/api/manager") || pathname.startsWith("/api/student")) {
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (isAdminRoute && role !== "housing_admin") {
+      return isApiRequest
+        ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        : NextResponse.redirect(new URL("/onboarding", req.url));
     }
-
-    if (pathname.startsWith("/api/admin")) {
-      const role = user.user_metadata?.role;
-      const isDocumentUrl = pathname === "/api/admin/applications/document-url";
-      
-      if (role !== "housing_admin" && !(isDocumentUrl && role === "dormitory_manager")) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
+    if (isManagerRoute && role !== "dormitory_manager") {
+      return isApiRequest
+        ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        : NextResponse.redirect(new URL("/onboarding", req.url));
+    }
+    if (isStudentRoute && role !== "student") {
+      return isApiRequest
+        ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        : NextResponse.redirect(new URL("/onboarding", req.url));
+    }
+    if (isGuestRoute && role !== "guest") {
+      return isApiRequest
+        ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        : NextResponse.redirect(new URL("/onboarding", req.url));
     }
   }
 

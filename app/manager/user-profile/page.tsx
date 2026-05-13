@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server-client'
 export default async function ManagerProfilePage() {
   const user = await getApiAuthenticatedUser()
   if (!user) redirect("/");
-  if (user.role !== "dormitory_manager") redirect("/dashboard");
+  if (user.role !== "dormitory_manager") redirect("/");
 
   const supabase = await createSupabaseServerClient();
   const { data: dbMetadata } = await supabase

@@ -44,12 +44,19 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
 
   useEffect(() => {
     if (currentUser) {
-      router.push("/");
+      const role = (currentUser as any).user_metadata?.role;
+      const firstName = (currentUser as any).user_metadata?.first_name;
+      
+      if (!role || !firstName || firstName === "TBD") setTimeout(() => router.push('/complete-profile'), 800);
+      else if (role === "student") setTimeout(() => router.push('/student/dashboard'), 800);
+      else if (role === "dormitory_manager") setTimeout(() => router.push('/manager/dashboard'), 800);
+      else if (role === "housing_admin") setTimeout(() => router.push('/admin/dashboard'), 800);
+      else setTimeout(() => router.push('/'), 800);
     }
   }, [currentUser, router]);
 
   async function handleGoogleLogin() {
-    await signInWithGoogle("/");
+    await signInWithGoogle("/complete-profile");
   }
 
   return (
@@ -66,9 +73,9 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
                 <CardDescription className="text-[#F6F8D5]">
                   Sign in with your Google account
                 </CardDescription>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => router.push('/onboarding')}
+                <Button
+                  variant="ghost"
+                  onClick={() => router.push('/complete-profile')}
                   className="absolute top-4 right-4 text-[#F6F8D5] hover:bg-white/10 hover:text-white rounded-full h-8 w-8 p-0"
                 >
                   <ChevronLeft className="h-5 w-5" />
@@ -84,8 +91,8 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
               </CardHeader>
             </Card>
             <div className="mt-8 flex justify-center">
-              <Button 
-                variant="link" 
+              <Button
+                variant="link"
                 onClick={() => router.push('/onboarding')}
                 className="text-[#F6F8D5]/60 hover:text-[#F6F8D5] flex items-center gap-1 no-underline font-semibold"
               >

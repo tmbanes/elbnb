@@ -38,7 +38,15 @@ export default function Auth() {
 
   useEffect(() => {
     if (currentUser != null) {
-      router.push("/");
+      const role = (currentUser as any).user_metadata?.role;
+      const firstName = (currentUser as any).user_metadata?.first_name;
+      
+      if (!role || !firstName || firstName === "TBD") router.push("/complete-profile");
+      else if (role === "student") router.push("/student/dashboard");
+      else if (role === "housing_admin") router.push("/admin/dashboard");
+      else if (role === "dormitory_manager") router.push("/manager/dashboard");
+      else if (role === "guest") router.push("/guest/dashboard");
+      else router.push("/");
     }
   }, [currentUser, router]);
 

@@ -136,7 +136,12 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
   const handleCTAClick = (e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setRipple({ active: true, x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-    setTimeout(() => router.push('/onboarding'), 800);
+    if (!initialUser) setTimeout(() => router.push('/onboarding'), 800);
+    else if (initialUser && !initialUser.role) setTimeout(() => router.push('/complete-profile'), 800);
+    else if (initialUser.role === "student") setTimeout(() => router.push('/student/dashboard'), 800);
+    else if (initialUser.role === "dormitory_manager") setTimeout(() => router.push('/manager/dashboard'), 800);
+    else if (initialUser.role === "housing_admin") setTimeout(() => router.push('/admin/dashboard'), 800);
+
   };
 
   const handleHeroMouseMove = (e: React.MouseEvent) => {
