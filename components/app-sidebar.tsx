@@ -52,9 +52,9 @@ const sidebarConfig = {
       { key: 0, title: "Dashboard", url: "/admin/dashboard", icon: PieChart },
       { key: 1, title: "Housing", url: "/admin/housing", icon: Building2 },
       { key: 2, title: "Managers", url: "/admin/housing/managers", icon: UserCheck2 },
-      { key: 3, title: "Billing", url: "/admin/billing", icon: Banknote },
+      { key: 3, title: "Applications", url: "/admin/applications", icon: Banknote },
       { key: 4, title: "Residents", url: "/admin/residents", icon: Users },
-      { key: 5, title: "Applications", url: "/admin/applications", icon: Newspaper },
+      { key: 5, title: "Billing", url: "/admin/billing", icon: Newspaper },
     ],
   },
 

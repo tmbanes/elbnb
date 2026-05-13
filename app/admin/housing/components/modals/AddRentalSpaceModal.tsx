@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DialogFooter } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Manager {
@@ -704,7 +704,12 @@ export default function AddRentalSpaceModal({
             onClick={handleSubmit}
             className="bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
           >
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Saving...</span>
+              </div>
+            ) : "Save Changes"}
           </Button>
         </div>
       ) : (
@@ -734,7 +739,12 @@ export default function AddRentalSpaceModal({
               onClick={handleSubmit}
               className="bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
             >
-              {loading ? "Saving..." : "Create Rental Space"}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              ) : "Create Rental Space"}
             </Button>
           )}
         </div>
