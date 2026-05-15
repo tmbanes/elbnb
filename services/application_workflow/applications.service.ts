@@ -13,7 +13,8 @@ export type ManualInvoiceItem = {
 function mapInvoiceKindToBillingType(kind: ManualInvoiceItem["kind"]) {
   if (kind === "security_deposit") return "security_deposit";
   if (kind === "reservation_fee") return "reservation_fee";
-  return "room_rent";
+  if (kind === "first_rental" || kind === "room_rent") return "room_rent";
+  return "other";
 }
 
 export async function getSingleApplicationService(user: User, id: string) {
@@ -346,25 +347,33 @@ export async function createInvoiceService(user: User, payload: any) {
 
   const periodDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
   const totalAmount = normalizedItems.reduce((sum: number, item: any) => sum + item.amount, 0);
-  const requiredAmount = requiredItems.reduce((sum: number, item: any) => sum + item.amount, 0);
 
-  // Delete any previous unpaid billing rows for this assignment before creating a fresh invoice.
-  // This prevents stacking duplicate rows that break the payment-details query.
+  // Delete any previous unpaid/draft billing rows for this assignment before creating a fresh invoice.
+  // This makes "Send Invoice" an effective upsert and prevents duplicate rows that break .maybeSingle() queries.
   await supabaseAdmin
     .from('billing')
     .delete()
     .eq('assignment_id', assignmentId)
     .in('status', ['unpaid', 'draft']);
 
+  // Create new invoice
   const { data: createdBilling, error: createBillingError } = await supabaseAdmin.from("billing").insert({
-    assignment_id: assignmentId, amount: totalAmount, billing_period_date: periodDate.toISOString(), due_date: dueDate.toISOString(), status: "unpaid", payment_method: "cash", internal_notes: "",
+    assignment_id: assignmentId, 
+    amount: totalAmount, 
+    billing_period_date: periodDate.toISOString(), 
+    due_date: dueDate.toISOString(), 
+    status: "unpaid", 
+    payment_method: "cash", 
+    internal_notes: note || "",
   }).select("billing_id").single();
 
   if (createBillingError || !createdBilling?.billing_id) throw new Error(createBillingError?.message ?? "Failed to create invoice.");
 
   const { error: insertItemsError } = await supabaseAdmin.from("billing_item").insert(
     normalizedItems.map((item: any) => ({
-      billing_id: createdBilling.billing_id, type: mapInvoiceKindToBillingType(item.kind), amount: item.amount,
+      billing_id: createdBilling.billing_id, 
+      type: mapInvoiceKindToBillingType(item.kind), 
+      amount: item.amount,
     }))
   );
 
@@ -372,6 +381,8 @@ export async function createInvoiceService(user: User, payload: any) {
     await supabaseAdmin.from("billing").delete().eq("billing_id", createdBilling.billing_id);
     throw new Error(insertItemsError.message);
   }
+
+  return { success: true, billing_id: createdBilling.billing_id };
 
   const actor = await getCurrentUserRole();
   if (actor) {

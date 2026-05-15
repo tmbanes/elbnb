@@ -12,7 +12,7 @@ export const GET = withRole(['student', 'guest'], async (req, { user }) => {
       return NextResponse.json({ error: 'Missing applicationId' }, { status: 400 });
     }
 
-    const { data: billing, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('billing')
       .select(`
         billing_id,
@@ -45,46 +45,51 @@ export const GET = withRole(['student', 'guest'], async (req, { user }) => {
       `)
       .eq('accommodation_assignment.application_id', applicationId)
       .eq('accommodation_assignment.user_id', user.user_id)
-      .maybeSingle();
+      .order('created_at', { ascending: false }).limit(1);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 404 });
-    }
-    if (!billing) {
-      return NextResponse.json({ error: 'Billing record not found.' }, { status: 404 });
+    const billingData = (data as any)?.[0];
+    if (error || !billingData) {
+      console.error('Payment Details Error:', error || 'No billing record found');
+      return NextResponse.json({ error: 'Invoice not found. Please contact the administrator if you believe this is an error.' }, { status: 404 });
     }
 
-    const receiptPath = billing.transaction_reference || billing.receipt_files?.[billing.receipt_files.length - 1] || null;
+    const receiptPath = billingData.transaction_reference || (Array.isArray(billingData.receipt_files) ? billingData.receipt_files[billingData.receipt_files.length - 1] : null);
     let receiptPreviewUrl: string | null = null;
 
     if (receiptPath) {
-      const { data: signed, error: signError } = await supabaseAdmin.storage
-        .from('payment_receipts')
-        .createSignedUrl(receiptPath, 60 * 10);
-      if (!signError) receiptPreviewUrl = signed.signedUrl;
+      try {
+        const { data: signed, error: signError } = await supabaseAdmin.storage
+          .from('payment_receipts')
+          .createSignedUrl(receiptPath, 60 * 10);
+        if (!signError) receiptPreviewUrl = signed.signedUrl;
+      } catch (err) {
+        console.error('Signed URL Error:', err);
+      }
     }
 
-    const items = Array.isArray(billing.billing_item)
-      ? billing.billing_item
-      : billing.billing_item
-        ? [billing.billing_item]
+    const items = Array.isArray(billingData.billing_item)
+      ? billingData.billing_item
+      : billingData.billing_item
+        ? [billingData.billing_item]
         : [];
 
     return NextResponse.json({
-      billingId: billing.billing_id,
-      amount: billing.amount,
-      status: billing.status,
-      billingPeriodDate: billing.billing_period_date,
-      dueDate: billing.due_date,
-      paymentMethod: billing.payment_method,
+      billingId: billingData.billing_id,
+      amount: Number(billingData.amount || 0),
+      status: billingData.status || 'unpaid',
+      billingPeriodDate: billingData.billing_period_date,
+      dueDate: billingData.due_date,
+      paymentMethod: billingData.payment_method || 'cash',
       receiptPath,
       receiptPreviewUrl,
-      breakdown: items.map((item: any) => ({
-        label: item.type,
-        amount: Number(item.amount || 0),
-      })),
-      summary: { total: Number(billing.amount || 0) },
-      applicant: billing.accommodation_assignment?.users ?? null,
+      breakdown: items.length > 0 
+        ? items.map((item: any) => ({
+            label: item.type || 'Miscellaneous Fee',
+            amount: Number(item.amount || 0),
+          }))
+        : [{ label: 'Total Outstanding Balance', amount: Number(billingData.amount || 0) }],
+      summary: { total: Number(billingData.amount || 0) },
+      applicant: billingData.accommodation_assignment?.users ?? null,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to load payment details.';

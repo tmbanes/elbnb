@@ -14,7 +14,8 @@ type ManualInvoiceItem = {
 function mapInvoiceKindToBillingType(kind: ManualInvoiceItem["kind"]) {
   if (kind === "security_deposit") return "security_deposit";
   if (kind === "reservation_fee") return "reservation_fee";
-  return "room_rent";
+  if (kind === "first_rental" || kind === "room_rent") return "room_rent";
+  return "other";
 }
 
 export const GET = withRole(["housing_admin", "admin"], async (req: NextRequest) => {
@@ -576,7 +577,49 @@ export const POST = withRole(["housing_admin", "admin"], async (req: NextRequest
     const totalAmount = normalizedItems.reduce((sum, item) => sum + item.amount, 0);
     const requiredAmount = requiredItems.reduce((sum, item) => sum + item.amount, 0);
 
-    const internalNotes = "";
+    const internalNotes = note || "";
+
+    // Check for existing unpaid invoice
+    const { data: existingBilling } = await supabaseAdmin
+      .from('billing')
+      .select('billing_id')
+      .eq('assignment_id', assignmentId)
+      .in('status', ['unpaid', 'draft'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingBilling?.billing_id) {
+      // Update existing
+      const { error: updateError } = await supabaseAdmin
+        .from('billing')
+        .update({
+          amount: totalAmount,
+          due_date: dueDate.toISOString(),
+          billing_period_date: periodDate.toISOString(),
+          internal_notes: internalNotes,
+        })
+        .eq('billing_id', existingBilling.billing_id);
+
+      if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+
+      // Replace items
+      await supabaseAdmin.from('billing_item').delete().eq('billing_id', existingBilling.billing_id);
+      await supabaseAdmin.from('billing_item').insert(
+        normalizedItems.map((item) => ({
+          billing_id: existingBilling.billing_id,
+          type: mapInvoiceKindToBillingType(item.kind),
+          amount: item.amount,
+        }))
+      );
+
+      return NextResponse.json({
+        success: true,
+        billing_id: existingBilling.billing_id,
+        mode: "updated",
+        required_to_secure_slot_total: requiredAmount,
+      });
+    }
 
     const { data: createdBilling, error: createBillingError } = await supabaseAdmin
       .from("billing")

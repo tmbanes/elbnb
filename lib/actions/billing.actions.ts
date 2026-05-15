@@ -70,6 +70,7 @@ export async function adminUpdateInvoiceAction(
   if (result?.error) throw new Error(toErrorMessage(result.error));
 
   revalidatePath("/admin/billing");
+  revalidatePath("/admin/dashboard/billing");
   revalidatePath("/student/billing");
   revalidatePath("/guest/billing");
   return result;
@@ -79,6 +80,8 @@ export async function adminApproveReceiptAction(billingId: string, adminId: stri
   const result = await approveReceipt("admin", billingId, adminId);
   if (result?.error) throw new Error(toErrorMessage(result.error));
   revalidatePath("/admin/billing");
+  revalidatePath("/admin/dashboard/billing");
+  revalidatePath("/admin/applications");
   revalidatePath("/student/billing");
   revalidatePath("/guest/billing");
   return result;
@@ -88,6 +91,7 @@ export async function adminRejectReceiptAction(billingId: string, adminId: strin
   const result = await rejectReceipt("admin", billingId, adminId);
   if (result?.error) throw new Error(toErrorMessage(result.error));
   revalidatePath("/admin/billing");
+  revalidatePath("/admin/dashboard/billing");
   revalidatePath("/student/billing");
   revalidatePath("/guest/billing");
   return result;
@@ -97,8 +101,38 @@ export async function adminCreateBillAction(
   billingData: BillingCreation,
   items: { type: BillingItemType; amount: number }[]
 ) {
+  // First, check if an invoice already exists for this assignment
+  if (billingData.assignment_id) {
+    const { data: existing, error: fetchError } = await supabaseAdmin
+      .from("billing")
+      .select("billing_id")
+      .eq("assignment_id", billingData.assignment_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (!fetchError && existing?.billing_id) {
+      // Invoice already exists, update it instead of creating a new one
+      const updateResult = await updateAdminInvoiceWithItems("admin", existing.billing_id, {
+        internal_notes: billingData.internal_notes || undefined,
+        due_date: billingData.due_date instanceof Date ? billingData.due_date.toISOString() : billingData.due_date,
+        payment_method: billingData.payment_method,
+      }, items);
+      
+      if (!updateResult?.error) {
+        (updateResult as any).mode = "updated";
+        revalidatePath("/admin/dashboard/billing");
+        revalidatePath("/admin/billing");
+        revalidatePath("/student/billing");
+        revalidatePath("/guest/billing");
+        return updateResult;
+      }
+    }
+  }
+
   const result = await createBillingWithItems("admin", billingData, items);
   if (result?.error) throw new Error(toErrorMessage(result.error));
+  revalidatePath("/admin/dashboard/billing");
   revalidatePath("/admin/billing");
   revalidatePath("/student/billing");
   revalidatePath("/guest/billing");
