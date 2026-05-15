@@ -15,9 +15,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ChevronLeft, Home, Eye, EyeOff } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const label_style = "block text-xs font-semibold uppercase tracking-wider text-[#F6F8D5]/80 font-[family-name:var(--font-archivo)]";
+//style constants
+const label_style = "block text-xs font-semibold uppercase tracking-wider text-slate-300"
+
 const field_style =
   "rounded-full border-none bg-[#fcf4d9] px-4 py-1.5 text-base " +
   "text-[#2d1a12] placeholder-[#2d1a12]/30 shadow-sm " +
@@ -214,33 +223,42 @@ export default function SignUpWithEmailSetup({ user: _initialUser }: { user: Use
                 </div>
               </div>
 
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email" className={label_style}>Email</Label>
-                  <Input className={field_style} id="email" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="name@up.edu.ph" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password" className={label_style}>Password</Label>
-                  <div className="relative">
-                    <Input
-                      className={field_style + " pr-10"}
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={handleChange}
-                      placeholder="Enter your password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(p => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2d1a12]/50 hover:text-[#2d1a12] transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email" className={label_style}>Email</Label>
+                <Input
+                  className={field_style}
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="name@up.edu.ph"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="password" className={label_style}>Password</Label>
+                <div className="relative">
+                  <Input
+                    className={`${field_style} pr-10`}
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2d1a12]/50 hover:text-[#2d1a12]"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
               </div>
+            </div>
 
               {status && (
                 <p className={`rounded-full px-4 py-2 text-center text-sm font-medium ${status.includes("successful") ? "bg-green-500/20 text-green-100" : "bg-red-500/20 text-red-200"}`}>

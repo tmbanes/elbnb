@@ -30,7 +30,12 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
   const supabase = getSupabaseBrowserClient();
   const [currentUser, setCurrentUser] = useState<User | null>(user);
   const router = useRouter();
-  const [formData, setFormData] = useState({ email: "", password: "" });
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -148,7 +153,7 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
                   <Label className={label_style}>Password</Label>
                   <div className="relative">
                     <Input
-                      className={field_style + " pr-10"}
+                      className={`${field_style} pr-10`}
                       name="password"
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
@@ -158,10 +163,10 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(p => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2d1a12]/50 hover:text-[#2d1a12] transition-colors"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2d1a12]/50 hover:text-[#2d1a12]"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
                 </div>

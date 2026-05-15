@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser-client'
 import { User } from '@/types/user.types'
+import { Archivo } from "next/font/google";
+
+const archivo = Archivo({ subsets: ["latin"] });
 
 const STYLES = {
   gradients: {
@@ -14,10 +17,18 @@ const STYLES = {
 }
 
 export default function Auth() {
-  const [openPanel, setOpenPanel] = useState<"upper" | "lower" | null>(null)
+  const [upperOpen, setUpperOpen] = useState(false);
+  const [lowerOpen, setLowerOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLowerOpen(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -26,12 +37,23 @@ export default function Auth() {
     return () => listener?.subscription.unsubscribe();
   }, [supabase]);
 
-  const toggleUpper = () => setOpenPanel((prev) => (prev === "upper" ? null : "upper"))
-  const toggleLower = () => setOpenPanel((prev) => (prev === "lower" ? null : "lower"))
-  const goTo = (path: string) => router.push(path)
+  useEffect(() => {
+    if (currentUser != null) {
+      router.push("/");
+    }
+  }, [currentUser, router]);
 
-  const upperOpen = openPanel === "upper"
-  const lowerOpen = openPanel === "lower"
+  const toggleUpper = () => {
+    setUpperOpen((prev) => !prev);
+  }
+
+  const toggleLower = () => {
+    setLowerOpen((prev) => !prev);
+  }
+
+  const goTo = (path: string) => {
+    router.push(path)
+  }
 
   return (
     <div
@@ -212,6 +234,9 @@ export default function Auth() {
                       Log In with Google
                     </button>
                   </div>
+                  <p className="text-sm mt-2 text-[#1e1e1e]">
+                    New Here? <button type="button" onClick={() => { setUpperOpen(true); setLowerOpen(false); }} className="underline font-bold hover:text-[#3e2319]">Click Here</button> to Register
+                  </p>
                 </>
               )}
             </div>
