@@ -17,15 +17,14 @@ const STYLES = {
 }
 
 export default function Auth() {
-  const [upperOpen, setUpperOpen] = useState(false);
-  const [lowerOpen, setLowerOpen] = useState(false);
+  const [openPanel, setOpenPanel] = useState<"upper" | "lower" | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setLowerOpen(true);
+      setOpenPanel("upper");
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
@@ -44,12 +43,15 @@ export default function Auth() {
   }, [currentUser, router]);
 
   const toggleUpper = () => {
-    setUpperOpen((prev) => !prev);
+    setOpenPanel((prev) => (prev === "upper" ? null : "upper"));
   }
 
   const toggleLower = () => {
-    setLowerOpen((prev) => !prev);
+    setOpenPanel((prev) => (prev === "lower" ? null : "lower"));
   }
+
+  const upperOpen = openPanel === "upper";
+  const lowerOpen = openPanel === "lower";
 
   const goTo = (path: string) => {
     router.push(path)
@@ -168,6 +170,9 @@ export default function Auth() {
                   <button type="button" onClick={() => goTo('/signup')} className="px-20 py-3 bg-[#fbbc05] text-[#1a1a1a] rounded-full font-semibold hover:bg-[#fcf4d9] transition-all">
                     Sign Up
                   </button>
+                  <p className="text-sm mt-2 text-[#fcf4d9]">
+                    Already have an account? <button type="button" onClick={() => setOpenPanel("lower")} className="underline font-bold hover:text-[#fcf4d9]">Click Here</button> to Login.
+                  </p>
                 </>
               )}
             </div>
@@ -214,7 +219,7 @@ export default function Auth() {
               </div>
             </div>
 
-            <div className={`absolute inset-0 z-0 flex flex-col items-center justify-center p-4 gap-4 transition-colors duration-500 ${lowerOpen ? 'bg-[#87CEEB]' : 'bg-transparent'}`}>
+            <div className={`absolute inset-0 z-0 flex flex-col items-center justify-center p-4 gap-4 transition-colors duration-500 ${lowerOpen ? 'bg-[#fcf4d9]' : 'bg-transparent'}`}>
               {lowerOpen && (
                 <>
                   <h2 className="text-xl font-bold text-[#1e1e1e] text-center">Choose Login Method</h2>
@@ -229,13 +234,13 @@ export default function Auth() {
                     <button
                       type="button"
                       onClick={() => goTo('/google-login')}
-                      className="w-full max-w-[240px] h-10 px-4 bg-[#fbbc05] text-[#2d1a1a] rounded-full hover:bg-[#fcf4d9] transition-all text-sm font-medium"
+                      className="w-full max-w-[240px] h-10 px-4 bg-[#fbbc05] text-[#2d1a1a] rounded-full hover:bg-[#f9d776] transition-all text-sm font-medium"
                     >
                       Log In with Google
                     </button>
                   </div>
                   <p className="text-sm mt-2 text-[#1e1e1e]">
-                    New Here? <button type="button" onClick={() => { setUpperOpen(true); setLowerOpen(false); }} className="underline font-bold hover:text-[#3e2319]">Click Here</button> to Register
+                    New Here? <button type="button" onClick={() => setOpenPanel("upper")} className="underline font-bold hover:text-[#3e2319]">Click Here</button> to Register.
                   </p>
                 </>
               )}

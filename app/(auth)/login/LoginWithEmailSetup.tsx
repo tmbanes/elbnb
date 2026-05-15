@@ -35,7 +35,6 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
     email: "",
     password: "",
   });
-  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -111,11 +110,12 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
       />
 
       {/* Card */}
-      {!currentUser && (
-        <div className="relative z-10 w-full max-w-md px-4 space-y-4">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <img src="/logo/logo_house.png" alt="ELbnb" className="h-12 w-auto" />
-            <img src="/logo/logo_text.png" alt="ELbnb" className="h-8 w-auto object-contain" />
+      {!currentUser && (      
+       <div className="relative z-10 w-full max-w-md px-4 space-y-4">
+          <div className="flex items-center justify-center relative z-20 translate-y-8">
+            <div className="w-20 h-20 bg-[#F6F8D5] border-4 border-[#3e2319] rounded-full flex items-center justify-center shadow-lg" style={{ filter: 'url(#grain-login)' }}>
+              <img src="/logo/logo_house.png" alt="ELbnb" className="h-10 w-auto" />
+            </div>
           </div>
 
           <Card className="w-full bg-[#5591AB] border-0 shadow-2xl rounded-3xl overflow-hidden">
@@ -126,13 +126,6 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
               <CardDescription className="text-[#F6F8D5]/80 font-[family-name:var(--font-archivo)]">
                 Enter your credentials to continue
               </CardDescription>
-              <Button
-                variant="ghost"
-                onClick={() => router.push("/onboarding")}
-                className="absolute top-4 right-4 text-[#F6F8D5] hover:bg-white/10 hover:text-white rounded-full h-8 w-8 p-0"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
             </CardHeader>
 
             <form onSubmit={handleSubmit}>

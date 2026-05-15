@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ChevronLeft, Eye, EyeOff } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff, Home } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -173,10 +173,11 @@ export default function SignUpWithEmailSetup({ user: _initialUser }: { user: Use
 
       {/* Card */}
       <div className="relative z-10 w-full max-w-md px-4 py-8 space-y-4">
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <img src="/logo/logo_house.png" alt="ELbnb" className="h-12 w-auto" />
-          <img src="/logo/logo_text.png" alt="ELbnb" className="h-8 w-auto object-contain" />
-        </div>
+          <div className="flex items-center justify-center relative z-20 translate-y-8">
+            <div className="w-20 h-20 bg-[#F6F8D5] border-4 border-[#3e2319] rounded-full flex items-center justify-center shadow-lg" style={{ filter: 'url(#grain-signup)' }}>
+              <img src="/logo/logo_house.png" alt="ELbnb" className="h-10 w-auto" />
+            </div>
+          </div>
 
         <Card className="w-full bg-[#5591AB] border-0 shadow-2xl rounded-3xl overflow-hidden">
           <CardHeader className="pb-2">
@@ -186,13 +187,6 @@ export default function SignUpWithEmailSetup({ user: _initialUser }: { user: Use
             <CardDescription className="text-[#F6F8D5]/80 font-[family-name:var(--font-archivo)]">
               Choose your role and credentials to begin
             </CardDescription>
-            <Button
-              variant="ghost"
-              onClick={() => router.push("/onboarding")}
-              className="absolute top-4 right-4 text-[#F6F8D5] hover:bg-white/10 hover:text-white rounded-full h-8 w-8 p-0"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
           </CardHeader>
 
           <CardContent>
@@ -270,20 +264,20 @@ export default function SignUpWithEmailSetup({ user: _initialUser }: { user: Use
                 {loading ? "Signing up..." : "Create account"}
               </Button>
             </form>
-
-            <div className="mt-5 flex items-center justify-center gap-4">
-              <Button variant="link" onClick={() => router.push("/onboarding")} className="text-[#F6F8D5]/80 hover:text-[#F6F8D5] flex items-center gap-1 no-underline font-bold font-[family-name:var(--font-archivo)]">
-                <ChevronLeft className="h-4 w-4" />
-                Go back
-              </Button>
-              <span className="text-[#F6F8D5]/30 font-bold">•</span>
-              <Button variant="link" onClick={() => router.push("/")} className="text-[#F6F8D5]/80 hover:text-[#F6F8D5] flex items-center gap-1 no-underline font-bold font-[family-name:var(--font-archivo)]">
-                <Home className="h-4 w-4" />
-                Back to Home
-              </Button>
-            </div>
           </CardContent>
         </Card>
+          <div className="flex items-center justify-center gap-4">
+            <Button variant="link" onClick={() => router.push("/onboarding")} className="text-[#3E2723]/80 hover:text-[#3E2723] flex items-center gap-1 no-underline font-bold font-[family-name:var(--font-archivo)]">
+              <ChevronLeft className="h-4 w-4" />
+              Go back
+            </Button>
+            <span className="text-[#3E2723]/30 font-bold">•</span>
+            <Button variant="link" onClick={() => router.push("/")} className="text-[#3E2723]/80 hover:text-[#3E2723] flex items-center gap-1 no-underline font-bold font-[family-name:var(--font-archivo)]">
+              <Home className="h-4 w-4" />
+              Back to Home
+            </Button>
+          </div>
+
       </div>
 
       <style jsx global>{`
