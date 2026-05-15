@@ -2,7 +2,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { userProfileService } from "@/services/user_profile";
-import { getStudentBillsDetailed } from "@/services/user-services";
+import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation";
 import { redirect } from "next/navigation";
 import GuestDashboardUI from "./guest-dashboard-ui";
 import { getApiAuthenticatedUser } from "@/lib/auth/session";
@@ -24,7 +24,8 @@ export default async function GuestDashboardPage() {
     applicationsRes,
     historyRes,
     billsRes,
-    notificationsRes
+    notificationsRes,
+    accommodationsRes
   ] = await Promise.all([
     userProfileService.getProfile(user.user_id),
     supabase
@@ -45,7 +46,8 @@ export default async function GuestDashboardPage() {
     userProfileService.getAccommodationHistory(user.user_id),
     userProfileService.getDocuments(user.user_id),
     getStudentBillsDetailed(user.user_id),
-    userProfileService.getNotifications(user.user_id)
+    userProfileService.getNotifications(user.user_id),
+    UnitAccomodationsDisplayService.listAccomodations("guest")
   ]);
 
   // Resolve images for active residency
@@ -81,6 +83,7 @@ export default async function GuestDashboardPage() {
       initialHistory={resolvedHistory}
       initialBills={billsRes.data || []}
       notifications={notificationsRes.data || []}
+      accommodations={accommodationsRes.data || []}
     />
 
   );

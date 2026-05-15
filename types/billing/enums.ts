@@ -4,6 +4,7 @@ export enum BillingStatus {
   UNPAID = "unpaid",
   OVERDUE = "overdue",
   PAID_LATE = "paid_late",
+  CANCELLED = "cancelled",
 
   // for receipt verification flow
   PENDING_VERIFICATION = "pending_verification",

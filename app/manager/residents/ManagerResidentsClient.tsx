@@ -4,6 +4,8 @@ import { Building2, ChevronLeft, ChevronRight, Filter, Mail, MapPin, Search, Arr
 import { Archivo, Archivo_Black } from "next/font/google";
 import { useCallback, useEffect, useState } from "react";
 import { useRealtimeSync } from "@/lib/realtime-sync";
+import { useRouter } from "next/navigation";
+import { updateResidentStatus } from "@/lib/actions/residents.actions";
 
 const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
@@ -60,11 +62,11 @@ interface ManagerResidentsClientProps {
 }
 
 export default function ManagerResidentsClient({ initialResidents, initialAccommodations }: ManagerResidentsClientProps) {
-  const [residents, setResidents] = useState<Resident[]>(initialResidents);
-  const [accommodations, setAccommodations] = useState(initialAccommodations);
-  const [loading, setLoading] = useState(false);
+  const residents = initialResidents;
+  const accommodations = initialAccommodations;
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(initialResidents[0]?.assignment_id || null);
+  const router = useRouter();
 
   // Filters
   const [search, setSearch] = useState("");
@@ -78,23 +80,9 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
   const [actionLoading, setActionLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
-  const fetchResidents = useCallback(async () => {
-    try {
-      setError(null);
-      const res = await fetch("/api/manager/residents");
-      if (!res.ok) throw new Error("Failed to refresh residents");
-      const json = await res.json();
-      setResidents(json.data ?? []);
-      if (Array.isArray(json.accommodations)) setAccommodations(json.accommodations);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }, []);
-
   // Real-time sync for assignment updates
   useRealtimeSync('accommodation_assignment', undefined, '*', () => {
-    fetchResidents();
+    router.refresh();
   });
 
   // ── Derived data ───────────────────────────────────────────────────────────
@@ -119,24 +107,20 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
     if (!selected || !confirmAction) return;
     setActionLoading(true);
     try {
-      const res = await fetch("/api/manager/residents", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          assignment_id: selected.assignment_id,
-          action: confirmAction,
-          date: actionDate,
-        }),
-      });
-      if (!res.ok) {
-        const j = await res.json();
-        throw new Error(j.error ?? "Action failed");
+      const result = await updateResidentStatus(
+        selected.assignment_id,
+        confirmAction as "record-move-in" | "record-move-out",
+        actionDate
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error ?? "Action failed");
       }
+
       setSuccessMsg(
         confirmAction === "record-move-out" ? "Move-out recorded" : "Move-in recorded"
       );
       setConfirmAction(null);
-      await fetchResidents();
     } catch (e) {
       setError((e as Error).message);
     } finally {

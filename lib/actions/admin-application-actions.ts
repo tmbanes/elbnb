@@ -56,7 +56,7 @@ export interface ApplicationInvoiceItemInput {
 export async function fetchAdminApplications(): Promise<{
   applications: AdminApplication[];
 }> {
-  const res = await fetch("/api/admin/applications", {
+  const res = await fetch("/api/applications", {
     method: "GET",
     credentials: "include",
   });
@@ -74,7 +74,7 @@ export async function processApplication(
   action: AdminAction,
   unit_id?: string
 ): Promise<void> {
-  const res = await fetch("/api/admin/applications", {
+  const res = await fetch("/api/applications", {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -88,7 +88,7 @@ export async function processApplication(
 }
 
 export async function getApplicationById(id: string) {
-  const res = await fetch(`/api/admin/applications?id=${id}`, {
+  const res = await fetch(`/api/applications?id=${id}`, {
     method: "GET",
   });
 
@@ -109,7 +109,7 @@ export async function sendApplicationInvoice(
     unit_id?: string;
   },
 ) {
-  const res = await fetch("/api/admin/applications", {
+  const res = await fetch("/api/applications", {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

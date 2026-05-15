@@ -1,11 +1,8 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-    Bell, Building2, History, FileText,
-    Folder, Download, Plus, ArrowRight, LogOut
+    Building2, History, FileText, ArrowRight
 } from "lucide-react";
 import { Archivo } from "next/font/google";
 import { Accommodation } from "@/types/accommodation_units";
@@ -141,86 +138,7 @@ export default function GuestDashboardUI({
         <div className={`min-h-screen bg-[#F6F8D5] p-6 lg:p-10 text-slate-800 flex flex-col items-center ${archivo.className}`}>
             <div className="w-full max-w-[1100px]">
                 {/* TOP BAR */}
-                <header className="flex flex-col-reverse md:flex-row justify-end items-start md:items-center w-full mb-12 gap-4">
-                    <div className="flex items-center gap-6 self-end md:self-auto">
-                        {/* NOTIFICATIONS BELL */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowNotifications(!showNotifications)}
-                                className="relative text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
-                            >
-                                <Bell className="w-5 h-5" />
-                                {notifications.filter(n => !n.is_read).length > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#A05C5C] text-white text-[9px] font-bold rounded-full ring-2 ring-[#FDFBF7] flex items-center justify-center">
-                                        {notifications.filter(n => !n.is_read).length}
-                                    </span>
-                                )}
-                            </button>
-
-                            {showNotifications && (
-                                <div className="absolute right-0 top-full mt-4 w-80 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[60] overflow-hidden">
-                                    <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
-                                        <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
-                                        <button
-                                            className="text-[10px] font-bold text-[#668E42] uppercase tracking-wider hover:text-[#557F44] transition-colors"
-                                            onClick={() => {
-                                                if (typeof window !== 'undefined') {
-                                                    const existingIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
-                                                    const allIds = Array.from(new Set([...existingIds, ...notifications.map(n => n.id)]));
-                                                    localStorage.setItem('read_notifications', JSON.stringify(allIds));
-                                                }
-                                                setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-                                            }}
-                                        >
-                                            Mark all as read
-                                        </button>
-                                    </div>
-                                    <div className="max-h-[350px] overflow-y-auto">
-                                        {notifications.length > 0 ? (
-                                            notifications.map((n, i) => (
-                                                <div
-                                                    key={i}
-                                                    className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer group"
-                                                    onClick={() => {
-                                                        const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
-                                                        if (!readIds.includes(n.id)) {
-                                                            readIds.push(n.id);
-                                                            localStorage.setItem('read_notifications', JSON.stringify(readIds));
-                                                        }
-                                                        setNotifications(prev => prev.map((notif, idx) =>
-                                                            idx === i ? { ...notif, is_read: true } : notif
-                                                        ));
-                                                        if (n.link) router.push(n.link);
-                                                    }}
-                                                >
-                                                    <div className="flex gap-3">
-                                                        <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-[#668E42]' : 'bg-transparent'}`}></div>
-                                                        <div>
-                                                            <p className="text-[13px] font-bold text-slate-900 mb-1 group-hover:text-[#668E42] transition-colors">{n.title}</p>
-                                                            <p className="text-[12px] text-slate-500 leading-relaxed mb-1.5">{n.message}</p>
-                                                            <p className="text-[10px] text-slate-400 font-medium">{new Date(n.created_at || Date.now()).toLocaleDateString()}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="py-10 text-center">
-                                                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                    <Bell className="w-5 h-5 text-slate-300" />
-                                                </div>
-                                                <p className="text-slate-400 text-xs italic">No notifications yet.</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <button
-                                        className="w-full py-3 text-[11px] font-bold text-slate-500 hover:text-[#668E42] transition-colors border-t border-slate-50"
-                                        onClick={() => { setShowNotifications(false); router.push('/guest/notifications'); }}
-                                    >
-                                        View All Activity
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                <GuestDashboardHeader profile={profile} initialNotifications={notifications} />
 
                         {/* PROFILE / LOGOUT DROPDOWN */}
                         <div className="relative">
@@ -343,12 +261,12 @@ export default function GuestDashboardUI({
                                                         You are not currently assigned to any accommodation. Browse our available options to find your next stay.
                                                     </p>
                                                 </div>
-                                                <button
-                                                    onClick={() => router.push("/guest/accommodations")}
+                                                <Link
+                                                    href="/guest/accommodations"
                                                     className="group shrink-0 w-full md:w-auto h-auto py-3 px-6 rounded-xl font-bold text-[12px] bg-[#668E42] hover:bg-[#557F44] text-white flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-[0.98] border-none outline-none"
                                                 >
                                                     Browse Options <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                                </button>
+                                                </Link>
                                             </div>
                                         </div>
                                     )}

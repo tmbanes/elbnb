@@ -157,7 +157,7 @@ function ApplicationFormContent() {
     }
 
     try {
-      const response = await fetch('/api/student/applications', {
+      const response = await fetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

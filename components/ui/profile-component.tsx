@@ -31,55 +31,14 @@ const nunito = Nunito({
 interface ProfileComponentProps {
   user: User;
   metadata: any;
+  currentAssignment?: any;
+  managerAccommodation?: any;
 }
 
-export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
+export function ProfileComponent({ user, metadata, currentAssignment, managerAccommodation }: ProfileComponentProps) {
   const [uploadPhotoOpen, setUploadPhotoOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'accommodations'>('personal');
-  const [currentAssignment, setCurrentAssignment] = useState<any>(null);
-  const [loadingAssignment, setLoadingAssignment] = useState(false);
-  const [managerAccommodation, setManagerAccommodation] = useState<any>(null);
-  const [loadingManagerAccom, setLoadingManagerAccom] = useState(false);
 
-  useEffect(() => {
-    if (user.role === 'student') {
-      const fetchAssignment = async () => {
-        setLoadingAssignment(true);
-        try {
-          const res = await fetch('/api/student/assignments/history');
-          const result = await res.json();
-          if (result.success && result.data) {
-            // Find the most recent active assignment
-            const active = result.data.find((a: any) => a.assignment_status === 'active');
-            setCurrentAssignment(active);
-          }
-        } catch (err) {
-          console.error("Failed to fetch assignments:", err);
-        } finally {
-          setLoadingAssignment(false);
-        }
-      };
-      fetchAssignment();
-    }
-
-    if (user.role === 'dormitory_manager') {
-      const fetchManagerAccom = async () => {
-        setLoadingManagerAccom(true);
-        try {
-          const res = await fetch('/api/manager/dashboard');
-          const result = await res.json();
-          if (result.accommodation) {
-            setManagerAccommodation(result.accommodation);
-          }
-        } catch (err) {
-          console.error("Failed to fetch manager accommodation:", err);
-        } finally {
-          setLoadingManagerAccom(false);
-        }
-      };
-      fetchManagerAccom();
-    }
-  }, [user.role]);
 
   const role = user.role;
   const isStudent = role === 'student';
@@ -158,9 +117,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
             <div className="grid grid-cols-1 gap-y-8 w-full">
               {isStudent && (
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
-                  {loadingAssignment ? (
-                    <div className="col-span-2 py-4 animate-pulse text-[#3E2723]/40 font-bold uppercase tracking-widest text-xs">Loading Assignment Data...</div>
-                  ) : currentAssignment ? (
+                  {currentAssignment ? (
                     <>
                       {renderValue(currentAssignment.accommodation?.accommodation_name || 'N/A', 'Dormitory Name')}
                       {renderValue(currentAssignment.unit?.unit_number || 'N/A', 'Unit Number')}
@@ -194,25 +151,18 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
               )}
               {isManager && (
                 <div className="grid grid-cols-1 gap-y-5 w-full">
-                  {loadingManagerAccom ? (
-                    <div className="py-4 animate-pulse text-[#3E2723]/40 font-bold uppercase tracking-widest text-xs">Loading Management Data...</div>
-                  ) : (
-                    <>
-                      {renderLargeValue(managerAccommodation?.name || 'No Assigned Dormitory', "Assigned Accommodation")}
-                      {renderValue(officeLocation, "Office Location")}
+                  {renderLargeValue(managerAccommodation?.name || 'No Assigned Dormitory', "Assigned Accommodation")}
+                  {renderValue(officeLocation, "Office Location")}
 
-                      <div className="-mt-2 flex justify-end">
-                        <Link
-                          href="/manager/housing"
-                          className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
-                        >
-                          <Building2 size={14} strokeWidth={3} />
-                          Manage Housing
-                        </Link>
-                      </div>
-                    </>
-
-                  )}
+                  <div className="-mt-2 flex justify-end">
+                    <Link
+                      href="/manager/housing"
+                      className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                    >
+                      <Building2 size={14} strokeWidth={3} />
+                      Manage Housing
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>

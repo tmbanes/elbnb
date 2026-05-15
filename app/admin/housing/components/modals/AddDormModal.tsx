@@ -77,7 +77,7 @@ export default function AddDormModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/admin/housing/managers")
+    fetch("/api/housing/managers")
       .then((r) => r.json())
       .then(setManagers)
       .catch(() => { });
@@ -204,8 +204,8 @@ export default function AddDormModal({
       };
 
       const endpoint = isEditing
-        ? `/api/admin/housing/dorms?id=${existingDorm.accommodation_id}`
-        : "/api/admin/housing/dorms";
+        ? `/api/housing/dorms?id=${existingDorm.accommodation_id}`
+        : "/api/housing/dorms";
 
       const res = await fetch(endpoint, {
         method: isEditing ? "PATCH" : "POST",
@@ -235,7 +235,7 @@ export default function AddDormModal({
               (u) => u.unit_type.trim() && u.max_occupancy && u.rental_fee
             )
             .map((u) =>
-              fetch("/api/admin/housing/units", {
+              fetch("/api/housing/units", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

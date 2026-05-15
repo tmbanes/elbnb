@@ -1,5 +1,5 @@
 // lib/realtime-sync.ts
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser-client';
 
@@ -20,6 +20,15 @@ export function useRealtimeSync(
 ) {
     const supabase = getSupabaseBrowserClient();
     const router = useRouter();
+    // Stabilize router in a ref so it never causes the effect to re-run
+    const routerRef = useRef(router);
+    routerRef.current = router;
+
+    const onRefreshRef = useRef(onRefresh);
+    onRefreshRef.current = onRefresh;
+
+    // Debounce guard: ignore rapid successive events within 500ms
+    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         if (!table) return;
@@ -34,16 +43,20 @@ export function useRealtimeSync(
                     table,
                     filter
                 },
-                (payload) => {
-                    // console.log(`[RealtimeSync] Change detected in ${table}:`, payload);
-                    router.refresh();
-                    if (onRefresh) onRefresh();
+                () => {
+                    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+                    debounceTimer.current = setTimeout(() => {
+                        routerRef.current.refresh();
+                        if (onRefreshRef.current) onRefreshRef.current();
+                    }, 500);
                 }
             )
             .subscribe();
 
         return () => {
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
             supabase.removeChannel(channel);
         };
-    }, [table, filter, event, supabase, router, onRefresh]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [table, filter, event]); // intentionally exclude router/supabase — stabilized via refs
 }

@@ -2,8 +2,8 @@ import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
-// GET /api/admin/housing/dorms          → all dorms
-// GET /api/admin/housing/dorms?id=123   → single dorm with units + manager
+// GET /api/housing/dorms          → all dorms
+// GET /api/housing/dorms?id=123   → single dorm with units + manager
 export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
 
@@ -83,7 +83,7 @@ export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
   return NextResponse.json(response);
 });
 
-// POST /api/admin/housing/dorms
+// POST /api/housing/dorms
 export const POST = withRole(['housing_admin'], async (req: NextRequest) => {
   const body = await req.json();
 
@@ -104,7 +104,7 @@ export const POST = withRole(['housing_admin'], async (req: NextRequest) => {
   return NextResponse.json(data, { status: 201 });
 });
 
-// PATCH /api/admin/housing/dorms?id=123
+// PATCH /api/housing/dorms?id=123
 // Body: { accommodationFields: {...}, dormitoryFields: {...} }
 export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
@@ -133,7 +133,7 @@ export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
   return NextResponse.json({ success: true });
 });
 
-// DELETE /api/admin/housing/dorms?id=123
+// DELETE /api/housing/dorms?id=123
 export const DELETE = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });

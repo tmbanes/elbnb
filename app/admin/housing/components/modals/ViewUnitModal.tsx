@@ -58,7 +58,7 @@ export default function ViewUnitModal({ isOpen, onClose, unit: initialUnit, acce
     try {
       // console.log(`Fetching data for unit: ${unitId}`);
       const [unitRes, occupantsRes] = await Promise.all([
-        fetch(`/api/admin/housing/units?id=${unitId}`),
+        fetch(`/api/housing/units?id=${unitId}`),
         fetch(`/api/admin/residents?unit_id=${unitId}`)
       ]);
 

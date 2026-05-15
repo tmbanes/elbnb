@@ -53,6 +53,7 @@ import { User as UserType } from '@/types/user.types';
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser-client';
 import { Edit3, Loader2, Camera, ShieldCheck } from 'lucide-react';
 import { ProfileUpload } from './ProfileUpload';
+import { updateProfileAction } from '@/lib/actions/profile.actions';
 
 interface EditProfileDialogProps {
   user: UserType;
@@ -160,18 +161,10 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
         emergency_person: emergencyPerson,
       };
 
-      const res = await fetch('/api/shared/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update profile");
+      await updateProfileAction(payload);
       
       onSuccess?.();
       toggleOpen(false);
-      router.refresh();
     } catch (err: any) {
       console.error(err);
       setError(err?.message || "Failed to update profile details.");

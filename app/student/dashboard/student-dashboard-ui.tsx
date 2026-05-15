@@ -1,12 +1,7 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Image from "next/image";
-import {
-    Search, Bell, Building2, History, FileText,
-    Folder, Download, Plus, ArrowRight, LogOut,
-    Calendar, CheckCircle2, AlertCircle, X
-} from "lucide-react";
+import Link from "next/link";
+import { History, FileText, ArrowRight } from "lucide-react";
 import { Archivo } from "next/font/google";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { useRouter } from "next/navigation";
@@ -32,9 +27,10 @@ import { ImageWithLoader } from "@/components/shared/ImageWithLoader";
 
 
 
-import { useRealtimeSync } from "@/lib/realtime-sync";
-import { ViewAccommodation } from "@/components/SearchAccommodations";
-import { Accommodation, Unit } from "@/types/accommodation_units";
+import { StudentDashboardHeader } from "./StudentDashboardHeader";
+import { StudentAccommodationsPreview } from "./StudentAccommodationsPreview";
+import { StudentActiveResidencyCard } from "./StudentActiveResidencyCard";
+import { DashboardRealtimeSync } from "@/components/DashboardRealtimeSync";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -178,7 +174,6 @@ export default function StudentDashboardUI({
         return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
     };
 
-    // Active Residency Details
     const dormName = currentResidency?.unit?.accommodation?.name || "No Active Residency";
     const dormAddress = currentResidency?.unit?.accommodation?.location || "No location details available yet";
     const roomNumber = currentResidency?.unit?.unit_number ? `Room ${currentResidency.unit.unit_number}` : "";
@@ -206,44 +201,11 @@ export default function StudentDashboardUI({
 
     return (
         <div className={`min-h-screen bg-[#F6F8D5] py-6 px-6 lg:py-10 lg:px-[1in] text-slate-800 flex flex-col items-center ${archivo.className}`}>
-
-            {/* SUCCESS TOAST */}
-            {showSuccessToast && (
-                <div className="fixed top-8 right-8 z-[100] animate-in slide-in-from-right-10 duration-500">
-                    <div className="bg-white border-l-4 border-emerald-500 shadow-2xl rounded-xl p-4 flex items-center gap-4 max-w-md">
-                        <div className="bg-emerald-100 p-2 rounded-full">
-                            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        <div>
-                            <p className="font-bold text-slate-900 text-sm">Extension Submitted!</p>
-                            <p className="text-slate-500 text-xs">Your request to extend stay has been sent for processing.</p>
-                        </div>
-                        <button onClick={() => setShowSuccessToast(false)} className="text-slate-400 hover:text-slate-600 ml-2">
-                            <X className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-            )}
-
+            <DashboardRealtimeSync table="activity_log" event="INSERT" />
             <div className="w-full max-w-[1100px]">
                 {/* TOP BAR */}
-                <header className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center w-full mb-12 gap-4">
-                    <div className="flex items-center gap-4 w-full md:w-auto"></div>
+                <StudentDashboardHeader user={user} initialNotifications={notifications} />
 
-                    <div className="flex items-center gap-6 self-end md:self-auto">
-                        {/* NOTIFICATIONS BELL */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowNotifications(!showNotifications)}
-                                className="relative text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
-                            >
-                                <Bell className="w-5 h-5" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#A05C5C] text-white text-[9px] font-bold rounded-full ring-2 ring-[#FDFBF7] flex items-center justify-center">
-                                        {unreadCount}
-                                    </span>
-                                )}
-                            </button>
 
                             {showNotifications && (
                                 <div className="absolute right-0 top-full mt-4 w-80 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[60] overflow-hidden">
@@ -499,12 +461,11 @@ export default function StudentDashboardUI({
                         </div>
 
                         <div className="mt-auto">
-                            <button
-                                onClick={goToHistory}
-                                className="w-full py-3 bg-white text-[#6492A7] text-[13px] font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-white/90 transition-all shadow-lg shadow-[#6492A7]/10 active:scale-[0.98] group"
-                            >
-                                View Full History <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </button>
+                            <Link href="/student/history">
+                                <button className="w-full py-3 bg-white text-[#6492A7] text-[13px] font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-white/90 transition-all shadow-lg shadow-[#6492A7]/10 active:scale-[0.98] group">
+                                    View Full History <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -613,12 +574,11 @@ export default function StudentDashboardUI({
                             </div>
                         </div>
 
-                        <button
-                            onClick={goToBilling}
-                            className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-xl transition-all shadow-[0_2px_8px_rgba(100,146,167,0.3)] hover:shadow-[0_4px_12px_rgba(100,146,167,0.4)] active:scale-[0.98]"
-                        >
-                            View All Bills
-                        </button>
+                        <Link href="/student/billing">
+                            <button className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-xl transition-all shadow-[0_2px_8px_rgba(100,146,167,0.3)] hover:shadow-[0_4px_12px_rgba(100,146,167,0.4)] active:scale-[0.98]">
+                                View All Bills
+                            </button>
+                        </Link>
                     </div>
 
                     {/* APPLICATIONS CARD */}
@@ -648,12 +608,11 @@ export default function StudentDashboardUI({
                             </div>
                         </div>
 
-                        <button
-                            onClick={goToAccommodations}
-                            className="w-full py-3.5 bg-white hover:bg-slate-50 text-[#1f3d5f] border border-[#dce3bc] text-[13px] font-extrabold rounded-[14px] transition-all hover:border-[#cfd8df] active:scale-[0.98]"
-                        >
-                            Start New Application
-                        </button>
+                        <Link href="/student/accommodations">
+                            <button className="w-full py-3.5 bg-white hover:bg-slate-50 text-[#1f3d5f] border border-[#dce3bc] text-[13px] font-extrabold rounded-[14px] transition-all hover:border-[#cfd8df] active:scale-[0.98]">
+                                Start New Application
+                            </button>
+                        </Link>
                     </div>
                 </div>
 
@@ -682,38 +641,6 @@ export default function StudentDashboardUI({
                     </div>
                 </div>
             </div>
-
-            {/* CONFIRMATION MODAL */}
-            <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
-                <DialogContent className="max-w-md bg-white rounded-3xl p-8 border-none shadow-2xl">
-                    <DialogHeader>
-                        <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100">
-                            <Calendar className="w-7 h-7 text-emerald-600" />
-                        </div>
-                        <DialogTitle className="text-2xl font-extrabold text-slate-900 tracking-tight">Confirm Extension of Stay</DialogTitle>
-                        <DialogDescription className="text-slate-500 text-[15px] font-medium leading-relaxed pt-2">
-                            By confirming, you are applying to extend your stay for the next semester. Please ensure your records and documents are updated to avoid delays in processing.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="mt-8 gap-3 sm:flex-row flex-col">
-                        <Button
-                            variant="outline"
-                            disabled={isSubmittingExtension}
-                            onClick={() => setIsConfirmModalOpen(false)}
-                            className="flex-1 py-6 rounded-2xl border-slate-200 text-slate-600 font-bold text-[13px] hover:bg-slate-50"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            disabled={isSubmittingExtension}
-                            onClick={handleConfirmExtension}
-                            className="flex-1 py-6 rounded-2xl bg-[#668E42] hover:bg-[#557F44] text-white font-bold text-[13px] shadow-lg shadow-[#668E42]/20"
-                        >
-                            {isSubmittingExtension ? "Processing..." : "Confirm Extension"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

@@ -112,8 +112,8 @@ export default function AssignedProperties({ managerId }: AssignedPropertiesProp
       try {
         setLoading(true);
         const [dormsRes, rentalsRes] = await Promise.all([
-          fetch("/api/admin/housing/dorms"),
-          fetch("/api/admin/housing/rental-spaces"),
+          fetch("/api/housing/dorms"),
+          fetch("/api/housing/rental-spaces"),
         ]);
         const [dorms, rentals] = await Promise.all([
           dormsRes.json(),
