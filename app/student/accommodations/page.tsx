@@ -9,12 +9,9 @@ import { AccommodationFilters } from '@/components/SearchAccommodations/Accommod
 import { UnitFilters } from '@/components/SearchAccommodations/UnitFilters'
 import { AccommodationListView } from '@/components/SearchAccommodations/Accommodation-list-view'
 import { UnitsListView } from '@/components/SearchAccommodations/Units-list-view'
-import next from 'next'
-import Link from 'next/link'
 import { ViewAccommodation, ViewUnit } from '@/components/SearchAccommodations'
-import { Archivo, Archivo_Black } from 'next/font/google'
+import { Archivo_Black } from 'next/font/google'
 
-const archivo = Archivo({ subsets: ['latin'] })
 const archivoBlack = Archivo_Black({ subsets: ['latin'], weight: '400' })
 
 type TabType = 'accommodations' | 'units'
