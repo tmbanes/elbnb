@@ -42,14 +42,11 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
     return () => listener?.subscription.unsubscribe();
   }, [supabase]);
 
-  useEffect(() => {
-    if (currentUser) {
-      router.push("/");
-    }
-  }, [currentUser, router]);
+  // Removed the useEffect watching currentUser to avoid client-side bouncing.
+  // The Google OAuth callback will automatically redirect to /auth-callback.
 
   async function handleGoogleLogin() {
-    await signInWithGoogle("/");
+    await signInWithGoogle("/complete-profile");
   }
 
   return (
@@ -66,9 +63,9 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
                 <CardDescription className="text-[#F6F8D5]">
                   Sign in with your Google account
                 </CardDescription>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => router.push('/onboarding')}
+                <Button
+                  variant="ghost"
+                  onClick={() => router.push('/complete-profile')}
                   className="absolute top-4 right-4 text-[#F6F8D5] hover:bg-white/10 hover:text-white rounded-full h-8 w-8 p-0"
                 >
                   <ChevronLeft className="h-5 w-5" />
@@ -84,8 +81,8 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
               </CardHeader>
             </Card>
             <div className="mt-8 flex justify-center">
-              <Button 
-                variant="link" 
+              <Button
+                variant="link"
                 onClick={() => router.push('/onboarding')}
                 className="text-[#F6F8D5]/60 hover:text-[#F6F8D5] flex items-center gap-1 no-underline font-semibold"
               >

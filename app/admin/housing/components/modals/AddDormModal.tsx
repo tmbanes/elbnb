@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 
 interface Manager {
   employee_id: string;
@@ -612,7 +612,12 @@ export default function AddDormModal({
             onClick={handleSubmit}
             className="bg-[#5591AB] hover:bg-[#467a8f]! text-white"
           >
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Saving...</span>
+              </div>
+            ) : "Save Changes"}
           </Button>
         </div>
       ) : (
@@ -647,11 +652,16 @@ export default function AddDormModal({
                   : "bg-[#78A24C] hover:bg-[#E7FAD3]! text-white hover:text-[#78A24C]!"
               )}
             >
-              {loading
-                ? "Saving..."
-                : isEditing
-                ? "Save Changes"
-                : "Create Dormitory"}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              ) : isEditing ? (
+                "Save Changes"
+              ) : (
+                "Create Dormitory"
+              )}
             </Button>
           )}
         </div>

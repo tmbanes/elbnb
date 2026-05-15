@@ -42,7 +42,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     .single()
 
   if (error || !user?.push_subscription) {
-    console.log('No push subscription found for user:', userId)
+    // console.log('No push subscription found for user:', userId)
     return
   }
 

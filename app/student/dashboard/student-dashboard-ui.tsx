@@ -176,11 +176,11 @@ export default function StudentDashboardUI({
 
     // Active Residency Details
     const dormName = currentResidency?.unit?.accommodation?.name || "No Active Residency";
-    const dormAddress = currentResidency?.unit?.accommodation?.location || "N/A";
+    const dormAddress = currentResidency?.unit?.accommodation?.location || "No location details available yet";
     const roomNumber = currentResidency?.unit?.unit_number ? `Room ${currentResidency.unit.unit_number}` : "";
-    const checkInDate = currentResidency?.move_in_date ? new Date(currentResidency.move_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A";
-    const status = currentResidency?.assignment_status ? (currentResidency.assignment_status.charAt(0).toUpperCase() + currentResidency.assignment_status.slice(1).replace('_', ' ')) : "N/A";
-    const unitType = currentResidency?.unit?.unit_type ? (currentResidency.unit.unit_type.charAt(0).toUpperCase() + currentResidency.unit.unit_type.slice(1)) : "N/A";
+    const checkInDate = currentResidency?.move_in_date ? new Date(currentResidency.move_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Not yet scheduled";
+    const status = currentResidency?.assignment_status ? (currentResidency.assignment_status.charAt(0).toUpperCase() + currentResidency.assignment_status.slice(1).replace('_', ' ')) : "No active residency yet";
+    const unitType = currentResidency?.unit?.unit_type ? (currentResidency.unit.unit_type.charAt(0).toUpperCase() + currentResidency.unit.unit_type.slice(1)) : "No unit assigned yet";
 
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -222,17 +222,7 @@ export default function StudentDashboardUI({
             <div className="w-full max-w-[1100px]">
                 {/* TOP BAR */}
                 <header className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center w-full mb-12 gap-4">
-                    <div className="flex items-center gap-4 w-full md:w-auto">
-                        <div className="relative w-full md:w-[350px]">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <input
-                                type="text"
-                                placeholder="Search data, students, or rooms..."
-                                className="w-full pl-11 pr-4 py-3 bg-slate-100/80 rounded-full text-sm border-none focus:ring-2 focus:ring-slate-300 outline-none font-medium placeholder:text-slate-400"
-                            />
-                        </div>
-
-                    </div>
+                    <div className="flex items-center gap-4 w-full md:w-auto"></div>
 
                     <div className="flex items-center gap-6 self-end md:self-auto">
                         {/* NOTIFICATIONS BELL */}
@@ -402,56 +392,76 @@ export default function StudentDashboardUI({
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4 w-full">
-                            <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
-                                <p className="text-[15px] font-bold text-slate-900">{checkInDate}</p>
-                            </div>
-                            <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Status</p>
-                                <p className="text-[15px] font-bold text-slate-900">{status}</p>
-                            </div>
-                            <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6] sm:col-span-1 col-span-2">
-                                <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Unit Type</p>
-                                <p className="text-[15px] font-bold text-slate-900">{unitType}</p>
-                            </div>
-                        </div>
+                        {dormName !== "No Active Residency" ? (
+                            <>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4 w-full">
+                                    <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                        <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
+                                        <p className="text-[15px] font-bold text-slate-900">{checkInDate}</p>
+                                    </div>
+                                    <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                        <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Status</p>
+                                        <p className="text-[15px] font-bold text-slate-900">{status}</p>
+                                    </div>
+                                    <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6] sm:col-span-1 col-span-2">
+                                        <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Unit Type</p>
+                                        <p className="text-[15px] font-bold text-slate-900">{unitType}</p>
+                                    </div>
+                                </div>
 
-                        {/* RENEWAL / EXTEND STAY BUTTON - BOTTOM RIGHT */}
-                        <div className="mt-8 flex justify-end">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="w-full md:w-auto">
-                                            <Button
-                                                disabled={!isRenewalAvailable || isSubmittingExtension}
-                                                onClick={() => setIsConfirmModalOpen(true)}
-                                                className={`w-full md:w-auto h-auto py-3 px-8 rounded-2xl font-bold text-[12px] transition-all flex items-center justify-center gap-2 shadow-lg ${isRenewalAvailable
-                                                    ? 'bg-[#668E42] hover:bg-[#557F44] text-white shadow-[#668E42]/10 active:scale-[0.98]'
-                                                    : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
-                                                    }`}
-                                            >
-                                                <Calendar className="w-4 h-4" />
-                                                {isSubmittingExtension ? "Submitting..." : "Extend Stay"}
-                                            </Button>
-                                        </div>
-                                    </TooltipTrigger>
-                                    {!isRenewalAvailable && (
-                                        <TooltipContent className="bg-slate-800 text-white border-none p-3 rounded-xl shadow-xl max-w-[250px]">
-                                            <div className="flex items-start gap-2">
-                                                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                                                <p className="text-[11px] font-medium leading-relaxed">
-                                                    Accommodation renewal can only be accessed during the renewal period:
-                                                    <span className="block mt-1 font-bold text-white">
-                                                        {formatDate(renewalStart)} – {formatDate(renewalEnd)}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
+                                {/* RENEWAL / EXTEND STAY BUTTON - BOTTOM RIGHT */}
+                                <div className="mt-8 flex justify-end">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="w-full md:w-auto">
+                                                    <Button
+                                                        disabled={!isRenewalAvailable || isSubmittingExtension}
+                                                        onClick={() => setIsConfirmModalOpen(true)}
+                                                        className={`w-full md:w-auto h-auto py-3 px-8 rounded-2xl font-bold text-[12px] transition-all flex items-center justify-center gap-2 shadow-lg ${isRenewalAvailable
+                                                            ? 'bg-[#668E42] hover:bg-[#557F44] text-white shadow-[#668E42]/10 active:scale-[0.98]'
+                                                            : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
+                                                            }`}
+                                                    >
+                                                        <Calendar className="w-4 h-4" />
+                                                        {isSubmittingExtension ? "Submitting..." : "Extend Stay"}
+                                                    </Button>
+                                                </div>
+                                            </TooltipTrigger>
+                                            {!isRenewalAvailable && (
+                                                <TooltipContent className="bg-slate-800 text-white border-none p-3 rounded-xl shadow-xl max-w-[250px]">
+                                                    <div className="flex items-start gap-2">
+                                                        <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                                                        <p className="text-[11px] font-medium leading-relaxed">
+                                                            Accommodation renewal can only be accessed during the renewal period:
+                                                            <span className="block mt-1 font-bold text-white">
+                                                                {formatDate(renewalStart)} – {formatDate(renewalEnd)}
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="mt-auto pt-6">
+                                <div className="bg-[#F8F9EC]/80 rounded-[18px] p-5 flex flex-col md:flex-row items-start md:items-center justify-between border border-[#eef1d6] gap-5">
+                                    <div className="flex items-start md:items-center gap-4">
+                                        <p className="text-[13px] text-slate-600 font-medium italic leading-relaxed max-w-[90%]">
+                                            You are not currently assigned to any accommodation. Browse our available options to find your next stay.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        onClick={goToAccommodations}
+                                        className="group shrink-0 w-full md:w-auto h-auto py-3 px-6 rounded-xl font-bold text-[12px] bg-[#668E42] hover:bg-[#557F44] text-white flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-[0.98] border-none outline-none"
+                                    >
+                                        Browse Options <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* RIGHT SMALL CARD - ACCOMMODATION HISTORY */}
@@ -462,7 +472,7 @@ export default function StudentDashboardUI({
                                 <History className="w-5 h-5 text-white/70" />
                             </div>
 
-                            <div className="space-y-4 mb-6">
+                            <div className="space-y-4 mb-6 px-1">
                                 {history.length > 0 ? (
                                     history.slice(0, 3).map((item, i) => (
                                         <div key={i} className="border-l-2 border-white/20 pl-4 py-0.5">
@@ -553,8 +563,8 @@ export default function StudentDashboardUI({
                     </div>
                 </section>
 
-                {/* BOTTOM THREE CARDS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {/* BOTTOM TWO CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
                     {/* BILLING CARD */}
                     <div className="bg-white rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
                         <div>
@@ -596,48 +606,6 @@ export default function StudentDashboardUI({
                             className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-xl transition-all shadow-[0_2px_8px_rgba(100,146,167,0.3)] hover:shadow-[0_4px_12px_rgba(100,146,167,0.4)] active:scale-[0.98]"
                         >
                             View All Bills
-                        </button>
-                    </div>
-
-                    {/* DOCUMENTS CARD */}
-                    <div className="bg-white rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
-                        <div>
-                            <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-[17px] font-extrabold text-[#2A3F2D]">Documents</h2>
-                                <Folder className="w-5 h-5 text-[#8BAE90] stroke-[1.5]" />
-                            </div>
-
-                            <div className="space-y-3 mb-8">
-                                {documents.length > 0 ? (
-                                    documents.slice(0, 2).map((doc, i) => (
-                                        <div key={i} className="bg-[#F8F9EC] rounded-[14px] p-3 pl-4 flex justify-between items-center border border-[#eef1d6] group hover:bg-[#f3f5e1] transition-colors cursor-pointer">
-                                            <div className="flex items-center gap-3.5">
-                                                <div className="w-8 h-8 bg-white border border-[#e2e7c3] rounded-[9px] flex items-center justify-center text-[#2C5282] shadow-sm">
-                                                    <FileText className="w-4 h-4" strokeWidth={2.5} />
-                                                </div>
-                                                <div className="max-w-[140px]">
-                                                    <p className="text-[13px] font-bold text-slate-900 mb-0.5 truncate">{doc.file_name}</p>
-                                                    <p className="text-[9px] font-bold text-[#668E42] tracking-wider uppercase">{doc.status || 'VERIFIED'}</p>
-                                                </div>
-                                            </div>
-                                            <button className="text-[#a5b487] group-hover:text-[#668E42] transition-colors pr-2">
-                                                <Download className="w-4 h-4 stroke-[2.5]" />
-                                            </button>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-100">
-                                        <p className="text-slate-400 text-xs italic">No documents uploaded yet.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={goToApplications}
-                            className="w-full py-3.5 bg-[#F8F9EC] hover:bg-[#eaeebb] text-[#5d8339] text-[13px] font-bold rounded-[14px] flex items-center justify-center gap-2 border border-[#dce3bc] transition-all hover:shadow-sm active:scale-[0.98]"
-                        >
-                            <Plus className="w-4 h-4 stroke-[2.5]" /> Manage Documents
                         </button>
                     </div>
 

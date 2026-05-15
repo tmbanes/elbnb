@@ -111,7 +111,8 @@ export default function CompleteProfile({ user }: { user: User | null }) {
     middle_name: "", // Initial value must be blank
     last_name: user?.last_name === "TBD" ? "" : (user?.last_name || ""),
     sex: user?.sex,
-    birthdate: (user as any)?.birthdate ? new Date((user as any).birthdate) : undefined
+    birthdate: (user as any)?.birthdate ? new Date((user as any).birthdate) : undefined,
+    contact_number: (user as any)?.contact_number || ""
   });
 
   const initialRole: ProfileCompletionRole | null =
@@ -164,6 +165,9 @@ export default function CompleteProfile({ user }: { user: User | null }) {
     if (!personalDetails.last_name.trim()) return "Last name is required.";
     if (!personalDetails.sex) return "Sex is required.";
     if (!personalDetails.birthdate) return "Birthdate is required.";
+    if (personalDetails.contact_number && !/^\d{11}$/.test(personalDetails.contact_number)) {
+      return "Contact number must be exactly 11 digits.";
+    }
 
     // 2. Role Specific Validation
     if (!selectedRole) return "Please select a role.";
@@ -334,6 +338,21 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                 required
               />
             </div>
+
+            <div className="space-y-2">
+              <Label className={label_style}>Contact Number</Label>
+              <Input
+                type="tel"
+                name="contact_number"
+                maxLength={11}
+                className={full_width}
+                value={personalDetails.contact_number}
+                onChange={(e) => handlePersonalFieldChange("contact_number", e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="e.g. 09760799992"
+              />
+              <p className="text-[10px] text-[#2d1a12]/60 font-semibold pl-1">Format: 11 digits (e.g. 09760799992)</p>
+            </div>
+
             <div className="space-y-2">
               <Label className={label_style}>Sex <span className="text-red-500">*</span></Label>
               <Select
@@ -384,7 +403,10 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                     fromYear={1900}
                     toYear={new Date().getFullYear()}
                     initialFocus
-                    className="rounded-xl border-none"
+                    className="rounded-xl border-none text-[#2d1a12]"
+                    classNames={{
+                      dropdown: "absolute inset-0 opacity-0 cursor-pointer bg-[#fcf4d9] text-[#2d1a12] [color-scheme:light] [&>option]:bg-[#fcf4d9] [&>option]:text-[#2d1a12]",
+                    }}
                   />
                 </PopoverContent>
               </Popover>

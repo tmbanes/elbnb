@@ -67,6 +67,18 @@ export default function ManagerDashboardUI({
     const [notifications, setNotifications] = useState(initialNotifications);
     const [hasMounted, setHasMounted] = useState(false);
     const router = useRouter();
+    const [internalIsLoggingOut, setInternalIsLoggingOut] = useState(false);
+
+    const handleLogout = async () => {
+        if (onLogout) {
+            onLogout();
+            return;
+        }
+        setInternalIsLoggingOut(true);
+        const supabase = getSupabaseBrowserClient();
+        await supabase.auth.signOut();
+        window.location.href = "/onboarding";
+    };
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -116,7 +128,7 @@ export default function ManagerDashboardUI({
                 id: asg.user_id,
                 assignment_id: asg.assignment_id,
                 name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
-                student_number: 'N/A', // Would need additional student fetch if needed
+                student_number: 'Not provided', // Would need additional student fetch if needed
                 move_in_date: asg.move_in_date,
                 payment_status: 'Unknown',
                 avatar: asg.users?.profile_picture_url || null,
@@ -143,9 +155,9 @@ export default function ManagerDashboardUI({
             id: asg.user_id,
             assignment_id: asg.assignment_id,
             name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
-            student_number: 'N/A',
-            college: 'N/A',
-            room_number: asg.unit?.unit_number || 'N/A',
+            student_number: 'Not provided',
+            college: 'Not specified',
+            room_number: asg.unit?.unit_number || 'Unassigned',
             move_in_date: asg.move_in_date,
             payment_status: 'Unknown',
         }));
@@ -352,7 +364,7 @@ export default function ManagerDashboardUI({
                                                 Mark all as read
                                             </button>
                                         </div>
-                                        <div className="max-h-[350px] overflow-y-auto">
+                                        <div className="max-h-[350px] overflow-y-auto pr-2">
                                             {notifications.length > 0 ? (
                                                 notifications.map((n, i) => (
                                                     <div
@@ -421,12 +433,12 @@ export default function ManagerDashboardUI({
                                 {showLogout && (
                                     <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-slate-100 p-2 z-50">
                                         <button
-                                            onClick={onLogout}
-                                            disabled={isLoggingOut}
+                                            onClick={handleLogout}
+                                            disabled={isLoggingOut || internalIsLoggingOut}
                                             className="w-full flex items-center gap-2 text-left px-3 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                                         >
                                             <LogOut className="w-4 h-4" />
-                                            {isLoggingOut ? "Exiting..." : "Log out"}
+                                            {(isLoggingOut || internalIsLoggingOut) ? "Exiting..." : "Log out"}
                                         </button>
                                     </div>
                                 )}
@@ -473,16 +485,16 @@ export default function ManagerDashboardUI({
                                 {/* METRICS GRID */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
                                     {/* Total Rooms */}
-                                    <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100/50 flex flex-col justify-between h-[180px]">
-                                        <h3 className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">Total Rooms</h3>
+                                    <div className="bg-[#eb8b0d] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] text-white">
+                                        <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase">Total Rooms</h3>
                                         <div>
-                                            <p className="text-[38px] font-black text-[#0B3A64] leading-none mb-1">{totalRooms}</p>
-                                            <p className="text-[11px] text-slate-500 font-medium">Certified Living Units</p>
+                                            <p className="text-[38px] font-black text-white leading-none mb-1">{totalRooms}</p>
+                                            <p className="text-[11px] text-white/80 font-medium">Certified Living Units</p>
                                         </div>
                                     </div>
 
                                     {/* Occupancy */}
-                                    <div className="bg-[#5D84A6] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] relative overflow-hidden text-white">
+                                    <div className="bg-[#79a34e] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] relative overflow-hidden text-white">
                                         <div className="absolute -right-4 -bottom-4 opacity-10"><BarChart2 className="w-32 h-32" /></div>
                                         <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase relative z-10">Occupancy</h3>
                                         <div className="relative z-10">
@@ -498,14 +510,14 @@ export default function ManagerDashboardUI({
                                     </div>
 
                                     {/* Pending Assignment */}
-                                    <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100/50 flex flex-col justify-between h-[180px]">
+                                    <div className="bg-[#5b93ad] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] text-white">
                                         <div className="flex justify-between items-center">
-                                            <h3 className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">Pending Assignment</h3>
-                                            <span className="bg-[#5591AB]/10 text-[#5591AB] text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Waitlist</span>
+                                            <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase">Pending Assignment</h3>
+                                            <span className="bg-white/20 text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Waitlist</span>
                                         </div>
                                         <div>
-                                            <p className="text-[38px] font-black text-[#5591AB] leading-none mb-1">{waitlistCount}</p>
-                                            <p className="text-[11px] text-slate-500 font-medium">Approved Students Waiting</p>
+                                            <p className="text-[38px] font-black text-white leading-none mb-1">{waitlistCount}</p>
+                                            <p className="text-[11px] text-white/80 font-medium">Approved Students Waiting</p>
                                         </div>
                                     </div>
 
@@ -549,7 +561,7 @@ export default function ManagerDashboardUI({
                                                 }
                                             </div>
                                         ) : (
-                                            <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+                                            <div className="flex-1 overflow-y-auto space-y-2 mb-4 pr-2">
                                                 {rooms.map(room => {
                                                     return (
                                                         <div key={room.unit_id}
@@ -590,26 +602,22 @@ export default function ManagerDashboardUI({
                                             </button>
                                         </div>
                                         {activityLog.length > 0 ? (
-                                            <div className="space-y-3 flex-1 overflow-y-auto">
-                                                {activityLog.map((log: any) => {
-                                                    return (
-                                                        <div key={log.log_id} className="flex items-start justify-between gap-3">
-                                                            <div className="flex items-start gap-3">
-                                                                <div className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: activityColor(log.action_type) }}></div>
-                                                                <div>
-                                                                    <p className="text-[12px] font-bold text-[#0B3A64] leading-snug">
-                                                                        {log.action_type?.replace(/_/g, ' ').replace(/\w/g, (c: string) => c.toUpperCase())}
-                                                                        {log.user_role && <span className="text-slate-400 font-medium"> by {log.user_role}</span>}
-                                                                    </p>
-                                                                    {log.log_desc && <p className="text-[10px] text-slate-400 mt-0.5">{log.log_desc}</p>}
-                                                                </div>
+                                            <div className="space-y-3 flex-1 overflow-y-auto pr-2">
+                                                {activityLog.map((log: any) => (
+                                                    <div key={log.log_id} className="flex items-start justify-between gap-3">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: activityColor(log.action_type) }}></div>
+                                                            <div>
+                                                                <p className="text-[12px] font-bold text-[#0B3A64] leading-snug">
+                                                                    {log.log_desc || log.action_type?.replace(/_/g, ' ').replace(/ \w/g, (c: string) => c.toUpperCase())}
+                                                                </p>
                                                             </div>
-                                                            <span className="text-[10px] text-slate-300 font-bold flex-shrink-0">
-                                                                {new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
-                                                            </span>
                                                         </div>
-                                                    );
-                                                })}
+                                                        <span className="text-[10px] text-slate-300 font-bold flex-shrink-0">
+                                                            {new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                             </div>
                                         ) : (
                                             <div className="flex-1 flex items-center justify-center">
@@ -724,7 +732,7 @@ export default function ManagerDashboardUI({
                                                             ) : (
                                                                 <td className="py-5 px-2 text-right">
                                                                     <span className="text-[13px] font-bold text-slate-600">
-                                                                        {student.date_submitted ? new Date(student.date_submitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                                                        {student.date_submitted ? new Date(student.date_submitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date'}
                                                                     </span>
                                                                 </td>
                                                             )}
@@ -1191,25 +1199,25 @@ function PendingApprovalsCard() {
     const urgentCount = pendingApps.length;
 
     return (
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100/50 flex flex-col h-[180px]">
+        <div className="bg-[#284485] rounded-[20px] p-5 shadow-sm flex flex-col h-[180px] text-white">
             <div className="flex justify-between items-center mb-3">
-                <h3 className="text-[10px] font-bold text-[#0B3A64] tracking-[0.1em] uppercase">Pending Approvals</h3>
+                <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase">Pending Approvals</h3>
                 {urgentCount > 0 && (
                     <span className="bg-[#D03027] text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">{urgentCount} Urgent</span>
                 )}
             </div>
             <div className="flex-1 flex flex-col gap-2 overflow-y-auto pr-1">
                 {loading ? (
-                    <p className="text-[11px] text-slate-300 font-bold uppercase tracking-widest mt-auto mb-auto text-center">Loading...</p>
+                    <p className="text-[11px] text-white/40 font-bold uppercase tracking-widest mt-auto mb-auto text-center">Loading...</p>
                 ) : pendingApps.length === 0 ? (
-                    <p className="text-[11px] text-slate-300 font-bold uppercase tracking-widest mt-auto mb-auto text-center">No pending approvals</p>
+                    <p className="text-[11px] text-white/40 font-bold uppercase tracking-widest mt-auto mb-auto text-center">No pending approvals</p>
                 ) : pendingApps.slice(0, 3).map((app: any) => {
                     return (
-                        <div key={app.application_id} className="bg-[#F6F8E8] rounded-lg p-2 flex items-start gap-2.5">
-                            <div className="text-[#7A9D54] mt-0.5"><UserPlus className="w-3.5 h-3.5" /></div>
+                        <div key={app.application_id} className="bg-white/10 rounded-lg p-2 flex items-start gap-2.5">
+                            <div className="text-white/70 mt-0.5"><UserPlus className="w-3.5 h-3.5" /></div>
                             <div className="overflow-hidden">
-                                <p className="text-[11px] font-bold text-[#0B3A64] leading-tight mb-0.5 truncate">Application Review</p>
-                                <p className="text-[9px] text-slate-500 font-medium truncate">
+                                <p className="text-[11px] font-bold text-white leading-tight mb-0.5 truncate">Application Review</p>
+                                <p className="text-[9px] text-white/60 font-medium truncate">
                                     {app.users?.first_name} {app.users?.last_name}
                                 </p>
                             </div>

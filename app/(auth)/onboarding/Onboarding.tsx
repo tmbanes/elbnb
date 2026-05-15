@@ -36,11 +36,7 @@ export default function Auth() {
     return () => listener?.subscription.unsubscribe();
   }, [supabase]);
 
-  useEffect(() => {
-    if (currentUser != null) {
-      router.push("/");
-    }
-  }, [currentUser, router]);
+  // Removed the useEffect watching currentUser to avoid client-side bouncing.
 
   const toggleUpper = () => {
     setOpenPanel((prev) => (prev === "upper" ? null : "upper"))

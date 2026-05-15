@@ -68,21 +68,23 @@ export function UnitsListView({
                 )}
 
                 {/* Availability Chip */}
-                <div className="absolute top-3 left-3 z-10">
-                  {vacantSlots > 5 ? (
-                    <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-                      Available
-                    </span>
-                  ) : vacantSlots > 0 ? (
-                    <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-                      Limited
-                    </span>
-                  ) : (
-                    <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-                      Full
-                    </span>
-                  )}
-                </div>
+                {isApplicationOpen && (
+                  <div className="absolute top-3 left-3 z-10">
+                    {vacantSlots > 5 ? (
+                      <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                        Available
+                      </span>
+                    ) : vacantSlots > 0 ? (
+                      <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                        Limited
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                        Full
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* CONTENT SIDE */}

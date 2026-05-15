@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-    Search, Bell, Building2, History, FileText,
+    Bell, Building2, History, FileText,
     Folder, Download, Plus, ArrowRight, LogOut
 } from "lucide-react";
 import { Archivo } from "next/font/google";
@@ -125,7 +125,7 @@ export default function GuestDashboardUI({
                     accommodation={selectedAccommodation}
                     units={accommodationUnits}
                     onBack={() => setSelectedAccommodation(null)}
-                    onApply={() => router.push(`/guest/accommodations/application?id=${selectedAccommodation.accommodation_id}`)}
+                    onApply={() => router.push(`/guest/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}`)}
                     userRole="guest"
                 />
             </div>
@@ -136,15 +136,7 @@ export default function GuestDashboardUI({
         <div className={`min-h-screen bg-[#F6F8D5] p-6 lg:p-10 text-slate-800 flex flex-col items-center ${archivo.className}`}>
             <div className="w-full max-w-[1100px]">
                 {/* TOP BAR */}
-                <header className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center w-full mb-12 gap-4">
-                    <div className="relative w-full md:w-[350px]">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                        <input
-                            type="text"
-                            placeholder="Search data, guests, or rooms..."
-                            className="w-full pl-11 pr-4 py-3 bg-slate-100/80 rounded-full text-sm border-none focus:ring-2 focus:ring-slate-300 outline-none font-medium placeholder:text-slate-400"
-                        />
-                    </div>
+                <header className="flex flex-col-reverse md:flex-row justify-end items-start md:items-center w-full mb-12 gap-4">
                     <div className="flex items-center gap-6 self-end md:self-auto">
                         {/* NOTIFICATIONS BELL */}
                         <div className="relative">
@@ -297,41 +289,64 @@ export default function GuestDashboardUI({
                                 </div>
                             )}
     
-                            <h2 className="text-2xl md:text-[28px] font-bold text-[#2A3F2D] mb-1 leading-tight flex items-center gap-2">
-                                {activeResidency ? (
-                                    <>
+                            {activeResidency ? (
+                                <>
+                                    <h2 className="text-2xl md:text-[28px] font-bold text-[#2A3F2D] mb-1 leading-tight flex items-center gap-2">
                                         {activeResidency.accommodation?.name}, Room {activeResidency.unit?.unit_number} <ArrowRight className="w-6 h-6 text-[#8BAE90] stroke-[1.5]" />
-                                    </>
-                                ) : isLoadingResidency ? (
-                                    "Loading..."
-                                ) : (
-                                    "No Active Residency"
-                                )}
-                            </h2>
-                            <p className="text-[13px] font-medium text-slate-500 mb-8 max-w-[80%]">
-                                {activeResidency?.accommodation?.location || "University of the Philippines Los Baños, College, Laguna"}
-                            </p>
-    
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
-                                <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                    <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
-                                    <p className="text-[15px] font-bold text-slate-900">
-                                        {activeResidency?.move_in_date ? new Date(activeResidency.move_in_date).toLocaleDateString() : "---"}
+                                    </h2>
+                                    <p className="text-[13px] font-medium text-slate-500 mb-8 max-w-[80%]">
+                                        {activeResidency.accommodation?.location || "University of the Philippines Los Baños, College, Laguna"}
                                     </p>
-                                </div>
-                                <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                    <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Status</p>
-                                    <p className="text-[15px] font-bold text-slate-900">
-                                        {activeResidency?.assignment_status || "Pending"}
+            
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
+                                        <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                            <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
+                                            <p className="text-[15px] font-bold text-slate-900">
+                                                {activeResidency.move_in_date ? new Date(activeResidency.move_in_date).toLocaleDateString() : "To be determined"}
+                                            </p>
+                                        </div>
+                                        <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                            <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Status</p>
+                                            <p className="text-[15px] font-bold text-slate-900">
+                                                {activeResidency.assignment_status || "Pending"}
+                                            </p>
+                                        </div>
+                                        <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                            <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Roommate</p>
+                                            <p className="text-[15px] font-bold text-slate-900">
+                                                {activeResidency.unit?.unit_type || "No unit assigned yet"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className="text-2xl md:text-[28px] font-bold text-[#2A3F2D] mb-1 leading-tight flex items-center gap-2">
+                                        {isLoadingResidency ? "Loading..." : "No Active Residency"}
+                                    </h2>
+                                    <p className="text-[13px] font-medium text-slate-500 mb-8 max-w-[80%]">
+                                        University of the Philippines Los Baños, College, Laguna
                                     </p>
-                                </div>
-                                <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                    <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Roommate</p>
-                                    <p className="text-[15px] font-bold text-slate-900">
-                                        {activeResidency?.unit?.unit_type || "---"}
-                                    </p>
-                                </div>
-                            </div>
+                                    
+                                    {!isLoadingResidency && (
+                                        <div className="mt-auto pt-6">
+                                            <div className="bg-[#F8F9EC]/80 rounded-[18px] p-5 flex flex-col md:flex-row items-start md:items-center justify-between border border-[#eef1d6] gap-5">
+                                                <div className="flex items-start md:items-center gap-4">
+                                                    <p className="text-[13px] text-slate-600 font-medium italic leading-relaxed max-w-[90%]">
+                                                        You are not currently assigned to any accommodation. Browse our available options to find your next stay.
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => router.push("/guest/accommodations")}
+                                                    className="group shrink-0 w-full md:w-auto h-auto py-3 px-6 rounded-xl font-bold text-[12px] bg-[#668E42] hover:bg-[#557F44] text-white flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-[0.98] border-none outline-none"
+                                                >
+                                                    Browse Options <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
                     </div>
                     {/* RIGHT SMALL CARD - ACCOMMODATION HISTORY */}
@@ -446,8 +461,8 @@ export default function GuestDashboardUI({
                     </div>
                 </section>
 
-                {/* BOTTOM THREE CARDS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {/* BOTTOM TWO CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {/* BILLING CARD */}
                     <div className="bg-[#FDFFF4] rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
                         <div>
@@ -489,42 +504,6 @@ export default function GuestDashboardUI({
                         </Link>
                     </div>
 
-                    {/* DOCUMENTS CARD */}
-                    <div className="bg-[#FDFFF4] rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
-                        <div>
-                            <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-[17px] font-extrabold text-[#2A3F2D]">Documents</h2>
-                                <Folder className="w-5 h-5 text-[#8BAE90] stroke-[1.5]" />
-                            </div>
-
-                            <div className="space-y-3 mb-8">
-                                {isLoadingDocuments ? (
-                                    <p className="text-[11px] text-slate-400">Loading documents...</p>
-                                ) : documents.length === 0 ? (
-                                    <p className="text-[11px] text-slate-400">No documents found.</p>
-                                ) : (
-                                    documents.slice(0, 3).map((doc) => (
-                                        <div key={doc.id} className="bg-[#F8F9EC] rounded-[14px] p-3 pl-4 flex justify-between items-center border border-[#eef1d6] group hover:bg-[#f3f5e1] transition-colors cursor-pointer">
-                                            <div className="flex items-center gap-3.5">
-                                                <div className="w-8 h-8 bg-white border border-[#e2e7c3] rounded-[9px] flex items-center justify-center text-[#2C5282] shadow-sm">
-                                                    <FileText className="w-4 h-4" strokeWidth={2.5} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[13px] font-bold text-slate-900 mb-0.5 truncate max-w-[120px]">{doc.file_name}</p>
-                                                    <p className="text-[9px] font-bold text-[#668E42] tracking-wider uppercase">
-                                                        {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : 'VERIFIED'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-[#a5b487] group-hover:text-[#668E42] transition-colors pr-2">
-                                                <Download className="w-4 h-4 stroke-[2.5]" />
-                                            </a>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    </div>
 
                     {/* APPLICATIONS CARD */}
                     <div className="bg-[#FDFFF4] rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
@@ -538,7 +517,7 @@ export default function GuestDashboardUI({
                                 {isLoadingApplications ? (
                                     <p className="text-[11px] text-slate-400">Loading applications...</p>
                                 ) : applications.length === 0 ? (
-                                    <p className="text-[11px] text-slate-400">No applications found.</p>
+                                    <p className="text-[11px] text-slate-400 italic">No recent applications found.</p>
                                 ) : (
                                     applications.slice(0, 3).map((app) => (
                                         <div key={app.application_id} className="relative pl-6">

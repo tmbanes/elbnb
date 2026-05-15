@@ -19,7 +19,7 @@ export async function createUserProfile<T extends UserCreationRequest>(userData:
     user_status: userData.user_status ?? "active",
   };
 
-  console.log("DEBUG: Creating user with metadata:", metadata);
+  // console.log("DEBUG: Creating user with metadata:", metadata);
 
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -28,7 +28,7 @@ export async function createUserProfile<T extends UserCreationRequest>(userData:
       options: { data: metadata },
     });
 
-    console.log("Supabase response:", { data, error });
+    // console.log("Supabase response:", { data, error });
 
     if (error) {
       // If user is already registered
@@ -115,7 +115,7 @@ export async function signInWithEmail({
     email,
     password,
   });
-  console.log("Supabase response:", { data, error }); // [DEBUGGING LOG] to check the response from Supabase
+  // console.log("Supabase response:", { data, error }); // [DEBUGGING LOG] to check the response from Supabase
   if (error) return { success: false, error: error.message };
   return { success: true };
 }

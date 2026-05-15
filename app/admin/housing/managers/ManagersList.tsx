@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Manager } from "../../../../types/housing/types";
 import { getManagerColumns, ManagerColumn } from "@/app/admin/housing/components/columns/managerColumns";
+import { cn } from "@/lib/utils";
 
 // ui components
 import { DataTable } from "@/components/ui/data-table";
@@ -45,15 +46,18 @@ export default function ManagersList({
   }));
 
   return (
-    <div className="p-4 md:p-6 space-y-4 font-[family-name:var(--font-archivo)]">
+    <div className={cn(
+      "flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 font-[family-name:var(--font-archivo)]",
+      selectedId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
+    )}>
       <div>
         <h1 className="text-3xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] mr-2">Managers Page</h1>
         <p className="text-sm md:text-md text-[#44291B] pt-3">Manage property managers and their assignments</p>
       </div>
 
       {/* FILTER & ACTIONS */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm mt-4">
-        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md bg-white">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border border-[#e8e2d6] shadow-sm mt-4">
+        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md bg-white focus-within:ring-2 focus-within:ring-[#264384]/20 transition-all">
           <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
             <Search className="w-4 h-4" />
           </div>
@@ -62,7 +66,7 @@ export default function ManagersList({
             placeholder="Search manager name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 text-sm outline-none bg-[#FDFFF4] text-[#44291B] placeholder:text-[#44291B]/50"
+            className="w-full px-3 py-2.5 text-sm outline-none bg-white text-[#44291B] placeholder:text-[#44291B]/50"
           />
         </div>
 

@@ -2,17 +2,13 @@ import { ensureInitialInvoicesForPendingPaymentApplications, getAllBillsForAdmin
 import { redirect } from "next/navigation";
 import { Archivo, Archivo_Black } from "next/font/google";
 import AdminBillingClient from "./AdminBillingClient";
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/session";
 
 const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 export default async function AdminBillingPage() {
-  const user = await getApiAuthenticatedUser();
-
-  if (!user) {
-    redirect("/onboarding");
-  }
+  const user = await requireRole(['housing_admin', 'admin']);
 
   // Parallelize the data fetching and the maintenance task
   const [_, billsRes, tenantsRes] = await Promise.all([

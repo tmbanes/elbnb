@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Manager } from "../../../../types/housing/types";
 import AddManagerModal from "@/app/admin/housing/components/modals/AddManagerModal";
 import ManagersList from "./ManagersList";
 import ManagerDetail from "./ManagerDetail";
 import Modal from "@/app/admin/housing/components/modals/Modal";
 import { Button } from "@/components/ui/button";
+import { CheckCircle2, X, Loader2 } from "lucide-react";
 
 export default function ManagersContent({ initialManagers, initialError }: { initialManagers: Manager[], initialError: string | null }) {
   const [managers, setManagers] = useState<Manager[]>(initialManagers);
@@ -19,6 +21,15 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
   const [detailLoading, setDetailLoading] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [managerToDelete, setManagerToDelete] = useState<Manager | null>(null);
+  const [showDeleteToast, setShowDeleteToast] = useState(false);
+  const [isHidingToast, setIsHidingToast] = useState(false);
+  const [deletedManagerName, setDeletedManagerName] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function fetchManagers() {
     try {
@@ -88,12 +99,15 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
 
   async function confirmDelete() {
     if (!managerToDelete) return;
+    setIsDeleting(true);
     const employeeId = managerToDelete.employee_id;
+    const deletedName = `${managerToDelete.users.first_name} ${managerToDelete.users.last_name}`;
 
     const res = await fetch(`/api/admin/housing/managers?id=${employeeId}`, {
       method: "DELETE",
     });
     const data = await res.json();
+    setIsDeleting(false);
 
     if (!res.ok || data.error) {
       alert(data.error || "Delete failed");
@@ -107,6 +121,17 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
     if (selectedId === employeeId) handleCloseDetail();
     setDeleteModalOpen(false);
     setManagerToDelete(null);
+    setDeletedManagerName(deletedName);
+    setShowDeleteToast(true);
+    setIsHidingToast(false);
+    
+    setTimeout(() => {
+      setIsHidingToast(true);
+      setTimeout(() => {
+        setShowDeleteToast(false);
+        setIsHidingToast(false);
+      }, 300);
+    }, 5000);
   }
 
   function handleBackToHousing() {
@@ -135,15 +160,38 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
     );
   }
 
-  fetchManagers() 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden bg-[#F6F8D5]">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#F6F8D5] relative">
+      {/* SUCCESS TOAST */}
+      {mounted && showDeleteToast && createPortal(
+        <div className={`fixed top-0 right-0 p-8 z-[9999] pointer-events-none ${isHidingToast ? 'animate-toast-out' : 'animate-toast-in'}`}>
+            <div className="bg-white border-l-4 border-red-500 shadow-2xl rounded-xl p-4 flex items-center gap-4 max-w-md pointer-events-auto">
+                <div className="bg-red-100 p-2 rounded-full">
+                    <CheckCircle2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                    <p className="font-bold text-slate-900 text-sm">Manager Removed</p>
+                    <p className="text-slate-500 text-xs">Successfully deleted {deletedManagerName}.</p>
+                </div>
+                <button onClick={() => {
+                  setIsHidingToast(true);
+                  setTimeout(() => {
+                    setShowDeleteToast(false);
+                    setIsHidingToast(false);
+                  }, 300);
+                }} className="text-slate-400 hover:text-slate-600 ml-2 transition-colors">
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+        </div>,
+        document.body
+      )}
+
       {/* LEFT: Managers List */}
       <div
         className={`
           flex-1
           transition-all duration-300
-          overflow-y-auto
           ${selectedId ? "hidden lg:block" : "block"}
         `}
       >
@@ -162,42 +210,34 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
       {/* RIGHT: Detail Panel */}
       <div
         className={`
-          w-full lg:w-[450px]
-          lg:border-l border-[#e8e2d6]
+          fixed lg:relative top-0 right-0 lg:min-h-screen z-50 lg:z-auto
           bg-[#F6F8D5]
-          transition-all duration-300
-          overflow-y-auto
+          transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
           flex flex-col
-          ${selectedId ? "block" : "hidden lg:flex"}
+          shadow-[-10px_0_30px_rgba(0,0,0,0.05)] lg:shadow-none
+          ${selectedId 
+            ? "w-full lg:w-[450px] translate-x-0 opacity-100 border-l border-[#e8e2d6]" 
+            : "w-full lg:w-0 translate-x-full lg:translate-x-0 opacity-0 border-none pointer-events-none"
+          }
         `}
       >
-        {selectedId && selectedManager && !detailLoading ? (
-          <ManagerDetail
-            manager={selectedManager}
-            onEdit={openEditModal}
-            onDelete={requestDelete}
-            onBack={handleCloseDetail}
-          />
-        ) : selectedId && detailLoading ? (
-
-          <div className="flex flex-1 items-center justify-center p-20">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 border-4 border-[#264384] border-t-transparent rounded-full animate-spin" />
-              <p className="text-[#44291B] text-sm">Loading details...</p>
+        <div className="w-full lg:w-[450px] h-full flex flex-col">
+          {selectedId && selectedManager && !detailLoading ? (
+            <ManagerDetail
+              manager={selectedManager}
+              onEdit={openEditModal}
+              onDelete={requestDelete}
+              onBack={handleCloseDetail}
+            />
+          ) : selectedId && detailLoading ? (
+            <div className="flex flex-1 items-center justify-center p-20">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-[#264384] border-t-transparent rounded-full animate-spin" />
+                <p className="text-[#44291B] text-sm">Loading details...</p>
+              </div>
             </div>
-          </div>
-        ) : (
-
-
-          <div className="hidden lg:flex flex-1 items-center justify-center p-10 text-center">
-            <div className="max-w-[200px] space-y-2">
-              <p className="text-[#44291B] font-bold text-lg">No Manager Selected</p>
-              <p className="text-[#44291B] text-sm">
-                Select a manager from the list to view their full profile and office details.
-              </p>
-            </div>
-          </div>
-        )}
+          ) : null}
+        </div>
       </div>
 
       <AddManagerModal
@@ -205,7 +245,6 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
         onClose={closeModal}
         onSuccess={() => {
           fetchManagers();
-          closeModal();
         }}
         existingManager={editingManager}
       />
@@ -218,12 +257,18 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
       >
         <div className="space-y-4">
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)} disabled={isDeleting}>Cancel</Button>
             <Button
               variant="destructive"
               onClick={confirmDelete}
+              disabled={isDeleting}
             >
-              Delete Manager
+              {isDeleting ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Deleting...</span>
+                </div>
+              ) : "Delete Manager"}
             </Button>
           </div>
         </div>

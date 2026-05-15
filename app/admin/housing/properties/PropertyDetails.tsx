@@ -23,7 +23,8 @@ import {
   Plus,
   X,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Loader2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -64,6 +65,7 @@ interface PropertyDetailProps {
   onBack: () => void;
   onDeleteUnit: (unitId: string) => Promise<void>;
   onAddUnit?: () => void;
+  isDeletingUnit?: boolean;
 }
 
 export default function PropertyDetail({
@@ -71,6 +73,7 @@ export default function PropertyDetail({
   onBack,
   onDeleteUnit,
   onAddUnit,
+  isDeletingUnit,
 }: PropertyDetailProps) {
   const [activeUnit, setActiveUnit] = useState<any | null>(null);
   const [unitAction, setUnitAction] = useState<"view" | "edit" | "delete" | null>(null);
@@ -446,9 +449,10 @@ export default function PropertyDetail({
         >
           <div className="space-y-4">
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={closeUnitAction}>Cancel</Button>
+              <Button variant="outline" onClick={closeUnitAction} disabled={isDeletingUnit}>Cancel</Button>
               <Button
                 variant="destructive"
+                disabled={isDeletingUnit}
                 onClick={() => {
                   if (activeUnit) {
                     onDeleteUnit(activeUnit.unit_id).then(() => {
@@ -458,7 +462,12 @@ export default function PropertyDetail({
                   }
                 }}
               >
-                Delete Unit
+                {isDeletingUnit ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Deleting...</span>
+                  </div>
+                ) : "Delete Unit"}
               </Button>
             </div>
           </div>
