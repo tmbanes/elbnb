@@ -158,7 +158,14 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
           {/* Applications Table - Fixed Height Container */}
           <div className="flex-1 bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-hidden shadow-sm flex flex-col min-h-0">
             <div className="flex-1 overflow-auto scrollbar-hide">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse table-fixed">
+                <colgroup>
+                  <col className="w-[35%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[17%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[12%]" />
+                </colgroup>
                 <thead className="sticky top-0 bg-[#FDFFF4] z-10 shadow-sm">
                   <tr className="border-b border-[#e8e2d6]">
                     <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Tenant / ID</th>
