@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { v4 as uuidv4 } from "uuid";
 
-const BUCKET = "accommodation_images";
+const BUCKET = "accommodation_image";
+
 
 export async function GET(req: NextRequest) {
   const accommodationId = req.nextUrl.searchParams.get("accommodationId");
@@ -19,7 +20,13 @@ export async function GET(req: NextRequest) {
       .order("created_at", { ascending: true });
 
     if (error) throw error;
-    return NextResponse.json(data ?? []);
+
+    // Resolve images to signed URLs for the private bucket
+    const { withResolvedAccommodationImages } = await import("@/lib/actions/housing-actions");
+    const resolvedData = await withResolvedAccommodationImages(data ?? []);
+
+    return NextResponse.json(resolvedData);
+
   } catch (err) {
     console.error("Fetch images error:", err);
     return NextResponse.json([], { status: 200 });
@@ -82,16 +89,20 @@ export async function POST(req: NextRequest) {
         console.error("DB insert failed:", dbError.message);
         continue;
       }
-
       uploadedImages.push(imgData);
     }
 
-    return NextResponse.json(uploadedImages);
+    // Resolve newly uploaded images to signed URLs
+    const { withResolvedAccommodationImages } = await import("@/lib/actions/housing-actions");
+    const resolvedUploadedImages = await withResolvedAccommodationImages(uploadedImages);
+
+    return NextResponse.json(resolvedUploadedImages);
   } catch (err) {
     console.error("Image upload error:", err);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }
+
 
 export async function DELETE(req: NextRequest) {
   try {

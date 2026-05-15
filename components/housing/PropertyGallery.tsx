@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Plus,
-  X,
+  Trash2,
   MoreVertical,
   Star,
   Loader2,
@@ -212,7 +212,8 @@ export default function PropertyGallery({ accommodationId }: PropertyGalleryProp
               />
 
               {/* Overlay */}
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              {/* Overlay removed as per user request */}
+
 
               {/* Primary Badge */}
               {image.is_primary && (
@@ -235,7 +236,7 @@ export default function PropertyGallery({ accommodationId }: PropertyGalleryProp
                         onClick={() => setPrimary(image.id)}
                         className="gap-2 text-[#44291B] font-bold text-xs focus:bg-[#F6F8D5] cursor-pointer"
                       >
-                        <Star className="w-3.5 h-3.5 text-[#264384]" />
+                        <Star className="w-3.5 h-3.5 text-[#F59E0B]" />
                         Set as Primary
                       </DropdownMenuItem>
                     )}
@@ -243,9 +244,10 @@ export default function PropertyGallery({ accommodationId }: PropertyGalleryProp
                       onClick={() => handleDeleteClick(image.id)}
                       className="gap-2 text-red-600 font-bold text-xs focus:bg-red-50 focus:text-red-600 cursor-pointer"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5" />
                       Delete Photo
                     </DropdownMenuItem>
+
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

@@ -30,16 +30,17 @@ export async function PATCH(req: NextRequest) {
     // 3. Optional: Sync with main accommodation table 'image' column
     const { data: primaryImg } = await supabase
         .from("accommodation_images")
-        .select("url")
+        .select("url, storage_path")
         .eq("id", id)
         .single();
     
     if (primaryImg) {
         await supabase
             .from("accommodation")
-            .update({ image: primaryImg.url })
+            .update({ image: primaryImg.storage_path || primaryImg.url })
             .eq("accommodation_id", accommodationId);
     }
+
 
     return NextResponse.json({ success: true });
   } catch (err) {

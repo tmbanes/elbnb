@@ -10,6 +10,7 @@ const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24; // 24 hours
 
 async function signAccommodationImage(storagePath: string): Promise<string> {
   const supabase = getSupabaseAdmin();
+  
   const { data, error } = await supabase.storage
     .from(ACCOMMODATION_IMAGE_BUCKET)
     .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS);
@@ -21,17 +22,36 @@ async function signAccommodationImage(storagePath: string): Promise<string> {
   return data.signedUrl;
 }
 
+
 /** Returns a browser-ready URL (signed or legacy absolute URL). */
 export async function resolveAccommodationImageDisplayUrl(
   urlOrPath: string | null | undefined
 ): Promise<string | null> {
   if (!urlOrPath) return null;
-  if (/^https?:\/\//i.test(urlOrPath)) return urlOrPath;
+  
+  // If it's a full URL, only return as is if it's NOT a Supabase storage URL
+  if (/^https?:\/\//i.test(urlOrPath) && !urlOrPath.includes(".supabase.co/storage/v1/object/")) {
+    return urlOrPath;
+  }
+
 
   const storagePath = accommodationImageStoragePath(urlOrPath);
-  if (!storagePath.startsWith("accommodations/")) return null;
-  return signAccommodationImage(storagePath);
+  
+  // If it's a known storage path or a UUID-like path, sign it
+  const isStoragePath = storagePath.startsWith("accommodations/") || 
+                        /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(storagePath) ||
+                        storagePath.includes("/");
+
+  if (!isStoragePath) return null;
+  try {
+    return await signAccommodationImage(storagePath);
+  } catch (error) {
+    console.warn(`[resolveAccommodationImageDisplayUrl] Signing failed for ${storagePath}:`, error);
+    // Return original URL if it's already an absolute URL, otherwise return null to avoid broken links
+    return /^https?:\/\//i.test(urlOrPath) ? urlOrPath : null;
+  }
 }
+
 
 /** @deprecated Use resolveAccommodationImageDisplayUrl */
 export async function getAccommodationImageSignedUrl(
@@ -41,16 +61,37 @@ export async function getAccommodationImageSignedUrl(
 }
 
 export async function withResolvedAccommodationImages<
-  T extends { image?: string | null },
+  T extends { image?: string | null; images?: string[] | null; url?: string | null },
 >(accommodations: T[]): Promise<T[]> {
   return Promise.all(
     accommodations.map(async (acc) => {
-      if (!acc.image) return acc;
-      const image = await resolveAccommodationImageDisplayUrl(acc.image);
-      return { ...acc, image: image ?? null };
+      // Resolve either 'image' or 'url' property
+      const targetPath = acc.image || acc.url;
+      const resolved = targetPath 
+        ? await resolveAccommodationImageDisplayUrl(targetPath).catch(() => null) 
+        : null;
+        
+      const images = acc.images 
+        ? await Promise.all(
+            acc.images.map((img) => 
+              resolveAccommodationImageDisplayUrl(img).catch(() => null)
+            )
+          ) 
+        : null;
+        
+      return { 
+        ...acc, 
+        image: resolved ?? acc.image ?? null,
+        url: resolved ?? acc.url ?? null,
+        images: (images?.filter(Boolean) as string[]) ?? acc.images ?? null
+      };
+
     })
   );
 }
+
+
+
 
 export async function uploadAccommodationImage(formData: FormData) {
   const file = formData.get("file") as File;

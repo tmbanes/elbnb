@@ -1,5 +1,7 @@
 export const ACCOMMODATION_IMAGE_BUCKET = "accommodation_image";
 
+
+
 /** Normalize a storage path, public URL, or signed URL to `accommodations/{id}/{file}`. */
 export function accommodationImageStoragePath(urlOrPath: string): string {
   if (!urlOrPath) return "";
@@ -9,7 +11,11 @@ export function accommodationImageStoragePath(urlOrPath: string): string {
     `/object/public/${ACCOMMODATION_IMAGE_BUCKET}/`,
     `/object/sign/${ACCOMMODATION_IMAGE_BUCKET}/`,
     `/${ACCOMMODATION_IMAGE_BUCKET}/`,
+    `/object/public/accommodation_images/`,
+    `/object/sign/accommodation_images/`,
+    `/accommodation_images/`,
   ];
+
 
   for (const pattern of patterns) {
     const idx = urlOrPath.indexOf(pattern);

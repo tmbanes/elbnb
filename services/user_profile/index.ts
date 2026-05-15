@@ -190,8 +190,12 @@ not yet tested
         number_of_companions,
         accommodation:preferred_accommodation_id (
           name,
-          accommodation_type
+          accommodation_type,
+          image,
+          accommodation_images(url, is_primary, storage_path)
         ),
+
+
         unit:unit_id (
           unit_number
         ),
@@ -204,11 +208,22 @@ not yet tested
       .eq("user_id", user_id)
       .order("date_submitted", { ascending: false });
 
-    if (error) {
-      console.error("Supabase fetch error:", error);
-    }
+    const mapped = (data || []).map((item: any) => {
+      if (item.accommodation) {
+        let displayImage = item.accommodation.image;
+        const images = item.accommodation.accommodation_images || [];
+        if (images.length > 0) {
+          const primary = images.find((img: any) => img.is_primary) || images[0];
+          displayImage = primary.storage_path || primary.url;
+        }
+        item.accommodation.image = displayImage;
+        item.accommodation.accommodation_images = undefined;
+      }
+      return item;
+    });
 
-    return { data: data as AccommodationApplication[] | null, error };
+    return { data: mapped as AccommodationApplication[] | null, error };
+
   },
 
   // added for the cancel modal in the history and status page, 
@@ -265,17 +280,30 @@ not yet tested
           accommodation:accommodation_id (
             name,
             location,
-            renewal_start_date,
             renewal_end_date,
-            image
+            image,
+            accommodation_images(url, is_primary, storage_path)
           )
         )
       `)
+
       .eq("user_id", user_id)
       .in("assignment_status", ["active", "waiting_payment", "pending"])
       .maybeSingle();
 
+    if (data?.unit?.accommodation) {
+      let displayImage = data.unit.accommodation.image;
+      const images = data.unit.accommodation.accommodation_images || [];
+      if (images.length > 0) {
+        const primary = images.find((img: any) => img.is_primary) || images[0];
+        displayImage = primary.storage_path || primary.url;
+      }
+      data.unit.accommodation.image = displayImage;
+      data.unit.accommodation.accommodation_images = undefined;
+    }
+
     return { data, error };
+
   },
 
   async getDashboardStats(user_id: string) {

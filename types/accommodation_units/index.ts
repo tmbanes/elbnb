@@ -63,6 +63,8 @@ export interface Accommodation {
     no_of_units: number;
     accomm_sex?: string | null;
     image?: string | null;
+    images?: string[] | null;
+
     min_price?: number | null;
     max_price?: number | null;
     billing_period?: BillingPeriod | null;
