@@ -155,11 +155,6 @@ export default function ResidentsClient({
     setConfirmAction(null);
     setSuccessMsg(null);
   };
-
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen py-8 px-5 md:px-12 lg:px-30 bg-[#F6F8D5] flex overflow-hidden font-[family-name:var(--font-archivo)]">
       {/* ── LEFT: List panel ───────────────────────────────────────────────── */}
