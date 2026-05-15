@@ -38,7 +38,7 @@ export default function AddManagerModal({
   // Fetch users with role = dormitory_manager
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/admin/housing/managers/available-users")
+    fetch("/api/housing/managers/available-users")
       .then((r) => r.json())
       .then(setUsers)
       .catch(() => {});
@@ -65,7 +65,7 @@ export default function AddManagerModal({
       if (isEditing && existingManager) {
         // ── UPDATE — only office location can change ─────────────────────
         const res = await fetch(
-          `/api/admin/housing/managers?id=${existingManager.employee_id}`,
+          `/api/housing/managers?id=${existingManager.employee_id}`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -78,7 +78,7 @@ export default function AddManagerModal({
         if (!res.ok) throw new Error(data.error || "Update failed");
       } else {
         // ── CREATE — link existing user to dormitory_manager ─────────────
-        const res = await fetch("/api/admin/housing/managers", {
+        const res = await fetch("/api/housing/managers", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

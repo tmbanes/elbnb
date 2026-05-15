@@ -31,7 +31,7 @@ export type ManagerAction = "forward" | "reject";
 
 export async function fetchManagerApplications(): Promise<ManagerApplicationsResponse> {
   
-  const res = await fetch("/api/manager/applications", {
+  const res = await fetch("/api/applications", {
     method: "GET",
     credentials: "include",
   });
@@ -49,7 +49,7 @@ export async function updateApplicationStatus(
   action: ManagerAction,
   unitId?: string
 ): Promise<void> {
-  const res = await fetch("/api/manager/applications", {
+  const res = await fetch("/api/applications", {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

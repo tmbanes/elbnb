@@ -80,7 +80,7 @@ export default function AddRentalSpaceModal({
   // Fetch managers
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/admin/housing/managers")
+    fetch("/api/housing/managers")
       .then((r) => r.json())
       .then(setManagers)
       .catch(() => { });
@@ -220,8 +220,8 @@ export default function AddRentalSpaceModal({
       };
 
       const endpoint = isEditing
-        ? `/api/admin/housing/rental-spaces?id=${existingRental.accommodation_id}`
-        : "/api/admin/housing/rental-spaces";
+        ? `/api/housing/rental-spaces?id=${existingRental.accommodation_id}`
+        : "/api/housing/rental-spaces";
 
       const res = await fetch(endpoint, {
         method: isEditing ? "PATCH" : "POST",
@@ -247,7 +247,7 @@ export default function AddRentalSpaceModal({
               (u) => u.unit_type.trim() && u.max_occupancy && u.rental_fee
             )
             .map((u) =>
-              fetch("/api/admin/housing/units", {
+              fetch("/api/housing/units", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -111,7 +111,7 @@ export default function EditUnitModal({
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/admin/housing/units?id=${unit.unit_id}`, {
+      const res = await fetch(`/api/housing/units?id=${unit.unit_id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

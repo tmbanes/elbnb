@@ -279,7 +279,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
       }));
 
       // Single request — no Content-Type header, browser sets multipart boundary
-      const response = await fetch("/api/student/applications", {
+      const response = await fetch("/api/applications", {
         method: "POST",
         body: formData,
       });

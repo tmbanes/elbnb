@@ -34,7 +34,7 @@ export function PaymentModal({
 
     setIsLoadingDetails(true);
     try {
-      const response = await fetch(`/api/student/applications/payment-details?applicationId=${encodeURIComponent(applicationId)}`);
+      const response = await fetch(`/api/applications/payment-details?applicationId=${encodeURIComponent(applicationId)}`);
       const payload = await response.json().catch(() => ({}));
 
       if (response.ok) {
@@ -72,7 +72,7 @@ export function PaymentModal({
       formData.append("applicationId", applicationId);
       formData.append("receiptFile", uploadFile);
 
-      const response = await fetch("/api/student/applications/upload-receipt", {
+      const response = await fetch("/api/applications/upload-receipt", {
         method: "POST",
         body: formData,
       });

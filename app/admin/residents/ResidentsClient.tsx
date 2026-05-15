@@ -60,6 +60,8 @@ const STATUS_MAP: Record<AssignmentStatus, { label: string; dot: string; badge: 
 
 const PER_PAGE = 5;
 
+import { updateResidentStatus, overrideResidentUnit } from "@/lib/actions/residents.actions";
+
 // ─── Main Client Component ──────────────────────────────────────────────────────
 
 export default function ResidentsClient({
@@ -69,8 +71,7 @@ export default function ResidentsClient({
   initialResidents: Resident[];
   initialError: string | null;
 }) {
-  const [residents, setResidents] = useState<Resident[]>(initialResidents);
-  const [loading, setLoading] = useState(false);
+  const residents = initialResidents;
   const [error, setError] = useState<string | null>(initialError);
   const [selectedId, setSelectedId] = useState<string | null>(initialResidents[0]?.assignment_id || null);
 
@@ -86,30 +87,6 @@ export default function ResidentsClient({
   const [targetUnit, setTargetUnit] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  // ── Fetch ──────────────────────────────────────────────────────────────────
-  const fetchResidents = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch("/api/admin/residents");
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(`${res.status}: ${t.slice(0, 200)}`);
-      }
-      const json = await res.json();
-      const data: Resident[] = json.data ?? [];
-      setResidents(data);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  
-  useEffect(() => {
-    fetchResidents();
-  }, [fetchResidents]);
 
   // ── Derived data ───────────────────────────────────────────────────────────
   const accommodations = Array.from(
@@ -141,22 +118,17 @@ export default function ResidentsClient({
     if (!selected || !confirmAction) return;
     setActionLoading(true);
     try {
-      const body: Record<string, any> = {
-        assignment_id: selected.assignment_id,
-        action: confirmAction,
-        date: actionDate,
-      };
-      if (confirmAction === "override") body.details = { targetUnit };
-
-      const res = await fetch("/api/admin/residents", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const j = await res.json();
-        throw new Error(j.error ?? "Action failed");
+      let result;
+      if (confirmAction === "override") {
+        result = await overrideResidentUnit(selected.assignment_id, targetUnit);
+      } else {
+        result = await updateResidentStatus(selected.assignment_id, confirmAction as "record-move-in" | "record-move-out" | "terminate", actionDate);
       }
+
+      if (!result.success) {
+        throw new Error(result.error ?? "Action failed");
+      }
+
       setSuccessMsg(
         confirmAction === "override" ? `Transferred to unit ${targetUnit}` :
           confirmAction === "terminate" ? "Stay terminated" :
@@ -164,7 +136,6 @@ export default function ResidentsClient({
               "Move-in recorded"
       );
       setConfirmAction(null);
-      await fetchResidents();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -185,18 +156,6 @@ export default function ResidentsClient({
     setSuccessMsg(null);
   };
 
-  if (error && residents.length === 0) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F6F8D5]">
-      <div className="text-center space-y-4 max-w-md">
-        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-          <AlertCircle className="w-7 h-7 text-red-500" />
-        </div>
-        <h2 className="text-xl font-bold text-[#44291B]">Error Loading Residents</h2>
-        <p className="text-sm text-[#44291B]/60">{error}</p>
-        <button onClick={fetchResidents}
-          className="px-6 py-2 bg-[#264384] text-white font-bold rounded-xl hover:bg-[#1a2d5a] transition-colors">
-          Try Again
-        </button>
       </div>
     </div>
   );
@@ -264,12 +223,7 @@ export default function ResidentsClient({
           </div>
 
           <div className="bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-hidden shadow-sm">
-            {loading ? (
-              <div className="p-10 flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 text-[#264384] animate-spin" />
-                <p className="text-xs font-bold text-[#44291B]/40">Refreshing residents list…</p>
-              </div>
-            ) : paginated.length > 0 ? (
+            {paginated.length > 0 ? (
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-[#e8e2d6] bg-[#FDFFF4]">
