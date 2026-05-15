@@ -141,7 +141,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
       <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full h-[600px] sm:h-[700px] md:h-[500px]">
         {/* Second Folder (Accommodations/Management) */}
         <div
-          onClick={() => setActiveTab('accommodations')}
+          onClick={() => setActiveTab(activeTab === 'accommodations' ? 'personal' : 'accommodations')}
           className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 rounded-tl-[200px] sm:rounded-tl-[400px] md:rounded-tl-[700px] rounded-tr-[40px] sm:rounded-tr-[60px] md:rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations' ? 'h-full' : 'hover:bg-[#8bc453] hover:shadow-lg'}`}
           style={{ filter: 'url(#grain)', backgroundBlendMode: 'multiply' }}
         >

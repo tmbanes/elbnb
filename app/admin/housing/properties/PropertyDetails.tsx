@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { Property } from "../../../../types/housing/types";
 import AddUnitModal from "@/app/admin/housing/components/modals/AddUnitModal";
+import PropertyGallery from "@/components/housing/PropertyGallery";
 
 // ui components
 import {
@@ -20,10 +21,6 @@ import {
   LayoutGrid,
   List,
   Info,
-  Plus,
-  X,
-  Upload,
-  Image as ImageIcon,
   Loader2
 } from "lucide-react";
 import {
@@ -78,10 +75,6 @@ export default function PropertyDetail({
   const [activeUnit, setActiveUnit] = useState<any | null>(null);
   const [unitAction, setUnitAction] = useState<"view" | "edit" | "delete" | null>(null);
   const [addUnitModalOpen, setAddUnitModalOpen] = useState(false);
-  const [propertyImages, setPropertyImages] = useState<string[]>([
-    "https://placehold.co/600x400/e2e4c0/44291B?text=Property+Photo+1",
-    "https://placehold.co/600x400/e2e4c0/44291B?text=Property+Photo+2"
-  ]);
   const isDorm = property.accommodation_type === "dormitory";
 
   const totalCapacity = property.total_capacity ?? 0;
@@ -102,22 +95,6 @@ export default function PropertyDetail({
   function handleUnitAdded(_unit: any) {
     closeAddUnitModal();
     if (onAddUnit) onAddUnit();
-  }
-
-  // dummy add image functionality for testing
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPropertyImages(prev => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  function removeImage(index: number) {
-    setPropertyImages(prev => prev.filter((_, i) => i !== index));
   }
 
   return (
@@ -256,47 +233,8 @@ export default function PropertyDetail({
               </div>
 
               {/* Property Images Section */}
-              <div className="mt-8 space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]">
-                    Property Gallery
-                  </p>
-                  <span className="text-[10px] text-[#8c8b82] font-medium">
-                    {propertyImages.length} images uploaded
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {propertyImages.map((src, index) => (
-                    <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border border-[#e2e4c0] bg-white shadow-sm">
-                      <img
-                        src={src}
-                        alt={`Property ${index + 1}`}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <button
-                        onClick={() => removeImage(index)}
-                        className="absolute top-1.5 right-1.5 bg-red-500/90 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-
-                  {/* Upload Placeholder */}
-                  <label className="relative aspect-square rounded-xl border-2 border-dashed border-[#e2e4c0] hover:border-[#264384]/30 hover:bg-[#F6F8D5]/30 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center gap-2 group">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
-                    <div className="w-8 h-8 rounded-full bg-[#ebf2f4] flex items-center justify-center group-hover:bg-[#264384]/10 transition-colors duration-200">
-                      <Plus className="w-4 h-4 text-[#264384]" />
-                    </div>
-                    <span className="text-[10px] font-bold text-[#264384]/60 uppercase tracking-tight">Add Photo</span>
-                  </label>
-                </div>
+              <div className="mt-8">
+                <PropertyGallery accommodationId={property.accommodation_id} />
               </div>
             </div>
           </CollapsibleContent>

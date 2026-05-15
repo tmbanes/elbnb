@@ -27,6 +27,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { submitExtensionRequest } from "./actions";
 import { createActivityLog } from "@/services/activity_log";
+import { formatImageUrl } from "@/lib/utils/image-utils";
+import { ImageWithLoader } from "@/components/shared/ImageWithLoader";
+
+
 
 import { useRealtimeSync } from "@/lib/realtime-sync";
 import { ViewAccommodation } from "@/components/SearchAccommodations";
@@ -42,7 +46,6 @@ interface StudentDashboardUIProps {
     bills: any[];
     stats: any;
     accommodations: any[];
-    documents: any[];
     notifications: any[];
 }
 
@@ -54,7 +57,6 @@ export default function StudentDashboardUI({
     bills,
     stats,
     accommodations,
-    documents,
     notifications: initialNotifications
 }: StudentDashboardUIProps) {
     const [showLogout, setShowLogout] = useState(false);
@@ -120,7 +122,9 @@ export default function StudentDashboardUI({
 
     const handleViewDetails = async (accommodation: Accommodation) => {
         setSelectedAccommodation(accommodation);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         setIsLoadingUnits(true);
+
         try {
             const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`);
             if (res.ok) {
@@ -190,7 +194,9 @@ export default function StudentDashboardUI({
                 <ViewAccommodation
                     accommodation={selectedAccommodation}
                     units={accommodationUnits}
+                    isFetchingUnits={isLoadingUnits}
                     onBack={() => setSelectedAccommodation(null)}
+
                     onApply={() => router.push(`/student/accommodations/application?id=${selectedAccommodation.accommodation_id}`)}
                     userRole="student"
                 />
@@ -321,9 +327,10 @@ export default function StudentDashboardUI({
                                 <div className="w-10 h-10 rounded-full bg-[#5D6BDE] overflow-hidden flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
                                     {user?.profile_picture_url ? (
                                         <Image
-                                            src={user.profile_picture_url}
+                                            src={formatImageUrl(user.profile_picture_url)}
                                             alt="Profile"
                                             width={40}
+
                                             height={40}
                                             className="w-full h-full object-cover"
                                         />
@@ -376,13 +383,14 @@ export default function StudentDashboardUI({
                             {currentResidency?.unit?.accommodation?.image && (
                                 <div className="absolute inset-0 z-0 opacity-10">
                                     <Image 
-                                        src={currentResidency.unit.accommodation.image} 
+                                        src={formatImageUrl(currentResidency.unit.accommodation.image)} 
                                         alt="Background" 
                                         fill 
                                         className="object-cover"
                                     />
                                 </div>
                             )}
+
 
                             <h2 className="text-2xl md:text-[28px] font-bold text-[#2A3F2D] mb-1 leading-tight">
                                 {dormName}{roomNumber ? `, ${roomNumber}` : ""}
@@ -527,21 +535,25 @@ export default function StudentDashboardUI({
                             accommodations.slice(0, 3).map((dorm, i) => (
                                 <div key={i} className="bg-[#F9FBEC] rounded-[32px] overflow-hidden border border-slate-100/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] group hover:shadow-2xl hover:shadow-[#709849]/5 transition-all duration-500">
                                     <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
-                                        <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center">
+                                        <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700">
                                             {dorm.image ? (
-                                                <Image 
+                                                <ImageWithLoader
                                                     src={dorm.image} 
                                                     alt={dorm.name} 
-                                                    fill 
                                                     className="object-cover"
                                                 />
                                             ) : (
-                                                <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                                <div className="flex items-center justify-center w-full h-full">
+                                                    <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                                </div>
                                             )}
                                         </div>
-                                        <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg z-10">
-                                            Available
-                                        </div>
+                                         {dorm.allowed_application && new Date() <= new Date(dorm.allowed_application) && (
+                                            <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg z-10">
+                                                Available
+                                            </div>
+                                         )}
+
                                     </div>
                                     <div className="p-8">
                                         <h4 className="text-[18px] font-bold text-[#2A3F2D] mb-1.5">{dorm.name}</h4>

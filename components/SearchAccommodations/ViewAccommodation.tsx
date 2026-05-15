@@ -2,6 +2,9 @@
 
 import React, { useMemo } from 'react'
 import { Accommodation, Unit } from '@/types/accommodation_units'
+import { formatImageUrl } from '@/lib/utils/image-utils'
+import { ImageWithLoader } from '@/components/shared/ImageWithLoader'
+
 
 interface ViewAccommodationProps {
   accommodation: Accommodation
@@ -45,6 +48,21 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
     return Object.values(stats)
   }, [units])
 
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0)
+  const displayImages = accommodation.images || (accommodation.image ? [accommodation.image] : [])
+
+
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setCurrentImageIndex((prev) => (prev + 1) % displayImages.length)
+  }
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length)
+  }
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F6F8D5' }}>
       {/* Back Button */}
@@ -67,27 +85,73 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
 
         {/* LEFT COLUMN */}
         <div className="min-w-0 flex flex-col gap-8">
-          {/* Main Gallery */}
-          <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl bg-gray-200 group">
-            {accommodation.image ? (
-              <img
-                src={accommodation.image}
-                alt={accommodation.name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 z-10"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            ) : null}
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-              <svg className="w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                <polyline strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" points="9 22 9 12 15 12 15 22" />
-              </svg>
-              <span className="mt-4 text-sm text-gray-400 font-bold uppercase tracking-widest opacity-50">No Property Image</span>
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none z-20" />
+          {/* Main Gallery / Carousel */}
+          <div className="relative aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl bg-gray-200 group border-8 border-white">
+            {displayImages.length > 0 ? (
+              <>
+                <ImageWithLoader
+                  src={displayImages[currentImageIndex]}
+                  alt={`${accommodation.name} - ${currentImageIndex + 1}`}
+                  className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
+                />
+
+
+                
+                {displayImages.length > 1 && (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40 z-20 pointer-events-none" />
+                    
+                    {/* Navigation Arrows */}
+                    <button 
+                      onClick={handlePrevImage}
+                      className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/40 z-30 active:scale-90"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    
+                    <button 
+                      onClick={handleNextImage}
+                      className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/40 z-30 active:scale-90"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+
+                    {/* Image Counter Indicators */}
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-30">
+                      {displayImages.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentImageIndex(idx)}
+                          className={`h-2 rounded-full transition-all duration-500 ${
+                            idx === currentImageIndex 
+                              ? 'w-10 bg-white shadow-lg' 
+                              : 'w-2 bg-white/40 hover:bg-white/60'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="absolute top-8 left-8 bg-black/30 backdrop-blur-xl px-5 py-2.5 rounded-2xl text-xs font-black text-white/90 z-30 tracking-[0.2em] border border-white/10 uppercase">
+                      {currentImageIndex + 1} / {displayImages.length}
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                <svg className="w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  <polyline strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" points="9 22 9 12 15 12 15 22" />
+                </svg>
+                <span className="mt-4 text-sm text-gray-400 font-bold uppercase tracking-widest opacity-50">No Property Image</span>
+              </div>
+            )}
           </div>
+
 
 
           {/* Unit List */}
