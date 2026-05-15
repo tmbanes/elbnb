@@ -21,13 +21,15 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import ViewUnitModal from "./components/ViewUnitModal";
+import PropertyGallery from "@/components/housing/PropertyGallery";
 
 interface HousingDetailProps {
   property: Property;
   onBack: () => void;
+  hideBack?: boolean;
 }
 
-export default function HousingDetail({ property, onBack }: HousingDetailProps) {
+export default function HousingDetail({ property, onBack, hideBack = false }: HousingDetailProps) {
   const isDorm = property.accommodation_type === "dormitory";
   const totalCapacity = property.total_capacity ?? 0;
   const currentOccupancy = property.units?.reduce(
@@ -48,14 +50,16 @@ export default function HousingDetail({ property, onBack }: HousingDetailProps) 
   return (
     <div className="space-y-6 animate-in slide-in-from-right duration-500 font-archivo">
       {/* Back Button */}
-      <Button
-        variant="link"
-        onClick={onBack}
-        className="pl-0 text-[#264384] hover:text-[#1e3569] font-bold text-sm transition-colors group h-auto py-0"
-      >
-        <ChevronLeft className="mr-1 h-4 w-4 transition-transform group-hover:-translate-x-1" />
-        Back
-      </Button>
+      {!hideBack && (
+        <Button
+          variant="link"
+          onClick={onBack}
+          className="pl-0 text-[#264384] hover:text-[#1e3569] font-bold text-sm transition-colors group h-auto py-0"
+        >
+          <ChevronLeft className="mr-1 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          Back
+        </Button>
+      )}
 
       {/* Property Header & Details Card (Collapsible) */}
       <Collapsible className="group/collapsible" defaultOpen={true}>
@@ -160,6 +164,10 @@ export default function HousingDetail({ property, onBack }: HousingDetailProps) 
                     </>
                   )}
                 </div>
+              </div>
+
+              <div className="mt-6">
+                <PropertyGallery accommodationId={property.accommodation_id} />
               </div>
             </div>
           </CollapsibleContent>
