@@ -16,7 +16,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { ChevronLeft, Home, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Home, Eye, EyeOff } from "lucide-react";
 
 const label_style = "block text-xs font-semibold uppercase tracking-wider text-[#F6F8D5]/80 font-[family-name:var(--font-archivo)]";
 const field_style =
@@ -188,7 +188,8 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
               onClick={() => router.push("/onboarding")}
               className="text-[#3E2723]/80 hover:text-[#3E2723] flex items-center gap-1 no-underline font-bold font-[family-name:var(--font-archivo)]"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
+
               Go back
             </Button>
             <span className="text-[#3E2723]/30 font-bold">•</span>

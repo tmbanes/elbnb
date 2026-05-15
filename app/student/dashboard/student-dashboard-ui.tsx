@@ -28,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { submitExtensionRequest } from "./actions";
 import { createActivityLog } from "@/services/activity_log";
 import { formatImageUrl } from "@/lib/utils/image-utils";
+import { ImageWithLoader } from "@/components/shared/ImageWithLoader";
+
 
 
 import { useRealtimeSync } from "@/lib/realtime-sync";
@@ -533,17 +535,17 @@ export default function StudentDashboardUI({
                             accommodations.slice(0, 3).map((dorm, i) => (
                                 <div key={i} className="bg-[#F9FBEC] rounded-[32px] overflow-hidden border border-slate-100/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] group hover:shadow-2xl hover:shadow-[#709849]/5 transition-all duration-500">
                                     <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
-                                        <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center">
+                                        <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700">
                                             {dorm.image ? (
-                                                <Image 
-                                                    src={formatImageUrl(dorm.image)} 
+                                                <ImageWithLoader
+                                                    src={dorm.image} 
                                                     alt={dorm.name} 
-                                                    fill 
                                                     className="object-cover"
                                                 />
                                             ) : (
-
-                                                <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                                <div className="flex items-center justify-center w-full h-full">
+                                                    <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                                </div>
                                             )}
                                         </div>
                                          {dorm.allowed_application && new Date() <= new Date(dorm.allowed_application) && (

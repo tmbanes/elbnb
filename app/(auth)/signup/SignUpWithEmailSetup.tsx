@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ChevronLeft, Eye, EyeOff, Home } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Home } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -268,7 +268,8 @@ export default function SignUpWithEmailSetup({ user: _initialUser }: { user: Use
         </Card>
           <div className="flex items-center justify-center gap-4">
             <Button variant="link" onClick={() => router.push("/onboarding")} className="text-[#3E2723]/80 hover:text-[#3E2723] flex items-center gap-1 no-underline font-bold font-[family-name:var(--font-archivo)]">
-              <ChevronLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
+
               Go back
             </Button>
             <span className="text-[#3E2723]/30 font-bold">•</span>

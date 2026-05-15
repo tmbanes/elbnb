@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser-client'
 import { User } from '@/types/user.types'
 import { Archivo } from "next/font/google";
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 
 const archivo = Archivo({ subsets: ["latin"] });
+
 
 const STYLES = {
   gradients: {
@@ -141,27 +143,28 @@ export default function Auth() {
           style={{ backgroundImage: STYLES.gradients.wall }}
         >
           <div className="w-[45%] h-[100%] grid grid-cols-2 gap-1 relative">
-            <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] border-[#44291B] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${upperOpen ? '-translate-x-full' : 'translate-x-0'}`}>
+            <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${upperOpen ? '-translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${upperOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
               ))}
               <div className="absolute right-0.5 top-1/2 -translate-y-1/2 flex items-center">
                 <button type="button" onClick={(e) => { e.stopPropagation(); toggleUpper(); }} className="w-10 h-10 rounded-full bg-[#3e2319] border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
-                  {upperOpen ? '→' : '←'}
+                  {upperOpen ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
 
-            <div className={`absolute inset-y-0 right-0 w-1/2 bg-[#fcf4d9] border border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${upperOpen ? 'translate-x-full' : 'translate-x-0'}`}>
+            <div className={`absolute inset-y-0 right-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${upperOpen ? 'translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${upperOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
               ))}
               <div className="absolute left-0.5 top-1/2 -translate-y-1/2 flex items-center">
                 <button type="button" onClick={(e) => { e.stopPropagation(); toggleUpper(); }} className="w-10 h-10 rounded-full bg-[#3e2319] border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
-                  {upperOpen ? '←' : '→'}
+                  {upperOpen ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
+
 
             <div className="absolute inset-0 flex flex-col items-center justify-center z-0 p-4 gap-2">
               {upperOpen && (
@@ -184,11 +187,16 @@ export default function Auth() {
           <button
             type="button"
             onClick={() => goTo('/')}
-            className="w-20 h-20 rounded-full bg-[#2d1a12] flex items-center justify-center mb-[12px] shadow-lg hover:bg-[#fbbc05] transition-colors duration-300 cursor-pointer group"
+            className="w-20 h-20 rounded-full bg-[#2d1a12] flex items-center justify-center mb-[12px] shadow-lg hover:bg-[#fbbc05] transition-colors duration-300 cursor-pointer group relative"
             title="Go to Home"
           >
+            <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#fcf4d9] text-[#2d1a12] text-[10px] px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap font-black uppercase tracking-widest border-2 border-[#2d1a12] shadow-xl translate-y-2 group-hover:translate-y-0">
+              Back to Home
+            </span>
+
             <img src="/assets/logo-icon-white.png" className="w-13 h-13 transition-all duration-300 group-hover:invert" alt="logo" />
           </button>
+
         </div>
 
         {/* Lower wall / door (Log In) */}
@@ -197,58 +205,59 @@ export default function Auth() {
           style={{ backgroundImage: STYLES.gradients.lowerWall }}
         >
           <div className="w-[45%] h-[100%] grid grid-cols-2 gap-1 relative">
-            <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${lowerOpen ? '-translate-x-full' : 'translate-x-0'}`}>
+            <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${lowerOpen ? '-translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${lowerOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
               ))}
               <div className="absolute right-0.5 top-1/2 -translate-y-1/2 flex items-center">
                 <button onClick={(e) => { e.stopPropagation(); toggleLower(); }} className="w-10 h-10 rounded-full bg-[#3e2319] border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
-                  {lowerOpen ? '→' : '←'}
+                  {lowerOpen ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
 
-            <div className={`absolute inset-y-0 right-0 w-1/2 bg-[#fcf4d9] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${lowerOpen ? 'translate-x-full' : 'translate-x-0'}`}>
+            <div className={`absolute inset-y-0 right-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${lowerOpen ? 'translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${lowerOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
               ))}
               <div className="absolute left-0.5 top-1/2 -translate-y-1/2 flex items-center">
                 <button onClick={(e) => { e.stopPropagation(); toggleLower(); }} className="w-10 h-10 rounded-full bg-[#3e2319] border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
-                  {lowerOpen ? '←' : '→'}
+                  {lowerOpen ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
+          </div>
 
-            <div className={`absolute inset-0 z-0 flex flex-col items-center justify-center p-4 gap-4 transition-colors duration-500 ${lowerOpen ? 'bg-[#fcf4d9]' : 'bg-transparent'}`}>
-              {lowerOpen && (
-                <>
-                  <h2 className="text-xl font-bold text-[#1e1e1e] text-center">Choose Login Method</h2>
-                  <div className="flex flex-col gap-3 w-full items-center">
-                    <button
-                      type="button"
-                      onClick={() => goTo('/login')}
-                      className="w-full max-w-[240px] h-10 px-4 bg-[#3e2319] text-[#fcf4d9] rounded-full hover:bg-[#2d1a12] transition-all text-sm font-medium"
-                    >
-                      Log In with Email
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => goTo('/google-login')}
-                      className="w-full max-w-[240px] h-10 px-4 bg-[#fbbc05] text-[#2d1a1a] rounded-full hover:bg-[#f9d776] transition-all text-sm font-medium"
-                    >
-                      Log In with Google
-                    </button>
-                  </div>
-                  <p className="text-sm mt-2 text-[#1e1e1e]">
-                    New Here? <button type="button" onClick={() => setOpenPanel("upper")} className="underline font-bold hover:text-[#3e2319]">Click Here</button> to Register.
-                  </p>
-                </>
-              )}
-            </div>
+
+          <div className={`absolute inset-0 z-0 flex flex-col items-center justify-center p-4 gap-4 transition-colors duration-500 ${lowerOpen ? 'bg-[#fcf4d9]' : 'bg-transparent'}`}>
+            {lowerOpen && (
+              <>
+                <h2 className="text-xl font-bold text-[#1e1e1e] text-center">Choose Login Method</h2>
+                <div className="flex flex-col gap-3 w-full items-center">
+                  <button
+                    type="button"
+                    onClick={() => goTo('/login')}
+                    className="w-full max-w-[240px] h-10 px-4 bg-[#3e2319] text-[#fcf4d9] rounded-full hover:bg-[#2d1a12] transition-all text-sm font-medium"
+                  >
+                    Log In with Email
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goTo('/google-login')}
+                    className="w-full max-w-[240px] h-10 px-4 bg-[#fbbc05] text-[#2d1a1a] rounded-full hover:bg-[#f9d776] transition-all text-sm font-medium"
+                  >
+                    Log In with Google
+                  </button>
+                </div>
+                <p className="text-sm mt-2 text-[#1e1e1e]">
+                  New Here? <button type="button" onClick={() => setOpenPanel("upper")} className="underline font-bold hover:text-[#3e2319]">Click Here</button> to Register.
+                </p>
+              </>
+            )}
           </div>
         </div>
-
       </div>
+
 
       <style jsx global>{`
         @keyframes cloudFloat {

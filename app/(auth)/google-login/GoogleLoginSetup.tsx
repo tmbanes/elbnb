@@ -15,7 +15,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { ChevronLeft, Home } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 
 type GoogleLoginProps = { user: User | null };
 
@@ -108,7 +108,8 @@ export default function GoogleLoginSetup({ user }: GoogleLoginProps) {
 
           <div className="flex items-center justify-center gap-4">
             <Button variant="link" onClick={() => router.push("/onboarding")} className="text-[#3E2723]/80 hover:text-[#3E2723] flex items-center gap-1 no-underline font-bold font-[family-name:var(--font-archivo)]">
-              <ChevronLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
+
               Go back
             </Button>
             <span className="text-[#3E2723]/30 font-bold">•</span>

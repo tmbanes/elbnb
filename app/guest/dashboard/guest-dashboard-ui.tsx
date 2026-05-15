@@ -16,6 +16,8 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { ViewAccommodation } from "@/components/SearchAccommodations";
 import { Unit } from "@/types/accommodation_units";
 import { formatImageUrl } from "@/lib/utils/image-utils";
+import { ImageWithLoader } from "@/components/shared/ImageWithLoader";
+
 
 
 const archivo = Archivo({ subsets: ["latin"] });
@@ -429,17 +431,17 @@ export default function GuestDashboardUI({
                     {accommodations.slice(0, 3).map((accommodation, i) => (
                             <div key={i} className="bg-[#F9FBEC] rounded-[32px] overflow-hidden border border-slate-100/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] group hover:shadow-2xl hover:shadow-[#709849]/5 transition-all duration-500">
                                 <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
-                                    <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center">
+                                    <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700">
                                         {accommodation.image ? (
-                                            <Image 
-                                                src={formatImageUrl(accommodation.image)} 
+                                            <ImageWithLoader
+                                                src={accommodation.image} 
                                                 alt={accommodation.name} 
-                                                fill 
                                                 className="object-cover"
                                             />
                                         ) : (
-
-                                            <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                            <div className="flex items-center justify-center w-full h-full">
+                                                <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                            </div>
                                         )}
                                     </div>
                                     <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg z-10">
