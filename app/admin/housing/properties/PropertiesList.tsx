@@ -27,7 +27,7 @@ import {
   CardTitle,
   CardHeader
 } from "@/components/ui/card";
-import { ChevronLeft, Plus, Building2, Home, Users, Bed, Search, Filter } from "lucide-react";
+import { ChevronLeft, Plus, Building2, Home, Users, Bed, Search, Filter, Loader2 } from "lucide-react";
 
 interface SummaryStats {
   totalDorms: number;
@@ -59,6 +59,7 @@ interface PropertiesListProps {
   onEditProperty: (property: Property) => void;
   onDeleteProperty: (id: string, type: string) => void;
   onBackToHousing: () => void;
+  isDeletingProperty?: boolean;
 }
 
 //Stat Card Function
@@ -116,6 +117,7 @@ export default function PropertiesList({
   onEditProperty,
   onDeleteProperty,
   onBackToHousing,
+  isDeletingProperty,
 }: PropertiesListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeProperty, setActiveProperty] = useState<Property | null>(null);
@@ -267,18 +269,24 @@ export default function PropertiesList({
       >
         <div className="space-y-4">
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)} disabled={isDeletingProperty}>Cancel</Button>
             <Button
               variant="destructive"
-              onClick={() => {
+              disabled={isDeletingProperty}
+              onClick={async () => {
                 if (activeProperty) {
-                  onDeleteProperty(activeProperty.accommodation_id, activeProperty.accommodation_type);
+                  await onDeleteProperty(activeProperty.accommodation_id, activeProperty.accommodation_type);
                   setDeleteModalOpen(false);
                   setActiveProperty(null);
                 }
               }}
             >
-              Delete Property
+              {isDeletingProperty ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Deleting...</span>
+                </div>
+              ) : "Delete Property"}
             </Button>
           </div>
         </div>

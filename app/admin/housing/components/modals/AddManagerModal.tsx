@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DialogFooter } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface User {
@@ -59,7 +60,7 @@ export default function AddManagerModal({
   const [error, setError] = useState<string | null>(null);
 
   // Tab 1 — existing user
-  const [activeTab, setActiveTab] = useState<Tab>("existing");
+  const [activeTab, setActiveTab] = useState<Tab>("create");
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [officeLocation, setOfficeLocation] = useState("");
@@ -76,7 +77,7 @@ export default function AddManagerModal({
     setSubmitState("idle");
     setGeneratedPassword(null);
     setCopied(false);
-    setActiveTab("existing");
+    setActiveTab("create");
 
     if (isEditing && existingManager) {
       setSelectedUserId(existingManager.user_id);
@@ -184,7 +185,7 @@ export default function AddManagerModal({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Account creation failed");
 
-      setGeneratedPassword(data.generated_password);
+      setGeneratedPassword(data.temporary_password);
       setSubmitState("success");
       onSuccess(); // refresh the list in background
     } catch (err: any) {
@@ -296,7 +297,12 @@ export default function AddManagerModal({
               disabled={loading}
               className="bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
             >
-              {loading ? "Saving..." : "Save Changes"}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              ) : "Save Changes"}
             </Button>
           </div>
         </form>
@@ -305,7 +311,7 @@ export default function AddManagerModal({
       {/* ── CREATE MODE (with tabs) ──────────────────────────────────────── */}
       {!isEditing && submitState !== "success" && (
         <>
-          {/* Tab switcher */}
+          {/* Tab switcher (COMMENTED OUT)
           <div className="flex rounded-lg border border-border overflow-hidden mb-4">
             <button
               type="button"
@@ -334,8 +340,9 @@ export default function AddManagerModal({
               Create New Account
             </button>
           </div>
+          */}
 
-          {/* ── TAB 1: Pick existing user ──────────────────────────────── */}
+          {/* ── TAB 1: Pick existing user (COMMENTED OUT) ──
           {activeTab === "existing" && (
             <form onSubmit={handleExistingSubmit} className="space-y-4">
               <FieldGroup>
@@ -408,6 +415,7 @@ export default function AddManagerModal({
               </div>
             </form>
           )}
+          */}
 
           {/* ── TAB 2: Create new account ──────────────────────────────── */}
           {activeTab === "create" && (
@@ -490,7 +498,12 @@ export default function AddManagerModal({
                   }
                   className="bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
                 >
-                  {loading ? "Creating..." : "Create Account"}
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Creating...</span>
+                    </div>
+                  ) : "Create Account"}
                 </Button>
               </div>
             </form>

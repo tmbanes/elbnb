@@ -20,9 +20,9 @@ export const GET = withRole(['housing_admin', 'admin'], async (_req: NextRequest
       .from("users").select("role").eq("user_id", user.id).single();
 
     if (!profile || (profile.role !== "housing_admin" && profile.role !== "admin")) {
-      return NextResponse.json({ 
-        error: "Forbidden", 
-        details: `Admin role required. Current role: '${profile?.role || "none"}'` 
+      return NextResponse.json({
+        error: "Forbidden",
+        details: `Admin role required. Current role: '${profile?.role || "none"}'`
       }, { status: 403 });
     }
 
@@ -55,7 +55,7 @@ export const GET = withRole(['housing_admin', 'admin'], async (_req: NextRequest
       `);
 
     if (unitId) {
-      console.log("DEBUG: Fetching residents for unitId:", unitId);
+      // console.log("DEBUG: Fetching residents for unitId:", unitId);
       // Basic UUID validation to prevent DB errors
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(unitId)) {
@@ -69,7 +69,7 @@ export const GET = withRole(['housing_admin', 'admin'], async (_req: NextRequest
       .order("move_in_date", { ascending: false });
 
     if (unitId) {
-      console.log(`DEBUG: Found ${assignments?.length || 0} assignments for unit ${unitId}`);
+      // console.log(`DEBUG: Found ${assignments?.length || 0} assignments for unit ${unitId}`);
     }
 
     if (error) {
@@ -172,8 +172,8 @@ export const PATCH = withRole(['housing_admin', 'admin'], async (req: NextReques
         .select("user_id, users(first_name, last_name)")
         .eq("assignment_id", assignment_id)
         .single();
-      
-      const residentName = assignmentData?.users 
+
+      const residentName = assignmentData?.users
         ? `${(assignmentData.users as any).first_name} ${(assignmentData.users as any).last_name}`
         : "Unknown Resident";
 

@@ -1,17 +1,12 @@
 // app/admin/residents/page.tsx
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
+import { requireRole } from "@/lib/auth/session";
 import ResidentsClient from "./ResidentsClient";
 
 export default async function AdminResidentsPage() {
-  const user = await getApiAuthenticatedUser();
+  const user = await requireRole(['housing_admin', 'admin']);
   const supabase = await createSupabaseServerClient();
-
-  if (!user || user.role !== "housing_admin") {
-    redirect("/onboarding");
-  }
 
   // Fetch initial residents data on the server - using admin client to bypass RLS
   const { data: residents, error } = await supabaseAdmin

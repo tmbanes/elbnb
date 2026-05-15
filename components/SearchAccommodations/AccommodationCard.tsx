@@ -57,21 +57,23 @@ export function AccommodationCard({
         )}
 
         {/* Availability Chip */}
-        <div className="absolute top-3 left-3 z-10">
-          {totalVacantSlots > 5 ? (
-            <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-              Available
-            </span>
-          ) : totalVacantSlots > 0 ? (
-            <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-              Limited
-            </span>
-          ) : (
-            <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-              Full
-            </span>
-          )}
-        </div>
+        {isApplicationOpen && (
+          <div className="absolute top-3 left-3 z-10">
+            {totalVacantSlots > 5 ? (
+              <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                Available
+              </span>
+            ) : totalVacantSlots > 0 ? (
+              <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                Limited
+              </span>
+            ) : (
+              <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                Full
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -96,6 +98,32 @@ export function AccommodationCard({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             {units.length > 0 ? `From ₱${Math.min(...units.map((u: any) => u.rental_fee)).toLocaleString()}` : 'Price not set'}
+          </div>
+
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#264384' }}>
+            {(!accommodation.accomm_sex || accommodation.accomm_sex.toLowerCase() === 'all' || accommodation.accomm_sex.toLowerCase() === 'coed') && (
+              <>
+                <svg className="w-4 h-4 text-purple-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="15" r="5" />
+                  <path d="M9 20v3M7 22h4" />
+                  <circle cx="15" cy="9" r="5" />
+                  <path d="M18.5 5.5L22 2M17 2h5v5" />
+                </svg>
+                <span>COED</span>
+              </>
+            )}
+            {(accommodation.accomm_sex?.toLowerCase() === 'female' || accommodation.accomm_sex?.toLowerCase() === 'f') && (
+              <>
+                <svg className="w-4 h-4 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6"/><path d="M12 16v6M9 19h6"/></svg>
+                <span>Female only</span>
+              </>
+            )}
+            {(accommodation.accomm_sex?.toLowerCase() === 'male' || accommodation.accomm_sex?.toLowerCase() === 'm') && (
+              <>
+                <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6"/><path d="M14.243 9.757L21 3M16 3h5v5"/></svg>
+                <span>Male only</span>
+              </>
+            )}
           </div>
         </div>
 

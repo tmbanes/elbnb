@@ -14,9 +14,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 async function checkManagerHousing() {
   // 1. Get current user (mocking what normally happens)
   // Since we don't have the active session easily here, let's list ALL managers and their assigned properties
-  
-  console.log('--- Managers & Their Assigned Accommodations ---');
-  
+
+  // console.log('--- Managers & Their Assigned Accommodations ---');
+
   const { data: managers, error: userError } = await supabase
     .from('users')
     .select('user_id, first_name, last_name, role')
@@ -32,17 +32,17 @@ async function checkManagerHousing() {
       .from('accommodation')
       .select('name, location')
       .eq('manager_id', manager.user_id);
-    
-    console.log(`${manager.first_name} ${manager.last_name} (${manager.user_id}): ${properties?.length || 0} properties`);
+
+    // console.log(`${manager.first_name} ${manager.last_name} (${manager.user_id}): ${properties?.length || 0} properties`);
     properties?.forEach(p => console.log(`  - ${p.name} at ${p.location}`));
   }
 
-  console.log('\n--- Unassigned Accommodations ---');
+  // console.log('\n--- Unassigned Accommodations ---');
   const { data: unassigned, error: unError } = await supabase
     .from('accommodation')
     .select('name, location')
     .is('manager_id', null);
-  
+
   unassigned?.forEach(p => console.log(`  - ${p.name} at ${p.location}`));
 }
 

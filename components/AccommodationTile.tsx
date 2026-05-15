@@ -33,7 +33,35 @@ export function AccommodationTile({ accommodation, onClick, units }: Accommodati
         </div>
         <div>
           <p className="text-gray-500">Type</p>
-          <p className="text-gray-900 font-medium">{accommodation.accommodation_type}</p>
+          <p className="text-gray-900 font-medium capitalize">{accommodation.accommodation_type}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Sex Allowed</p>
+          <div className="flex items-center gap-1.5 mt-0.5 text-gray-900 font-medium">
+            {(!accommodation.accomm_sex || accommodation.accomm_sex.toLowerCase() === 'all' || accommodation.accomm_sex.toLowerCase() === 'coed') && (
+              <>
+                <svg className="w-4 h-4 text-purple-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="15" r="5" />
+                  <path d="M9 20v3M7 22h4" />
+                  <circle cx="15" cy="9" r="5" />
+                  <path d="M18.5 5.5L22 2M17 2h5v5" />
+                </svg>
+                <span>COED</span>
+              </>
+            )}
+            {(accommodation.accomm_sex?.toLowerCase() === 'female' || accommodation.accomm_sex?.toLowerCase() === 'f') && (
+              <>
+                <svg className="w-4 h-4 text-pink-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6"/><path d="M12 16v6M9 19h6"/></svg>
+                <span>Female only</span>
+              </>
+            )}
+            {(accommodation.accomm_sex?.toLowerCase() === 'male' || accommodation.accomm_sex?.toLowerCase() === 'm') && (
+              <>
+                <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6"/><path d="M14.243 9.757L21 3M16 3h5v5"/></svg>
+                <span>Male only</span>
+              </>
+            )}
+          </div>
         </div>
         <div>
           <p className="text-gray-500">Application Period</p>

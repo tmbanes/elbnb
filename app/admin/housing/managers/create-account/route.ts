@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { randomBytes } from "crypto";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
 function generatePassword(): string {
   const upper = "ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -45,6 +46,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Security check: ensure requester is an authenticated housing admin
+  const user = await getApiAuthenticatedUser();
+  if (!user || user.role !== "housing_admin") {
+    return NextResponse.json(
+      { error: "Unauthorized. Only housing administrators can create manager accounts." },
+      { status: 403 }
+    );
+  }
+
   const password = generatePassword();
   // employee_id must be passed so the trigger's INSERT into
   // dormitory_manager does not fail the NOT NULL constraint
@@ -72,12 +82,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // generated_password is returned ONCE — never stored in plaintext
+  // temporary_password is returned ONCE to match frontend expectations
   return NextResponse.json(
     {
       user_id: data.user.id,
       employee_id,
-      generated_password: password,
+      temporary_password: password,
     },
     { status: 201 }
   );

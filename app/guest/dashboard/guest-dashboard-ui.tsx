@@ -125,7 +125,7 @@ export default function GuestDashboardUI({
                     accommodation={selectedAccommodation}
                     units={accommodationUnits}
                     onBack={() => setSelectedAccommodation(null)}
-                    onApply={() => router.push(`/guest/accommodations/application?id=${selectedAccommodation.accommodation_id}`)}
+                    onApply={() => router.push(`/guest/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}`)}
                     userRole="guest"
                 />
             </div>
@@ -289,41 +289,64 @@ export default function GuestDashboardUI({
                                 </div>
                             )}
     
-                            <h2 className="text-2xl md:text-[28px] font-bold text-[#2A3F2D] mb-1 leading-tight flex items-center gap-2">
-                                {activeResidency ? (
-                                    <>
+                            {activeResidency ? (
+                                <>
+                                    <h2 className="text-2xl md:text-[28px] font-bold text-[#2A3F2D] mb-1 leading-tight flex items-center gap-2">
                                         {activeResidency.accommodation?.name}, Room {activeResidency.unit?.unit_number} <ArrowRight className="w-6 h-6 text-[#8BAE90] stroke-[1.5]" />
-                                    </>
-                                ) : isLoadingResidency ? (
-                                    "Loading..."
-                                ) : (
-                                    "No Active Residency"
-                                )}
-                            </h2>
-                            <p className="text-[13px] font-medium text-slate-500 mb-8 max-w-[80%]">
-                                {activeResidency?.accommodation?.location || "University of the Philippines Los Baños, College, Laguna"}
-                            </p>
-    
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
-                                <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                    <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
-                                    <p className="text-[15px] font-bold text-slate-900">
-                                        {activeResidency?.move_in_date ? new Date(activeResidency.move_in_date).toLocaleDateString() : "---"}
+                                    </h2>
+                                    <p className="text-[13px] font-medium text-slate-500 mb-8 max-w-[80%]">
+                                        {activeResidency.accommodation?.location || "University of the Philippines Los Baños, College, Laguna"}
                                     </p>
-                                </div>
-                                <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                    <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Status</p>
-                                    <p className="text-[15px] font-bold text-slate-900">
-                                        {activeResidency?.assignment_status || "Pending"}
+            
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
+                                        <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                            <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
+                                            <p className="text-[15px] font-bold text-slate-900">
+                                                {activeResidency.move_in_date ? new Date(activeResidency.move_in_date).toLocaleDateString() : "To be determined"}
+                                            </p>
+                                        </div>
+                                        <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                            <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Status</p>
+                                            <p className="text-[15px] font-bold text-slate-900">
+                                                {activeResidency.assignment_status || "Pending"}
+                                            </p>
+                                        </div>
+                                        <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                            <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Roommate</p>
+                                            <p className="text-[15px] font-bold text-slate-900">
+                                                {activeResidency.unit?.unit_type || "No unit assigned yet"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className="text-2xl md:text-[28px] font-bold text-[#2A3F2D] mb-1 leading-tight flex items-center gap-2">
+                                        {isLoadingResidency ? "Loading..." : "No Active Residency"}
+                                    </h2>
+                                    <p className="text-[13px] font-medium text-slate-500 mb-8 max-w-[80%]">
+                                        University of the Philippines Los Baños, College, Laguna
                                     </p>
-                                </div>
-                                <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                    <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Roommate</p>
-                                    <p className="text-[15px] font-bold text-slate-900">
-                                        {activeResidency?.unit?.unit_type || "---"}
-                                    </p>
-                                </div>
-                            </div>
+                                    
+                                    {!isLoadingResidency && (
+                                        <div className="mt-auto pt-6">
+                                            <div className="bg-[#F8F9EC]/80 rounded-[18px] p-5 flex flex-col md:flex-row items-start md:items-center justify-between border border-[#eef1d6] gap-5">
+                                                <div className="flex items-start md:items-center gap-4">
+                                                    <p className="text-[13px] text-slate-600 font-medium italic leading-relaxed max-w-[90%]">
+                                                        You are not currently assigned to any accommodation. Browse our available options to find your next stay.
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => router.push("/guest/accommodations")}
+                                                    className="group shrink-0 w-full md:w-auto h-auto py-3 px-6 rounded-xl font-bold text-[12px] bg-[#668E42] hover:bg-[#557F44] text-white flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-[0.98] border-none outline-none"
+                                                >
+                                                    Browse Options <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
                     </div>
                     {/* RIGHT SMALL CARD - ACCOMMODATION HISTORY */}
@@ -494,7 +517,7 @@ export default function GuestDashboardUI({
                                 {isLoadingApplications ? (
                                     <p className="text-[11px] text-slate-400">Loading applications...</p>
                                 ) : applications.length === 0 ? (
-                                    <p className="text-[11px] text-slate-400">No applications found.</p>
+                                    <p className="text-[11px] text-slate-400 italic">No recent applications found.</p>
                                 ) : (
                                     applications.slice(0, 3).map((app) => (
                                         <div key={app.application_id} className="relative pl-6">

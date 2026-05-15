@@ -6,18 +6,8 @@ export default async function LandingPage() {
   // Check if user is logged in
   const user = await getApiAuthenticatedUser();
 
-  // If user is logged in but profile is incomplete
-  if (user != null && (!user.role || !user.first_name || user.first_name === "TBD")) {
-    redirect("/complete-profile");
-  }
-
-  // user is logged in and has role and complete profile
-  if (user && user.role) {
-    if (user.role === "student") redirect("/student/dashboard");
-    if (user.role === "housing_admin") redirect("/admin/dashboard");
-    if (user.role === "dormitory_manager") redirect("/manager/dashboard");
-    if (user.role === "guest") redirect("/guest/dashboard");
-  }
+  // Note: Redirections have been removed so logged-in users can access the landing page.
+  // The RotatingLanding component will receive the user prop and can display specific UI (e.g. "Go to Dashboard" button).
 
   // We DO NOT call redirectByRole here because it has a built-in redirect to /onboarding
 

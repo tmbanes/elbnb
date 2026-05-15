@@ -43,21 +43,23 @@ export function UnitCard({
         </div>
 
         {/* Vacancy Chip */}
-        <div className="absolute top-3 left-3 z-10">
-          {unit.vacant_slots > 5 ? (
-            <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-              Available
-            </span>
-          ) : unit.vacant_slots > 0 ? (
-            <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-              Limited
-            </span>
-          ) : (
-            <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-              Full
-            </span>
-          )}
-        </div>
+        {isApplicationOpen && (
+          <div className="absolute top-3 left-3 z-10">
+            {unit.vacant_slots > 5 ? (
+              <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                Available
+              </span>
+            ) : unit.vacant_slots > 0 ? (
+              <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                Limited
+              </span>
+            ) : (
+              <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                Full
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Content */}

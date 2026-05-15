@@ -71,21 +71,23 @@ export function AccommodationListView({
                 )}
 
                 {/* Availability Chip */}
-                <div className="absolute top-3 left-3 z-10">
-                  {vacantSlots > 5 ? (
-                    <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-                      Available
-                    </span>
-                  ) : vacantSlots > 0 ? (
-                    <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-                      Limited
-                    </span>
-                  ) : (
-                    <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-                      Full
-                    </span>
-                  )}
-                </div>
+                {isApplicationOpen && (
+                  <div className="absolute top-3 left-3 z-10">
+                    {vacantSlots > 5 ? (
+                      <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                        Available
+                      </span>
+                    ) : vacantSlots > 0 ? (
+                      <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                        Limited
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                        Full
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* CONTENT SIDE */}
@@ -131,6 +133,33 @@ export function AccommodationListView({
                     <span className="font-medium">
                       {acc.accommodation_type === 'renting_space' ? 'Renting Space' : acc.accommodation_type === 'dormitory' ? 'Dormitory' : 'Accommodation Type not set'}
                     </span>
+                  </div>
+
+                  {/* Sex Allowed */}
+                  <div className="flex items-center gap-1.5" title="Sex Allowed">
+                    {(!acc.accomm_sex || acc.accomm_sex.toLowerCase() === 'all' || acc.accomm_sex.toLowerCase() === 'coed') && (
+                      <>
+                        <svg className="w-4 h-4 text-purple-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="9" cy="15" r="5" />
+                          <path d="M9 20v3M7 22h4" />
+                          <circle cx="15" cy="9" r="5" />
+                          <path d="M18.5 5.5L22 2M17 2h5v5" />
+                        </svg>
+                        <span className="font-medium">COED</span>
+                      </>
+                    )}
+                    {(acc.accomm_sex?.toLowerCase() === 'female' || acc.accomm_sex?.toLowerCase() === 'f') && (
+                      <>
+                        <svg className="w-4 h-4 text-pink-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6"/><path d="M12 16v6M9 19h6"/></svg>
+                        <span className="font-medium">Female only</span>
+                      </>
+                    )}
+                    {(acc.accomm_sex?.toLowerCase() === 'male' || acc.accomm_sex?.toLowerCase() === 'm') && (
+                      <>
+                        <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6"/><path d="M14.243 9.757L21 3M16 3h5v5"/></svg>
+                        <span className="font-medium">Male only</span>
+                      </>
+                    )}
                   </div>
 
                   {/* Occupants */}

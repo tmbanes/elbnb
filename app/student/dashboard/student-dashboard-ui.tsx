@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
-    Bell, Building2, History, FileText,
+    Search, Bell, Building2, History, FileText,
     Folder, Download, Plus, ArrowRight, LogOut,
     Calendar, CheckCircle2, AlertCircle, X
 } from "lucide-react";
@@ -64,7 +64,7 @@ export default function StudentDashboardUI({
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState(initialNotifications);
-
+    
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
@@ -76,7 +76,7 @@ export default function StudentDashboardUI({
     }, [initialNotifications]);
 
     const [isSubmittingExtension, setIsSubmittingExtension] = useState(false);
-
+    
     // Detailed View State
     const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null);
     const [accommodationUnits, setAccommodationUnits] = useState<Unit[]>([]);
@@ -176,11 +176,11 @@ export default function StudentDashboardUI({
 
     // Active Residency Details
     const dormName = currentResidency?.unit?.accommodation?.name || "No Active Residency";
-    const dormAddress = currentResidency?.unit?.accommodation?.location || "N/A";
+    const dormAddress = currentResidency?.unit?.accommodation?.location || "No location details available yet";
     const roomNumber = currentResidency?.unit?.unit_number ? `Room ${currentResidency.unit.unit_number}` : "";
-    const checkInDate = currentResidency?.move_in_date ? new Date(currentResidency.move_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A";
-    const status = currentResidency?.assignment_status ? (currentResidency.assignment_status.charAt(0).toUpperCase() + currentResidency.assignment_status.slice(1).replace('_', ' ')) : "N/A";
-    const unitType = currentResidency?.unit?.unit_type ? (currentResidency.unit.unit_type.charAt(0).toUpperCase() + currentResidency.unit.unit_type.slice(1)) : "N/A";
+    const checkInDate = currentResidency?.move_in_date ? new Date(currentResidency.move_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Not yet scheduled";
+    const status = currentResidency?.assignment_status ? (currentResidency.assignment_status.charAt(0).toUpperCase() + currentResidency.assignment_status.slice(1).replace('_', ' ')) : "No active residency yet";
+    const unitType = currentResidency?.unit?.unit_type ? (currentResidency.unit.unit_type.charAt(0).toUpperCase() + currentResidency.unit.unit_type.slice(1)) : "No unit assigned yet";
 
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -221,7 +221,9 @@ export default function StudentDashboardUI({
 
             <div className="w-full max-w-[1100px]">
                 {/* TOP BAR */}
-                <header className="flex flex-col-reverse md:flex-row justify-end items-start md:items-center w-full mb-12 gap-4">
+                <header className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center w-full mb-12 gap-4">
+                    <div className="flex items-center gap-4 w-full md:w-auto"></div>
+
                     <div className="flex items-center gap-6 self-end md:self-auto">
                         {/* NOTIFICATIONS BELL */}
                         <div className="relative">
@@ -258,8 +260,8 @@ export default function StudentDashboardUI({
                                     <div className="max-h-[350px] overflow-y-auto">
                                         {notifications.length > 0 ? (
                                             notifications.map((n, i) => (
-                                                <div
-                                                    key={i}
+                                                <div 
+                                                    key={i} 
                                                     className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer group"
                                                     onClick={() => {
                                                         const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
@@ -267,7 +269,7 @@ export default function StudentDashboardUI({
                                                             readIds.push(n.id);
                                                             localStorage.setItem('read_notifications', JSON.stringify(readIds));
                                                         }
-                                                        setNotifications(prev => prev.map((notif, idx) =>
+                                                        setNotifications(prev => prev.map((notif, idx) => 
                                                             idx === i ? { ...notif, is_read: true } : notif
                                                         ));
                                                         if (n.link) router.push(n.link);
@@ -373,10 +375,10 @@ export default function StudentDashboardUI({
 
                             {currentResidency?.unit?.accommodation?.image && (
                                 <div className="absolute inset-0 z-0 opacity-10">
-                                    <Image
-                                        src={currentResidency.unit.accommodation.image}
-                                        alt="Background"
-                                        fill
+                                    <Image 
+                                        src={currentResidency.unit.accommodation.image} 
+                                        alt="Background" 
+                                        fill 
                                         className="object-cover"
                                     />
                                 </div>
@@ -390,56 +392,76 @@ export default function StudentDashboardUI({
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4 w-full">
-                            <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
-                                <p className="text-[15px] font-bold text-slate-900">{checkInDate}</p>
-                            </div>
-                            <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Status</p>
-                                <p className="text-[15px] font-bold text-slate-900">{status}</p>
-                            </div>
-                            <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6] sm:col-span-1 col-span-2">
-                                <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Unit Type</p>
-                                <p className="text-[15px] font-bold text-slate-900">{unitType}</p>
-                            </div>
-                        </div>
+                        {dormName !== "No Active Residency" ? (
+                            <>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4 w-full">
+                                    <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                        <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
+                                        <p className="text-[15px] font-bold text-slate-900">{checkInDate}</p>
+                                    </div>
+                                    <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                        <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Status</p>
+                                        <p className="text-[15px] font-bold text-slate-900">{status}</p>
+                                    </div>
+                                    <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6] sm:col-span-1 col-span-2">
+                                        <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Unit Type</p>
+                                        <p className="text-[15px] font-bold text-slate-900">{unitType}</p>
+                                    </div>
+                                </div>
 
-                        {/* RENEWAL / EXTEND STAY BUTTON - BOTTOM RIGHT */}
-                        <div className="mt-8 flex justify-end">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="w-full md:w-auto">
-                                            <Button
-                                                disabled={!isRenewalAvailable || isSubmittingExtension}
-                                                onClick={() => setIsConfirmModalOpen(true)}
-                                                className={`w-full md:w-auto h-auto py-3 px-8 rounded-2xl font-bold text-[12px] transition-all flex items-center justify-center gap-2 shadow-lg ${isRenewalAvailable
-                                                    ? 'bg-[#668E42] hover:bg-[#557F44] text-white shadow-[#668E42]/10 active:scale-[0.98]'
-                                                    : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
-                                                    }`}
-                                            >
-                                                <Calendar className="w-4 h-4" />
-                                                {isSubmittingExtension ? "Submitting..." : "Extend Stay"}
-                                            </Button>
-                                        </div>
-                                    </TooltipTrigger>
-                                    {!isRenewalAvailable && (
-                                        <TooltipContent className="bg-slate-800 text-white border-none p-3 rounded-xl shadow-xl max-w-[250px]">
-                                            <div className="flex items-start gap-2">
-                                                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                                                <p className="text-[11px] font-medium leading-relaxed">
-                                                    Accommodation renewal can only be accessed during the renewal period:
-                                                    <span className="block mt-1 font-bold text-white">
-                                                        {formatDate(renewalStart)} – {formatDate(renewalEnd)}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
+                                {/* RENEWAL / EXTEND STAY BUTTON - BOTTOM RIGHT */}
+                                <div className="mt-8 flex justify-end">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="w-full md:w-auto">
+                                                    <Button
+                                                        disabled={!isRenewalAvailable || isSubmittingExtension}
+                                                        onClick={() => setIsConfirmModalOpen(true)}
+                                                        className={`w-full md:w-auto h-auto py-3 px-8 rounded-2xl font-bold text-[12px] transition-all flex items-center justify-center gap-2 shadow-lg ${isRenewalAvailable
+                                                            ? 'bg-[#668E42] hover:bg-[#557F44] text-white shadow-[#668E42]/10 active:scale-[0.98]'
+                                                            : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
+                                                            }`}
+                                                    >
+                                                        <Calendar className="w-4 h-4" />
+                                                        {isSubmittingExtension ? "Submitting..." : "Extend Stay"}
+                                                    </Button>
+                                                </div>
+                                            </TooltipTrigger>
+                                            {!isRenewalAvailable && (
+                                                <TooltipContent className="bg-slate-800 text-white border-none p-3 rounded-xl shadow-xl max-w-[250px]">
+                                                    <div className="flex items-start gap-2">
+                                                        <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                                                        <p className="text-[11px] font-medium leading-relaxed">
+                                                            Accommodation renewal can only be accessed during the renewal period:
+                                                            <span className="block mt-1 font-bold text-white">
+                                                                {formatDate(renewalStart)} – {formatDate(renewalEnd)}
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="mt-auto pt-6">
+                                <div className="bg-[#F8F9EC]/80 rounded-[18px] p-5 flex flex-col md:flex-row items-start md:items-center justify-between border border-[#eef1d6] gap-5">
+                                    <div className="flex items-start md:items-center gap-4">
+                                        <p className="text-[13px] text-slate-600 font-medium italic leading-relaxed max-w-[90%]">
+                                            You are not currently assigned to any accommodation. Browse our available options to find your next stay.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        onClick={goToAccommodations}
+                                        className="group shrink-0 w-full md:w-auto h-auto py-3 px-6 rounded-xl font-bold text-[12px] bg-[#668E42] hover:bg-[#557F44] text-white flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-[0.98] border-none outline-none"
+                                    >
+                                        Browse Options <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* RIGHT SMALL CARD - ACCOMMODATION HISTORY */}
@@ -450,7 +472,7 @@ export default function StudentDashboardUI({
                                 <History className="w-5 h-5 text-white/70" />
                             </div>
 
-                            <div className="space-y-4 mb-6">
+                            <div className="space-y-4 mb-6 px-1">
                                 {history.length > 0 ? (
                                     history.slice(0, 3).map((item, i) => (
                                         <div key={i} className="border-l-2 border-white/20 pl-4 py-0.5">
@@ -507,10 +529,10 @@ export default function StudentDashboardUI({
                                     <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
                                         <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center">
                                             {dorm.image ? (
-                                                <Image
-                                                    src={dorm.image}
-                                                    alt={dorm.name}
-                                                    fill
+                                                <Image 
+                                                    src={dorm.image} 
+                                                    alt={dorm.name} 
+                                                    fill 
                                                     className="object-cover"
                                                 />
                                             ) : (
@@ -542,7 +564,7 @@ export default function StudentDashboardUI({
                 </section>
 
                 {/* BOTTOM TWO CARDS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
                     {/* BILLING CARD */}
                     <div className="bg-white rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
                         <div>
@@ -586,7 +608,6 @@ export default function StudentDashboardUI({
                             View All Bills
                         </button>
                     </div>
-
 
                     {/* APPLICATIONS CARD */}
                     <div className="bg-white rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">

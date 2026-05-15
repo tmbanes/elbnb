@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ProfileUpload } from '@/components/edit-profile/ProfileUpload';
 import { EditProfileDialog } from '@/components/edit-profile/EditProfileDialog';
 import { User } from '@/types/user.types';
-import { Home, Edit3, CircleUser, User as UserIcon, ShieldCheck, MapPinHouse, Building2, History } from 'lucide-react';
+import { Home, Edit3, CircleUser, User as UserIcon, ShieldCheck, MapPinHouse, Building2, History, ChevronDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -148,6 +148,10 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
           <div className="flex items-center justify-end gap-3 text-[#3E2723] pt-6 mb-4">
             <SecondFolderIcon className="w-6 h-6 stroke-[2.5]" />
             <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>{secondFolderLabel}</h3>
+            <ChevronDown 
+              className={`w-6 h-6 transition-transform duration-300 ease-in-out ${activeTab === 'accommodations' ? 'rotate-180' : ''}`} 
+              strokeWidth={2.5}
+            />
           </div>
 
           <div className="pb-6 pt-3 pl-4 sm:pl-10 md:pl-[180px] pr-4 sm:pr-6 md:pr-12 mt-20">
@@ -225,6 +229,10 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
           <div className={`flex items-center gap-3 text-[#3E2723] transition-all duration-500 ${activeTab === 'personal' ? 'pt-8 mb-4' : 'py-5 sm:py-6'}`}>
             <CircleUser className="w-6 h-6 stroke-[2.5]" />
             <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Personal Information</h3>
+            <ChevronDown 
+              className={`w-6 h-6 transition-transform duration-300 ease-in-out ${activeTab === 'personal' ? 'rotate-180' : ''}`} 
+              strokeWidth={2.5}
+            />
           </div>
           <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'personal' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
             <div className="min-h-0 overflow-hidden">

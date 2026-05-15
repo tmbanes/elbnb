@@ -3,16 +3,12 @@
 import { userProfileService } from "@/services/user_profile";
 import { redirect } from "next/navigation";
 import ManagerDashboardUI from "./manager-dashboard-ui";
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 
 export default async function DormitoryManagerDashboardPage() {
-  const user = await getApiAuthenticatedUser();
+  const user = await requireRole(['dormitory_manager']);
   const supabase = await createSupabaseServerClient();
-
-  if (!user) {
-    redirect("/onboarding");
-  }
 
   // Fetch all necessary data in parallel on the server
   const [
@@ -24,7 +20,7 @@ export default async function DormitoryManagerDashboardPage() {
     userProfileService.getProfile(user.user_id),
     userProfileService.getNotifications(user.user_id),
     supabase.from('accommodation').select('*').eq('manager_id', user.user_id).single(),
-    supabase.from('activity_log').select('*').order('timestamp', { ascending: false }).limit(10)
+    supabase.from('activity_log').select('*').neq('entity_type', 'auth').order('timestamp', { ascending: false }).limit(10)
   ]);
 
   const profile = profileRes.data;

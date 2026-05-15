@@ -2,12 +2,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams, useRouter } from "next/navigation";
 import AddDormModal from "@/app/admin/housing/components/modals/AddDormModal";
 import AddRentalSpaceModal from "@/app/admin/housing/components/modals/AddRentalSpaceModal";
 import { Property } from "../../../../types/housing/types";
 import PropertiesList from "./PropertiesList";
 import PropertyDetail from "./PropertyDetails";
+import { CheckCircle2, X } from "lucide-react";
 
 export default function PropertiesContent({ initialData }: { initialData: { properties: Property[], managerCount: number } }) {
   const searchParams = useSearchParams();
@@ -25,6 +27,16 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
   const [dormModalOpen, setDormModalOpen] = useState(false);
   const [rentalModalOpen, setRentalModalOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [showDeleteToast, setShowDeleteToast] = useState(false);
+  const [isHidingToast, setIsHidingToast] = useState(false);
+  const [deletedPropertyName, setDeletedPropertyName] = useState("");
+  const [isDeletingProperty, setIsDeletingProperty] = useState(false);
+  const [isDeletingUnit, setIsDeletingUnit] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
 
   async function fetchProperties() {
@@ -115,6 +127,10 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
   }
 
   async function handleDeleteProperty(id: string, type: string) {
+    const deletedProp = properties.find((p) => p.accommodation_id === id);
+    const deletedName = deletedProp?.name || "Accommodation";
+    
+    setIsDeletingProperty(true);
     const endpoint =
       type === "renting_space"
         ? `/api/admin/housing/rental-spaces?id=${id}`
@@ -122,6 +138,7 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
 
     const res = await fetch(endpoint, { method: "DELETE" });
     const data = await res.json();
+    setIsDeletingProperty(false);
 
     if (!res.ok || data.success === false) {
       alert(data.error || "Delete failed");
@@ -130,13 +147,27 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
 
     setProperties((prev) => prev.filter((p) => p.accommodation_id !== id));
     if (selectedId === id) handleBackToList();
+    
+    setDeletedPropertyName(deletedName);
+    setShowDeleteToast(true);
+    setIsHidingToast(false);
+    
+    setTimeout(() => {
+      setIsHidingToast(true);
+      setTimeout(() => {
+        setShowDeleteToast(false);
+        setIsHidingToast(false);
+      }, 300);
+    }, 5000);
   }
 
   async function handleDeleteUnit(unitId: string) {
+    setIsDeletingUnit(true);
     const res = await fetch(`/api/admin/housing/units?id=${unitId}`, {
       method: "DELETE",
     });
     const data = await res.json();
+    setIsDeletingUnit(false);
 
     if (!res.ok || data.success === false) {
       alert(data.error || "Delete failed");
@@ -186,63 +217,62 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
   if (loading) return <p className="p-6">Loading properties...</p>;
   if (error) return <p className="p-6 text-red-500">Error: {error}</p>;
 
-  return selectedId ? (
+  return (
     <>
-      {detailLoading || !selectedProperty ? (
-        <p className="p-6">Loading detail...</p>
-      ) : (
-        <PropertyDetail
-          property={selectedProperty}
-          onBack={handleBackToList}
-          onDeleteUnit={handleDeleteUnit}
-          onAddUnit={fetchProperties}
-        />
+      {mounted && showDeleteToast && createPortal(
+        <div className={`fixed top-0 right-0 p-8 z-[9999] pointer-events-none ${isHidingToast ? 'animate-toast-out' : 'animate-toast-in'}`}>
+            <div className="bg-white border-l-4 border-red-500 shadow-2xl rounded-xl p-4 flex items-center gap-4 max-w-md pointer-events-auto">
+                <div className="bg-red-100 p-2 rounded-full">
+                    <CheckCircle2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                    <p className="font-bold text-slate-900 text-sm">Property Removed</p>
+                    <p className="text-slate-500 text-xs">Successfully deleted {deletedPropertyName}.</p>
+                </div>
+                <button onClick={() => {
+                  setIsHidingToast(true);
+                  setTimeout(() => {
+                    setShowDeleteToast(false);
+                    setIsHidingToast(false);
+                  }, 300);
+                }} className="text-slate-400 hover:text-slate-600 ml-2 transition-colors">
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+        </div>,
+        document.body
       )}
 
-      <AddDormModal
-        isOpen={dormModalOpen}
-        onClose={closeDormModal}
-        onSuccess={() => {
-          fetchProperties();
-          closeDormModal();
-        }}
-        existingDorm={
-          editingProperty?.accommodation_type === "dormitory"
-            ? editingProperty
-            : null
-        }
-      />
-      <AddRentalSpaceModal
-        isOpen={rentalModalOpen}
-        onClose={closeRentalModal}
-        onSuccess={() => {
-          fetchProperties();
-          closeRentalModal();
-        }}
-        existingRental={
-          editingProperty?.accommodation_type === "renting_space"
-            ? editingProperty
-            : null
-        }
-      />
-    </>
-  ) : (
-    <>
-      <PropertiesList
-        properties={properties}
-        filtered={filtered}
-        tableData={tableData}
-        typeFilter={typeFilter}
-        managerCount={managerCount}
-        addPromptOpen={addPromptOpen}
-        onFilterChange={handleFilterChange}
-        onToggleAddPrompt={() => setAddPromptOpen((prev) => !prev)}
-        onAddProperty={handleAddProperty}
-        onSelectProperty={handleSelectProperty}
-        onEditProperty={openEditModal}
-        onDeleteProperty={handleDeleteProperty}
-        onBackToHousing={handleBackToHousing}
-      />
+      {selectedId ? (
+        detailLoading || !selectedProperty ? (
+          <p className="p-6">Loading detail...</p>
+        ) : (
+          <PropertyDetail
+            property={selectedProperty}
+            onBack={handleBackToList}
+            onDeleteUnit={handleDeleteUnit}
+            onAddUnit={fetchProperties}
+            isDeletingUnit={isDeletingUnit}
+          />
+        )
+      ) : (
+        <PropertiesList
+          properties={properties}
+          filtered={filtered}
+          tableData={tableData}
+          typeFilter={typeFilter}
+          managerCount={managerCount}
+          addPromptOpen={addPromptOpen}
+          onFilterChange={handleFilterChange}
+          onToggleAddPrompt={() => setAddPromptOpen((prev) => !prev)}
+          onAddProperty={handleAddProperty}
+          onSelectProperty={handleSelectProperty}
+          onEditProperty={openEditModal}
+          onDeleteProperty={handleDeleteProperty}
+          onBackToHousing={handleBackToHousing}
+          isDeletingProperty={isDeletingProperty}
+        />
+      )}
 
       <AddDormModal
         isOpen={dormModalOpen}
