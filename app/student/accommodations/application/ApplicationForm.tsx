@@ -590,13 +590,13 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                         )}
                         {(accommodation.accomm_sex?.toLowerCase() === 'female' || accommodation.accomm_sex?.toLowerCase() === 'f') && (
                           <>
-                            <svg className="w-4 h-4 text-pink-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6"/><path d="M12 16v6M9 19h6"/></svg>
+                            <svg className="w-4 h-4 text-pink-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6" /><path d="M12 16v6M9 19h6" /></svg>
                             <span>Female only</span>
                           </>
                         )}
                         {(accommodation.accomm_sex?.toLowerCase() === 'male' || accommodation.accomm_sex?.toLowerCase() === 'm') && (
                           <>
-                            <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6"/><path d="M14.243 9.757L21 3M16 3h5v5"/></svg>
+                            <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6" /><path d="M14.243 9.757L21 3M16 3h5v5" /></svg>
                             <span>Male only</span>
                           </>
                         )}

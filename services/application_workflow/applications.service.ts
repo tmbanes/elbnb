@@ -348,6 +348,14 @@ export async function createInvoiceService(user: User, payload: any) {
   const totalAmount = normalizedItems.reduce((sum: number, item: any) => sum + item.amount, 0);
   const requiredAmount = requiredItems.reduce((sum: number, item: any) => sum + item.amount, 0);
 
+  // Delete any previous unpaid billing rows for this assignment before creating a fresh invoice.
+  // This prevents stacking duplicate rows that break the payment-details query.
+  await supabaseAdmin
+    .from('billing')
+    .delete()
+    .eq('assignment_id', assignmentId)
+    .in('status', ['unpaid', 'draft']);
+
   const { data: createdBilling, error: createBillingError } = await supabaseAdmin.from("billing").insert({
     assignment_id: assignmentId, amount: totalAmount, billing_period_date: periodDate.toISOString(), due_date: dueDate.toISOString(), status: "unpaid", payment_method: "cash", internal_notes: "",
   }).select("billing_id").single();

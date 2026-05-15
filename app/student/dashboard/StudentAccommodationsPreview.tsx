@@ -19,8 +19,8 @@ export function StudentAccommodationsPreview({ initialAccommodations }: StudentA
     const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null);
 
     const { data: units, isValidating: isLoadingUnits } = useSWR<Unit[]>(
-        selectedAccommodation 
-            ? `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${selectedAccommodation.accommodation_id}` 
+        selectedAccommodation
+            ? `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${selectedAccommodation.accommodation_id}`
             : null,
         fetcher
     );
@@ -32,7 +32,7 @@ export function StudentAccommodationsPreview({ initialAccommodations }: StudentA
                     accommodation={selectedAccommodation}
                     units={units || []}
                     onBack={() => setSelectedAccommodation(null)}
-                    onApply={() => router.push(`/student/accommodations/application?id=${selectedAccommodation.accommodation_id}`)}
+                    onApply={() => router.push(`/student/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}`)}
                     userRole="student"
                 />
             </div>
@@ -65,12 +65,13 @@ export function StudentAccommodationsPreview({ initialAccommodations }: StudentA
                     initialAccommodations.slice(0, 3).map((dorm, i) => (
                         <div key={i} className="bg-[#F9FBEC] rounded-[32px] overflow-hidden border border-slate-100/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] group hover:shadow-2xl hover:shadow-[#709849]/5 transition-all duration-500">
                             <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
-                                <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center">
+                            <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center relative">
                                     {dorm.image ? (
-                                        <Image 
-                                            src={dorm.image} 
-                                            alt={dorm.name} 
-                                            fill 
+                                        <Image
+                                            src={dorm.image}
+                                            alt={dorm.name}
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, 33vw"
                                             className="object-cover"
                                         />
                                     ) : (
@@ -88,7 +89,7 @@ export function StudentAccommodationsPreview({ initialAccommodations }: StudentA
                                     onClick={() => setSelectedAccommodation(dorm)}
                                     className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-2xl transition-all active:scale-[0.98] shadow-md shadow-[#6492A7]/10 flex items-center justify-center gap-2"
                                 >
-                                    {isLoadingUnits && selectedAccommodation?.accommodation_id === dorm.accommodation_id ? "Loading..." : "Details"}
+                                    Details
                                 </button>
                             </div>
                         </div>

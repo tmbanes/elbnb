@@ -12,7 +12,7 @@ import useSWR from "swr";
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 interface GuestAccommodationsPreviewProps {
-    initialAccommodations: Accommodation[];
+    initialAccommodations: any[];
 }
 
 export function GuestAccommodationsPreview({ initialAccommodations }: GuestAccommodationsPreviewProps) {
@@ -70,6 +70,7 @@ export function GuestAccommodationsPreview({ initialAccommodations }: GuestAccom
                                         src={accommodation.image} 
                                         alt={accommodation.name} 
                                         fill 
+                                        sizes="(max-width: 768px) 100vw, 33vw"
                                         className="object-cover"
                                     />
                                 ) : (
