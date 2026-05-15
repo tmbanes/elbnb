@@ -146,9 +146,9 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
           {displayImages.length > 0 ? (
             <div className="flex flex-col gap-3">
 
-              {/* Main viewer */}
+              {/* Main image */}
               <div
-                className="relative aspect-video rounded-[2rem] overflow-hidden shadow-xl border-[6px] border-white group select-none"
+                className="relative aspect-video rounded-2xl overflow-hidden shadow-xl border-[5px] border-white group select-none"
                 onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -159,18 +159,18 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
                 onTouchEnd={handleTouchEnd}
                 style={{ touchAction: 'none' }}
               >
-                {/* Blurred background */}
+                {/* Blurred background fill */}
                 <img
                   src={displayImages[activeIndex]}
                   alt=""
                   aria-hidden
                   draggable={false}
                   className="absolute inset-0 w-full h-full object-cover scale-110 pointer-events-none"
-                  style={{ filter: 'blur(22px)', opacity: 0.65, transition: 'opacity 0.4s' }}
+                  style={{ filter: 'blur(22px)', opacity: 0.6 }}
                 />
-                <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+                <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 
-                {/* Zoomable image */}
+                {/* Zoomable main image */}
                 <img
                   src={displayImages[activeIndex]}
                   alt={`${accommodation.name} photo ${activeIndex + 1}`}
@@ -180,94 +180,115 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
                     transform: `scale(${zoom}) translate(${panX / zoom}px, ${panY / zoom}px)`,
                     transformOrigin: 'center center',
                     transition: dragging ? 'none' : 'transform 0.12s ease-out',
-                    userSelect: 'none',
                   }}
                 />
 
-                {/* Cursor overlay (captures events without blocking image) */}
-                <div
-                  className="absolute inset-0 z-10"
-                  style={{ cursor: zoom > 1 ? (dragging ? 'grabbing' : 'grab') : 'default' }}
-                />
+                {/* Cursor overlay */}
+                <div className="absolute inset-0 z-10" style={{ cursor: zoom > 1 ? (dragging ? 'grabbing' : 'grab') : 'default' }} />
 
-                {/* Navigation arrows */}
+                {/* Counter badge */}
                 {displayImages.length > 1 && (
-                  <>
-                    <button
-                      onMouseDown={e => e.stopPropagation()}
-                      onClick={e => { e.stopPropagation(); goTo((activeIndex - 1 + displayImages.length) % displayImages.length) }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-[#F6F8D5] border-2 border-[#44291B]/15 flex items-center justify-center text-[#264384] shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-[#264384] hover:text-white active:scale-90"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-                    <button
-                      onMouseDown={e => e.stopPropagation()}
-                      onClick={e => { e.stopPropagation(); goTo((activeIndex + 1) % displayImages.length) }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-[#F6F8D5] border-2 border-[#44291B]/15 flex items-center justify-center text-[#264384] shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-[#264384] hover:text-white active:scale-90"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-
-                    {/* Counter */}
-                    <div className="absolute top-4 left-4 z-20 bg-[#F6F8D5] border border-[#44291B]/15 px-3 py-1 rounded-full text-[11px] font-black text-[#264384] shadow-sm tracking-wider">
-                      {activeIndex + 1} / {displayImages.length}
-                    </div>
-                  </>
+                  <div className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-black text-[#264384] shadow-sm tracking-wider">
+                    {activeIndex + 1} / {displayImages.length}
+                  </div>
                 )}
 
-                {/* Zoom level badge + reset */}
+                {/* Zoom badge + reset */}
                 {zoomLabel && (
                   <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-                    <span className="bg-[#264384] text-white px-3 py-1 rounded-full text-[11px] font-black shadow-md tracking-wider">
+                    <span className="bg-[#264384] text-white px-3 py-1 rounded-full text-[11px] font-black shadow-md">
                       {zoomLabel}
                     </span>
                     <button
                       onMouseDown={e => e.stopPropagation()}
                       onClick={e => { e.stopPropagation(); resetView() }}
-                      className="bg-[#F6F8D5] border border-[#44291B]/15 text-[#264384] px-3 py-1 rounded-full text-[11px] font-black shadow-sm hover:bg-[#264384] hover:text-white transition-colors"
+                      className="bg-white/90 text-[#264384] px-3 py-1 rounded-full text-[11px] font-black shadow-sm hover:bg-[#264384] hover:text-white transition-colors"
                     >
                       Reset
                     </button>
                   </div>
                 )}
 
-                {/* Hint */}
+                {/* Scroll hint */}
                 {!zoomLabel && (
-                  <div className="absolute bottom-4 right-4 z-20 bg-[#F6F8D5]/90 border border-[#44291B]/10 px-3 py-1 rounded-full text-[10px] font-bold text-[#264384] flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-sm pointer-events-none">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                    </svg>
+                  <div className="absolute bottom-4 right-4 z-20 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-[#264384] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     Scroll / pinch to zoom
                   </div>
                 )}
               </div>
 
+              {/* 3-up preview row with outside arrows */}
+              {displayImages.length > 1 && (
+                <div className="flex items-center gap-3">
+                  {/* Left arrow */}
+                  <button
+                    onClick={() => goTo((activeIndex - 1 + displayImages.length) % displayImages.length)}
+                    className="flex-shrink-0 w-10 h-10 rounded-full border-2 border-[#44291B]/20 bg-white flex items-center justify-center text-[#264384] shadow-sm hover:bg-[#264384] hover:text-white hover:border-[#264384] transition-all duration-200 active:scale-90"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+
+                  {/* 3 preview images */}
+                  <div className="flex-1 grid grid-cols-3 gap-3">
+                    {[-1, 0, 1].map(offset => {
+                      const idx = (activeIndex + offset + displayImages.length) % displayImages.length
+                      const isCurrent = offset === 0
+                      return (
+                        <button
+                          key={offset}
+                          onClick={() => goTo(idx)}
+                          className="relative aspect-[4/3] rounded-xl overflow-hidden transition-all duration-200"
+                          style={{
+                            border: isCurrent ? '3px solid #264384' : '3px solid white',
+                            boxShadow: isCurrent ? '0 0 0 1px #264384, 0 4px 16px rgba(0,0,0,0.12)' : '0 2px 10px rgba(0,0,0,0.1)',
+                            opacity: isCurrent ? 1 : 0.72,
+                          }}
+                          onMouseEnter={e => { if (!isCurrent) (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                          onMouseLeave={e => { if (!isCurrent) (e.currentTarget as HTMLElement).style.opacity = '0.72' }}
+                        >
+                          <img
+                            src={displayImages[idx]}
+                            alt={`Photo ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Right arrow */}
+                  <button
+                    onClick={() => goTo((activeIndex + 1) % displayImages.length)}
+                    className="flex-shrink-0 w-10 h-10 rounded-full border-2 border-[#44291B]/20 bg-white flex items-center justify-center text-[#264384] shadow-sm hover:bg-[#264384] hover:text-white hover:border-[#264384] transition-all duration-200 active:scale-90"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+
               {/* Thumbnail strip */}
               {displayImages.length > 1 && (
-                <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin' }}>
+                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin' }}>
                   {displayImages.map((img, idx) => {
                     const isActive = idx === activeIndex
                     return (
                       <button
                         key={idx}
                         onClick={() => goTo(idx)}
-                        className="relative flex-shrink-0 w-24 h-16 rounded-xl overflow-hidden border-[3px] transition-all duration-200"
+                        className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden transition-all duration-200"
                         style={{
-                          borderColor: isActive ? '#264384' : 'white',
-                          boxShadow: isActive ? '0 0 0 1px #264384' : '0 2px 8px rgba(0,0,0,0.12)',
+                          border: isActive ? '2.5px solid #264384' : '2.5px solid white',
+                          boxShadow: isActive ? '0 0 0 1px #264384' : '0 1px 6px rgba(0,0,0,0.12)',
                           opacity: isActive ? 1 : 0.65,
                         }}
                         onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.opacity = '1' }}
                         onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.opacity = '0.65' }}
                       >
-                        <div className="relative w-full h-full bg-[#1a1a1a]">
-                          <img src={img} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110" style={{ filter: 'blur(8px)', opacity: 0.5 }} />
-                          <img src={img} alt={`Photo ${idx + 1}`} className="absolute inset-0 w-full h-full object-contain" />
-                        </div>
+                        <img src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
                       </button>
                     )
                   })}
