@@ -30,6 +30,7 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   Upload,
   CheckCircle,
+  AlertCircle,
   Calendar as CalendarIcon,
   Loader2,
   ChevronLeft,
@@ -203,6 +204,8 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormValues | null>(null);
   const [dynamicUnitTypes, setDynamicUnitTypes] = useState<string[]>([]);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [userInfo, setUserInfo] = useState({
     firstName: "",
@@ -286,7 +289,8 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to submit.");
+        setErrorMessage(errorData.error || "Failed to submit.");
+        setShowError(true);
         setShowSuccess(false);
         return;
       }
@@ -311,7 +315,8 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
       setShowSuccess(true);
     } catch (error) {
       console.error("Submission error:", error);
-      alert("An unexpected error occurred.");
+      setErrorMessage("An unexpected error occurred. Please try again.");
+      setShowError(true);
       setShowSuccess(false);
     } finally {
       setIsSubmitting(false);
@@ -1003,6 +1008,36 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
               Confirm
             </Button>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Submission Error Modal */}
+      <Dialog
+        open={showError}
+        onOpenChange={setShowError}
+      >
+        <DialogContent className="bg-[#FDFFF4] rounded-2xl max-w-sm text-center">
+          <DialogHeader>
+            <div className="flex justify-center mb-2">
+              <div className="bg-[#DF3538] rounded-full p-3">
+                <AlertCircle className="h-10 w-10 text-white" />
+              </div>
+            </div>
+            <DialogTitle className="text-xl font-black text-[#3d2000] text-center">
+              Submission Error
+            </DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-[#5a4a2a] text-center leading-relaxed">
+            {errorMessage}
+          </p>
+
+          <Button
+            onClick={() => setShowError(false)}
+            className="w-full bg-[#DF3538] hover:bg-red-600 text-white font-bold rounded-xl py-3 mt-2"
+          >
+            Go Back
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
