@@ -108,7 +108,7 @@ function SectionCard({
     <div
       className={`
         relative rounded-2xl border-2 bg-white mb-4 transition-all duration-300 ease-in-out
-        hover:scale-[1.01] hover:shadow-xl hover:border-[#78A24C] group
+        group
         ${highlighted ? "border-blue-400 shadow-md" : "border-[#78A24C]/30"}
         ${className || "p-6"}
       `}
@@ -127,7 +127,7 @@ function SectionCard({
       <div className="flex items-center mb-6">
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${highlighted ? "bg-[#F2C908]" : "bg-[#78A24C]/25"}`}>
           {icon && (
-            <span className="text-[#567536] [&>svg]:w-[18px] [&>svg]:h-[18px] group-hover:animate-pulse">
+            <span className="text-[#567536] [&>svg]:w-[18px] [&>svg]:h-[18px]">
               {icon}
             </span>
           )}
