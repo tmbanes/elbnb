@@ -30,11 +30,15 @@ export function useRealtimeSync(
     // Debounce guard: ignore rapid successive events within 500ms
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Use a unique ID for each hook instance to prevent "after subscribe" errors 
+    // when multiple components watch the same table.
+    const hookId = useRef(Math.random().toString(36).substring(7));
+
     useEffect(() => {
         if (!table) return;
 
         const channel = supabase
-            .channel(`sync-${table}-${filter || 'all'}`)
+            .channel(`sync-${table}-${filter || 'all'}-${hookId.current}`)
             .on(
                 'postgres_changes',
                 {

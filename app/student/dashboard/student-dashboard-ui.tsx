@@ -1,7 +1,8 @@
-import React from "react";
+"use client";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { History, FileText, ArrowRight } from "lucide-react";
+import { History, FileText, ArrowRight, Bell, AlertCircle, Building2, Calendar, LogOut } from "lucide-react";
 import { Archivo } from "next/font/google";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { useRouter } from "next/navigation";
@@ -27,10 +28,13 @@ import { ImageWithLoader } from "@/components/shared/ImageWithLoader";
 
 
 
-import { StudentDashboardHeader } from "./StudentDashboardHeader";
+
 import { StudentAccommodationsPreview } from "./StudentAccommodationsPreview";
 import { StudentActiveResidencyCard } from "./StudentActiveResidencyCard";
 import { DashboardRealtimeSync } from "@/components/DashboardRealtimeSync";
+import { Accommodation, Unit } from "@/types/accommodation_units";
+import { useRealtimeSync } from "@/lib/realtime-sync";
+import { ViewAccommodation } from "@/components/SearchAccommodations/ViewAccommodation";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -201,13 +205,35 @@ export default function StudentDashboardUI({
 
     return (
         <div className={`min-h-screen bg-[#F6F8D5] py-6 px-6 lg:py-10 lg:px-[1in] text-slate-800 flex flex-col items-center ${archivo.className}`}>
-            <DashboardRealtimeSync table="activity_log" event="INSERT" />
             <div className="w-full max-w-[1100px]">
                 {/* TOP BAR */}
-                <StudentDashboardHeader user={user} initialNotifications={notifications} />
+                <header className="flex justify-between items-center mb-10 w-full relative z-50">
+                    <div className="flex flex-col">
+                        <h1 className="text-[28px] font-black text-slate-900 leading-tight">
+                            Student Dashboard
+                        </h1>
+                        <p className="text-[13px] text-slate-500 font-medium">
+                            Welcome back, {user?.first_name}!
+                        </p>
+                    </div>
 
+                    <div className="flex items-center gap-6">
+                        {/* NOTIFICATIONS */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className="relative text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
+                            >
+                                <Bell className="w-5 h-5" />
+                                {notifications.filter(n => !n.is_read).length > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#A05C5C] text-white text-[9px] font-bold rounded-full ring-2 ring-[#FDFBF7] flex items-center justify-center">
+                                        {notifications.filter(n => !n.is_read).length}
+                                    </span>
+                                )}
+                            </button>
 
                             {showNotifications && (
+
                                 <div className="absolute right-0 top-full mt-4 w-80 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[60] overflow-hidden">
                                     <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
                                         <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
@@ -290,12 +316,9 @@ export default function StudentDashboardUI({
                                     {user?.profile_picture_url ? (
                                         <Image
                                             src={formatImageUrl(user.profile_picture_url)}
-                                            alt="Profile"
                                             width={40}
-
                                             height={40}
-                                            className="w-full h-full object-cover"
-                                        />
+                                            className="w-full h-full object-cover" alt={""}                                        />
                                     ) : (
                                         <span className="text-white">
                                             {user?.first_name?.[0]}{user?.last_name?.[0]}
