@@ -5,8 +5,17 @@ import {
     Building2, History, FileText, ArrowRight
 } from "lucide-react";
 import { Archivo } from "next/font/google";
-import { GuestDashboardHeader } from "./GuestDashboardHeader";
-import { GuestAccommodationsPreview } from "./GuestAccommodationsPreview";
+import { Accommodation } from "@/types/accommodation_units";
+import { AccommodationHistory } from "@/types/accomodation/accomodationHistory";
+import { useRouter } from "next/navigation";
+
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+import { ViewAccommodation } from "@/components/SearchAccommodations";
+import { Unit } from "@/types/accommodation_units";
+import { formatImageUrl } from "@/lib/utils/image-utils";
+import { ImageWithLoader } from "@/components/shared/ImageWithLoader";
+
+
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -15,7 +24,6 @@ interface GuestDashboardUIProps {
     initialActiveResidency?: any;
     initialApplications?: any[];
     initialHistory?: any[];
-    initialDocuments?: any[];
     initialBills?: any[];
     notifications?: any[];
 }
@@ -25,20 +33,106 @@ export default function GuestDashboardUI({
     initialActiveResidency, 
     initialApplications = [], 
     initialHistory = [], 
-    initialDocuments = [],
     initialBills = [],
-    notifications = [],
-    accommodations = []
-}: GuestDashboardUIProps & { accommodations?: any[] }) {
+    notifications: initialNotifications = []
+}: GuestDashboardUIProps) {
+    const [showLogout, setShowLogout] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [notifications, setNotifications] = useState(initialNotifications);
+    const router = useRouter();
+    
+    const supabase = getSupabaseBrowserClient();
 
-    const activeResidency = initialActiveResidency;
-    const isLoadingResidency = false;
-    const applications = initialApplications;
-    const isLoadingApplications = false;
-    const documents = initialDocuments;
-    const history = initialHistory;
-    const isLoadingHistory = false;
-    const bills = initialBills;
+    // Sync read state from localStorage
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
+            setNotifications(initialNotifications.map(n => ({
+                ...n,
+                is_read: n.is_read || readIds.includes(n.id)
+            })));
+        }
+    }, [initialNotifications]);
+
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        await supabase.auth.signOut();
+        window.location.href = "/";
+    };
+
+    const handleViewDetails = async (accommodation: Accommodation) => {
+        setSelectedAccommodation(accommodation);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setIsLoadingUnits(true);
+
+        try {
+            const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setAccommodationUnits(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch units:", err);
+        } finally {
+            setIsLoadingUnits(false);
+        }
+    };
+    const [activeResidency, setActiveResidency] = useState<any>(initialActiveResidency);
+    const [isLoadingResidency, setIsLoadingResidency] = useState(false);
+    const [applications, setApplications] = useState<any[]>(initialApplications);
+    const [isLoadingApplications, setIsLoadingApplications] = useState(false);
+    const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+    const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
+    const [isLoadingAccommodations, setIsLoadingAccommodations] = useState(true);
+    const [history, setHistory] = useState<AccommodationHistory[]>(initialHistory);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [bills, setBills] = useState<any[]>(initialBills);
+    const [isLoadingBills, setIsLoadingBills] = useState(false);
+    
+    // Detailed View State
+    const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null);
+    const [accommodationUnits, setAccommodationUnits] = useState<Unit[]>([]);
+    const [isLoadingUnits, setIsLoadingUnits] = useState(false);
+    
+
+    useEffect(() => {
+        async function fetchAccommodations() {
+            try {
+                // Fetch Accommodations Preview
+                const resAcc = await fetch("/api/shared/dashboard/tiles?type=accommodations");
+                if (resAcc.ok) {
+                    const data = await resAcc.json();
+                    setAccommodations(data);
+                }
+            } catch (error) {
+                console.error("Error fetching accommodations:", error);
+            } finally {
+                setIsLoadingAccommodations(false);
+            }
+        }
+
+        fetchAccommodations();
+    }, []);
+
+    const userInitials = profile ? `${profile.first_name?.[0] ?? ""}${profile.last_name?.[0] ?? ""}`.toUpperCase() : "G";
+    const userName = profile ? `${profile.first_name} ${profile.last_name}` : "Guest";
+
+    if (selectedAccommodation) {
+        return (
+            <div className={`min-h-screen bg-[#F6F8D5] ${archivo.className}`}>
+                <ViewAccommodation
+                    accommodation={selectedAccommodation}
+                    units={accommodationUnits}
+                    isFetchingUnits={isLoadingUnits}
+                    onBack={() => setSelectedAccommodation(null)}
+                    onApply={() => router.push(`/guest/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}`)}
+                    userRole="guest"
+                />
+
+            </div>
+        );
+    }
 
     return (
         <div className={`min-h-screen bg-[#F6F8D5] p-6 lg:p-10 text-slate-800 flex flex-col items-center ${archivo.className}`}>
@@ -46,6 +140,45 @@ export default function GuestDashboardUI({
                 {/* TOP BAR */}
                 <GuestDashboardHeader profile={profile} initialNotifications={notifications} />
 
+                        {/* PROFILE / LOGOUT DROPDOWN */}
+                        <div className="relative">
+                            <div
+                                className="flex items-center gap-3 cursor-pointer group"
+                                onClick={() => setShowLogout(!showLogout)}
+                            >
+                                <div className="flex flex-col items-end">
+                                    <span className="text-[13px] font-bold text-slate-900 leading-tight">{userInitials}</span>
+                                    <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase">GUEST</span>
+                                </div>
+                                <div className="w-10 h-10 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                                    {profile?.profile_picture_url ? (
+                                        <Image 
+                                            src={formatImageUrl(profile.profile_picture_url)} 
+                                            alt="Profile" 
+                                            width={40} 
+                                            height={40} 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : userInitials}
+
+                                </div>
+                            </div>
+
+                            {showLogout && (
+                                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-slate-100 p-2 z-50 overflow-hidden">
+                                    <button
+                                        onClick={handleLogout}
+                                        disabled={isLoggingOut}
+                                        className="w-full flex items-center gap-2 text-left px-3 py-2.5 text-[13px] font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        {isLoggingOut ? "Exiting..." : "Log out"}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </header>
 
                 {/* HERO SECTION */}
                 <section className="mb-10">
@@ -72,13 +205,14 @@ export default function GuestDashboardUI({
                             {activeResidency?.accommodation?.image && (
                                 <div className="absolute inset-0 z-0 opacity-10">
                                     <Image 
-                                        src={activeResidency.accommodation.image} 
+                                        src={formatImageUrl(activeResidency.accommodation.image)} 
                                         alt="Background" 
                                         fill 
                                         className="object-cover"
                                     />
                                 </div>
                             )}
+
     
                             {activeResidency ? (
                                 <>
@@ -192,7 +326,66 @@ export default function GuestDashboardUI({
                 </div>
 
                 {/* ACCOMMODATIONS PREVIEW - ENCLOSED IN SECTION CONTAINER */}
-                <GuestAccommodationsPreview initialAccommodations={accommodations} />
+                <section className="mb-14 bg-[#FDFFF4] rounded-[40px] p-8 md:p-12 border border-[#eef1d6] shadow-[0_8px_30px_rgba(0,0,0,0.03)] relative overflow-hidden">
+                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#F6F8D5]/40 rounded-full blur-3xl"></div>
+
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6 relative z-10">
+                        <div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="w-8 h-[2px] bg-[#709849]"></span>
+                                <h3 className="text-[11px] font-extrabold text-[#709849] tracking-[0.25em] uppercase">Guest-Ready Stays</h3>
+                            </div>
+                            <h2 className="text-3xl md:text-4xl font-extrabold text-[#2A3F2D] tracking-tight">Accommodations</h2>
+                            <p className="text-[14px] text-slate-500 font-medium mt-2 max-w-md">Options curated for guests and short-term residents.</p>
+                        </div>
+                        <Link href="/guest/accommodations">
+                            <button className="flex items-center gap-2 text-[#557F44] font-black text-[13px] hover:translate-x-1 transition-all bg-white px-7 py-3.5 rounded-2xl border border-[#eef1d6] shadow-sm hover:shadow-md active:scale-95">
+                                Explore All Accommodations <ArrowRight className="w-4 h-4" />
+                            </button>
+                        </Link>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+                    {accommodations.slice(0, 3).map((accommodation, i) => (
+                            <div key={i} className="bg-[#F9FBEC] rounded-[32px] overflow-hidden border border-slate-100/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] group hover:shadow-2xl hover:shadow-[#709849]/5 transition-all duration-500">
+                                <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
+                                    <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700">
+                                        {accommodation.image ? (
+                                            <ImageWithLoader
+                                                src={accommodation.image} 
+                                                alt={accommodation.name} 
+                                                className="object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex items-center justify-center w-full h-full">
+                                                <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg z-10">
+                                        {accommodation.min_price && accommodation.max_price
+                                            ? `₱${accommodation.min_price} - ₱${accommodation.max_price}`
+                                            : accommodation.min_price
+                                            ? `₱${accommodation.min_price}`
+                                            : accommodation.max_price
+                                            ? `₱${accommodation.max_price}`
+                                            : "No price available to show"}
+                                    </div>
+                                </div>
+                                <div className="p-8">
+                                    <h4 className="text-[18px] font-bold text-[#2A3F2D] mb-1.5">{accommodation.name}</h4>
+                                    <p className="text-[10px] font-extrabold text-[#709849] uppercase tracking-[0.15em] mb-6">{accommodation.accommodation_type}</p>
+                                    <button 
+                                        onClick={() => handleViewDetails(accommodation)}
+                                        className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-2xl transition-all active:scale-[0.98] shadow-md shadow-[#6492A7]/10"
+                                    >
+                                        Details
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
 
                 {/* BOTTOM TWO CARDS */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

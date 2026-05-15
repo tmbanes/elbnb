@@ -24,8 +24,10 @@ export const UnitAccomodationsDisplayService = {
         unit(
           rental_fee,
           billing_period
-        )
+        ),
+        accommodation_images(url, is_primary, storage_path)
       `)
+
         .eq('accommodation_status', 'active')
         .order('created_at', { referencedTable: 'unit', ascending: true })
 
@@ -63,8 +65,25 @@ export const UnitAccomodationsDisplayService = {
           }
         }
 
+        // Use accommodation_images as the primary source if available
+        let displayImage = a.image;
+        let allImages: string[] = [];
+        
+        if (a.accommodation_images && a.accommodation_images.length > 0) {
+          // Sort images so primary is first
+          const sortedImgs = [...a.accommodation_images].sort((x, y) => (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0));
+          allImages = sortedImgs.map((img: any) => img.storage_path || img.url);
+          
+          const primary = a.accommodation_images.find((img: any) => img.is_primary) || a.accommodation_images[0];
+          displayImage = primary.storage_path || primary.url;
+        } else if (displayImage) {
+          allImages = [displayImage];
+        }
+
         return {
           ...a,
+          image: displayImage,
+          images: allImages,
           property_type: propertyType,
           min_price: minPrice,
           max_price: maxPrice,
@@ -72,7 +91,10 @@ export const UnitAccomodationsDisplayService = {
           // Don't need to expose nested objects
           unit: undefined,
           renting_space: undefined,
+          accommodation_images: undefined,
         }
+
+
       })
 
       return { data: flattened as Accommodation[], error: null }

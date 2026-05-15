@@ -6,6 +6,8 @@ import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation";
 import { redirect } from "next/navigation";
 import GuestDashboardUI from "./guest-dashboard-ui";
 import { getApiAuthenticatedUser } from "@/lib/auth/session";
+import { resolveAccommodationImageDisplayUrl } from "@/lib/actions/housing-actions";
+
 
 export default async function GuestDashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -21,7 +23,6 @@ export default async function GuestDashboardPage() {
     activeResidencyRes,
     applicationsRes,
     historyRes,
-    documentsRes,
     billsRes,
     notificationsRes,
     accommodationsRes
@@ -49,17 +50,42 @@ export default async function GuestDashboardPage() {
     UnitAccomodationsDisplayService.listAccomodations("guest")
   ]);
 
+  // Resolve images for active residency
+  const activeResidency = activeResidencyRes.data;
+  if (activeResidency?.accommodation?.image) {
+    activeResidency.accommodation.image = await resolveAccommodationImageDisplayUrl(activeResidency.accommodation.image).catch(() => null);
+  }
+
+  // Resolve images for history
+  const resolvedHistory = await Promise.all((historyRes.data || []).map(async (item: any) => {
+    if (item.accommodation?.image) {
+      item.accommodation.image = await resolveAccommodationImageDisplayUrl(item.accommodation.image).catch(() => null);
+    }
+    return item;
+  }));
+
+
+
+  // Resolve images for applications
+  const resolvedApplications = await Promise.all((applicationsRes.data || []).map(async (item: any) => {
+    if (item.accommodation?.image) {
+      item.accommodation.image = await resolveAccommodationImageDisplayUrl(item.accommodation.image).catch(() => null);
+    }
+    return item;
+  }));
+
   return (
     <GuestDashboardUI
       profile={profileRes.data}
-      initialActiveResidency={activeResidencyRes.data}
-      initialApplications={applicationsRes.data || []}
-      initialHistory={historyRes.data || []}
-      initialDocuments={documentsRes.data || []}
+      initialActiveResidency={activeResidency}
+      initialApplications={resolvedApplications}
+
+      initialHistory={resolvedHistory}
       initialBills={billsRes.data || []}
       notifications={notificationsRes.data || []}
       accommodations={accommodationsRes.data || []}
     />
+
   );
 }
 

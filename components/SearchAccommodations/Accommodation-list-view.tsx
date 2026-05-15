@@ -1,6 +1,9 @@
 import React from 'react'
 import Link from 'next/link'
 import { Accommodation, Unit } from '@/types/accommodation_units'
+import { formatImageUrl } from '@/lib/utils/image-utils'
+import { ImageWithLoader } from '@/components/shared/ImageWithLoader'
+
 
 interface AccommodationListViewProps {
   paginatedAccommodations: Accommodation[]
@@ -52,15 +55,13 @@ export function AccommodationListView({
               {/* IMAGE SIDE */}
               <div className="w-full sm:w-[200px] h-48 sm:h-auto relative overflow-hidden flex-shrink-0 bg-gray-200">
                 {acc.image ? (
-                  <img
+                  <ImageWithLoader
                     src={acc.image}
                     alt={acc.name}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
                   />
                 ) : (
+
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
                     <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
