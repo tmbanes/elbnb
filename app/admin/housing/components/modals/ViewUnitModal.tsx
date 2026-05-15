@@ -88,7 +88,10 @@ export default function ViewUnitModal({ isOpen, onClose, unit: initialUnit, acce
       // console.log("Fetched occupants data:", occupantsData);
 
       setUnit(unitData);
-      setOccupants(occupantsData.data || []);
+      const activeOccupants = (occupantsData.data || []).filter(
+        (occ: Occupant) => occ.assignment_status?.toLowerCase() === "active"
+      );
+      setOccupants(activeOccupants);
     } catch (err: any) {
       console.error("Error fetching unit details:", err);
       setError(err.message);
