@@ -133,14 +133,30 @@ export default function ReviewApplication({
   const mapBillingTypeToInvoiceKind = (type: string): any => {
     if (type === "security_deposit") return "security_deposit";
     if (type === "reservation_fee") return "reservation_fee";
+    if (type === "room_rent" || type === "first_rental") return "first_rental";
     return "other";
   };
 
   const createDefaultInvoiceItem = (): ApplicationInvoiceItemInput => ({
-    kind: "other",
+    kind: "first_rental",
     amount: 0,
     required_to_secure_slot: true,
   });
+
+  useEffect(() => {
+    if (selectedUnitId && !appData?.invoiceDraft) {
+      const unit = appData?.availableUnits?.find((u: any) => u.unit_id === selectedUnitId);
+      if (unit && invoiceItems.length === 1 && (invoiceItems[0].amount === 0 || !invoiceItems[0].amount)) {
+        setInvoiceItems([
+          {
+            kind: "first_rental",
+            amount: unit.rental_fee || 0,
+            required_to_secure_slot: true,
+          }
+        ]);
+      }
+    }
+  }, [selectedUnitId, appData?.availableUnits, appData?.invoiceDraft]);
 
   async function handleConfirm() {
     if (!confirmAction) return;

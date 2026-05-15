@@ -56,6 +56,16 @@ export function PaymentModal({
     return Array.isArray(paymentDetails?.breakdown) ? paymentDetails.breakdown : [];
   }, [paymentDetails]);
 
+  const receiptPreviewType = useMemo<"image" | "pdf" | "unknown">(() => {
+    const rawPath = String(paymentDetails?.receiptPath || "").split("?")[0].toLowerCase();
+    if (!rawPath) return "unknown";
+    if (rawPath.endsWith(".pdf")) return "pdf";
+    if ([".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".heic", ".heif"].some((ext) => rawPath.endsWith(ext))) {
+      return "image";
+    }
+    return "unknown";
+  }, [paymentDetails?.receiptPath]);
+
   const hasUploadedReceipt = Boolean(paymentDetails?.receiptPath);
 
   const handlePayment = async () => {
@@ -167,11 +177,17 @@ export function PaymentModal({
             <div className="space-y-2">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#44291B]/50">Uploaded Receipt</h4>
               <div className="rounded-xl border border-slate-200 bg-white p-3 flex items-center gap-3">
-                <img
-                  src={paymentDetails.receiptPreviewUrl}
-                  alt="Uploaded receipt preview"
-                  className="w-14 h-14 object-cover rounded-md border border-slate-200"
-                />
+                {receiptPreviewType === "image" ? (
+                  <img
+                    src={paymentDetails.receiptPreviewUrl}
+                    alt="Uploaded receipt preview"
+                    className="w-14 h-14 object-cover rounded-md border border-slate-200"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center text-[10px] text-slate-500 font-semibold text-center px-1">
+                    PDF
+                  </div>
+                )}
                 <div className="text-xs text-slate-600">
                   A receipt already exists for this invoice. You can review or cancel it from the Billing page.
                 </div>
