@@ -173,7 +173,14 @@ export default function ManagerApplicationList({
             {/* TABLE */}
             <div className="bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left border-collapse table-fixed">
+                        <colgroup>
+                            <col className="w-[35%]" />
+                            <col className="w-[18%]" />
+                            <col className="w-[17%]" />
+                            <col className="w-[18%]" />
+                            <col className="w-[12%]" />
+                        </colgroup>
                         <thead>
                             <tr className="border-b border-[#e8e2d6] bg-[#FDFFF4]">
                                 <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Applicant</th>
