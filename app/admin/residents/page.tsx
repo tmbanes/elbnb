@@ -4,13 +4,13 @@ import { ResidentsService } from "@/services/residents.service";
 import ResidentsClient from "./ResidentsClient";
 
 export default async function AdminResidentsPage() {
-  await requireRole(['housing_admin', 'admin']);
-  
+  const user = await requireRole(['housing_admin', 'admin']);
+
   let mappedResidents = [];
   let errorMsg = null;
-  
+
   try {
-    mappedResidents = await ResidentsService.getResidentsForAdmin();
+    mappedResidents = await ResidentsService.getResidentsForAdmin(user!.user_id, user!.role!);
   } catch (error: any) {
     errorMsg = error.message;
   }

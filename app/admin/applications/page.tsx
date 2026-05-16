@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth/session";
 import ApplicationsClient from "./ApplicationsClient";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { getAdminApplicationsService } from "@/services/application_workflow/applications.service";
+import { getAdminApplicationsService } from "@/services/application_workflow/applications";
 
 export default async function Page() {
     const user = await requireRole(['housing_admin', 'admin']);

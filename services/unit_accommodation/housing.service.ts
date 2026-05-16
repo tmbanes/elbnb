@@ -129,6 +129,37 @@ export const HousingService = {
     return { success: true };
   },
 
+  async assignAccommodationToAdmin(adminUserId: string, newAccommodationId: string) {
+    // 1. Fetch the existing array
+    const { data: admin, error: fetchError } = await supabaseAdmin
+      .from("housing_admin")
+      .select("accommodation_ids")
+      .eq("user_id", adminUserId)
+      .single();
+
+    if (fetchError) throw new Error(fetchError.message);
+
+    // 2. Initialize array if it's null, or grab existing array
+    const currentIds = admin?.accommodation_ids || [];
+
+    // 3. Prevent duplicates
+    if (currentIds.includes(newAccommodationId)) {
+      return { success: true, message: "Accommodation already assigned." };
+    }
+
+    const updatedIds = [...currentIds, newAccommodationId];
+
+    // 4. Update the row back into the database
+    const { error: updateError } = await supabaseAdmin
+      .from("housing_admin")
+      .update({ accommodation_ids: updatedIds })
+      .eq("user_id", adminUserId);
+
+    if (updateError) throw new Error(updateError.message);
+
+    return { accommodation_id: newAccommodationId };
+  },
+
   // --- Shared / Managers ---
   async deleteAccommodation(id: string) {
     const { data, error } = await supabaseAdmin.rpc("delete_accommodation", { p_accommodation_id: id });

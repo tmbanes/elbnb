@@ -395,7 +395,7 @@ function ResidentDetailPanel({
             <div className="px-4 py-3 flex-1">
               <p className="text-[9px] font-black text-[#44291B]/40 uppercase tracking-widest mb-1">Unit</p>
               <p className="text-lg font-[family-name:var(--font-archivo-black)] text-[#44291B] leading-none">
-                Rm {resident.unit.unit_number}
+                Rm {resident.unit?.unit_number}
               </p>
             </div>
             <div className="px-4 py-3 flex items-center gap-4 bg-white/40">
@@ -418,7 +418,7 @@ function ResidentDetailPanel({
             <span className="text-[10px] font-black text-[#44291B]/50 uppercase tracking-widest">History</span>
           </div>
           <div className="relative pl-7 space-y-6 before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[#e8e2d6]">
-            <TimelineEvent color="bg-[#5591AB]" title="Assigned" subtitle={`Room ${resident.unit.unit_number} • ${fmtDate(resident.move_in_date)}`} />
+            <TimelineEvent color="bg-[#5591AB]" title="Assigned" subtitle={`Room ${resident.unit?.unit_number} • ${fmtDate(resident.move_in_date)}`} />
             {(isActive || isCheckedOut) && (
               <TimelineEvent color="bg-[#78A24C]" title="Moved In" subtitle={fmtDate(resident.move_in_date)} />
             )}

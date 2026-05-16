@@ -200,7 +200,7 @@ export default function AddDormModal({
           allowed_programs: form.allowed_programs || null,
           term_type: form.term_type,
           separate_by_gender: form.separate_by_gender,
-        },
+        }
       };
 
       const endpoint = isEditing
@@ -399,10 +399,10 @@ export default function AddDormModal({
                   {managers.map((m) => {
                     const assignedAcc = m.accommodation?.[0]?.name;
                     const isAssignedElsewhere = !!(assignedAcc && m.users.user_id !== existingDorm?.manager_id);
-                    
+
                     return (
-                      <SelectItem 
-                        key={m.employee_id} 
+                      <SelectItem
+                        key={m.employee_id}
                         value={m.users.user_id}
                         disabled={isAssignedElsewhere}
                       >
@@ -583,8 +583,8 @@ export default function AddDormModal({
                   const isAssignedElsewhere = !!(assignedAcc && m.users.user_id !== existingDorm?.manager_id);
 
                   return (
-                    <SelectItem 
-                      key={m.employee_id} 
+                    <SelectItem
+                      key={m.employee_id}
                       value={m.users.user_id}
                       disabled={isAssignedElsewhere}
                     >

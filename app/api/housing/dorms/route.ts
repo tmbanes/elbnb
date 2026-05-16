@@ -1,6 +1,7 @@
 import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { HousingService } from "@/services/unit_accommodation/housing.service";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 export const GET = withRole(['housing_admin', 'admin'], async (req: NextRequest) => {
   try {
@@ -16,10 +17,14 @@ export const GET = withRole(['housing_admin', 'admin'], async (req: NextRequest)
   }
 });
 
-export const POST = withRole(['housing_admin', 'admin'], async (req: NextRequest) => {
+export const POST = withRole(['housing_admin', 'admin'], async (req: NextRequest, { user }) => {
   try {
     const body = await req.json();
     const data = await HousingService.createDorm(body);
+    if (data) {
+      const res = await HousingService.assignAccommodationToAdmin(user?.user_id, data.accommodation_id);
+      return NextResponse.json(res, { status: 201 });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

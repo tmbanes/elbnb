@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withRole } from "@/lib/auth/api-guard";
-import { 
-  getApplicationsService, 
-  getSingleApplicationService, 
-  processApplicationService, 
-  createInvoiceService 
-} from "@/services/application_workflow/applications.service";
+import {
+  getApplicationsService,
+  getSingleApplicationService,
+  processApplicationService,
+  createInvoiceService
+} from "@/services/application_workflow/applications";
 import { CreateApplicationService } from "@/services/application_workflow/create_application";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { v4 as uuidv4 } from "uuid";
@@ -16,7 +16,7 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const BUCKET = 'application_documents';
 
 export const GET = withRole(
-  ["student", "dormitory_manager", "housing_admin", "admin"], 
+  ["student", "dormitory_manager", "housing_admin", "admin"],
   async (req: NextRequest, { user }) => {
     try {
       const { searchParams } = new URL(req.url);
@@ -42,7 +42,7 @@ export const GET = withRole(
 );
 
 export const PATCH = withRole(
-  ["dormitory_manager", "housing_admin", "admin"], 
+  ["dormitory_manager", "housing_admin", "admin"],
   async (req: NextRequest, { user }) => {
     try {
       const body = await req.json();
@@ -56,7 +56,7 @@ export const PATCH = withRole(
 );
 
 export const POST = withRole(
-  ["student", "housing_admin", "admin"], 
+  ["student", "housing_admin", "admin"],
   async (req: NextRequest, { user }) => {
     try {
       // Students POSTing to create an application (FormData)
@@ -64,7 +64,7 @@ export const POST = withRole(
         const formData = await req.formData();
         const file = formData.get('file') as File | null;
         const bodyStr = formData.get('data') as string;
-        
+
         if (!bodyStr) return NextResponse.json({ error: 'No data provided' }, { status: 400 });
         const body = JSON.parse(bodyStr);
 

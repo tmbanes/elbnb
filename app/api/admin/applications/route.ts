@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { createActivityLog, getCurrentUserRole } from "@/services/activity_log/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { User } from "@/types/user.types";
-import { getAdminApplicationsService } from "@/services/application_workflow/applications.service";
+import { getAdminApplicationsService } from "@/services/application_workflow/applications";
 
 
 type ManualInvoiceItem = {

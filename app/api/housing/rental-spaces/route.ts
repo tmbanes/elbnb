@@ -16,10 +16,14 @@ export const GET = withRole(['housing_admin', 'admin'], async (req: NextRequest)
   }
 });
 
-export const POST = withRole(['housing_admin', 'admin'], async (req: NextRequest) => {
+export const POST = withRole(['housing_admin', 'admin'], async (req: NextRequest, { user }) => {
   try {
     const body = await req.json();
     const data = await HousingService.createRentalSpace(body);
+    if (data) {
+      const res = await HousingService.assignAccommodationToAdmin(user?.user_id, data.accommodation_id);
+      return NextResponse.json(res, { status: 201 });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
