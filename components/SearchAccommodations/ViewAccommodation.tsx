@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useRef } from 'react'
 import { Accommodation, Unit } from '@/types/accommodation_units'
+import { Building2, Users } from 'lucide-react'
 
 interface ViewAccommodationProps {
   accommodation: Accommodation
@@ -47,7 +48,7 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F6F8D5' }}>
 
       {/* Back Button */}
-      <div className="py-6 px-10 sm:px-20 sticky top-0 z-20 bg-[#F6F8D5]/80 backdrop-blur-md">
+      <div className="py-4 px-10 sm:px-20 lg:px-32 sticky top-0 z-20 bg-[#F6F8D5]/80 backdrop-blur-md">
         <button
           onClick={onBack}
           className="group flex items-center gap-4 text-[#44291B] font-archivo font-black text-xs uppercase tracking-widest hover:text-[#6a9b3a] transition-all duration-500 ease-in-out"
@@ -62,7 +63,7 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
       </div>
 
       {/* Layout Grid */}
-      <div className="max-w-[1400px] mx-auto w-full p-8 sm:p-12 lg:p-20 flex-1 flex flex-col gap-8">
+      <div className="max-w-[1200px] mx-auto w-full p-6 sm:p-8 lg:px-12 lg:py-10 flex-1 flex flex-col gap-8">
         
         {/* Main Header - Context First */}
         <div className="flex flex-col gap-2">
@@ -77,9 +78,9 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10">
           {/* LEFT COLUMN */}
-          <div className="min-w-0 flex flex-col gap-10">
+          <div className="min-w-0 flex flex-col gap-8">
 
             {/* ── Image viewer ── */}
             {displayImages.length > 0 ? (
@@ -167,14 +168,14 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
               </div>
             )}
 
-            {/* Unit List */}
+            <div className="flex items-center gap-2 mb-4 ml-2">
+              <div className="w-1 h-1 rounded-full bg-[#44291B]/20" />
+              <h2 className="font-archivo font-bold text-[10px] uppercase text-[#44291B]/50 tracking-[0.2em]">
+                Showing Units for {accommodation.name}
+              </h2>
+            </div>
+
             <div className="bg-[#FDFFF4] rounded-[2.5rem] p-10 shadow-sm border border-gray-100/50">
-              <div className="flex items-center justify-between mb-10">
-                <h2 className="font-archivo font-black text-2xl uppercase text-[#44291B] tracking-tight">
-                  Available Unit Types
-                </h2>
-              </div>
-              
               <div className="grid grid-cols-1 gap-5">
                 {isFetchingUnits ? (
                   Array(3).fill(0).map((_, i) => (

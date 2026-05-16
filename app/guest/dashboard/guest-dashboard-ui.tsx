@@ -3,7 +3,9 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-    Building2, History, FileText, ArrowRight
+    Building2, History, FileText, ArrowRight,
+    Bell,
+    LogOut
 } from "lucide-react";
 import { Archivo } from "next/font/google";
 import { Accommodation } from "@/types/accommodation_units";
@@ -468,12 +470,22 @@ export default function GuestDashboardUI({
                                 <div className="p-8">
                                     <h4 className="text-[18px] font-bold text-[#2A3F2D] mb-1.5">{accommodation.name}</h4>
                                     <p className="text-[10px] font-extrabold text-[#709849] uppercase tracking-[0.15em] mb-6">{accommodation.accommodation_type}</p>
-                                    <button 
-                                        onClick={() => handleViewDetails(accommodation)}
-                                        className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-2xl transition-all active:scale-[0.98] shadow-md shadow-[#6492A7]/10"
-                                    >
-                                        Details
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => handleViewDetails(accommodation)}
+                                            className="flex-1 py-3 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[11px] font-black rounded-xl transition-all uppercase tracking-widest shadow-md hover:shadow-lg active:scale-95"
+                                        >
+                                            Details
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                router.push(`/guest/accommodations?accommodationId=${accommodation.accommodation_id}&tab=units`);
+                                            }}
+                                            className="flex-1 py-3 bg-white border-2 border-[#6492A7] text-[#6492A7] hover:bg-[#6492A7] hover:text-white text-[11px] font-black rounded-xl transition-all uppercase tracking-widest active:scale-95"
+                                        >
+                                            See Units
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -483,42 +495,64 @@ export default function GuestDashboardUI({
                 {/* BOTTOM TWO CARDS */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {/* BILLING CARD */}
-                    <div className="bg-[#FDFFF4] rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
-                        <div>
+                    <div className="bg-[#FDFFF4] rounded-[32px] p-8 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col h-full">
+                        <div className="flex-grow">
                             <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-[17px] font-extrabold text-[#2A3F2D]">Billing Summary</h2>
-                                <FileText className="w-5 h-5 text-[#8BAE90] stroke-[1.5]" />
+                                <div className="flex flex-col">
+                                    <h2 className="text-[18px] font-black text-[#2A3F2D] tracking-tight">Billing Summary</h2>
+                                    <p className="text-[11px] font-bold text-[#709849] uppercase tracking-widest mt-0.5">Current Statement</p>
+                                </div>
+                                <div className="p-3 bg-[#F6F8D5] rounded-2xl">
+                                    <FileText className="w-5 h-5 text-[#709849] stroke-[2]" />
+                                </div>
                             </div>
 
-                             <div className="mb-8">
-                                <p className="text-4xl font-extrabold text-[#113a68] leading-none mb-2 tracking-tight">
-                                    ₱{bills[0]?.amount?.toLocaleString() || "0.00"}
-                                </p>
-                                <p className="text-[10px] font-extrabold text-[#D03027] tracking-[0.1em] uppercase">
-                                    Balance Due {bills[0]?.due_date ? new Date(bills[0].due_date).toLocaleDateString(undefined, { month: 'short', day: '2-digit' }) : "---"}
-                                </p>
+                            <div className="bg-[#F9FBEC] rounded-3xl p-6 mb-8 border border-[#eef1d6]/60">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">Total Balance Due</p>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-3xl font-black text-[#113a68]">₱</span>
+                                    <span className="text-4xl font-black text-[#113a68] tracking-tighter">
+                                        {bills[0]?.amount?.toLocaleString() || "0.00"}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-3 px-3 py-1.5 bg-[#FDF2F2] w-fit rounded-xl border border-[#FEE2E2]">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[#D03027] animate-pulse"></div>
+                                    <p className="text-[10px] font-black text-[#D03027] uppercase tracking-wider">
+                                        Due {bills[0]?.due_date ? new Date(bills[0].due_date).toLocaleDateString(undefined, { month: 'short', day: '2-digit' }) : "---"}
+                                    </p>
+                                </div>
                             </div>
 
-                            <div className="space-y-4 mb-8 border-t border-[#eef1d6] pt-5">
-                                {bills[0]?.breakdown?.length > 0 ? (
-                                    bills[0].breakdown.map((item: any, idx: number) => (
-                                        <div key={idx} className="flex justify-between items-start">
-                                            <div>
-                                                <p className="text-[13px] font-extrabold text-slate-900 capitalize">{item.label?.replace('_', ' ')}</p>
-                                                <p className="text-[10px] font-medium text-slate-400 mt-0.5">{item.amount < 0 ? 'Discount' : 'Charge'}</p>
+                            <div className="space-y-4 mb-8">
+                                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">Recent Items</h4>
+                                <div className="space-y-3">
+                                    {bills[0]?.breakdown?.length > 0 ? (
+                                        bills[0].breakdown.slice(0, 2).map((item: any, idx: number) => (
+                                            <div key={idx} className="flex justify-between items-center p-3 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-sm">
+                                                        {idx + 1}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[13px] font-bold text-slate-900 capitalize">{item.label?.replace(/_/g, ' ')}</p>
+                                                        <p className="text-[10px] font-medium text-slate-400">{item.amount < 0 ? 'Discount' : 'Regular Charge'}</p>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[13px] font-black text-slate-900">₱{Math.abs(item.amount).toLocaleString()}</span>
                                             </div>
-                                            <span className="text-[13px] font-extrabold text-slate-900">₱{Math.abs(item.amount).toLocaleString()}</span>
+                                        ))
+                                    ) : (
+                                        <div className="py-4 text-center">
+                                            <p className="text-[11px] text-slate-400 italic">No recent billing items.</p>
                                         </div>
-                                    ))
-                                ) : (
-                                    <p className="text-[11px] text-slate-400">No recent billing items.</p>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
 
-                        <Link href="/guest/billing">
-                            <button className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-xl transition-all shadow-[0_2px_8px_rgba(100,146,167,0.3)] hover:shadow-[0_4px_12px_rgba(100,146,167,0.4)] active:scale-[0.98]">
-                                View Bills
+                        <Link href="/guest/billing" className="mt-auto">
+                            <button className="group w-full py-4 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-[20px] transition-all shadow-[0_8px_20px_rgba(100,146,167,0.25)] hover:shadow-[0_12px_25px_rgba(100,146,167,0.35)] active:scale-[0.98] flex items-center justify-center gap-2">
+                                Manage Payments <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
                         </Link>
                     </div>

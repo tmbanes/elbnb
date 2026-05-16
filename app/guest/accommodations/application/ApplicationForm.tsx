@@ -224,12 +224,13 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
   const [errorMessage, setErrorMessage] = useState("");
 
   const [userInfo, setUserInfo] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    contactNumber: "",
-    role: "",
-    sex: "",
+    firstName: authUser?.first_name || "",
+    middleName: authUser?.middle_name || "",
+    lastName: authUser?.last_name || "",
+    email: authUser?.email || "",
+    contactNumber: authUser?.phone_number || authUser?.contact_number || "",
+    role: authUser?.role || "",
+    sex: authUser?.sex || "",
   });
 
   const {
@@ -270,7 +271,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
     }
 
     setIsSubmitting(true);
-    setShowSuccess(true);
+    setIsSubmitting(true);
     setFileError("");
 
     // Calculate duration in months for the backend
@@ -318,6 +319,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
       }
 
       setSubmittedData(data);
+      setShowSuccess(true);
 
       const profile = await getCurrentUserFromApi();
       const role = isUserRole(profile?.role) ? profile.role : "guest";
@@ -351,14 +353,18 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
         const res = await fetch("/api/user/profile");
         const userProfile = await res.json();
 
-        if (userProfile) {
+        // If the API returns an error or is missing key fields, use authUser as fallback
+        if (userProfile && !userProfile.error) {
+          const role = userProfile.role || authUser?.role || "";
+          setUserRole(role);
           setUserInfo({
-            firstName: userProfile.first_name || "",
-            lastName: userProfile.last_name || "",
-            email: userProfile.email || "",
-            contactNumber: userProfile.contact_number || "",
-            role: userProfile.role || "",
-            sex: userProfile.sex || "",
+            firstName: userProfile.first_name || authUser?.first_name || "",
+            middleName: userProfile.middle_name || authUser?.middle_name || "",
+            lastName: userProfile.last_name || authUser?.last_name || "",
+            email: userProfile.email || authUser?.email || "",
+            contactNumber: userProfile.contact_number || userProfile.phone_number || authUser?.contact_number || authUser?.phone_number || "",
+            role: role,
+            sex: userProfile.sex || authUser?.sex || "",
           });
         }
       } catch (err) {
@@ -428,6 +434,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
           <div className="grid grid-cols-3 gap-4">
             {[
               ["First Name", userInfo.firstName],
+              ["Middle Name", userInfo.middleName],
               ["Last Name", userInfo.lastName],
               ["Email Address", userInfo.email],
               ["Contact Number", userInfo.contactNumber || "--"],
@@ -492,6 +499,15 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
             <p className="text-sm text-[#3d2000] font-medium">{file?.name}</p>
           </div>
         </SectionCard>
+
+        <div className="flex justify-end mt-8">
+          <Button 
+            onClick={() => router.push(userInfo.role === 'student' ? '/student/dashboard' : '/guest/dashboard')}
+            className="bg-[#78A24C] hover:bg-[#5f8a38] text-white px-7 py-3 text-base font-bold rounded-xl transition-all hover:scale-105"
+          >
+            Back to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
@@ -653,8 +669,14 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                 <Field label="First Name">
                   <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.firstName || "--"} />
                 </Field>
+                <Field label="Middle Name">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.middleName || "--"} />
+                </Field>
                 <Field label="Last Name">
                   <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.lastName || "--"} />
+                </Field>
+                <Field label="Sex">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.sex || "--"} />
                 </Field>
                 <div className="md:col-span-2">
                   <Field label="Email Address">
@@ -666,9 +688,6 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                 </Field>
                 <Field label="Applicant Type">
                   <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.role.replace("_", " ") || "--"} />
-                </Field>
-                <Field label="Sex">
-                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.sex || "--"} />
                 </Field>
               </div>
             </SectionCard>

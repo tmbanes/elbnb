@@ -25,13 +25,15 @@ export const GET = withRole(['student', 'guest', 'dormitory_manager', 'housing_a
         .from(targetTable)
         .select("*")
         .eq("user_id", user.user_id)
-        .single();
+        .maybeSingle();
 
     if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error("Profile fetch error:", error);
+        // Fallback to base user data if role-specific fetch fails
+        return NextResponse.json(user);
     }
 
-    // Merge the base user data with role-specific data
+    // Merge the base user data with role-specific data (if any)
     return NextResponse.json({
         ...user,
         ...(roleSpecificData || {})
