@@ -81,9 +81,7 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Real-time sync for assignment updates
-  useRealtimeSync('accommodation_assignment', undefined, '*', () => {
-    router.refresh();
-  });
+  useRealtimeSync('accommodation_assignment', undefined, '*');
 
   // ── Derived data ───────────────────────────────────────────────────────────
   const filtered = residents.filter(r => {
@@ -112,7 +110,7 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
         confirmAction as "record-move-in" | "record-move-out",
         actionDate
       );
-      
+
       if (!result.success) {
         throw new Error(result.error ?? "Action failed");
       }
