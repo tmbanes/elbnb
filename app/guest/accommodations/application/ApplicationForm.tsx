@@ -30,6 +30,7 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   Upload,
   CheckCircle,
+  AlertCircle,
   Calendar as CalendarIcon,
   Loader2,
   ChevronLeft,
@@ -124,7 +125,7 @@ function SectionCard({
     <div
       className={`
         relative rounded-2xl border-2 bg-white mb-4 transition-all duration-300 ease-in-out
-        hover:scale-[1.01] hover:shadow-xl hover:border-[#78A24C] group
+        group
         ${highlighted ? "border-blue-400 shadow-md" : "border-[#78A24C]/30"}
         ${className || "p-6"}
       `}
@@ -143,7 +144,7 @@ function SectionCard({
       <div className="flex items-center mb-6">
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${highlighted ? "bg-[#F2C908]" : "bg-[#78A24C]/25"}`}>
           {icon && (
-            <span className="text-[#567536] [&>svg]:w-[18px] [&>svg]:h-[18px] group-hover:animate-pulse">
+            <span className="text-[#567536] [&>svg]:w-[18px] [&>svg]:h-[18px]">
               {icon}
             </span>
           )}
@@ -219,14 +220,17 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
   const [submittedData, setSubmittedData] = useState<FormValues | null>(null);
   const [dynamicUnitTypes, setDynamicUnitTypes] = useState<string[]>([]);
   const [preferredAccommodation, setPreferredAccommodation] = useState<string>("");
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [userInfo, setUserInfo] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    contactNumber: "",
-    role: "",
-    sex: "",
+    firstName: authUser?.first_name || "",
+    middleName: authUser?.middle_name || "",
+    lastName: authUser?.last_name || "",
+    email: authUser?.email || "",
+    contactNumber: authUser?.phone_number || authUser?.contact_number || "",
+    role: authUser?.role || "",
+    sex: authUser?.sex || "",
   });
 
   const {
@@ -267,7 +271,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
     }
 
     setIsSubmitting(true);
-    setShowSuccess(true);
+    setIsSubmitting(true);
     setFileError("");
 
     // Calculate duration in months for the backend
@@ -308,12 +312,14 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to submit.");
+        setErrorMessage(errorData.error || "Failed to submit.");
+        setShowError(true);
         setShowSuccess(false);
         return;
       }
 
       setSubmittedData(data);
+      setShowSuccess(true);
 
       const profile = await getCurrentUserFromApi();
       const role = isUserRole(profile?.role) ? profile.role : "guest";
@@ -332,7 +338,8 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
       setShowSuccess(true);
     } catch (error) {
       console.error("Submission error:", error);
-      alert("An unexpected error occurred.");
+      setErrorMessage("An unexpected error occurred. Please try again.");
+      setShowError(true);
       setShowSuccess(false);
     } finally {
       setIsSubmitting(false);
@@ -346,14 +353,18 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
         const res = await fetch("/api/user/profile");
         const userProfile = await res.json();
 
-        if (userProfile) {
+        // If the API returns an error or is missing key fields, use authUser as fallback
+        if (userProfile && !userProfile.error) {
+          const role = userProfile.role || authUser?.role || "";
+          setUserRole(role);
           setUserInfo({
-            firstName: userProfile.first_name || "",
-            lastName: userProfile.last_name || "",
-            email: userProfile.email || "",
-            contactNumber: userProfile.contact_number || "",
-            role: userProfile.role || "",
-            sex: userProfile.sex || "",
+            firstName: userProfile.first_name || authUser?.first_name || "",
+            middleName: userProfile.middle_name || authUser?.middle_name || "",
+            lastName: userProfile.last_name || authUser?.last_name || "",
+            email: userProfile.email || authUser?.email || "",
+            contactNumber: userProfile.contact_number || userProfile.phone_number || authUser?.contact_number || authUser?.phone_number || "",
+            role: role,
+            sex: userProfile.sex || authUser?.sex || "",
           });
         }
       } catch (err) {
@@ -423,6 +434,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
           <div className="grid grid-cols-3 gap-4">
             {[
               ["First Name", userInfo.firstName],
+              ["Middle Name", userInfo.middleName],
               ["Last Name", userInfo.lastName],
               ["Email Address", userInfo.email],
               ["Contact Number", userInfo.contactNumber || "--"],
@@ -487,6 +499,15 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
             <p className="text-sm text-[#3d2000] font-medium">{file?.name}</p>
           </div>
         </SectionCard>
+
+        <div className="flex justify-end mt-8">
+          <Button 
+            onClick={() => router.push(userInfo.role === 'student' ? '/student/dashboard' : '/guest/dashboard')}
+            className="bg-[#78A24C] hover:bg-[#5f8a38] text-white px-7 py-3 text-base font-bold rounded-xl transition-all hover:scale-105"
+          >
+            Back to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
@@ -573,13 +594,13 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                         )}
                         {(accommodation.accomm_sex?.toLowerCase() === 'female' || accommodation.accomm_sex?.toLowerCase() === 'f') && (
                           <>
-                            <svg className="w-4 h-4 text-pink-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6"/><path d="M12 16v6M9 19h6"/></svg>
+                            <svg className="w-4 h-4 text-pink-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6" /><path d="M12 16v6M9 19h6" /></svg>
                             <span>Female only</span>
                           </>
                         )}
                         {(accommodation.accomm_sex?.toLowerCase() === 'male' || accommodation.accomm_sex?.toLowerCase() === 'm') && (
                           <>
-                            <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6"/><path d="M14.243 9.757L21 3M16 3h5v5"/></svg>
+                            <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6" /><path d="M14.243 9.757L21 3M16 3h5v5" /></svg>
                             <span>Male only</span>
                           </>
                         )}
@@ -648,8 +669,14 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                 <Field label="First Name">
                   <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.firstName || "--"} />
                 </Field>
+                <Field label="Middle Name">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.middleName || "--"} />
+                </Field>
                 <Field label="Last Name">
                   <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.lastName || "--"} />
+                </Field>
+                <Field label="Sex">
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.sex || "--"} />
                 </Field>
                 <div className="md:col-span-2">
                   <Field label="Email Address">
@@ -661,9 +688,6 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                 </Field>
                 <Field label="Applicant Type">
                   <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.role.replace("_", " ") || "--"} />
-                </Field>
-                <Field label="Sex">
-                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed capitalize`} value={userInfo.sex || "--"} />
                 </Field>
               </div>
             </SectionCard>
@@ -1039,6 +1063,36 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
               View Application Summary
             </Button>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ERROR MODAL */}
+      <Dialog
+        open={showError}
+        onOpenChange={setShowError}
+      >
+        <DialogContent className="bg-[#FDFFF4] rounded-2xl max-w-sm text-center">
+          <DialogHeader>
+            <div className="flex justify-center mb-2">
+              <div className="bg-[#DF3538] rounded-full p-3">
+                <AlertCircle className="h-10 w-10 text-white" />
+              </div>
+            </div>
+            <DialogTitle className="text-xl font-black text-[#3d2000] text-center">
+              Submission Error
+            </DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-[#5a4a2a] text-center leading-relaxed">
+            {errorMessage}
+          </p>
+
+          <Button
+            onClick={() => setShowError(false)}
+            className="w-full bg-[#DF3538] hover:bg-red-600 text-white font-bold rounded-xl py-3 mt-2"
+          >
+            Go Back
+          </Button>
         </DialogContent>
       </Dialog>
     </div>

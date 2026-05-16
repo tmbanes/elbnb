@@ -229,8 +229,15 @@ main>*:not(.page-loader) {
 }
 
 /* Hide scrollbar but keep scroll */
-.scrollbar-hide::-webkit-scrollbar {
+.scrollbar-hide::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+.scrollbar-hide,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Toast Animations moved to @theme block */

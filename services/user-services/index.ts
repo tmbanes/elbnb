@@ -1088,6 +1088,25 @@ export async function getAccomodationHistory(user_id: string) {
   return { data: flattened as AccommodationHistory[] | null, error };
 }
 
+
+//======================================================//
+// GET EXISTING INVOICE FOR ASSIGNMENT
+//======================================================//
+
+export async function getExistingInvoiceForAssignment(assignment_id: string) {
+  const supabase = supabaseAdmin;
+
+  const { data, error } = await supabase
+    .from("billing")
+    .select("billing_id")
+    .eq("assignment_id", assignment_id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return { data, error };
+}
+
 //======================================================//
 // CREATE BILLING WITH DETAILED ITEMS
 //======================================================//

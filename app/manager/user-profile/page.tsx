@@ -20,11 +20,22 @@ export default async function ManagerProfilePage() {
     ...(dbMetadata || {})
   };
 
+  let managerAccommodation = null;
+  if (dbMetadata?.accommodation_id) {
+    const { data: accom } = await supabase
+      .from('accommodation')
+      .select('*')
+      .eq('accommodation_id', dbMetadata.accommodation_id)
+      .single();
+    managerAccommodation = accom;
+  }
+
   return (
     <main>
       <ProfileComponent
         user={user}
         metadata={mergedMetadata}
+        managerAccommodation={managerAccommodation}
       />
     </main>
   )

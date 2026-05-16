@@ -63,7 +63,7 @@ export default function AddDormModal({
   // Fetch managers for the dropdown
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/admin/housing/managers")
+    fetch("/api/housing/managers")
       .then((r) => r.json())
       .then(setManagers)
       .catch(() => {});
@@ -114,7 +114,7 @@ export default function AddDormModal({
       if (isEditing && existingDorm) {
         // ── UPDATE ──────────────────────────────────────────────────────────
         const res = await fetch(
-          `/api/admin/housing/dorms?id=${existingDorm.accommodation_id}`,
+          `/api/housing/dorms?id=${existingDorm.accommodation_id}`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -141,7 +141,7 @@ export default function AddDormModal({
         if (!res.ok) throw new Error(data.error || "Update failed");
       } else {
         // ── CREATE ──────────────────────────────────────────────────────────
-        const res = await fetch("/api/admin/housing/dorms", {
+        const res = await fetch("/api/housing/dorms", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

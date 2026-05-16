@@ -97,7 +97,7 @@ export default function AddUnitModal({
     setLoading(true);
 
     try {
-      const res = await fetch("/api/admin/housing/units", {
+      const res = await fetch("/api/housing/units", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

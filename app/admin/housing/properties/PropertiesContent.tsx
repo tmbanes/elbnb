@@ -42,9 +42,9 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
   async function fetchProperties() {
     try {
       const [dormsRes, rentalsRes, managersRes] = await Promise.all([
-        fetch("/api/admin/housing/dorms"),
-        fetch("/api/admin/housing/rental-spaces"),
-        fetch("/api/admin/housing/managers"),
+        fetch("/api/housing/dorms"),
+        fetch("/api/housing/rental-spaces"),
+        fetch("/api/housing/managers"),
       ]);
       const [dorms, rentals, managers] = await Promise.all([
         dormsRes.json(),
@@ -74,8 +74,8 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
         const found = properties.find((p) => p.accommodation_id === selectedId);
         const endpoint =
           found?.accommodation_type === "renting_space"
-            ? `/api/admin/housing/rental-spaces?id=${selectedId}`
-            : `/api/admin/housing/dorms?id=${selectedId}`;
+            ? `/api/housing/rental-spaces?id=${selectedId}`
+            : `/api/housing/dorms?id=${selectedId}`;
 
         const res = await fetch(endpoint);
         const data = await res.json();
@@ -133,8 +133,8 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
     setIsDeletingProperty(true);
     const endpoint =
       type === "renting_space"
-        ? `/api/admin/housing/rental-spaces?id=${id}`
-        : `/api/admin/housing/dorms?id=${id}`;
+        ? `/api/housing/rental-spaces?id=${id}`
+        : `/api/housing/dorms?id=${id}`;
 
     const res = await fetch(endpoint, { method: "DELETE" });
     const data = await res.json();
@@ -163,7 +163,7 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
 
   async function handleDeleteUnit(unitId: string) {
     setIsDeletingUnit(true);
-    const res = await fetch(`/api/admin/housing/units?id=${unitId}`, {
+    const res = await fetch(`/api/housing/units?id=${unitId}`, {
       method: "DELETE",
     });
     const data = await res.json();

@@ -3,6 +3,7 @@
 import { Unit, Accommodation } from "@/types/accommodation_units";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { Banknote } from "lucide-react";
 
 interface UnitCardProps {
   unit: Unit;
@@ -105,9 +106,7 @@ export function UnitCard({
 
         {/* Price */}
         <div className="flex items-center gap-1.5 mb-4">
-          <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <Banknote className="w-4 h-4 text-gray-400" />
           <span className="text-sm font-semibold" style={{ color: "#264384" }}>
             {unit.rental_fee ? `₱${unit.rental_fee.toLocaleString()}` : "Price not set"}
             {unit.rental_fee && unit.billing_period ? (

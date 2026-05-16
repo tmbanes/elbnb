@@ -257,7 +257,8 @@ export default function ReviewApplication({
               data.documents.map((doc, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-3 bg-white border border-[#e8e2d6] rounded-xl shadow-sm"
+                  onClick={() => setIsPreviewOpen(true)}
+                  className="flex items-center justify-between p-4 bg-white border border-[#e8e2d6] rounded-xl shadow-sm cursor-pointer hover:bg-[#ebf2f4] transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600">
@@ -265,15 +266,10 @@ export default function ReviewApplication({
                     </div>
                     <span className="text-sm font-bold text-[#44291B]">{doc.name}</span>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setIsPreviewOpen(true)}
-                    className="text-[#264384] font-bold hover:bg-[#ebf2f4] rounded-lg gap-2"
-                  >
+                  <div className="flex items-center gap-2 text-[#264384] font-bold text-sm px-4 py-2 bg-[#ebf2f4] rounded-xl">
                     View
-                    <ExternalLink className="w-3 h-3" />
-                  </Button>
+                    <ExternalLink className="w-4 h-4" />
+                  </div>
                 </div>
               ))
             ) : (

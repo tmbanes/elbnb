@@ -33,7 +33,7 @@ function generatePassword(): string {
   return parts.join("");
 }
 
-// POST /api/admin/housing/managers/create-account
+// POST /api/housing/managers/create-account
 // Creates a Supabase Auth user. The handle_new_user trigger automatically
 // inserts into public.users AND public.dormitory_manager using the metadata.
 export async function POST(req: NextRequest) {

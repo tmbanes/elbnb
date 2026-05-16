@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { BillingStatus, BillingItemType } from "@/types/billing/enums";
-import { adminUpdateInvoiceAction, adminApproveReceiptAction, adminRejectReceiptAction, adminCreateBillAction } from "./actions";
+import { adminUpdateInvoiceAction, adminApproveReceiptAction, adminRejectReceiptAction, adminCreateBillAction, getReceiptSignedUrl } from "@/lib/actions/billing.actions";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import {
   Search,
@@ -179,11 +179,11 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     const receiptPath = bill.transaction_reference || bill.receipt_files?.[bill.receipt_files.length - 1];
 
     if (receiptPath) {
-      const response = await fetch(`/api/admin/billing/receipt-url?path=${encodeURIComponent(receiptPath)}`);
-      const payload = await response.json().catch(() => ({}));
-
-      if (response.ok && payload.signedUrl) {
-        setReceiptUrl(payload.signedUrl);
+      try {
+        const signedUrl = await getReceiptSignedUrl(receiptPath);
+        if (signedUrl) setReceiptUrl(signedUrl);
+      } catch (e) {
+        console.error("Failed to fetch receipt url:", e);
       }
     }
   };

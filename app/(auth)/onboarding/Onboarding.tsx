@@ -27,7 +27,7 @@ export default function Auth() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setOpenPanel("upper");
-    }, 1500);
+    }, 100);
     return () => clearTimeout(timer);
   }, []);
 

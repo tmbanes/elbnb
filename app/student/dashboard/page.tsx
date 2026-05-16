@@ -4,7 +4,7 @@ import { UnitAccomodationsDisplayService } from "@/services/unit_accommodation";
 import { redirect } from "next/navigation";
 import StudentDashboardUI from "./student-dashboard-ui";
 import { getApiAuthenticatedUser } from "@/lib/auth/session";
-import { resolveAccommodationImageDisplayUrl } from "@/lib/actions/housing-actions";
+import { resolveAccommodationImageDisplayUrl, withResolvedAccommodationImages } from "@/lib/actions/housing-actions";
 
 
 export default async function StudentDashboardPage() {
@@ -33,29 +33,32 @@ export default async function StudentDashboardPage() {
     userProfileService.getNotifications(user.user_id)
   ]);
 
-  // Resolve current residency image if it exists
-  if (currentResidency?.unit?.accommodation?.image) {
-    currentResidency.unit.accommodation.image = await resolveAccommodationImageDisplayUrl(currentResidency.unit.accommodation.image).catch(() => null);
-  }
-
-  // Resolve history images
-  const resolvedHistory = await Promise.all((history || []).map(async (item: any) => {
-    if (item.accommodation?.image) {
-      item.accommodation.image = await resolveAccommodationImageDisplayUrl(item.accommodation.image).catch(() => null);
-    }
-    return item;
-  }));
-
-  // Resolve accommodations preview images
-  const { withResolvedAccommodationImages } = await import("@/lib/actions/housing-actions");
-  const resolvedAccommodations = await withResolvedAccommodationImages(accommodations || []).catch(() => accommodations || []);
-
+  // Parallelize all image resolutions
+  const [resolvedCurrentResidency, resolvedHistory, resolvedAccommodations] = await Promise.all([
+    // Resolve current residency image
+    (async () => {
+      if (currentResidency?.unit?.accommodation?.image) {
+        currentResidency.unit.accommodation.image = await resolveAccommodationImageDisplayUrl(currentResidency.unit.accommodation.image).catch(() => null);
+      }
+      return currentResidency;
+    })(),
+    // Resolve history images
+    Promise.all((history || []).map(async (item: any) => {
+      if (item.accommodation?.image) {
+        item.accommodation.image = await resolveAccommodationImageDisplayUrl(item.accommodation.image).catch(() => null);
+      }
+      return item;
+    })),
+    // Resolve accommodations preview images
+    withResolvedAccommodationImages(accommodations || []).catch(() => accommodations || [])
+  ]);
 
   return (
     <StudentDashboardUI
       user={user}
-      currentResidency={currentResidency}
+      currentResidency={resolvedCurrentResidency}
       history={resolvedHistory}
+
       billingSummary={billingSummary || { total: 0, paid: 0, balance: 0 }}
       bills={billsDetailed || []}
       stats={stats}

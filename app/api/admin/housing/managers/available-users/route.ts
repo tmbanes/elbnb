@@ -1,10 +1,10 @@
-// app/api/admin/housing/managers/available-users/route.ts
+// app/api/housing/managers/available-users/route.ts
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
 import { withRole } from "@/lib/auth/api-guard";
 
-// GET /api/admin/housing/managers/available-users
+// GET /api/housing/managers/available-users
 // Returns all users with role = 'dormitory_manager'
 // that are NOT already in the dormitory_manager table
 export const GET = withRole(['housing_admin', 'admin'], async () => {

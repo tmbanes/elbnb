@@ -33,7 +33,7 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
 
   async function fetchManagers() {
     try {
-      const res = await fetch("/api/admin/housing/managers");
+      const res = await fetch("/api/housing/managers");
       const data = await res.json();
       
       if (!res.ok) throw new Error(data.error);
@@ -49,7 +49,7 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
   async function fetchManagerDetail(id: string) {
     try {
       setDetailLoading(true);
-      const res = await fetch(`/api/admin/housing/managers?id=${id}`);
+      const res = await fetch(`/api/housing/managers?id=${id}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setSelectedManager(data);
@@ -103,7 +103,7 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
     const employeeId = managerToDelete.employee_id;
     const deletedName = `${managerToDelete.users.first_name} ${managerToDelete.users.last_name}`;
 
-    const res = await fetch(`/api/admin/housing/managers?id=${employeeId}`, {
+    const res = await fetch(`/api/housing/managers?id=${employeeId}`, {
       method: "DELETE",
     });
     const data = await res.json();

@@ -26,14 +26,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { useRealtimeSync } from "@/lib/realtime-sync";
+import { uploadReceiptAction, cancelReceiptAction, getReceiptSignedUrl } from "@/lib/actions/billing.actions";
 
 export default function BillingClient({
   userId,
   summary,
   bills,
   paymentHistory,
-  uploadEndpoint = "/api/student/billing/upload-receipt",
-  cancelEndpoint = "/api/student/billing/cancel-receipt",
 }: any) {
   const supabase = getSupabaseBrowserClient();
   const router = useRouter();
@@ -255,11 +254,9 @@ export default function BillingClient({
     const loadPreview = async () => {
       setIsLoadingReceiptPreview(true);
       try {
-        const response = await fetch(`/api/admin/billing/receipt-url?path=${encodeURIComponent(receiptPath)}`);
-        const payload = await response.json().catch(() => ({}));
-
-        if (response.ok && payload.signedUrl && !cancelled) {
-          setReceiptPreviewUrl(payload.signedUrl);
+        const signedUrl = await getReceiptSignedUrl(receiptPath);
+        if (signedUrl && !cancelled) {
+          setReceiptPreviewUrl(signedUrl);
         } else if (!cancelled) {
           setReceiptPreviewUrl(null);
         }
@@ -343,15 +340,7 @@ export default function BillingClient({
       formData.append("billingId", billId);
       formData.append("receiptFile", uploadFile);
 
-      const response = await fetch(uploadEndpoint, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Failed to upload receipt.");
-      }
+      await uploadReceiptAction(formData);
 
       // Reload page to reflect changes
       window.location.reload();
@@ -373,16 +362,7 @@ export default function BillingClient({
     setUploadError("");
 
     try {
-      const response = await fetch(cancelEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ billingId: focusedBill.billing_id }),
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Failed to cancel receipt.");
-      }
+      await cancelReceiptAction(focusedBill.billing_id);
 
       setUploadFile(null);
       router.refresh();

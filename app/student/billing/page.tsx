@@ -45,7 +45,6 @@ export default async function StudentBillingPage() {
           summary={summary || { total: 0, paid: 0, balance: 0 }}
           bills={bills || []}
           paymentHistory={paymentHistory || []}
-          uploadEndpoint="/api/student/billing/upload-receipt"
         />
       </div>
     </main>
