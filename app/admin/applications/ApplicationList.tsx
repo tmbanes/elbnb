@@ -15,6 +15,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
+import { useRouter } from "next/navigation";
 import { Archivo, Archivo_Black } from "next/font/google";
 
 const archivo = Archivo({ subsets: ["latin"] });
@@ -498,8 +499,18 @@ export default function ApplicationList({
 
     const selectedAppsData = applications.filter(app => selectedIds.has(app.application_id));
 
+    const router = useRouter();
+
     return (
         <div className="p-4 bg-[#F6F8D5] text-[#44291B] space-y-6 relative">
+            <Button
+                variant="ghost"
+                onClick={() => router.push("/admin/dashboard")}
+                className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group w-fit"
+            >
+                <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+            </Button>
             {/* Header */}
             <div>
                 <h1 className="text-4xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">

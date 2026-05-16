@@ -142,6 +142,14 @@ export default function PropertiesList({
 
   return (
     <div className="p-6 space-y-4 font-[family-name:var(--font-archivo)]">
+      <Button
+        variant="ghost"
+        onClick={() => router.push("/admin/dashboard")}
+        className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group"
+      >
+        <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+        <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+      </Button>
       <div>
         <h1 className="text-3xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] mr-2">Properties Page</h1>
         <p className="text-sm md:text-md text-[#44291B] pt-3">Manage your Properties and view their details</p>

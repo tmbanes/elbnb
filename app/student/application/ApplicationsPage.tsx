@@ -18,6 +18,8 @@ import { AccommodationApplication } from "@/types/user_profile";
 import { Check, Clock, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils/ui-utils";
 import { PaymentModal } from "./PaymentModal";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { Archivo_Black } from "next/font/google";
 
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
@@ -66,6 +68,7 @@ function formatDate(dateString: string | undefined | null, fallback = "—") {
 import { useRealtimeSync } from "@/lib/realtime-sync";
 
 export default function ApplicationsPage({ records }: ApplicationsPageProps) {
+  const router = useRouter();
   // Sync applications in real-time
   useRealtimeSync('accommodation_application', undefined, '*');
 
@@ -103,6 +106,24 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
   return (
     <div className="min-h-screen w-full py-8" style={{ backgroundColor: '#F6F8D5' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        <div>
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/student/dashboard")}
+            className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group w-fit"
+          >
+            <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+          </Button>
+          <header className="mb-2">
+            <h1 className={`${archivoBlack.className} pt-6 text-4xl md:text-5xl`} style={{ color: '#44291B' }}>
+              Accommodation Overview
+            </h1>
+            <p className="mt-2 text-sm sm:text-sm" style={{ color: '#44291B' }}>
+              Manage your active requests and view past history.
+            </p>
+          </header>
+        </div>
 
         {/* SECTION 1: ACTIVE APPLICATIONS */}
         <section className="space-y-4">

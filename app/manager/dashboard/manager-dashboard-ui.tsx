@@ -192,6 +192,7 @@ export default function ManagerDashboardUI({
 
     // --- Recent Applications ---
     const [recentApplications] = useState(initialData.recentApplications);
+    const [expandedApplication, setExpandedApplication] = useState<string | null>(null);
 
     // --- Move-out Alerts ---
     const [moveOutAlerts] = useState(initialData.moveOutAlerts);
@@ -646,36 +647,70 @@ export default function ManagerDashboardUI({
                                                         // Ensure student_number is extracted correctly if nested
                                                         const studentNumber = app.student_number || u.student?.student_number || u.student?.[0]?.student_number || 'N/A';
                                                         const dateSubmitted = app.date_submitted || app.date || null;
+                                                        const isExpanded = expandedApplication === app.application_id;
 
                                                         return (
-                                                            <tr key={app.application_id} className="border-b border-slate-50 last:border-0 hover:bg-[#F9FBFD] transition-colors">
-                                                                <td className="py-4 px-6">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">{initials}</div>
-                                                                        <div>
-                                                                            <p className="text-[13px] font-black text-[#0B3A64] leading-none">{name}</p>
-                                                                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">{app.preferred_unit_type || dormName}</p>
+                                                            <React.Fragment key={app.application_id}>
+                                                                <tr 
+                                                                    onClick={() => setExpandedApplication(isExpanded ? null : app.application_id)}
+                                                                    className={`border-b border-slate-50 last:border-0 hover:bg-[#F9FBFD] transition-colors cursor-pointer ${isExpanded ? 'bg-[#F9FBFD]' : ''}`}
+                                                                >
+                                                                    <td className="py-4 px-6">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-8 h-8 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">{initials}</div>
+                                                                            <div>
+                                                                                <p className="text-[13px] font-black text-[#0B3A64] leading-none">{name}</p>
+                                                                                <p className="text-[10px] text-slate-400 font-medium mt-0.5">{app.preferred_unit_type || dormName}</p>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="py-4 px-4">
-                                                                    <span className="text-[11px] text-slate-400 font-bold">
-                                                                        {dateSubmitted ? new Date(dateSubmitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-4 px-6 text-right">
-                                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap ${statusColor}`}>
-                                                                        {statusLabel}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-4 px-6 text-right">
-                                                                    <Link href={`/manager/student-history/${u.user_id || app.user_id}`}>
-                                                                        <button className="text-slate-300 hover:text-[#5591AB] transition-colors">
-                                                                            <History className="w-4 h-4" />
-                                                                        </button>
-                                                                    </Link>
-                                                                </td>
-                                                            </tr>
+                                                                    </td>
+                                                                    <td className="py-4 px-4">
+                                                                        <span className="text-[11px] text-slate-400 font-bold">
+                                                                            {dateSubmitted ? new Date(dateSubmitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="py-4 px-6 text-right">
+                                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap ${statusColor}`}>
+                                                                            {statusLabel}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="py-4 px-6 text-right">
+                                                                        <Link href={`/manager/student-history/${u.user_id || app.user_id}`} onClick={(e) => e.stopPropagation()}>
+                                                                            <button className="text-slate-300 hover:text-[#5591AB] transition-colors">
+                                                                                <History className="w-4 h-4" />
+                                                                            </button>
+                                                                        </Link>
+                                                                    </td>
+                                                                </tr>
+                                                                {isExpanded && (
+                                                                    <tr className="bg-slate-50/50 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                                        <td colSpan={4} className="py-4 px-6 border-b border-slate-100">
+                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                                                                <div className="sm:col-span-2">
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Email Contact</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64] break-all">{u.email || "No email"}</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Sex</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64] uppercase tracking-wider">{u.sex || "—"}</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Stay Duration</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64]">{app.duration_of_stay || 1} Semester(s)</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Check-in Date</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64]">{app.check_in ? new Date(app.check_in).toLocaleDateString() : 'Pending'}</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Companions</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64]">{app.number_of_companions || 0} Person(s)</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                )}
+                                                            </React.Fragment>
                                                         );
                                                     }) : (
                                                         <tr>

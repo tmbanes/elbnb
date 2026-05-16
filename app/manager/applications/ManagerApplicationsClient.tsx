@@ -14,6 +14,7 @@ import { useRealtimeSync } from "@/lib/realtime-sync";
 import { cn } from "@/lib/utils/ui-utils";
 import { Search, Filter, Eye, ChevronLeft, ChevronRight, X, Building2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 import { Archivo, Archivo_Black } from "next/font/google";
 
@@ -21,6 +22,7 @@ const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 export default function ManagerApplicationsClient({ user, initialData }: { user: any, initialData: ManagerApplicationsResponse }) {
+  const router = useRouter();
   const [applications, setApplications] = useState<Application[]>(initialData.applications);
   const [accommodationName, setAccommodationName] = useState(initialData.accommodation.name);
   const [loading, setLoading] = useState(false);
@@ -220,12 +222,21 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
         "flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out",
         selectedAppId ? "hidden lg:flex lg:flex-[7]" : "flex-1"
       )}>
+
         <div className={cn(
           "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
           selectedAppId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
         )}>
           {/* Header */}
           <div className="space-y-1 flex-shrink-0">
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/manager/dashboard")}
+              className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#FDFFF4] -ml-2 mb-2 transition-all group w-fit"
+            >
+              <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+            </Button>
             <h1 className={`${archivoBlack.className} pt-6 text-4xl md:text-5xl text-[#44291B] tracking-tight`}>
               Applications
             </h1>

@@ -44,7 +44,7 @@ export default async function DormitoryManagerDashboardPage() {
         .eq('application_status', 'approved')
         .order('date_submitted', { ascending: true }),
       supabase.from('accommodation_application')
-        .select('*, user_id, users!user_id(user_id, first_name, last_name, profile_picture_url)')
+        .select('*, user_id, users!user_id(user_id, first_name, last_name, profile_picture_url, email, sex)')
         .eq('preferred_accommodation_id', accom.accommodation_id)
         .order('date_submitted', { ascending: false })
         .limit(5)

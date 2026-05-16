@@ -11,6 +11,9 @@ import { AccommodationListView } from '@/components/SearchAccommodations/Accommo
 import { UnitsListView } from '@/components/SearchAccommodations/Units-list-view'
 import { ViewAccommodation, ViewUnit } from '@/components/SearchAccommodations'
 import { Archivo_Black } from 'next/font/google'
+import { ChevronLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 
 const archivoBlack = Archivo_Black({ subsets: ['latin'], weight: '400' })
 
@@ -36,6 +39,7 @@ interface UnitFiltersType {
 
 export default function SearchAccommodationsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('accommodations')
+  const router = useRouter()
 
   // Data states
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
@@ -530,6 +534,14 @@ export default function SearchAccommodationsPage() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-6 xl:px-6 py-6">
           {/* Header */}
           <div className="mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/student/dashboard")}
+              className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group w-fit"
+            >
+              <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+            </Button>
             <h1 className={`${archivoBlack.className} pt-9 text-4xl md:text-5xl mb-2`} style={{ color: '#44291B' }}>
               Search Accommodations
             </h1>
