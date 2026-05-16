@@ -420,11 +420,26 @@ export default function ReviewApplication({
                   onChange={(e) => setSelectedUnitId(e.target.value)}
                 >
                   <option value="">Choose a unit...</option>
-                  {(appData.availableUnits || []).map((unit: any) => (
-                    <option key={unit.unit_id} value={unit.unit_id}>
-                      Unit {unit.unit_number} ({unit.unit_type})
-                    </option>
-                  ))}
+                  <optgroup label="Matching Preferred Type">
+                    {(appData.availableUnits || [])
+                      .filter((u: any) => u.unit_type === appData.preferred_unit_type)
+                      .map((unit: any) => (
+                        <option key={unit.unit_id} value={unit.unit_id}>
+                          Unit {unit.unit_number} ({unit.unit_type.replace(/_/g, ' ')})
+                        </option>
+                      ))
+                    }
+                  </optgroup>
+                  <optgroup label="Other Available Units">
+                    {(appData.availableUnits || [])
+                      .filter((u: any) => u.unit_type !== appData.preferred_unit_type)
+                      .map((unit: any) => (
+                        <option key={unit.unit_id} value={unit.unit_id}>
+                          Unit {unit.unit_number} ({unit.unit_type.replace(/_/g, ' ')})
+                        </option>
+                      ))
+                    }
+                  </optgroup>
                 </select>
               </div>
             )}
@@ -677,9 +692,22 @@ export default function ReviewApplication({
                     disabled={appData.application_status !== "pending_admin"}
                   >
                     <option value="">Choose Unit...</option>
-                    {(appData.availableUnits || []).map((u: any) => (
-                      <option key={u.unit_id} value={u.unit_id}>Unit {u.unit_number}</option>
-                    ))}
+                    <optgroup label="Matching Preferred Type">
+                      {(appData.availableUnits || [])
+                        .filter((u: any) => u.unit_type === appData.preferred_unit_type)
+                        .map((u: any) => (
+                          <option key={u.unit_id} value={u.unit_id}>Unit {u.unit_number} ({u.unit_type.replace(/_/g, ' ')})</option>
+                        ))
+                      }
+                    </optgroup>
+                    <optgroup label="Other Available Units">
+                      {(appData.availableUnits || [])
+                        .filter((u: any) => u.unit_type !== appData.preferred_unit_type)
+                        .map((u: any) => (
+                          <option key={u.unit_id} value={u.unit_id}>Unit {u.unit_number} ({u.unit_type.replace(/_/g, ' ')})</option>
+                        ))
+                      }
+                    </optgroup>
                   </select>
                 </div>
               </div>

@@ -28,7 +28,10 @@ export async function getSingleApplicationService(user: User, id: string) {
     .from("accommodation_application")
     .select(`
       *,
-      users:user_id (first_name, last_name, email),
+      users:user_id (
+        first_name, last_name, email,
+        student:student ( student_num )
+      ),
       accommodation:preferred_accommodation_id (accommodation_id, name, location),
       unit:unit_id (unit_number)
     `)
@@ -119,7 +122,10 @@ export async function getApplicationsService(user: User) {
             application_id, preferred_accommodation_id, preferred_unit_type,
             date_submitted, duration_of_stay, check_in, check_out,
             number_of_companions, application_status, user_id, file,
-            users ( first_name, last_name, email )
+            users ( 
+              first_name, last_name, email,
+              student:student ( student_num )
+            )
           `)
           .eq("preferred_accommodation_id", accommodationId)
           .order("date_submitted", { ascending: false }),
@@ -134,10 +140,16 @@ export async function getApplicationsService(user: User) {
 
       return {
         accommodation: accommodationData,
-        applications: (appsRes.data ?? []).map((app: any) => ({
-          ...app,
-          users: Array.isArray(app.users) ? app.users[0] : app.users
-        })),
+        applications: (appsRes.data ?? []).map((app: any) => {
+          const user = Array.isArray(app.users) ? app.users[0] : app.users;
+          if (user && user.student && Array.isArray(user.student)) {
+            user.student = user.student[0];
+          }
+          return {
+            ...app,
+            users: user
+          };
+        }),
         units: unitsRes.data ?? [],
       };
     } else {
@@ -148,7 +160,10 @@ export async function getApplicationsService(user: User) {
           application_id, preferred_accommodation_id, preferred_unit_type,
           date_submitted, duration_of_stay, check_in, check_out,
           number_of_companions, application_status, user_id,
-          users ( first_name, last_name, email ),
+          users ( 
+            first_name, last_name, email,
+            student:student ( student_num )
+          ),
           accommodation:preferred_accommodation_id (
             accommodation_id, name, location,
             unit ( unit_id, unit_number, unit_type, max_occupancy, current_occupancy, rental_fee, billing_period, unit_status )
@@ -159,7 +174,18 @@ export async function getApplicationsService(user: User) {
 
       if (appError) throw new Error(appError.message);
 
-      return { applications: applications ?? [] };
+      return { 
+        applications: (applications ?? []).map((app: any) => {
+          const user = Array.isArray(app.users) ? app.users[0] : app.users;
+          if (user && user.student && Array.isArray(user.student)) {
+            user.student = user.student[0];
+          }
+          return {
+            ...app,
+            users: user
+          };
+        }) 
+      };
     }
   }
 
@@ -192,7 +218,9 @@ export async function processApplicationService(user: User, payload: any) {
       .eq("application_id", application_id)
       .eq("application_status", "pending_dorm_manager");
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      throw new Error(error.message);
+    }
 
     const actor = await getCurrentUserRole();
     if (actor) {
@@ -225,7 +253,9 @@ export async function processApplicationService(user: User, payload: any) {
         .in("application_status", ["pending_dorm_manager", "pending_admin", "pending_payment", "waitlisted"])
         .select();
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        throw new Error(error.message);
+      }
       if (!data || data.length === 0) throw new Error("Application could not be rejected.");
 
       const actor = await getCurrentUserRole();
@@ -238,53 +268,118 @@ export async function processApplicationService(user: User, payload: any) {
     }
 
     if (action === "pending_payment") {
-      const { data: application, error: appError } = await supabase.from("accommodation_application").select("application_id, application_status").eq("application_id", application_id).single();
+      const { data: application, error: appError } = await supabase.from("accommodation_application").select("application_id, application_status, user_id, check_in, check_out").eq("application_id", application_id).single();
       if (appError || !application) throw new Error("Application not found.");
-      if (application.application_status !== "pending_payment") throw new Error("Only pending payment applications can be approved from this action.");
 
-      const { data: applicationData } = await supabaseAdmin.from("accommodation_application").select("user_id").eq("application_id", application_id).single();
-      if (!applicationData) throw new Error("Application not found.");
+      // Stage 1: Approve & Assign (move from pending_admin to pending_payment)
+      if (application.application_status === "pending_admin") {
+        if (!unit_id) throw new Error("A unit must be selected to approve and assign.");
 
-      const { data: userAssignments } = await supabaseAdmin.from("accommodation_assignment").select("assignment_id, assignment_status, application_id").eq("user_id", applicationData.user_id);
-      const assignment = (userAssignments ?? []).find((a: any) => String(a.application_id) === String(application_id));
-      if (!assignment) throw new Error("No assignment found for this application.");
+        const { data: unit, error: unitError } = await supabase.from("unit").select("unit_id, max_occupancy, current_occupancy, unit_status, rental_fee").eq("unit_id", unit_id!).single();
+        if (unitError || !unit) throw new Error("Unit not found.");
+        if (unit.current_occupancy >= unit.max_occupancy) throw new Error("Selected unit is already at full capacity.");
+        if (unit.unit_status !== "active") throw new Error("Selected unit is not active.");
 
-      const { data: latestBilling, error: billingError } = await supabase.from("billing").select("billing_id, status").eq("assignment_id", assignment.assignment_id).order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (billingError || !latestBilling?.billing_id) throw new Error("No invoice found for this application.");
-      if (latestBilling.status !== "paid") throw new Error("Invoice must be marked as paid before final approval.");
+        await supabaseAdmin.from("accommodation_application").update({ application_status: "pending_payment", unit_id: unit_id! }).eq("application_id", application_id);
 
-      await supabaseAdmin.from("accommodation_assignment").update({ assignment_status: "active" }).eq("assignment_id", assignment.assignment_id);
-      await supabaseAdmin.from("accommodation_application").update({ application_status: "approved" }).eq("application_id", application_id);
+        const { data: existingAssignment } = await supabaseAdmin.from("accommodation_assignment").select("assignment_id").eq("application_id", application_id).maybeSingle();
+        let assignmentId: string;
 
-      const actor = await getCurrentUserRole();
-      if (actor) {
-        const { data: appData } = await supabaseAdmin.from("accommodation_application").select("user_id, users:user_id(first_name, last_name)").eq("application_id", application_id).single();
-        const applicantName = (appData as any)?.users ? `${(appData as any).users.first_name} ${(appData as any).users.last_name}` : "Unknown Applicant";
-        await createActivityLog({ p_user_id: actor.userId, p_action_type: "approve_application", p_log_desc: `${actor.first_name} approved application for ${applicantName} (Final Approval)`, p_entity_type: "application", p_entity_id: application_id, p_user_role: actor.role });
-        await createActivityLog({ p_user_id: actor.userId, p_action_type: "update_assignment", p_log_desc: `${actor.first_name} activated housing assignment for ${applicantName}`, p_entity_type: "assignment", p_entity_id: assignment.assignment_id, p_user_role: actor.role });
+        if (existingAssignment?.assignment_id) {
+          assignmentId = existingAssignment.assignment_id;
+          await supabaseAdmin.from("accommodation_assignment").update({ unit_id: unit_id! }).eq("assignment_id", assignmentId);
+        } else {
+          const { data: assignment, error: assignError } = await supabaseAdmin.from("accommodation_assignment").insert({
+            application_id: application.application_id, unit_id: unit_id!, user_id: application.user_id, move_in_date: application.check_in, expected_move_out_date: application.check_out, actual_move_out_date: null, assignment_status: "waiting_payment"
+          }).select("assignment_id").single();
+          if (assignError) throw new Error(`Failed to create assignment: ${assignError.message}`);
+          assignmentId = assignment.assignment_id;
+        }
+
+        const actor = await getCurrentUserRole();
+        if (actor) {
+          const { data: appData } = await supabase.from("accommodation_application").select("user_id, users(first_name, last_name)").eq("application_id", application_id).single();
+          const applicantName = appData?.users ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}` : "Unknown Applicant";
+          await createActivityLog({ p_user_id: actor.userId, p_action_type: "approve_application", p_log_desc: `${actor.first_name} approved application for ${applicantName} (Awaiting Payment)`, p_entity_type: "application", p_entity_id: application_id, p_user_role: actor.role });
+        }
+
+        return { success: true, new_status: "pending_payment", assignment_status: "waiting_payment" };
       }
 
-      return { success: true, new_status: "approved", assignment_status: "active" };
+      // Stage 2: Final Approval (move from pending_payment to approved)
+      if (application.application_status === "pending_payment") {
+        const { data: applicationData } = await supabaseAdmin.from("accommodation_application").select("user_id").eq("application_id", application_id).single();
+        if (!applicationData) throw new Error("Application not found.");
+
+        const { data: userAssignments } = await supabaseAdmin.from("accommodation_assignment").select("assignment_id, assignment_status, application_id").eq("user_id", applicationData.user_id);
+        const assignment = (userAssignments ?? []).find((a: any) => String(a.application_id) === String(application_id));
+        if (!assignment) throw new Error("No assignment found for this application.");
+
+        const { data: latestBilling, error: billingError } = await supabase.from("billing").select("billing_id, status").eq("assignment_id", assignment.assignment_id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+        if (billingError || !latestBilling?.billing_id) throw new Error("No invoice found for this application.");
+        if (latestBilling.status !== "paid") throw new Error("Invoice must be marked as paid before final approval.");
+
+        await supabaseAdmin.from("accommodation_assignment").update({ assignment_status: "active" }).eq("assignment_id", assignment.assignment_id);
+        await supabaseAdmin.from("accommodation_application").update({ application_status: "approved" }).eq("application_id", application_id);
+
+        const actor = await getCurrentUserRole();
+        if (actor) {
+          const { data: appData } = await supabaseAdmin.from("accommodation_application").select("user_id, users:user_id(first_name, last_name)").eq("application_id", application_id).single();
+          const applicantName = (appData as any)?.users ? `${(appData as any).users.first_name} ${(appData as any).users.last_name}` : "Unknown Applicant";
+          await createActivityLog({ p_user_id: actor.userId, p_action_type: "approve_application", p_log_desc: `${actor.first_name} approved application for ${applicantName} (Final Approval)`, p_entity_type: "application", p_entity_id: application_id, p_user_role: actor.role });
+          await createActivityLog({ p_user_id: actor.userId, p_action_type: "update_assignment", p_log_desc: `${actor.first_name} activated housing assignment for ${applicantName}`, p_entity_type: "assignment", p_entity_id: assignment.assignment_id, p_user_role: actor.role });
+        }
+
+        return { success: true, new_status: "approved", assignment_status: "active" };
+      }
+
+      throw new Error(`Action 'pending_payment' is not valid for application status: ${application.application_status}`);
     }
 
     if (action === "approve") {
-      const { data: application, error: fetchError } = await supabase.from("accommodation_application").select("application_id, user_id, check_in, check_out").eq("application_id", application_id).eq("application_status", "pending_admin").single();
-      if (fetchError || !application) throw new Error("Application not found or already processed.");
+      const { data: application, error: fetchError } = await supabase
+        .from("accommodation_application")
+        .select("application_id, user_id, check_in, check_out, application_status")
+        .eq("application_id", application_id)
+        .in("application_status", ["pending_admin", "pending_payment"])
+        .single();
+      
+      if (fetchError || !application) throw new Error("Application not found or not in an approvable state.");
 
       const { data: unit, error: unitError } = await supabase.from("unit").select("unit_id, max_occupancy, current_occupancy, unit_status, rental_fee").eq("unit_id", unit_id!).single();
       if (unitError || !unit) throw new Error("Unit not found.");
       if (unit.current_occupancy >= unit.max_occupancy) throw new Error("Selected unit is already at full capacity.");
       if (unit.unit_status !== "active") throw new Error("Selected unit is not active.");
 
-      await supabaseAdmin.from("accommodation_application").update({ application_status: "pending_payment", unit_id: unit_id! }).eq("application_id", application_id);
+      await supabaseAdmin.from("accommodation_application")
+        .update({ application_status: "pending_payment", unit_id: unit_id! })
+        .eq("application_id", application_id);
 
-      const { data: assignment, error: assignError } = await supabaseAdmin.from("accommodation_assignment").insert({
-        application_id: application.application_id, unit_id: unit_id!, user_id: application.user_id, move_in_date: application.check_in, expected_move_out_date: application.check_out, actual_move_out_date: null, assignment_status: "waiting_payment"
-      }).select("assignment_id").single();
+      const { data: existingAssignment } = await supabaseAdmin
+        .from("accommodation_assignment")
+        .select("assignment_id")
+        .eq("application_id", application_id)
+        .maybeSingle();
 
-      if (assignError) {
-        await supabaseAdmin.from("accommodation_application").update({ application_status: "pending_admin", unit_id: null }).eq("application_id", application.application_id);
-        throw new Error(`Failed to create assignment: ${assignError.message}`);
+      let assignmentId: string;
+
+      if (existingAssignment?.assignment_id) {
+        assignmentId = existingAssignment.assignment_id;
+        await supabaseAdmin.from("accommodation_assignment")
+          .update({ unit_id: unit_id! })
+          .eq("assignment_id", assignmentId);
+      } else {
+        const { data: assignment, error: assignError } = await supabaseAdmin.from("accommodation_assignment").insert({
+          application_id: application.application_id, unit_id: unit_id!, user_id: application.user_id,
+          move_in_date: application.check_in, expected_move_out_date: application.check_out,
+          actual_move_out_date: null, assignment_status: "waiting_payment"
+        }).select("assignment_id").single();
+
+        if (assignError) {
+          await supabaseAdmin.from("accommodation_application").update({ application_status: "pending_admin", unit_id: null }).eq("application_id", application.application_id);
+          throw new Error(`Failed to create assignment: ${assignError.message}`);
+        }
+        assignmentId = assignment.assignment_id;
       }
 
       const actor = await getCurrentUserRole();
@@ -292,7 +387,7 @@ export async function processApplicationService(user: User, payload: any) {
         const { data: appData } = await supabase.from("accommodation_application").select("user_id, users(first_name, last_name)").eq("application_id", application_id).single();
         const applicantName = appData?.users ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}` : "Unknown Applicant";
         await createActivityLog({ p_user_id: actor.userId, p_action_type: "approve_application", p_log_desc: `${actor.first_name} approved application for ${applicantName} (Awaiting Payment)`, p_entity_type: "application", p_entity_id: application_id, p_user_role: actor.role });
-        await createActivityLog({ p_user_id: actor.userId, p_action_type: "create_assignment", p_log_desc: `${actor.first_name} created accommodation assignment for ${applicantName}`, p_entity_type: "assignment", p_entity_id: assignment.assignment_id, p_user_role: actor.role });
+        await createActivityLog({ p_user_id: actor.userId, p_action_type: "create_assignment", p_log_desc: `${actor.first_name} created/updated accommodation assignment for ${applicantName}`, p_entity_type: "assignment", p_entity_id: assignmentId, p_user_role: actor.role });
       }
 
       return { success: true, new_status: "pending_payment", assignment_status: "waiting_payment", message: "Application approved." };
@@ -301,6 +396,7 @@ export async function processApplicationService(user: User, payload: any) {
 
   throw new Error("Unauthorized or unknown action");
 }
+
 
 export async function createInvoiceService(user: User, payload: any) {
   if (user.role !== 'admin' && user.role !== 'housing_admin') {
@@ -382,8 +478,6 @@ export async function createInvoiceService(user: User, payload: any) {
     throw new Error(insertItemsError.message);
   }
 
-  return { success: true, billing_id: createdBilling.billing_id };
-
   const actor = await getCurrentUserRole();
   if (actor) {
     const { data: appData } = await supabase.from("accommodation_application").select("user_id, users(first_name, last_name)").eq("application_id", application_id).single();
@@ -391,5 +485,5 @@ export async function createInvoiceService(user: User, payload: any) {
     await createActivityLog({ p_user_id: actor.userId, p_action_type: "generate_billing", p_log_desc: `${actor.first_name} generated invoice for ${applicantName}`, p_entity_type: "billing", p_entity_id: createdBilling.billing_id, p_user_role: actor.role });
   }
 
-  return { success: true, billing_id: createdBilling.billing_id, mode: "created", required_to_secure_slot_total: requiredAmount };
+  return { success: true, billing_id: createdBilling.billing_id };
 }
