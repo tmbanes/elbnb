@@ -254,21 +254,26 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
               <h2 className="text-2xl font-bold text-[#44291B]">Application History</h2>
             </div>
 
-            {/* Filter styled to match the Admin Client */}
-            <div className="flex items-center gap-2 text-sm bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+            <div className="relative">
               <select
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="bg-transparent outline-none text-slate-700 font-medium cursor-pointer"
+                className="appearance-none pl-4 pr-9 py-2.5 text-sm font-semibold rounded-xl border border-[#44291B]/15 shadow-sm outline-none cursor-pointer transition-all hover:border-[#264384]/30 focus:ring-2 focus:ring-[#264384]/15 focus:border-[#264384]/40"
+                style={{ backgroundColor: '#FDFFF4', color: '#44291B' }}
               >
                 <option value="all">All Statuses</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
                 <option value="cancelled">Cancelled</option>
               </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="#44291B" strokeOpacity="0.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
 

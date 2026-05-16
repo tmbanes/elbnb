@@ -193,12 +193,12 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
             </div>
 
             {accommodations.length > 1 && (
-              <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
+              <div className="flex items-center gap-2 border border-[#44291B]/15 rounded-xl bg-[#FDFFF4] px-3 py-2 shadow-sm">
                 <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
                 <select
                   value={accomFilter}
                   onChange={e => { setAccomFilter(e.target.value); setPage(1); }}
-                  className="text-sm bg-transparent outline-none text-[#44291B] font-medium cursor-pointer"
+                  className="text-sm bg-transparent outline-none text-[#44291B] font-semibold cursor-pointer"
                 >
                   <option value="all">All Properties</option>
                   {accommodations.map(a => (
@@ -208,12 +208,12 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
               </div>
             )}
 
-            <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
+            <div className="flex items-center gap-2 border border-[#44291B]/15 rounded-xl bg-[#FDFFF4] px-3 py-2 shadow-sm">
               <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
               <select
                 value={statusFilter}
                 onChange={e => { setStatusFilter(e.target.value as FilterStatus); setPage(1); }}
-                className="text-sm bg-transparent outline-none text-[#44291B] font-medium cursor-pointer"
+                className="text-sm bg-transparent outline-none text-[#44291B] font-semibold cursor-pointer"
               >
                 <option value="all">All Status</option>
                 <option value="awaiting">Awaiting Move-in</option>

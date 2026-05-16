@@ -23,8 +23,9 @@ export function FilterDropdown({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="w-full appearance-none px-4 py-3 pr-10 border border-gray-200 rounded-xl text-sm font-semibold shadow-sm transition-all hover:border-[#264384]/30 hover:bg-white cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#264384]/5 focus:border-[#264384] bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full appearance-none px-4 py-2.5 pr-10 border border-[#44291B]/15 rounded-xl text-sm font-semibold shadow-sm transition-all hover:border-[#264384]/30 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#264384]/15 focus:border-[#264384]/40 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
+            backgroundColor: '#FDFFF4',
             color: '#44291B',
           } as any}
         >
