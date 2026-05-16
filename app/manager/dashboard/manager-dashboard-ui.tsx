@@ -130,7 +130,7 @@ export default function ManagerDashboardUI({
     const [allStudents] = useState(() => {
         return initialData.assignments.map((asg: any) => ({
             type: 'resident' as const,
-            id: asg.user_id,
+            id: asg.users?.user_id || asg.user_id,
             assignment_id: asg.assignment_id,
             name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
             student_number: 'Not provided',
@@ -145,7 +145,7 @@ export default function ManagerDashboardUI({
             const u = app.users || {};
             return {
                 type: 'waitlist' as const,
-                id: app.user_id,
+                id: u.user_id || app.user_id,
                 application_id: app.application_id,
                 name: `${u.first_name || ''} ${u.last_name || ''}`.trim(),
                 student_number: u.student?.student_number || u.student?.[0]?.student_number || 'N/A',
@@ -222,13 +222,13 @@ export default function ManagerDashboardUI({
 
     // Delinquency filter + sort
     const filteredDelinquency = delinquencyList
-        .filter(d => {
+        .filter((d: any) => {
             if (delinquencyFilter === 'all') return true;
             if (delinquencyFilter === 'Pending') return d.status === 'Unpaid';
             if (delinquencyFilter === 'Overdue') return d.status === 'Overdue';
             return true;
         })
-        .sort((a, b) => delinquencySortDays ? b.days_overdue - a.days_overdue : a.name.localeCompare(b.name));
+        .sort((a: any, b: any) => delinquencySortDays ? b.days_overdue - a.days_overdue : a.name.localeCompare(b.name));
 
     // Activity log color + label
     const activityColor = (type: string) => {
@@ -669,7 +669,7 @@ export default function ManagerDashboardUI({
                                                                     </span>
                                                                 </td>
                                                                 <td className="py-4 px-6 text-right">
-                                                                    <Link href={`/manager/student-history/${app.user_id}`}>
+                                                                    <Link href={`/manager/student-history/${u.user_id || app.user_id}`}>
                                                                         <button className="text-slate-300 hover:text-[#5591AB] transition-colors">
                                                                             <History className="w-4 h-4" />
                                                                         </button>
