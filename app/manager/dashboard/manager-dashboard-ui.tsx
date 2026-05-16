@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import {
-    Search, Bell, Building2, Users, FileText,
+    Bell, Building2, Users, FileText,
     Banknote, LogOut, UserPlus, ArrowLeftRight, AlertTriangle, BarChart2, CheckCircle2, ChevronRight,
     Filter, User, Plus, RotateCcw, Clock, Send, History
 } from "lucide-react";
@@ -483,11 +483,7 @@ export default function ManagerDashboardUI({
                                             </div>
 
                                             <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-                                                <div className="relative flex-1 xl:flex-none xl:w-[240px]">
-                                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                                                    <input type="text" placeholder="Search Name/ID..." value={tableSearch} onChange={(e) => setTableSearch(e.target.value)} className="w-full pl-11 pr-4 py-2.5 bg-[#F8F9FD] border border-slate-100 rounded-full text-[12px] outline-none focus:ring-2 focus:ring-[#5591AB]/10 font-medium placeholder:text-slate-400" />
-                                                </div>
-                                                <div className="flex flex-wrap items-center gap-2">
+                                                <div className="flex flex-wrap items-center gap-2 ml-auto">
                                                     <div className="flex items-center gap-2 bg-[#F8F9FD] px-3 py-1 rounded-full border border-slate-100">
                                                         <Select value={tableFilters.college} onValueChange={(v) => setTableFilters(prev => { return { ...prev, college: v }; })}>
                                                             <SelectTrigger className="h-7 border-none bg-transparent text-[11px] font-bold text-[#0B3A64] focus:ring-0 w-[90px] p-0 px-2"><SelectValue placeholder="College" /></SelectTrigger>
@@ -519,7 +515,6 @@ export default function ManagerDashboardUI({
                                                     )}
 
                                                     <button onClick={handleResetFilters} className="p-2 text-slate-400 hover:text-[#DE7A6A] transition-all hover:rotate-180 duration-500" title="Reset Filters"><RotateCcw className="w-4 h-4" /></button>
-                                                    <button className="flex items-center gap-2 px-5 py-2 bg-[#5591AB] text-white rounded-full text-[12px] font-bold hover:bg-[#467A91] hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm"><Search className="w-3.5 h-3.5" />Search</button>
                                                 </div>
                                             </div>
                                         </div>
