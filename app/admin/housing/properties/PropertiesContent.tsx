@@ -11,7 +11,7 @@ import PropertiesList from "./PropertiesList";
 import PropertyDetail from "./PropertyDetails";
 import { CheckCircle2, X } from "lucide-react";
 
-export default function PropertiesContent({ initialData }: { initialData: { properties: Property[], managerCount: number } }) {
+export default function PropertiesContent({ initialData }: { initialData: { properties: Property[], assignedManagerCount: number, totalManagerCount: number, allManagers: any[] } }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedId = searchParams.get("id");
@@ -22,11 +22,24 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
   const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [managerCount, setManagerCount] = useState(initialData.managerCount);
+  const initialAssignedCount = new Set(
+    (initialData.properties || []).filter((p: any) => p.manager_id).map((p: any) => p.manager_id)
+  ).size;
+  const [assignedManagerCount, setAssignedManagerCount] = useState(initialAssignedCount);
+  const [totalManagerCount, setTotalManagerCount] = useState(initialData.totalManagerCount);
+  const [allManagers, setAllManagers] = useState<any[]>(initialData.allManagers);
   const [addPromptOpen, setAddPromptOpen] = useState(false);
   const [dormModalOpen, setDormModalOpen] = useState(false);
   const [rentalModalOpen, setRentalModalOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+
+  // Build assigned set from ALL managers' accommodation data (system-wide, not just this admin's properties)
+  const assignedManagerIds = new Set<string>(
+    allManagers
+      .filter(m => (m.accommodation?.length ?? 0) > 0)
+      .map(m => m.users?.user_id)
+      .filter(Boolean)
+  );
   const [showDeleteToast, setShowDeleteToast] = useState(false);
   const [isHidingToast, setIsHidingToast] = useState(false);
   const [deletedPropertyName, setDeletedPropertyName] = useState("");
@@ -41,19 +54,27 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
 
   async function fetchProperties() {
     try {
-      const [dormsRes, rentalsRes, managersRes] = await Promise.all([
+      const [dormsRes, rentalsRes, allManagersRes] = await Promise.all([
         fetch("/api/housing/dorms"),
         fetch("/api/housing/rental-spaces"),
-        fetch("/api/housing/managers"),
+        fetch("/api/housing/managers?all=true"),
       ]);
-      const [dorms, rentals, managers] = await Promise.all([
+      const [dorms, rentals, freshManagers] = await Promise.all([
         dormsRes.json(),
         rentalsRes.json(),
-        managersRes.json(),
+        allManagersRes.json(),
       ]);
 
-      setProperties([...(dorms || []), ...(rentals || [])]);
-      setManagerCount(managers?.length ?? 0);
+      const allProps = [...(dorms || []), ...(rentals || [])];
+      setProperties(allProps);
+
+      if (Array.isArray(freshManagers)) {
+        setAllManagers(freshManagers);
+        setTotalManagerCount(freshManagers.length);
+        // Count managers assigned to at least one property
+        const assignedIds = new Set(allProps.filter(p => p.manager_id).map(p => p.manager_id));
+        setAssignedManagerCount(assignedIds.size);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -261,7 +282,8 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
           filtered={filtered}
           tableData={tableData}
           typeFilter={typeFilter}
-          managerCount={managerCount}
+          managerCount={assignedManagerCount}
+          totalManagerCount={totalManagerCount}
           addPromptOpen={addPromptOpen}
           onFilterChange={handleFilterChange}
           onToggleAddPrompt={() => setAddPromptOpen((prev) => !prev)}
@@ -286,6 +308,8 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
             ? editingProperty
             : null
         }
+        managers={allManagers}
+        assignedManagerIds={assignedManagerIds}
       />
       <AddRentalSpaceModal
         isOpen={rentalModalOpen}
@@ -299,6 +323,8 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
             ? editingProperty
             : null
         }
+        managers={allManagers}
+        assignedManagerIds={assignedManagerIds}
       />
     </>
   );

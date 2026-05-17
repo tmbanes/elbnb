@@ -42,6 +42,7 @@ export default function ManagersList({
     name: `${manager.users.first_name} ${manager.users.last_name}`,
     email: manager.users.email,
     office: manager.office_location || "—",
+    accommodations: manager.accommodation?.map(a => a.name).join(", ") || "None",
     original: manager,
   }));
 
@@ -94,6 +95,7 @@ export default function ManagersList({
           data={tableData}
           activeRowId={selectedId || undefined}
           onRowClick={(row: any) => onSelect(row.id)}
+          fixedLayout
         />
       ) : (
         <div className="flex h-[200px] items-center justify-center rounded-md border border-dashed mt-4 bg-white/50">

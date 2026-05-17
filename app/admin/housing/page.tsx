@@ -3,70 +3,24 @@ import PropertiesContent from "./properties/PropertiesContent";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { requireRole } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
+import { HousingService } from "@/services/unit_accommodation/housing.service";
 
 export default async function PropertiesPage() {
   const user = await requireRole(['housing_admin', 'admin']);
 
-  const supabase = supabaseAdmin;
-
-  // Parallel fetch on the server
-  const propertyQuery = `
-    accommodation_id, name, location,
-    accommodation_type, accommodation_status, total_capacity,
-    manager_id,
-    dormitory_manager!accommodation_manager_id_fkey (
-      employee_id,
-      users (first_name, last_name)
-    ),
-    dormitory (
-      number_of_semestersAllowed,
-      curfew_time,
-      allowed_programs,
-      term_type,
-      separate_by_gender
-    ),
-    renting_space (
-      property_type,
-      allow_shortterm_stay,
-      allow_longterm_stay,
-      minimum_stay_days,
-      maximum_stay_days,
-      security_deposit_required
-    ),
-    unit (
-      current_occupancy
-    )
-  `;
-
-  const [dormsRes, rentalsRes, managersRes] = await Promise.all([
-    supabase.from("accommodation")
-      .select(propertyQuery)
-      .eq("accommodation_type", "dormitory"),
-    supabase.from("accommodation")
-      .select(propertyQuery)
-      .eq("accommodation_type", "renting_space"),
-    supabase.from("dormitory_manager").select("employee_id")
+  // Parallel fetch on the server using HousingService to respect admin assignment limits
+  const [dormsRes, rentalsRes, managersRes, allManagersRes] = await Promise.all([
+    HousingService.getAllDorms(user),
+    HousingService.getAllRentalSpaces(user),
+    HousingService.getAssignedManagers(user),
+    HousingService.getAllManagers()
   ]);
 
-  const processProperties = (data: any[]) =>
-    (data || []).map(item => ({
-      ...item,
-      units: item.unit || [],
-      dormitory: Array.isArray(item.dormitory) ? item.dormitory[0] : item.dormitory,
-      renting_space: Array.isArray(item.renting_space) ? item.renting_space[0] : item.renting_space,
-      dormitory_manager: (() => {
-        const dm = Array.isArray(item.dormitory_manager) ? item.dormitory_manager[0] : item.dormitory_manager;
-        if (!dm) return null;
-        return {
-          ...dm,
-          users: Array.isArray(dm.users) ? dm.users[0] : dm.users
-        };
-      })()
-    }));
-
   const initialData = {
-    properties: [...processProperties(dormsRes.data || []), ...processProperties(rentalsRes.data || [])],
-    managerCount: managersRes.data?.length || 0
+    properties: [...(dormsRes || []), ...(rentalsRes || [])],
+    assignedManagerCount: managersRes?.length || 0,
+    totalManagerCount: allManagersRes?.length || 0,
+    allManagers: allManagersRes || []
   };
 
   return (

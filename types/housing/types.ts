@@ -55,4 +55,5 @@ export interface Manager {
     email: string;
     role: string;
   };
+  accommodation?: { name: string }[];
 }

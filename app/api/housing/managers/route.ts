@@ -2,14 +2,23 @@ import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { HousingService } from "@/services/unit_accommodation/housing.service";
 
-export const GET = withRole(['housing_admin', 'admin'], async (req: NextRequest) => {
+export const GET = withRole(['housing_admin', 'admin'], async (req: NextRequest, { user }) => {
   try {
     const id = req.nextUrl.searchParams.get("id");
+    const fetchAll = req.nextUrl.searchParams.get("all") === "true";
+    
     if (id) {
       const data = await HousingService.getManager(id);
       return NextResponse.json(data);
     }
-    const data = await HousingService.getAllManagers();
+    
+    let data;
+    if (fetchAll) {
+      data = await HousingService.getAllManagers();
+    } else {
+      data = await HousingService.getAssignedManagers(user);
+    }
+    
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

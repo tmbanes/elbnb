@@ -26,17 +26,30 @@ export const HousingService = {
     return data && data.unit ? { ...data, units: data.unit } : data;
   },
 
-  async getAllDorms() {
-    const { data, error } = await supabaseAdmin
+  async getAllDorms(user?: User) {
+    let query = supabaseAdmin
       .from("accommodation")
       .select(`
         accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity, manager_id,
         dormitory_manager!accommodation_manager_id_fkey (employee_id, users (first_name, last_name, email)),
         dormitory (number_of_semestersAllowed, curfew_time, allowed_programs, term_type, separate_by_gender),
-        unit (current_occupancy)
+        unit (unit_id, unit_number, unit_type, max_occupancy, current_occupancy, rental_fee, unit_status)
       `)
       .eq("accommodation_type", "dormitory");
 
+    if (user && user.role === 'housing_admin') {
+      const { data: adminData } = await supabaseAdmin
+        .from("housing_admin")
+        .select("accommodation_ids")
+        .eq("user_id", user.user_id)
+        .maybeSingle();
+
+      const managedAccommodationIds = adminData?.accommodation_ids || [];
+      if (managedAccommodationIds.length === 0) return [];
+      query = query.in("accommodation_id", managedAccommodationIds);
+    }
+
+    const { data, error } = await query;
     if (error) throw new Error(error.message);
     return data?.map((item: any) => ({
       ...item,
@@ -86,17 +99,30 @@ export const HousingService = {
     return data && data.unit ? { ...data, units: data.unit } : data;
   },
 
-  async getAllRentalSpaces() {
-    const { data, error } = await supabaseAdmin
+  async getAllRentalSpaces(user?: User) {
+    let query = supabaseAdmin
       .from("accommodation")
       .select(`
         accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity, manager_id,
         dormitory_manager!accommodation_manager_id_fkey (employee_id, users (first_name, last_name, email)),
         renting_space (property_type, allow_shortterm_stay, allow_longterm_stay, minimum_stay_days, maximum_stay_days, security_deposit_required),
-        unit (current_occupancy)
+        unit (unit_id, unit_number, unit_type, max_occupancy, current_occupancy, rental_fee, unit_status)
       `)
       .eq("accommodation_type", "renting_space");
 
+    if (user && user.role === 'housing_admin') {
+      const { data: adminData } = await supabaseAdmin
+        .from("housing_admin")
+        .select("accommodation_ids")
+        .eq("user_id", user.user_id)
+        .maybeSingle();
+
+      const managedAccommodationIds = adminData?.accommodation_ids || [];
+      if (managedAccommodationIds.length === 0) return [];
+      query = query.in("accommodation_id", managedAccommodationIds);
+    }
+
+    const { data, error } = await query;
     if (error) throw new Error(error.message);
     return data?.map((item: any) => ({
       ...item,
@@ -182,7 +208,50 @@ export const HousingService = {
       .from("dormitory_manager")
       .select(`employee_id, office_location, users (user_id, first_name, last_name, email, role), accommodation:accommodation(name)`);
     if (error) throw new Error(error.message);
-    return data;
+    return (data || []).map((m: any) => ({
+      ...m,
+      users: Array.isArray(m.users) ? m.users[0] : m.users
+    }));
+  },
+
+  async getAssignedManagers(user: User) {
+    let query = supabaseAdmin
+      .from("dormitory_manager")
+      .select(`employee_id, office_location, users (user_id, first_name, last_name, email, role), accommodation:accommodation(name)`);
+
+    if (user.role === 'housing_admin') {
+      const { data: adminData } = await supabaseAdmin
+        .from("housing_admin")
+        .select("accommodation_ids")
+        .eq("user_id", user.user_id)
+        .maybeSingle();
+
+      const managedAccommodationIds = adminData?.accommodation_ids || [];
+
+      if (managedAccommodationIds.length === 0) {
+        return [];
+      }
+
+      const { data: accoms } = await supabaseAdmin
+        .from("accommodation")
+        .select("manager_id")
+        .in("accommodation_id", managedAccommodationIds);
+
+      const validManagerIds = (accoms || []).map(a => a.manager_id).filter(id => id !== null);
+
+      if (validManagerIds.length === 0) {
+        return [];
+      }
+
+      query = query.in("employee_id", validManagerIds);
+    }
+
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return (data || []).map((m: any) => ({
+      ...m,
+      users: Array.isArray(m.users) ? m.users[0] : m.users
+    }));
   },
 
   async createManager(body: any) {

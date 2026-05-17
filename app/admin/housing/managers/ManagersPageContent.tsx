@@ -33,11 +33,11 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
 
   async function fetchManagers() {
     try {
-      const res = await fetch("/api/housing/managers");
+      const res = await fetch("/api/housing/managers?all=true");
       const data = await res.json();
       
       if (!res.ok) throw new Error(data.error);
-      setManagers(data);
+      setManagers(Array.isArray(data) ? data : []);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -49,7 +49,7 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
   async function fetchManagerDetail(id: string) {
     try {
       setDetailLoading(true);
-      const res = await fetch(`/api/housing/managers?id=${id}`);
+      const res = await fetch(`/api/housing/managers?all=true&id=${id}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setSelectedManager(data);

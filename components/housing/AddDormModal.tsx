@@ -63,10 +63,18 @@ export default function AddDormModal({
   // Fetch managers for the dropdown
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/housing/managers")
+    fetch("/api/housing/managers?all=true")
       .then((r) => r.json())
-      .then(setManagers)
-      .catch(() => {});
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setManagers(data);
+        } else if (data && Array.isArray(data.data)) {
+          setManagers(data.data);
+        } else {
+          setManagers([]);
+        }
+      })
+      .catch(() => setManagers([]));
   }, [isOpen]);
 
   // Pre-fill when editing
@@ -320,11 +328,15 @@ export default function AddDormModal({
                 className={inputCls}
               >
                 <option value="">Select a manager...</option>
-                {managers.map((m) => (
-                  <option key={m.employee_id} value={m.users.user_id}>
-                    {m.users.first_name} {m.users.last_name}
-                  </option>
-                ))}
+                {managers.map((m) => {
+                  const firstName = Array.isArray(m.users) ? m.users[0]?.first_name : m.users?.first_name;
+                  const lastName = Array.isArray(m.users) ? m.users[0]?.last_name : m.users?.last_name;
+                  return (
+                    <option key={m.employee_id} value={m.employee_id}>
+                      {firstName} {lastName}
+                    </option>
+                  );
+                })}
               </select>
             </FLabel>
             {form.manager_id && (

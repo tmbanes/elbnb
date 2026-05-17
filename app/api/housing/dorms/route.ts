@@ -3,14 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { HousingService } from "@/services/unit_accommodation/housing.service";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 
-export const GET = withRole(['housing_admin', 'admin'], async (req: NextRequest) => {
+export const GET = withRole(['housing_admin', 'admin'], async (req: NextRequest, { user }) => {
   try {
     const id = req.nextUrl.searchParams.get("id");
     if (id) {
       const data = await HousingService.getDorm(id);
       return NextResponse.json(data);
     }
-    const data = await HousingService.getAllDorms();
+    const data = await HousingService.getAllDorms(user);
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
