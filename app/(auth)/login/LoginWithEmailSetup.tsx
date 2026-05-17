@@ -16,7 +16,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { ArrowLeft, Home, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Home, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const label_style = "block text-xs font-semibold uppercase tracking-wider text-[#F6F8D5]/80 font-[family-name:var(--font-archivo)]";
 const field_style =
@@ -26,6 +26,7 @@ const field_style =
 
 export default function LoginWithEmailSetup({ user }: { user: User | null }) {
   const [status, setStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const supabase = getSupabaseBrowserClient();
   const [currentUser, setCurrentUser] = useState<User | null>(user);
@@ -50,9 +51,17 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
 
   async function handleSubmit(event: { preventDefault(): void }) {
     event.preventDefault();
+    setIsLoading(true);
+    setStatus("");
     const response = await signInWithEmail(formData);
+    setIsLoading(false);
+    
     if (!response.success) {
-      setStatus(response.error ?? "Login failed");
+      if (response.error?.includes("Invalid login credentials")) {
+        setStatus("Invalid email or password. Please try again.");
+      } else {
+        setStatus(response.error ?? "Login failed");
+      }
       return;
     }
     setStatus("Login successful! Redirecting...");
@@ -165,18 +174,22 @@ export default function LoginWithEmailSetup({ user }: { user: User | null }) {
                 </div>
 
                 {status && (
-                  <p className={`rounded-full px-4 py-2 text-center text-sm font-medium ${
-                    status.includes("successful") ? "bg-green-500/20 text-green-100" : "bg-red-500/20 text-red-200"
+                  <div className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 shadow-md border ${
+                    status.includes("successful") 
+                      ? "bg-[#E8F5E9] text-[#2E7D32] border-[#C8E6C9]" 
+                      : "bg-[#FFEBEB] text-[#D32F2F] border-[#FFCDD2]"
                   }`}>
-                    {status}
-                  </p>
+                    {status.includes("successful") ? <CheckCircle2 className="h-5 w-5 shrink-0" /> : <AlertCircle className="h-5 w-5 shrink-0" />}
+                    <p className="text-sm font-bold text-center leading-tight">{status}</p>
+                  </div>
                 )}
 
                 <Button
                   type="submit"
-                  className="w-full h-11 rounded-full bg-[#fbbc05] text-[#2d1a12] font-bold hover:bg-[#f9d776] font-[family-name:var(--font-archivo)]"
+                  disabled={isLoading}
+                  className="w-full h-11 rounded-full bg-[#fbbc05] text-[#2d1a12] font-bold hover:bg-[#f9d776] font-[family-name:var(--font-archivo)] disabled:opacity-70"
                 >
-                  Log In
+                  {isLoading ? "Logging in..." : "Log In"}
                 </Button>
               </CardContent>
             </form>

@@ -9,7 +9,7 @@ export const HousingService = {
       .select(`
         accommodation_id, name, location,
         accommodation_type, accommodation_status, total_capacity,
-        manager_id,
+        manager_id, accomm_sex,
         dormitory_manager!accommodation_manager_id_fkey (
           employee_id, users (first_name, last_name, email)
         ),
@@ -24,14 +24,20 @@ export const HousingService = {
       .single();
 
     if (error) throw new Error(error.message);
-    return data && data.unit ? { ...data, units: data.unit } : data;
+    if (!data) return data;
+    return {
+      ...data,
+      dormitory: Array.isArray(data.dormitory) ? data.dormitory[0] : data.dormitory,
+      dormitory_manager: Array.isArray(data.dormitory_manager) ? data.dormitory_manager[0] : data.dormitory_manager,
+      units: data.unit || [],
+    };
   },
 
   async getAllDorms(user?: User) {
     let query = supabaseAdmin
       .from("accommodation")
       .select(`
-        accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity, manager_id,
+        accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity, manager_id, accomm_sex,
         dormitory_manager!accommodation_manager_id_fkey (employee_id, users (first_name, last_name, email)),
         dormitory (number_of_semestersAllowed, curfew_time, allowed_programs, term_type, separate_by_gender),
         unit (unit_id, unit_number, unit_type, max_occupancy, current_occupancy, rental_fee, unit_status)
@@ -88,7 +94,7 @@ export const HousingService = {
     const { data, error } = await supabaseAdmin
       .from("accommodation")
       .select(`
-        accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity, manager_id,
+        accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity, manager_id, accomm_sex,
         dormitory_manager!accommodation_manager_id_fkey (employee_id, users (first_name, last_name, email)),
         renting_space (property_type, allow_shortterm_stay, allow_longterm_stay, minimum_stay_days, maximum_stay_days, security_deposit_required),
         unit (unit_id, unit_number, unit_type, max_occupancy, current_occupancy, rental_fee, unit_status)
@@ -97,14 +103,20 @@ export const HousingService = {
       .single();
 
     if (error) throw new Error(error.message);
-    return data && data.unit ? { ...data, units: data.unit } : data;
+    if (!data) return data;
+    return {
+      ...data,
+      renting_space: Array.isArray(data.renting_space) ? data.renting_space[0] : data.renting_space,
+      dormitory_manager: Array.isArray(data.dormitory_manager) ? data.dormitory_manager[0] : data.dormitory_manager,
+      units: data.unit || [],
+    };
   },
 
   async getAllRentalSpaces(user?: User) {
     let query = supabaseAdmin
       .from("accommodation")
       .select(`
-        accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity, manager_id,
+        accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity, manager_id, accomm_sex,
         dormitory_manager!accommodation_manager_id_fkey (employee_id, users (first_name, last_name, email)),
         renting_space (property_type, allow_shortterm_stay, allow_longterm_stay, minimum_stay_days, maximum_stay_days, security_deposit_required),
         unit (unit_id, unit_number, unit_type, max_occupancy, current_occupancy, rental_fee, unit_status)

@@ -38,6 +38,7 @@ interface RentalForm {
   security_deposit_required: boolean;
   manager_id: string;
   accommodation_status: string;
+  accomm_sex: string;
 }
 
 interface Props {
@@ -60,6 +61,7 @@ const EMPTY: RentalForm = {
   security_deposit_required: false,
   manager_id: "",
   accommodation_status: "active",
+  accomm_sex: "",
 };
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -120,6 +122,7 @@ export default function AddRentalSpaceModal({
           existingRental.renting_space?.security_deposit_required ?? false,
         manager_id: existingRental.manager_id ?? "",
         accommodation_status: existingRental.accommodation_status ?? "active",
+        accomm_sex: existingRental.accomm_sex ?? "",
       });
     } else {
       setForm(EMPTY);
@@ -159,7 +162,8 @@ export default function AddRentalSpaceModal({
       return (
         form.name.trim() !== "" &&
         form.location.trim() !== "" &&
-        form.property_type.trim() !== ""
+        form.property_type.trim() !== "" &&
+        !!form.accomm_sex
         // manager_id is optional when editing
       );
     }
@@ -181,7 +185,8 @@ export default function AddRentalSpaceModal({
       return (
         form.name.trim() !== "" &&
         form.location.trim() !== "" &&
-        form.property_type.trim() !== ""
+        form.property_type.trim() !== "" &&
+        !!form.accomm_sex
       );
     if (step === 4) return !!form.manager_id;
     return true;
@@ -228,6 +233,7 @@ export default function AddRentalSpaceModal({
           manager_id: form.manager_id === "none" ? null : form.manager_id,
           total_capacity: computedTotalCapacity,
           accommodation_status: form.accommodation_status,
+          accomm_sex: form.accomm_sex,
         },
         rentingFields: {
           property_type: form.property_type,
@@ -370,25 +376,46 @@ export default function AddRentalSpaceModal({
                 required
               />
             </Field>
-            <Field>
-              <Label className="font-semibold">
-                Property Type <span className="text-[#DF3538]">*</span>
-              </Label>
-              <Select
-                value={form.property_type}
-                onValueChange={(val) => handleChange("property_type", val)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="apartment">Apartment</SelectItem>
-                  <SelectItem value="boarding">Boarding House</SelectItem>
-                  <SelectItem value="transient">Transient</SelectItem>
-                  <SelectItem value="house">House</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <Label className="font-semibold">
+                  Property Type <span className="text-[#DF3538]">*</span>
+                </Label>
+                <Select
+                  value={form.property_type}
+                  onValueChange={(val) => handleChange("property_type", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="apartment">Apartment</SelectItem>
+                    <SelectItem value="boarding">Boarding House</SelectItem>
+                    <SelectItem value="transient">Transient</SelectItem>
+                    <SelectItem value="house">House</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <Label className="font-semibold">
+                  Allowed Sex <span className="text-[#DF3538]">*</span>
+                </Label>
+                <Select
+                  value={form.accomm_sex}
+                  onValueChange={(val) => handleChange("accomm_sex", val)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select allowed sex" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Male</SelectItem>
+                    <SelectItem value="F">Female</SelectItem>
+                    <SelectItem value="COED">Co-ed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
             <div className="space-y-3 pt-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -592,25 +619,46 @@ export default function AddRentalSpaceModal({
                     required
                   />
                 </Field>
-                <Field>
-                  <Label className="font-semibold">
-                    Property Type <span className="text-[#DF3538]">*</span>
-                  </Label>
-                  <Select
-                    value={form.property_type}
-                    onValueChange={(val) => handleChange("property_type", val)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="apartment">Apartment</SelectItem>
-                      <SelectItem value="boarding">Boarding House</SelectItem>
-                      <SelectItem value="transient">Transient</SelectItem>
-                      <SelectItem value="house">House</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field>
+                    <Label className="font-semibold">
+                      Property Type <span className="text-[#DF3538]">*</span>
+                    </Label>
+                    <Select
+                      value={form.property_type}
+                      onValueChange={(val) => handleChange("property_type", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="apartment">Apartment</SelectItem>
+                        <SelectItem value="boarding">Boarding House</SelectItem>
+                        <SelectItem value="transient">Transient</SelectItem>
+                        <SelectItem value="house">House</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field>
+                    <Label className="font-semibold">
+                      Allowed Sex <span className="text-[#DF3538]">*</span>
+                    </Label>
+                    <Select
+                      value={form.accomm_sex}
+                      onValueChange={(val) => handleChange("accomm_sex", val)}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select allowed sex" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Co-ed">Co-ed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
               </>
             )}
 

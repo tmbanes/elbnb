@@ -34,7 +34,9 @@ interface HousingDetailProps {
 
 export default function HousingDetail({ property, assignedAdmins, onBack, hideBack = false }: HousingDetailProps) {
   const isDorm = property.accommodation_type === "dormitory";
-  const totalCapacity = property.total_capacity ?? 0;
+  const totalCapacity = (property.units && property.units.length > 0)
+    ? property.units.reduce((acc, unit) => acc + (unit.max_occupancy ?? 0), 0)
+    : (property.total_capacity ?? 0);
   const currentOccupancy = property.units?.reduce(
     (acc, unit) => acc + (unit.current_occupancy ?? 0), 0
   ) ?? 0;
@@ -156,6 +158,7 @@ export default function HousingDetail({ property, assignedAdmins, onBack, hideBa
                       <ConfigDetail label="Curfew Time" value={property.dormitory.curfew_time || "—"} />
                       <ConfigDetail label="Term Type" value={property.dormitory.term_type} />
                       <ConfigDetail label="Gender Policy" value={property.dormitory.separate_by_gender ? "Separated" : "Mixed"} />
+                      <ConfigDetail label="Allowed Sex" value={{ M: "Male", F: "Female", COED: "Co-ed" }[property.accomm_sex ?? ""] ?? (property.accomm_sex || "Unspecified")} />
                     </>
                   )}
                   {!isDorm && property.renting_space && (
@@ -164,6 +167,7 @@ export default function HousingDetail({ property, assignedAdmins, onBack, hideBa
                       <ConfigDetail label="Security Deposit" value={property.renting_space.security_deposit_required ? "Required" : "None"} />
                       <ConfigDetail label="Min Stay" value={`${property.renting_space.minimum_stay_days || 0} days`} />
                       <ConfigDetail label="Max Stay" value={`${property.renting_space.maximum_stay_days || 0} days`} />
+                      <ConfigDetail label="Allowed Sex" value={{ M: "Male", F: "Female", COED: "Co-ed" }[property.accomm_sex ?? ""] ?? (property.accomm_sex || "Unspecified")} />
                     </>
                   )}
                 </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -146,7 +146,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
   const [expandedApplication, setExpandedApplication] = useState<string | null>(null);
 
   const [showNotifications, setShowNotifications] = useState(false);
-  const notificationRef = React.useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

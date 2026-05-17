@@ -311,18 +311,19 @@ not yet tested
       .in("assignment_status", ["active", "waiting_payment", "pending"])
       .maybeSingle();
 
-    if (data?.unit?.accommodation) {
-      let displayImage = data.unit.accommodation.image;
-      const images = data.unit.accommodation.accommodation_images || [];
+    const res = data as any;
+    if (res?.unit?.accommodation) {
+      let displayImage = res.unit.accommodation.image;
+      const images = res.unit.accommodation.accommodation_images || [];
       if (images.length > 0) {
         const primary = images.find((img: any) => img.is_primary) || images[0];
         displayImage = primary.storage_path || primary.url;
       }
-      data.unit.accommodation.image = displayImage;
-      data.unit.accommodation.accommodation_images = undefined;
+      res.unit.accommodation.image = displayImage;
+      res.unit.accommodation.accommodation_images = undefined;
     }
 
-    return { data, error };
+    return { data: res, error };
 
   },
 

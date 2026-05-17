@@ -82,13 +82,13 @@ export function AccommodationCard({
       {/* Content */}
       <div className="p-5 flex-1 flex flex-col">
         {/* Title */}
-        <h3 className="text-2xl font-black mb-2 line-clamp-2 min-h-[4rem]" style={{ color: '#44291B', lineHeight: '2rem' }} title={accommodation.name}>
+        <h3 className="text-2xl font-black mb-2 line-clamp-2 min-h-[4rem]" style={{ color: '#000000', lineHeight: '2rem' }} title={accommodation.name}>
           {accommodation.name}
         </h3>
 
         {/* Key Details */}
         <div className="flex flex-col gap-2 mb-4 flex-1">
-          <div className="flex items-start gap-2 text-sm" style={{ color: '#44291B' }}>
+          <div className="flex items-start gap-2 text-sm" style={{ color: '#000000' }}>
             <svg className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>

@@ -99,11 +99,11 @@ export async function updateResidentStatus(assignmentId: string, action: UpdateR
 
       await createActivityLog({
         p_user_id: actor.userId,
-        p_action_type: logAction,
+        p_action_type: logAction as any,
         p_log_desc: logDesc,
         p_entity_type: "assignment",
         p_entity_id: assignmentId,
-        p_user_role: actor.role,
+        p_user_role: actor.role as any,
       });
     }
 

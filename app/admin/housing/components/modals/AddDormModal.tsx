@@ -37,6 +37,7 @@ interface DormForm {
   separate_by_gender: boolean;
   manager_id: string;
   accommodation_status: string;
+  accomm_sex: string;
 }
 
 interface Props {
@@ -59,6 +60,7 @@ const EMPTY: DormForm = {
   separate_by_gender: true,
   manager_id: "",
   accommodation_status: "active",
+  accomm_sex: "",
 };
 
 export default function AddDormModal({
@@ -111,6 +113,7 @@ export default function AddDormModal({
           existingDorm.dormitory?.separate_by_gender ?? true,
         manager_id: existingDorm.manager_id ?? "",
         accommodation_status: existingDorm.accommodation_status ?? "active",
+        accomm_sex: existingDorm.accomm_sex ?? "",
       });
     } else {
       setForm(EMPTY);
@@ -150,7 +153,8 @@ export default function AddDormModal({
         form.name.trim() !== "" &&
         form.location.trim() !== "" &&
         form.number_of_semesters_allowed.trim() !== "" &&
-        !!form.term_type
+        !!form.term_type &&
+        !!form.accomm_sex
         // manager_id is optional when editing
       );
     }
@@ -169,7 +173,7 @@ export default function AddDormModal({
       );
     }
     if (step === 2) return form.name.trim() !== "" && form.location.trim() !== "";
-    if (step === 3) return form.number_of_semesters_allowed.trim() !== "" && !!form.term_type;
+    if (step === 3) return form.number_of_semesters_allowed.trim() !== "" && !!form.term_type && !!form.accomm_sex;
     if (step === 4) return !!form.manager_id;
     return true;
   }
@@ -217,6 +221,7 @@ export default function AddDormModal({
           manager_id: form.manager_id === "none" ? null : form.manager_id,
           total_capacity: computedTotalCapacity,
           accommodation_status: form.accommodation_status,
+          accomm_sex: form.accomm_sex,
         },
         dormitoryFields: {
           number_of_semestersAllowed: Number(
@@ -383,14 +388,35 @@ export default function AddDormModal({
                 </Select>
               </Field>
             </div>
-            <Field>
-              <Label className="font-semibold">Curfew Time</Label>
-              <Input
-                type="time"
-                value={form.curfew_time}
-                onChange={(e) => handleChange("curfew_time", e.target.value)}
-              />
-            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <Label className="font-semibold">Curfew Time</Label>
+                <Input
+                  type="time"
+                  value={form.curfew_time}
+                  onChange={(e) => handleChange("curfew_time", e.target.value)}
+                />
+              </Field>
+              <Field>
+                <Label className="font-semibold">
+                  Allowed Sex <span className="text-[#DF3538]">*</span>
+                </Label>
+                <Select
+                  value={form.accomm_sex}
+                  onValueChange={(val) => handleChange("accomm_sex", val)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select allowed sex" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Male</SelectItem>
+                    <SelectItem value="F">Female</SelectItem>
+                    <SelectItem value="COED">Co-ed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
             <Field>
               <Label className="font-semibold">Allowed Programs</Label>
               <Textarea

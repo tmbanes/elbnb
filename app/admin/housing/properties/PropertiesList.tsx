@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getPropertyColumns } from "@/app/admin/housing/components/columns/propertyColumns";
 import { Property } from "../../../../types/housing/types";
 
@@ -121,15 +122,18 @@ export default function PropertiesList({
   onBackToHousing,
   isDeletingProperty,
 }: PropertiesListProps) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeProperty, setActiveProperty] = useState<Property | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const stats: SummaryStats = useMemo(() => {
-    const totalCapacity = properties.reduce(
-      (acc, curr) => acc + Number(curr.total_capacity || 0),
-      0
-    );
+    const totalCapacity = properties.reduce((acc, curr) => {
+      const cap = (curr.units && curr.units.length > 0)
+        ? curr.units.reduce((sum, u) => sum + (u.max_occupancy ?? 0), 0)
+        : (curr.total_capacity ?? 0);
+      return acc + Number(cap);
+    }, 0);
 
     return {
       totalDorms: properties.filter((p) => p.accommodation_type === "dormitory")

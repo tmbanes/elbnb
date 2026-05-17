@@ -2,6 +2,7 @@ import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { HousingService } from "@/services/unit_accommodation/housing.service";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
+import { createActivityLog } from "@/services/activity_log/server";
 
 export const GET = withRole(['housing_admin', 'admin'], async (req: NextRequest, { user }) => {
   try {
@@ -32,12 +33,20 @@ export const POST = withRole(['housing_admin', 'admin'], async (req: NextRequest
   }
 });
 
-export const PATCH = withRole(['housing_admin', 'admin'], async (req: NextRequest) => {
+export const PATCH = withRole(['housing_admin', 'admin'], async (req: NextRequest, { user }) => {
   try {
     const id = req.nextUrl.searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
     const { accommodationFields, dormitoryFields } = await req.json();
     const result = await HousingService.updateDorm(id, accommodationFields, dormitoryFields);
+    await createActivityLog({
+      p_user_id: user.user_id,
+      p_action_type: "update_accomm",
+      p_entity_type: "accommodation",
+      p_entity_id: id,
+      p_log_desc: `Updated dormitory fields: ${Object.keys({ ...accommodationFields, ...dormitoryFields }).join(", ")}.`,
+      p_user_role: user.role as any,
+    });
     return NextResponse.json(result);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

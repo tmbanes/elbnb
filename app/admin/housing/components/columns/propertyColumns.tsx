@@ -118,13 +118,15 @@ export const getPropertyColumns = (
       meta: { width: "15%" },
       cell: ({ row }) => {
         const property = row.original.original as {
-          units?: Array<{ current_occupancy?: number }>;
+          units?: Array<{ current_occupancy?: number; max_occupancy?: number }>;
         };
         const current = property.units?.reduce(
           (sum, unit) => sum + (unit.current_occupancy ?? 0),
           0,
         ) ?? 0;
-        const total = row.original.capacity ?? 0;
+        const total = (property.units && property.units.length > 0)
+          ? property.units.reduce((sum, unit) => sum + (unit.max_occupancy ?? 0), 0)
+          : (row.original.capacity ?? 0);
         const percentage = total > 0 ? Math.min(100, (current / total) * 100) : 0;
 
         return (

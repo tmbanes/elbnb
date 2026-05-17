@@ -218,6 +218,7 @@ export default function PropertyDetail({
                       <ConfigDetail label="Curfew Time" value={property.dormitory.curfew_time || "—"} />
                       <ConfigDetail label="Term Type" value={property.dormitory.term_type} />
                       <ConfigDetail label="Gender Policy" value={property.dormitory.separate_by_gender ? "Separated" : "Mixed"} />
+                      <ConfigDetail label="Allowed Sex" value={{ M: "Male", F: "Female", COED: "Co-ed" }[property.accomm_sex ?? ""] ?? (property.accomm_sex || "Unspecified")} />
                       <div className="sm:col-span-2">
                         <ConfigDetail label="Allowed Programs" value={property.dormitory.allowed_programs || "All Programs"} />
                       </div>
@@ -229,6 +230,7 @@ export default function PropertyDetail({
                       <ConfigDetail label="Security Deposit" value={property.renting_space.security_deposit_required ? "Required" : "None"} />
                       <ConfigDetail label="Min Stay" value={`${property.renting_space.minimum_stay_days || 0} days`} />
                       <ConfigDetail label="Max Stay" value={`${property.renting_space.maximum_stay_days || 0} days`} />
+                      <ConfigDetail label="Allowed Sex" value={property.accomm_sex || "Unspecified"} />
                     </>
                   )}
                 </div>

@@ -37,10 +37,11 @@ export default async function StudentDashboardPage() {
   const [resolvedCurrentResidency, resolvedHistory, resolvedAccommodations] = await Promise.all([
     // Resolve current residency image
     (async () => {
-      if (currentResidency?.unit?.accommodation?.image) {
-        currentResidency.unit.accommodation.image = await resolveAccommodationImageDisplayUrl(currentResidency.unit.accommodation.image).catch(() => null);
+      const res = currentResidency as any;
+      if (res?.unit?.accommodation?.image) {
+        res.unit.accommodation.image = await resolveAccommodationImageDisplayUrl(res.unit.accommodation.image).catch(() => null);
       }
-      return currentResidency;
+      return res;
     })(),
     // Resolve history images
     Promise.all((history || []).map(async (item: any) => {
