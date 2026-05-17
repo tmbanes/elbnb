@@ -47,12 +47,6 @@ const FEATURES = [
   { icon: "mdi:shield-account", title: "Tailored Dashboards", desc: "Distinct, customized portals for students, building managers, and housing admins." }
 ];
 
-const CATEGORIES = [
-  { title: "Solo Sanctuary", desc: "Studios & solo rooms for the focused student.", icon: "mdi:home" },
-  { title: "The Study Squad", desc: "Shared housing for groups and barkadas (2–4 bedrooms).", icon: "mdi:account-group" },
-  { title: "Budget-Friendly", desc: "Quality living that fits the student allowance.", icon: "mdi:creation" }
-];
-
 const FOOTER_COLS = [
   { label: 'Product', links: [['Find a Home', '/onboarding'], ['List Property', '/onboarding'], ['Student Portal', '/onboarding']] },
   { label: 'Company', links: [['About Us', '#'], ['Contact Support', '#'], ['Partners', '#']] },
@@ -474,35 +468,6 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
                     </div>
                   </div>
                 </Reveal>
-              </section>
-
-              <div className="h-px bg-white/10 mx-8 md:mx-20" />
-
-              {/* ─── PROPERTY CATEGORIES ─── */}
-              <section className="py-28 px-6 max-w-5xl mx-auto space-y-14">
-                <Reveal delay={0}>
-                  <div className="text-center space-y-3 max-w-xl mx-auto">
-                    <p className="text-white/50 uppercase tracking-[0.2em] text-xs font-bold">Browse By Type</p>
-                    <h2 className={`${HeaderMd} text-3xl md:text-5xl`}>Find your fit.</h2>
-                  </div>
-                </Reveal>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {CATEGORIES.map((cat, i) => (
-                    <Reveal key={i} delay={150 + (i * 150)}>
-                      <div className="group h-full bg-white/5 backdrop-blur-sm hover:bg-white/15 transition-all duration-300 hover:-translate-y-2 rounded-3xl p-8 border border-white/10 cursor-pointer space-y-4">
-                        <span className="text-4xl block mb-6 transform group-hover:scale-110 transition-transform origin-left">
-                          <Icon icon={cat.icon} />
-                        </span>
-                        <h3 className={`${SubheaderLg} text-xl font-bold`}>{cat.title}</h3>
-                        <p className={`${BodyMd} text-white/60 leading-relaxed`}>{cat.desc}</p>
-                        <div className="pt-4 flex items-center gap-2 text-white/50 group-hover:text-white font-bold text-sm transition-colors">
-                          Browse Listings <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
-                        </div>
-                      </div>
-                    </Reveal>
-                  ))}
-                </div>
               </section>
 
               <div className="h-px bg-white/10 mx-8 md:mx-20" />

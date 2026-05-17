@@ -22,7 +22,7 @@ import autoTable from "jspdf-autotable";
 const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
-// ── Types ──
+// Types
 type Stats = {
   totalProperties: number; totalUnits: number; occupiedUnits: number; availableUnits: number;
   studentsHoused: number; waitingListCount: number; revenueThisMonth: number; overdueCount: number;
@@ -63,7 +63,7 @@ interface Props {
   activityLogs?: any[];
 }
 
-// ── Helpers ──
+// Helpers
 const fmt = (n: number) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 0 }).format(n);
 const pct = (n: number) => `${n.toFixed(1)}%`;
 const unwrap = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] : v);
@@ -82,7 +82,7 @@ const statusBadgeDetails = (s: string) => {
   return map[s] ?? { badge: "bg-gray-100 text-gray-600", dot: "bg-gray-400", label: s.replace(/_/g, " ") };
 };
 
-// ── Pagination Helper ──
+// Pagination
 const PROP_PER_PAGE = 5;
 const APP_PER_PAGE = 5;
 const STUDENT_PER_PAGE = 5;
@@ -112,10 +112,10 @@ function PaginationControls({ currentPage, totalPages, onPageChange, className =
   );
 }
 
-// ── Donut SVG ──
+// Donut SVG
 function DonutChart({ value, size = 120, label, color = "#78A24C" }: { value: number; size?: number; label: string; color?: string }) {
   const clamped = Math.min(100, Math.max(0, value));
-  // Dynamic font sizing based on the chart size
+  // Dynamic font sizing
   const pctSize = size >= 120 ? "text-xl" : size >= 100 ? "text-lg" : "text-sm";
   const labelSize = size >= 120 ? "text-[8px]" : "text-[7px]";
 
@@ -167,7 +167,7 @@ function getEntityBadgeStyle(entity: string): string {
   return "bg-[#F8FAFC] text-[#475569] border border-[#E2E8F0]";
 }
 
-// ── Main Component ──
+// Main Component
 export function DashboardClient({ user, profile, notifications: initialNotifications, stats, propertyOccupancy, recentApplications, pendingApplications, housedStudents, billingStatusCounts, alerts, activityLogs }: Props) {
   const [propFilter, setPropFilter] = useState<"all" | "available">("all");
   const [propSearch, setPropSearch] = useState("");
@@ -222,7 +222,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
   const handleExportCSV = () => {
     const csvRows = [];
 
-    // Section 1: Dashboard Stats
+    // Stats
     csvRows.push(["--- DASHBOARD SUMMARY ---"]);
     csvRows.push(["Metric", "Value"]);
     Object.entries(stats).forEach(([key, value]) => {
@@ -232,7 +232,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
     });
     csvRows.push([]);
 
-    // Section 2: Property Occupancy
+    // Occupancy
     csvRows.push(["--- PROPERTY OCCUPANCY ---"]);
     csvRows.push(["Name", "Type", "Status", "Total Units", "Capacity", "Current Occupancy", "Available Slots", "Occupancy Rate (%)"]);
     propertyOccupancy.forEach(p => {
@@ -240,7 +240,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
     });
     csvRows.push([]);
 
-    // Section 3: Pending Applications
+    // Pending
     csvRows.push(["--- PENDING APPLICATIONS ---"]);
     csvRows.push(["Applicant", "Unit Type", "Date Submitted", "Status"]);
     pendingApplications.forEach(a => {
@@ -337,7 +337,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
     <div className="min-h-screen px-4 md:px-10 py-4 md:py-10 bg-[#F6F8D5] selection:bg-[#4A5628] selection:text-white">
       <div className="max-w-7xl mx-auto space-y-8">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div>
             <h1 className={`${archivoBlack.className} text-3xl md:text-5xl text-[#44291B] mr-2`}>Admin Dashboard</h1>
@@ -428,7 +428,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           </div>
         </header>
 
-        {/* ── Waiting List Banner ── */}
+        {/* Waiting List Banner */}
         {stats.waitingListCount > 0 && (
           <div className={`${archivo.className} w-full flex items-center gap-2.5 rounded-xl border border-[#f5df96] bg-[#FFFBEB] px-5 py-3 text-sm font-semibold text-[#92400E] shadow-sm animate-in fade-in duration-500 delay-100`}>
             <span className="h-2 w-2 rounded-full bg-[#F2C908] animate-pulse" />
@@ -436,7 +436,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           </div>
         )}
 
-        {/* ── KPI Cards Sections ── */}
+        {/* KPI Cards */}
         <div className="space-y-3 animate-in fade-in slide-in-from-bottom-6 duration-500 delay-150">
 
           {/* Financials */}
@@ -508,7 +508,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           </div>
         </div>
 
-        {/* ── Row: Occupancy + Donut Charts ── */}
+        {/* Occupancy & Financials */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-8 duration-500 delay-300">
 
           {/* Property Occupancy */}
@@ -664,7 +664,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           </Card>
         </div>
 
-        {/* ── Row: Recent Apps + Students ── */}
+        {/* Applications & Students */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-10 duration-500 delay-500">
 
           {/* Recent Applications Table */}
@@ -837,7 +837,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           </Card>
         </div>
 
-        {/* ── Bottom Section: Logs & Reports Side-by-Side ── */}
+        {/* Logs & Reports */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-12 duration-500 delay-700">
           
           {/* Left Side: Activity Logs */}
