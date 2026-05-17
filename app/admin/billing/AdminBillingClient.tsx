@@ -192,7 +192,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
     if (!viewedReceipt) return;
     await adminApproveReceiptAction(viewedReceipt.billing_id, adminId);
     setViewedReceipt(null);
-    window.location.reload();
+    router.refresh(); //[CHANGES] window.location.reload() to router.refresh() for faster loading
   };
 
   const markAsPaid = async (billingId: string) => {
