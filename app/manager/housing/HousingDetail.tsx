@@ -12,7 +12,9 @@ import {
   User,
   UserMinus,
   ChevronDown,
-  Info
+  Info,
+  Mail,
+  Phone
 } from "lucide-react";
 import {
   Collapsible,
@@ -25,11 +27,12 @@ import PropertyGallery from "@/components/housing/PropertyGallery";
 
 interface HousingDetailProps {
   property: Property;
+  assignedAdmins?: { name: string; email: string; contact?: string }[];
   onBack: () => void;
   hideBack?: boolean;
 }
 
-export default function HousingDetail({ property, onBack, hideBack = false }: HousingDetailProps) {
+export default function HousingDetail({ property, assignedAdmins, onBack, hideBack = false }: HousingDetailProps) {
   const isDorm = property.accommodation_type === "dormitory";
   const totalCapacity = property.total_capacity ?? 0;
   const currentOccupancy = property.units?.reduce(
@@ -162,6 +165,36 @@ export default function HousingDetail({ property, onBack, hideBack = false }: Ho
                       <ConfigDetail label="Min Stay" value={`${property.renting_space.minimum_stay_days || 0} days`} />
                       <ConfigDetail label="Max Stay" value={`${property.renting_space.maximum_stay_days || 0} days`} />
                     </>
+                  )}
+                </div>
+
+                <div className="bg-[#FDFFF4] p-4 rounded-xl border border-[#e2e4c0] space-y-2">
+                  <div className="flex items-center gap-1.5 text-[#44291B]/80">
+                    <User className="w-4 h-4 shrink-0" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Assigned Housing Admin</span>
+                  </div>
+                  {assignedAdmins && assignedAdmins.length > 0 ? (
+                    <div className="space-y-4 pt-1">
+                      {assignedAdmins.map((admin, idx) => (
+                        <div key={idx} className="flex flex-col gap-1 pl-0.5">
+                          <span className="text-sm font-bold text-[#44291B]">{admin.name}</span>
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5 text-xs text-[#44291B]/70 font-medium">
+                              <Mail className="w-3.5 h-3.5 text-[#264384] shrink-0" />
+                              <span>{admin.email}</span>
+                            </div>
+                            {admin.contact && (
+                              <div className="flex items-center gap-1.5 text-xs text-[#44291B]/70 font-medium">
+                                <Phone className="w-3.5 h-3.5 text-[#264384] shrink-0" />
+                                <span>{admin.contact}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[#8c8b82] italic pl-0.5">No housing admins assigned to this property.</p>
                   )}
                 </div>
               </div>

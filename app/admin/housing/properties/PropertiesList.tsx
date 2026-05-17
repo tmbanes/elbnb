@@ -50,9 +50,6 @@ interface PropertiesListProps {
     original: Property;
   }>;
   typeFilter: string | null;
-  assignmentFilter: "all" | "assigned";
-  tableLoading: boolean;
-  onAssignmentFilterChange: (val: "all" | "assigned") => void;
   managerCount: number;
   totalManagerCount: number;
   addPromptOpen: boolean;
@@ -114,9 +111,6 @@ export default function PropertiesList({
   filtered = [],
   tableData = [],
   typeFilter,
-  assignmentFilter,
-  tableLoading,
-  onAssignmentFilterChange,
   managerCount,
   totalManagerCount,
   onFilterChange,
@@ -198,24 +192,6 @@ export default function PropertiesList({
         </div>
 
         <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
-          {/* Assignment Filter */}
-          <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] w-full sm:w-auto">
-            <Filter className="w-4 h-4 text-[#44291B]/50" />
-            <Select
-              value={assignmentFilter}
-              onValueChange={(val: any) => onAssignmentFilterChange(val)}
-            >
-              <SelectTrigger className="w-full sm:w-[150px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
-                <SelectValue placeholder="Assigned to Me" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md">
-                <SelectItem value="all" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
-                <SelectItem value="assigned" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Assigned to Me</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Type Filter */}
           <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] w-full sm:w-auto">
             <Filter className="w-4 h-4 text-[#44291B]/50" />
             <Select
@@ -223,10 +199,10 @@ export default function PropertiesList({
               onValueChange={(val) => onFilterChange(val === "all" ? "" : val)}
             >
               <SelectTrigger className="w-full sm:w-[140px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
-                <SelectValue placeholder="All Types" />
+                <SelectValue placeholder="All Properties" />
               </SelectTrigger>
               <SelectContent className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md">
-                <SelectItem value="all" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Types</SelectItem>
+                <SelectItem value="all" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
                 <SelectItem value="dormitory" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Dorms</SelectItem>
                 <SelectItem value="renting_space" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Rental Spaces</SelectItem>
               </SelectContent>
@@ -269,12 +245,7 @@ export default function PropertiesList({
         </div>
       </div>
 
-      {tableLoading ? (
-        <div className="flex h-[300px] flex-col items-center justify-center rounded-2xl border border-[#e8e2d6] bg-[#FDFFF4] shadow-sm mt-4 gap-3">
-          <Loader2 className="w-8 h-8 text-[#264384] animate-spin" />
-          <p className="text-sm font-medium text-[#44291B]/70">Updating properties list...</p>
-        </div>
-      ) : filtered?.length === 0 ? (
+      {filtered?.length === 0 ? (
         <div className="flex h-[200px] items-center justify-center rounded-md border border-dashed mt-4">
           <p className="text-muted-foreground">No properties yet. Click Add Property to get started.</p>
         </div>

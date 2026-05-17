@@ -70,6 +70,19 @@
       transform: translateX(100%) translateY(-20px) scale(0.9);
     }
   }
+
+  --animate-collapsible-down: collapsibleDown 0.3s ease-out;
+  --animate-collapsible-up: collapsibleUp 0.3s ease-out;
+
+  @keyframes collapsibleDown {
+    from { height: 0; }
+    to { height: var(--radix-collapsible-content-height); }
+  }
+
+  @keyframes collapsibleUp {
+    from { height: var(--radix-collapsible-content-height); }
+    to { height: 0; }
+  }
 }
 
 :root {

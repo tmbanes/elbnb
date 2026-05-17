@@ -14,5 +14,5 @@ export default function HousingContent({ properties }: { properties: Property[] 
     );
   }
 
-  return <HousingDetail property={property} onBack={() => {}} hideBack />;
+  return <HousingDetail property={property} assignedAdmins={(property as any).assignedAdmins} onBack={() => {}} hideBack />;
 }
