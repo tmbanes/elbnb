@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { useRealtimeSync } from "@/lib/realtime-sync";
-import { Building2, Home, Users, KeyRound, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, Filter, MoreHorizontal, Download, ChevronLeft, ChevronRight, Eye, Bell } from "lucide-react";
+import { Building2, Home, Users, KeyRound, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, Filter, MoreHorizontal, Download, ChevronLeft, ChevronRight, Eye, Bell, X } from "lucide-react";
 import { Archivo, Archivo_Black } from "next/font/google";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -34,7 +34,11 @@ type PropertyOcc = {
 type AppRow = {
   application_id: string; application_status: string; date_submitted: string;
   preferred_unit_type: string | null;
-  users: { first_name: string; last_name: string; email?: string } | { first_name: string; last_name: string; email?: string }[] | null;
+  duration_of_stay: number | null;
+  check_in: string | null;
+  check_out: string | null;
+  number_of_companions: number | null;
+  users: { first_name: string; last_name: string; email?: string; sex?: string } | { first_name: string; last_name: string; email?: string; sex?: string }[] | null;
   accommodation: { name: string } | { name: string }[] | null;
 };
 type HousedStudent = {
@@ -137,7 +141,20 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
   const [studentSearch, setStudentSearch] = useState("");
   const [studentPage, setStudentPage] = useState(1);
 
+  const [expandedApplication, setExpandedApplication] = useState<string | null>(null);
+
   const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   const [notifications, setNotifications] = useState(initialNotifications);
   const router = useRouter();
 
@@ -280,7 +297,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
   ];
 
   return (
-    <div className="min-h-screen px-20 md:px-36 py-4 md:py-10 bg-[#F6F8D5] selection:bg-[#4A5628] selection:text-white">
+    <div className="min-h-screen px-4 md:px-10 py-4 md:py-10 bg-[#F6F8D5] selection:bg-[#4A5628] selection:text-white">
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* ── Header ── */}
@@ -294,7 +311,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           </div>
           <div className="flex gap-2 items-center">
             {/* Notifications Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={notificationRef}>
               <button
                 className={`relative text-slate-600 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-100 ${showNotifications ? 'bg-slate-100 text-[#5D6BDE]' : ''}`}
                 onClick={() => setShowNotifications(!showNotifications)}
@@ -608,7 +625,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-10 duration-500 delay-500">
 
           {/* Recent Applications Table */}
-          <Card className="lg:col-span-2 shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-4 rounded-2xl h-full lg:min-h-[26rem]">
+          <Card className="lg:col-span-2 shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-4 rounded-2xl">
             <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Recent Applications</h2>
             <div className="relative">
               <Search className="w-4 h-4 text-[#44291B]/40 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -620,15 +637,15 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                 className={`${archivo.className} w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#cfd6e4] text-sm bg-[#FDFFF4] text-[#44291B] placeholder:text-[#44291B]/40 focus:outline-none focus:ring-2 focus:ring-[#78A24C]/20 focus:border-[#78A24C] transition-all h-10`}
               />
             </div>
-            <div className="overflow-x-auto flex-1 min-h-0">
-              <table className="w-full text-left border-collapse">
+            <div>
+              <table className="w-full text-left border-collapse table-fixed">
                 <thead>
                   <tr className="border-b border-[#cfd6e4] bg-[#FDFFF4]">
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Applicant</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Property</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Type</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Date</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Status</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[25%]">Applicant</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[20%]">Property</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[15%]">Type</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[15%]">Date</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest text-right min-w-[140px] w-[25%]">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -637,26 +654,64 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                   ) : filteredRecentApplications.slice((appPage - 1) * APP_PER_PAGE, appPage * APP_PER_PAGE).map(a => {
                     const u = unwrap(a.users);
                     const acc = unwrap(a.accommodation);
+                    const isExpanded = expandedApplication === a.application_id;
                     return (
-                      <tr key={a.application_id} className="hover:bg-[#F6F8D5] transition-colors border-b border-[#cfd6e4]/60 last:border-b-0 group">
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#44291B] to-[#734A35] text-white flex items-center justify-center text-[10px] font-bold shrink-0">{initials(u?.first_name ?? "", u?.last_name ?? "")}</div>
-                            <div>
-                              <p className="text-sm font-bold text-[#44291B]">{u?.first_name ?? "—"} {u?.last_name ?? ""}</p>
-                              <p className="text-[10px] text-[#44291B]/50 font-medium">ID: {a.application_id.slice(0, 8)}</p>
+                      <React.Fragment key={a.application_id}>
+                        <tr 
+                          onClick={() => setExpandedApplication(isExpanded ? null : a.application_id)}
+                          className={`hover:bg-[#F6F8D5] transition-colors border-b border-[#cfd6e4]/60 last:border-b-0 group cursor-pointer ${isExpanded ? 'bg-[#F6F8D5]' : ''}`}
+                        >
+                          <td className="py-3 px-3 overflow-hidden">
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#44291B] to-[#734A35] text-white flex items-center justify-center text-[10px] font-bold shrink-0">{initials(u?.first_name ?? "", u?.last_name ?? "")}</div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-[#44291B] truncate">{u?.first_name ?? "—"} {u?.last_name ?? ""}</p>
+                                <p className="text-[10px] text-[#44291B]/50 font-medium truncate">ID: {a.application_id.slice(0, 8)}</p>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3 text-sm font-bold text-[#44291B]">{acc?.name ?? "—"}</td>
-                        <td className="py-3 px-3 text-sm font-bold text-[#44291B] capitalize">{a.preferred_unit_type?.replace(/_/g, " ") ?? "—"}</td>
-                        <td className="py-3 px-3 text-xs font-bold text-[#44291B]">{a.date_submitted ? new Date(a.date_submitted).toLocaleDateString() : "—"}</td>
-                        <td className="py-3 px-3">
-                          <span className={`${archivoBlack.className} px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${statusBadge(a.application_status)}`}>
-                            {a.application_status.replace(/_/g, " ")}
-                          </span>
-                        </td>
-                      </tr>
+                          </td>
+                          <td className="py-3 px-3 text-sm font-bold text-[#44291B] truncate">{acc?.name ?? "—"}</td>
+                          <td className="py-3 px-3 text-sm font-bold text-[#44291B] capitalize truncate">{a.preferred_unit_type?.replace(/_/g, " ") ?? "—"}</td>
+                          <td className="py-3 px-3 text-xs font-bold text-[#44291B] truncate">{a.date_submitted ? new Date(a.date_submitted).toLocaleDateString() : "—"}</td>
+                          <td className="py-3 px-3 text-right">
+                            <span className={`${archivoBlack.className} px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap ${statusBadge(a.application_status)}`}>
+                              {a.application_status.replace(/_/g, " ")}
+                            </span>
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="bg-[#F6F8D5]/50 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <td colSpan={5} className="py-4 px-6 border-b border-[#cfd6e4]/60">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 p-5 bg-white rounded-2xl border border-[#cfd6e4]/30 shadow-sm">
+                                <div className="sm:col-span-2">
+                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Email Contact</p>
+                                  <p className="text-sm font-bold text-[#44291B] break-all">{u?.email || "No email"}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Sex</p>
+                                  <p className="text-sm font-bold text-[#44291B] uppercase tracking-wider">{u?.sex || "—"}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Stay Duration</p>
+                                  <p className="text-sm font-bold text-[#44291B]">{a.duration_of_stay || 1} Semester(s)</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Check-in Date</p>
+                                  <p className="text-sm font-bold text-[#44291B]">{a.check_in ? new Date(a.check_in).toLocaleDateString() : 'Pending'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Companions</p>
+                                  <p className="text-sm font-bold text-[#44291B]">{a.number_of_companions || 0} Person(s)</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Submission Date</p>
+                                  <p className="text-sm font-bold text-[#264384]">{new Date(a.date_submitted).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
@@ -666,7 +721,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           </Card>
 
           {/* Student Management */}
-          <Card className="shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl h-full lg:min-h-[26rem]">
+          <Card className="shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl">
             <div className="flex items-center justify-between">
               <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Students</h2>
             </div>
@@ -718,8 +773,8 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
               const pagedList = currentList.slice((studentPage - 1) * STUDENT_PER_PAGE, studentPage * STUDENT_PER_PAGE);
 
               return (
-                <div className="flex flex-col flex-1 min-h-0">
-                  <div className="space-y-1.5 flex-1">
+                <div className="flex flex-col">
+                  <div className="space-y-1.5">
                     {studentTab === "housed" ? (
                       (pagedList as typeof housedStudents).map(s => {
                         const u = unwrap(s.users);

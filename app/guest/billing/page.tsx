@@ -31,10 +31,7 @@ export default async function GuestBillingPage() {
   return (
     <main className={`min-h-screen pt-10 pb-16 bg-[#F6F8D5] ${archivo.className}`} style={{ color: '#44291B' }}>
       <div className="max-w-7xl mx-auto px-4 md:px-8 space-y-8">
-        <div className="mb-2">
-          <h1 className={`${archivoBlack.className} pt-7 text-4xl md:text-5xl mb-1`}>Billing & Payments</h1>
-          <p className="text-sm md:text-md font-medium pt-1 pb-7 opacity-70">Manage your invoices and view your payment history.</p>
-        </div>
+
 
         <BillingClient
           userId={user.user_id}

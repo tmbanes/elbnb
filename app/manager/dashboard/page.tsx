@@ -39,12 +39,12 @@ export default async function DormitoryManagerDashboardPage() {
     const [unitsRes, waitlistRes, recentAppsRes] = await Promise.all([
       supabase.from('unit').select('*').eq('accommodation_id', accom.accommodation_id),
       supabase.from('accommodation_application')
-        .select('*, users!user_id(first_name, last_name, profile_picture_url)')
+        .select('*, user_id, users!user_id(user_id, first_name, last_name, profile_picture_url)')
         .eq('preferred_accommodation_id', accom.accommodation_id)
         .eq('application_status', 'approved')
         .order('date_submitted', { ascending: true }),
       supabase.from('accommodation_application')
-        .select('*, users!user_id(first_name, last_name, profile_picture_url)')
+        .select('*, user_id, users!user_id(user_id, first_name, last_name, profile_picture_url, email, sex)')
         .eq('preferred_accommodation_id', accom.accommodation_id)
         .order('date_submitted', { ascending: false })
         .limit(5)
@@ -68,7 +68,9 @@ export default async function DormitoryManagerDashboardPage() {
         .from('accommodation_assignment')
         .select(`
           *,
+          user_id,
           users:user_id (
+            user_id,
             first_name, 
             last_name, 
             profile_picture_url,

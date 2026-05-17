@@ -309,6 +309,19 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
 
   return (
     <>
+      <Button
+        variant="ghost"
+        onClick={() => router.push("/admin/dashboard")}
+        className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group w-fit"
+      >
+        <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+        <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+      </Button>
+      <div className="mb-8">
+        <h1 className="text-4xl md:text-5xl font-black text-[#44291B] tracking-tight">Billing Management</h1>
+        <p className="mt-1 mb-4 text-sm text-[#44291B] font-medium">Overview of all tenant invoices, payments, and revenue.</p>
+      </div>
+
       {/* SUMMARY */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:hidden">
         <div className="bg-[#5591AB] text-white p-6 rounded-2xl border border-[#4b839b] shadow-sm">

@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import {
-    Search, Bell, Building2, Users, FileText,
+    Bell, Building2, Users, FileText,
     Banknote, LogOut, UserPlus, ArrowLeftRight, AlertTriangle, BarChart2, CheckCircle2, ChevronRight,
     Filter, User, Plus, RotateCcw, Clock, Send, History
 } from "lucide-react";
@@ -130,7 +130,7 @@ export default function ManagerDashboardUI({
     const [allStudents] = useState(() => {
         return initialData.assignments.map((asg: any) => ({
             type: 'resident' as const,
-            id: asg.user_id,
+            id: asg.users?.user_id || asg.user_id,
             assignment_id: asg.assignment_id,
             name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
             student_number: 'Not provided',
@@ -145,7 +145,7 @@ export default function ManagerDashboardUI({
             const u = app.users || {};
             return {
                 type: 'waitlist' as const,
-                id: app.user_id,
+                id: u.user_id || app.user_id,
                 application_id: app.application_id,
                 name: `${u.first_name || ''} ${u.last_name || ''}`.trim(),
                 student_number: u.student?.student_number || u.student?.[0]?.student_number || 'N/A',
@@ -192,6 +192,7 @@ export default function ManagerDashboardUI({
 
     // --- Recent Applications ---
     const [recentApplications] = useState(initialData.recentApplications);
+    const [expandedApplication, setExpandedApplication] = useState<string | null>(null);
 
     // --- Move-out Alerts ---
     const [moveOutAlerts] = useState(initialData.moveOutAlerts);
@@ -222,13 +223,13 @@ export default function ManagerDashboardUI({
 
     // Delinquency filter + sort
     const filteredDelinquency = delinquencyList
-        .filter(d => {
+        .filter((d: any) => {
             if (delinquencyFilter === 'all') return true;
             if (delinquencyFilter === 'Pending') return d.status === 'Unpaid';
             if (delinquencyFilter === 'Overdue') return d.status === 'Overdue';
             return true;
         })
-        .sort((a, b) => delinquencySortDays ? b.days_overdue - a.days_overdue : a.name.localeCompare(b.name));
+        .sort((a: any, b: any) => delinquencySortDays ? b.days_overdue - a.days_overdue : a.name.localeCompare(b.name));
 
     // Activity log color + label
     const activityColor = (type: string) => {
@@ -483,11 +484,7 @@ export default function ManagerDashboardUI({
                                             </div>
 
                                             <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-                                                <div className="relative flex-1 xl:flex-none xl:w-[240px]">
-                                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                                                    <input type="text" placeholder="Search Name/ID..." value={tableSearch} onChange={(e) => setTableSearch(e.target.value)} className="w-full pl-11 pr-4 py-2.5 bg-[#F8F9FD] border border-slate-100 rounded-full text-[12px] outline-none focus:ring-2 focus:ring-[#5591AB]/10 font-medium placeholder:text-slate-400" />
-                                                </div>
-                                                <div className="flex flex-wrap items-center gap-2">
+                                                <div className="flex flex-wrap items-center gap-2 ml-auto">
                                                     <div className="flex items-center gap-2 bg-[#F8F9FD] px-3 py-1 rounded-full border border-slate-100">
                                                         <Select value={tableFilters.college} onValueChange={(v) => setTableFilters(prev => { return { ...prev, college: v }; })}>
                                                             <SelectTrigger className="h-7 border-none bg-transparent text-[11px] font-bold text-[#0B3A64] focus:ring-0 w-[90px] p-0 px-2"><SelectValue placeholder="College" /></SelectTrigger>
@@ -519,7 +516,6 @@ export default function ManagerDashboardUI({
                                                     )}
 
                                                     <button onClick={handleResetFilters} className="p-2 text-slate-400 hover:text-[#DE7A6A] transition-all hover:rotate-180 duration-500" title="Reset Filters"><RotateCcw className="w-4 h-4" /></button>
-                                                    <button className="flex items-center gap-2 px-5 py-2 bg-[#5591AB] text-white rounded-full text-[12px] font-bold hover:bg-[#467A91] hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm"><Search className="w-3.5 h-3.5" />Search</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -651,36 +647,70 @@ export default function ManagerDashboardUI({
                                                         // Ensure student_number is extracted correctly if nested
                                                         const studentNumber = app.student_number || u.student?.student_number || u.student?.[0]?.student_number || 'N/A';
                                                         const dateSubmitted = app.date_submitted || app.date || null;
+                                                        const isExpanded = expandedApplication === app.application_id;
 
                                                         return (
-                                                            <tr key={app.application_id} className="border-b border-slate-50 last:border-0 hover:bg-[#F9FBFD] transition-colors">
-                                                                <td className="py-4 px-6">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">{initials}</div>
-                                                                        <div>
-                                                                            <p className="text-[13px] font-black text-[#0B3A64] leading-none">{name}</p>
-                                                                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">{app.preferred_unit_type || dormName}</p>
+                                                            <React.Fragment key={app.application_id}>
+                                                                <tr 
+                                                                    onClick={() => setExpandedApplication(isExpanded ? null : app.application_id)}
+                                                                    className={`border-b border-slate-50 last:border-0 hover:bg-[#F9FBFD] transition-colors cursor-pointer ${isExpanded ? 'bg-[#F9FBFD]' : ''}`}
+                                                                >
+                                                                    <td className="py-4 px-6">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-8 h-8 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">{initials}</div>
+                                                                            <div>
+                                                                                <p className="text-[13px] font-black text-[#0B3A64] leading-none">{name}</p>
+                                                                                <p className="text-[10px] text-slate-400 font-medium mt-0.5">{app.preferred_unit_type || dormName}</p>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="py-4 px-4">
-                                                                    <span className="text-[11px] text-slate-400 font-bold">
-                                                                        {dateSubmitted ? new Date(dateSubmitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-4 px-6 text-right">
-                                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap ${statusColor}`}>
-                                                                        {statusLabel}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-4 px-6 text-right">
-                                                                    <Link href={`/manager/student-history/${app.user_id}`}>
-                                                                        <button className="text-slate-300 hover:text-[#5591AB] transition-colors">
-                                                                            <History className="w-4 h-4" />
-                                                                        </button>
-                                                                    </Link>
-                                                                </td>
-                                                            </tr>
+                                                                    </td>
+                                                                    <td className="py-4 px-4">
+                                                                        <span className="text-[11px] text-slate-400 font-bold">
+                                                                            {dateSubmitted ? new Date(dateSubmitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="py-4 px-6 text-right">
+                                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap ${statusColor}`}>
+                                                                            {statusLabel}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="py-4 px-6 text-right">
+                                                                        <Link href={`/manager/student-history/${u.user_id || app.user_id}`} onClick={(e) => e.stopPropagation()}>
+                                                                            <button className="text-slate-300 hover:text-[#5591AB] transition-colors">
+                                                                                <History className="w-4 h-4" />
+                                                                            </button>
+                                                                        </Link>
+                                                                    </td>
+                                                                </tr>
+                                                                {isExpanded && (
+                                                                    <tr className="bg-slate-50/50 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                                        <td colSpan={4} className="py-4 px-6 border-b border-slate-100">
+                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                                                                <div className="sm:col-span-2">
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Email Contact</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64] break-all">{u.email || "No email"}</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Sex</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64] uppercase tracking-wider">{u.sex || "—"}</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Stay Duration</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64]">{app.duration_of_stay || 1} Semester(s)</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Check-in Date</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64]">{app.check_in ? new Date(app.check_in).toLocaleDateString() : 'Pending'}</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Companions</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64]">{app.number_of_companions || 0} Person(s)</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                )}
+                                                            </React.Fragment>
                                                         );
                                                     }) : (
                                                         <tr>

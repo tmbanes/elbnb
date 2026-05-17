@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRealtimeSync } from "@/lib/realtime-sync";
 import { useRouter } from "next/navigation";
 import { updateResidentStatus } from "@/lib/actions/residents.actions";
+import { Button } from "@/components/ui/button";
 
 const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
@@ -153,6 +154,14 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
 
           {/* Header */}
           <div>
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/manager/dashboard")}
+              className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#FDFFF4] -ml-2 mb-2 transition-all group w-fit"
+            >
+              <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+            </Button>
             <h1 className={`${archivoBlack.className} pt-6 text-3xl md:text-5xl text-[#44291B] tracking-tight`}>
               Resident Management
             </h1>
@@ -175,12 +184,12 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
             </div>
 
             {accommodations.length > 1 && (
-              <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
+              <div className="flex items-center gap-2 border border-[#44291B]/15 rounded-xl bg-[#FDFFF4] px-3 py-2 shadow-sm">
                 <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
                 <select
                   value={accomFilter}
                   onChange={e => { setAccomFilter(e.target.value); setPage(1); }}
-                  className="text-sm bg-transparent outline-none text-[#44291B] font-medium cursor-pointer"
+                  className="text-sm bg-transparent outline-none text-[#44291B] font-semibold cursor-pointer"
                 >
                   <option value="all">All Properties</option>
                   {accommodations.map(a => (
@@ -190,12 +199,12 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
               </div>
             )}
 
-            <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
+            <div className="flex items-center gap-2 border border-[#44291B]/15 rounded-xl bg-[#FDFFF4] px-3 py-2 shadow-sm">
               <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
               <select
                 value={statusFilter}
                 onChange={e => { setStatusFilter(e.target.value as FilterStatus); setPage(1); }}
-                className="text-sm bg-transparent outline-none text-[#44291B] font-medium cursor-pointer"
+                className="text-sm bg-transparent outline-none text-[#44291B] font-semibold cursor-pointer"
               >
                 <option value="all">All Status</option>
                 <option value="awaiting">Awaiting Move-in</option>

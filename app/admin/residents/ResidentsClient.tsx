@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search, Filter, Building2, History, ArrowLeft, AlertCircle,
   CheckCircle2, Clock, ShieldAlert, CalendarArrowDown, CalendarArrowUp,
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,6 +74,7 @@ export default function ResidentsClient({
   initialError: string | null;
 }) {
   const residents = initialResidents;
+  const router = useRouter();
   const [error, setError] = useState<string | null>(initialError);
   const [selectedId, setSelectedId] = useState<string | null>(initialResidents[0]?.assignment_id || null);
 
@@ -163,6 +166,14 @@ export default function ResidentsClient({
         selectedId ? "hidden lg:block" : "block"
       )}>
         <div className="p-4 md:p-6 space-y-6">
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/admin/dashboard")}
+            className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group w-fit"
+          >
+            <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+          </Button>
           <div>
             <h1 className="text-4xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
               Resident Management
@@ -377,9 +388,7 @@ function ResidentDetailPanel({
   return (
     <div className="flex flex-col h-full">
       <div className="lg:hidden p-4 border-b border-[#e8e2d6]">
-        <button onClick={onBack} className="flex items-center gap-2 text-[#264384] font-bold text-sm">
-          <ArrowLeft className="w-4 h-4" /> Back to Residents
-        </button>
+        {/* Hiding individual back button as requested */}
       </div>
 
       <div className="p-6 space-y-4 flex-1">
