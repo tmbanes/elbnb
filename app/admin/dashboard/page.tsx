@@ -22,7 +22,7 @@ export default async function AdminDashboardPage() {
 
   let accommodations: any[] = [];
   let units: any[] = [];
-  let activeAssignments: any[] = [];
+  let studentsHousedCount = 0;
   let pendingApplications: any[] = [];
   let recentApplications: any[] = [];
   let allBilling: any[] = [];
@@ -39,12 +39,12 @@ export default async function AdminDashboardPage() {
     profile = profileRes;
     notifications = notificationsRes.data || [];
   } else {
-    let accommodationsQuery: any = supabase.from("accommodation").select("accommodation_id, name, location, accommodation_type, accommodation_status, total_capacity");
-    let unitsQuery: any = supabase.from("unit").select("unit_id, accommodation_id, unit_number, unit_type, max_occupancy, current_occupancy, unit_status, rental_fee");
-    let activeAssignmentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status");
+    let accommodationsQuery: any = supabase.from("accommodation").select("accommodation_id, name, accommodation_type, accommodation_status");
+    let unitsQuery: any = supabase.from("unit").select("accommodation_id, max_occupancy, current_occupancy, unit_status");
+    let activeAssignmentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id", { count: 'exact', head: true });
     let pendingApplicationsQuery: any = supabase.from("accommodation_application").select("application_id, user_id, application_status, date_submitted, preferred_accommodation_id, preferred_unit_type, users(first_name, last_name, email), accommodation(name)");
     let recentApplicationsQuery: any = supabase.from("accommodation_application").select("application_id, user_id, application_status, date_submitted, preferred_accommodation_id, preferred_unit_type, users(first_name, last_name, email), accommodation(name)");
-    let allBillingQuery: any = supabase.from("billing").select("billing_id, amount, status, due_date, created_at, assignment_id");
+    let allBillingQuery: any = supabase.from("billing").select("amount, status, created_at");
     let housedStudentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status, users(first_name, last_name, email), unit(unit_number, accommodation(name))");
     let activityLogsQuery: any = supabase
       .from("activity_log")
@@ -58,7 +58,7 @@ export default async function AdminDashboardPage() {
       unitsQuery = unitsQuery.in("accommodation_id", managedAccommodationIds);
       
       activeAssignmentsQuery = activeAssignmentsQuery
-        .select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status, unit!inner(accommodation_id)")
+        .select("assignment_id, unit!inner(accommodation_id)", { count: 'exact', head: true })
         .eq("assignment_status", "active")
         .in("unit.accommodation_id", managedAccommodationIds);
 
@@ -70,7 +70,7 @@ export default async function AdminDashboardPage() {
         .in("preferred_accommodation_id", managedAccommodationIds);
 
       allBillingQuery = allBillingQuery
-        .select("billing_id, amount, status, due_date, created_at, assignment_id, accommodation_assignment!inner(unit!inner(accommodation_id))")
+        .select("amount, status, created_at, accommodation_assignment!inner(unit!inner(accommodation_id))")
         .in("accommodation_assignment.unit.accommodation_id", managedAccommodationIds);
 
       housedStudentsQuery = housedStudentsQuery
@@ -115,7 +115,8 @@ export default async function AdminDashboardPage() {
 
     accommodations = accommodationsRes.data || [];
     units = unitsRes.data || [];
-    activeAssignments = activeAssignmentsRes.data || [];
+    // Only capture count for students housed metric
+    studentsHousedCount = activeAssignmentsRes.count || 0;
     pendingApplications = pendingApplicationsRes.data || [];
     recentApplications = recentApplicationsRes.data || [];
     allBilling = allBillingRes.data || [];
@@ -131,7 +132,7 @@ export default async function AdminDashboardPage() {
   const totalUnits = activeUnits.length;
   const occupiedUnits = activeUnits.filter(u => u.current_occupancy > 0).length;
   const availableUnits = totalUnits - occupiedUnits;
-  const studentsHoused = activeAssignments?.length ?? 0;
+  const studentsHoused = studentsHousedCount;
   const waitingListCount = pendingApplications?.length ?? 0;
 
   // Revenue this month
