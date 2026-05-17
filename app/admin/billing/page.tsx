@@ -10,9 +10,11 @@ const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 export default async function AdminBillingPage() {
   const user = await requireRole(['housing_admin', 'admin']);
 
-  // Parallelize the data fetching and the maintenance task
-  const [_, billsRes, tenantsRes] = await Promise.all([
-    ensureInitialInvoicesForPendingPaymentApplications(),
+  // Trigger maintenance task in the background (fire and forget)
+  ensureInitialInvoicesForPendingPaymentApplications().catch(console.error);
+
+  // Parallelize the data fetching
+  const [billsRes, tenantsRes] = await Promise.all([
     getAllBillsForAdmin(user.role || "", user.user_id || undefined),
     getActiveTenants(user.role || undefined, user.user_id || undefined)
   ]);

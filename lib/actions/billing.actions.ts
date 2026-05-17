@@ -2,6 +2,7 @@
 
 import { updateAdminInvoiceDetails, approveReceipt, rejectReceipt, createBillingWithItems, updateAdminInvoiceWithItems, submitPayment } from "@/services/user-services";
 import { revalidatePath } from "next/cache";
+import { requireRole } from "@/lib/auth/session";
 import { BillingCreation } from "@/types/billing";
 import { BillingItemType, BillingStatus } from "@/types/billing/enums";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
@@ -45,11 +46,14 @@ export async function adminUpdateInvoiceAction(
   items?: { type: BillingItemType; amount: number }[],
   adminId?: string
 ) {
+  const user = await requireRole(['housing_admin', 'admin']);
+  const activeAdminId = adminId || user.user_id;
+
   let result;
   const hasItems = Array.isArray(items) && items.length > 0;
 
-  if (updates.status === BillingStatus.PAID && adminId) {
-    result = await approveReceipt("admin", billingId, adminId);
+  if (updates.status === BillingStatus.PAID && activeAdminId) {
+    result = await approveReceipt("admin", billingId, activeAdminId);
 
     const { status: _status, ...rest } = updates;
     if (Object.keys(rest).length > 0) {
@@ -77,7 +81,8 @@ export async function adminUpdateInvoiceAction(
 }
 
 export async function adminApproveReceiptAction(billingId: string, adminId: string) {
-  const result = await approveReceipt("admin", billingId, adminId);
+  const user = await requireRole(['housing_admin', 'admin']);
+  const result = await approveReceipt("admin", billingId, adminId || user.user_id);
   if (result?.error) throw new Error(toErrorMessage(result.error));
   revalidatePath("/admin/billing");
   revalidatePath("/admin/dashboard/billing");
@@ -88,7 +93,8 @@ export async function adminApproveReceiptAction(billingId: string, adminId: stri
 }
 
 export async function adminRejectReceiptAction(billingId: string, adminId: string) {
-  const result = await rejectReceipt("admin", billingId, adminId);
+  const user = await requireRole(['housing_admin', 'admin']);
+  const result = await rejectReceipt("admin", billingId, adminId || user.user_id);
   if (result?.error) throw new Error(toErrorMessage(result.error));
   revalidatePath("/admin/billing");
   revalidatePath("/admin/dashboard/billing");
@@ -101,6 +107,8 @@ export async function adminCreateBillAction(
   billingData: BillingCreation,
   items: { type: BillingItemType; amount: number }[]
 ) {
+  await requireRole(['housing_admin', 'admin']);
+
   // First, check if an invoice already exists for this assignment
   if (billingData.assignment_id) {
     const { data: existing, error: fetchError } = await supabaseAdmin
