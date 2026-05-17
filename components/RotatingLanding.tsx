@@ -26,7 +26,7 @@ const FACES = [
     role: "Managers",
     icon: <Building2 className="w-10 h-10" />,
     title: "Streamline Operations",
-    desc: "Manage resident lists, track maintenance, and oversee multiple dormitory buildings from one dashboard.",
+    desc: "Manage resident lists, track maintenance, and oversee dormitory buildings from one dashboard.",
     accent: "#D48806",
     bg: "bg-[#FFF8E1]",
   },
@@ -41,10 +41,10 @@ const FACES = [
 ];
 
 const FEATURES = [
-  { icon: "mdi:map-marker", title: "Proximity to Campus", desc: "Filter by distance from your college or the nearest jeepney route." },
-  { icon: "mdi:shield-check", title: "Verified & Secure", desc: "We vet our listings to ensure your safety and peace of mind." },
-  { icon: "mdi:wifi", title: "Study-Ready Spaces", desc: "Dedicated tags for high-speed Wi-Fi, quiet zones, and well-lit desks." },
-  { icon: "mdi:handshake", title: "Community First", desc: "Connect with potential roommates who share your vibe and your degree program." }
+  { icon: "mdi:home-city", title: "Dorms & Rentals", desc: "Compare dorms with curfew and gender rules, or choose flexible renting spaces." },
+  { icon: "mdi:bed-king-outline", title: "Real-Time Occupancy", desc: "View open bedspaces and vacant studio slots instantly before you apply." },
+  { icon: "mdi:account-cog", title: "Seamless Applications", desc: "Apply, upload documents, and track your move-in status from your dashboard." },
+  { icon: "mdi:shield-account", title: "Tailored Dashboards", desc: "Distinct, customized portals for students, building managers, and housing admins." }
 ];
 
 const CATEGORIES = [
@@ -201,9 +201,20 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
 
         <nav className="hidden md:flex items-center gap-10">
           {[['#features', 'Features'], ['#roles', 'For Who?'], ['#get-started', 'Get Started']].map(([href, label]) => (
-            <Link key={href} href={href} className="text-[#3E2723]/60 hover:text-[#7EB647] transition-colors font-semibold uppercase tracking-widest text-[11px]">
+            <a
+              key={href}
+              href={href}
+              onClick={(e) => {
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                  target.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
+              className="text-[#3E2723]/60 hover:text-[#7EB647] transition-colors font-semibold uppercase tracking-widest text-[11px] cursor-pointer"
+            >
               {label}
-            </Link>
+            </a>
           ))}
         </nav>
 
@@ -218,7 +229,8 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
       <main>
         {/* ─── HERO SECTION ─── */}
         <section
-          className="relative min-h-screen flex flex-col items-center justify-center px-6 text-center pt-24 pb-0 overflow-hidden bg-[#87CEEB]"
+          className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 text-center pt-24 pb-0 overflow-hidden bg-[#87CEEB]"
+
           onMouseMove={handleHeroMouseMove}
           onMouseLeave={handleHeroMouseLeave}
         >
@@ -305,7 +317,7 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
         </section>
 
         {/* ─── CONTENT SECTION (TEXTURED GREEN WITH HERO TEXT & BUTTONS) ─── */}
-        <div className="relative text-white pt-32 -mt-[120px] pb-10">
+        <div className="relative z-20 text-white pt-32 -mt-[120px] pb-10">
 
           {/* Global Layer 1: Textured green contiguous background */}
           <div className="absolute inset-0 z-0 bg-[#7EB647]" style={{ filter: 'url(#grain)' }} />
@@ -565,7 +577,7 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
 
       {/* ─── GLOBAL STYLES ─── */}
       <style jsx global>{`
-        body { background-color: #F4F5E1; scroll-behavior: smooth; }
+        html, body { background-color: #F4F5E1; scroll-behavior: smooth !important; }
         
         @keyframes rippleExpand {
           0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }

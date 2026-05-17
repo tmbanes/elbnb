@@ -212,8 +212,7 @@ export default function PropertyGallery({ accommodationId }: PropertyGalleryProp
               />
 
               {/* Overlay */}
-              {/* Overlay removed as per user request */}
-
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
               {/* Primary Badge */}
               {image.is_primary && (
