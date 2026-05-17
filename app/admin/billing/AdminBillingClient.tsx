@@ -23,7 +23,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
-  Receipt
+  Receipt,
+  Building
 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -410,17 +411,17 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       {/* DATA TABLE */}
       <div className="bg-[#FDFFF4] border text-sm  border-[#cfd6e4] rounded-2xl shadow-sm overflow-hidden print:hidden">
         <div className="overflow-x-auto text-[#44291B]">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-[#FDFFF4] border-b border-[#cfd6e4]">
                 <th className="px-6 py-4 font-semibold w-12 pt-[18px]">
                   <input type="checkbox" checked={selectedBillIds.length === filteredBills.length && filteredBills.length > 0} onChange={handleSelectAll} className="rounded border-slate-300" />
                 </th>
-                <th className="px-6 py-4 font-semibold">Tenant / Property</th>
-                <th className="px-6 py-4 font-semibold">Invoice #</th>
-                <th className="px-6 py-4 font-semibold">Amount / Date</th>
-                <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                <th className="px-6 py-4 font-semibold w-[35%]">Tenant / Property</th>
+                <th className="px-6 py-4 font-semibold w-[15%]">Invoice #</th>
+                <th className="px-6 py-4 font-semibold w-[20%]">Amount / Date</th>
+                <th className="px-6 py-4 font-semibold w-[15%]">Status</th>
+                <th className="px-6 py-4 font-semibold text-right w-[15%]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -438,7 +439,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                     <p className="font-bold text-[#44291B] flex items-center gap-2">
                       {bill.accommodation_assignment?.users ? `${bill.accommodation_assignment.users.first_name} ${bill.accommodation_assignment.users.last_name}` : "Unknown Tenant"}
                     </p>
-                    <p className="text-xs text-[#44291B]/70">Prop: {bill.accommodation_assignment?.accommodation_application?.preferred_accommodation_id || "N/A"}</p>
+                    <p className="text-xs text-[#44291B]/70 flex items-center gap-1">
+                      <Building className="w-3.5 h-3.5 text-[#44291B]/50" />
+                      {bill.accommodation_assignment?.unit?.accommodation?.name || bill.accommodation_assignment?.accommodation_application?.accommodation?.name || "N/A"}
+                    </p>
                   </td>
                   <td className="px-6 py-4 font-mono text-xs">
                     {bill.billing_id.split("-")[0]}

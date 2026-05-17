@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
+import { User } from "@/types/user.types";
 
 export const HousingService = {
   // --- Dorms ---
@@ -237,7 +238,7 @@ export const HousingService = {
         .select("manager_id")
         .in("accommodation_id", managedAccommodationIds);
 
-      const validManagerIds = (accoms || []).map(a => a.manager_id).filter(id => id !== null);
+      const validManagerIds = (accoms || []).map((a: any) => a.manager_id).filter((id: any) => id !== null);
 
       if (validManagerIds.length === 0) {
         return [];
