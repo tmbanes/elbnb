@@ -58,9 +58,7 @@ export default function ApplicationList({
     const supabase = getSupabaseBrowserClient();
 
     // Sync applications in real-time
-    useRealtimeSync('accommodation_application', undefined, '*', () => {
-        fetchApplications();
-    });
+    useRealtimeSync('accommodation_application', undefined, '*'); // [CHANGES] realtimesync does the fetching
 
     // Data State
     const [applications, setApplications] = useState<Application[]>(initialData.applications);
@@ -198,6 +196,24 @@ export default function ApplicationList({
         } finally {
             setLoading(false);
         }
+
+        // Flatten data if Supabase returns arrays for single joins
+        const mappedData = (data as any[])?.map((app) => {
+            const user = Array.isArray(app.users) ? app.users[0] : app.users;
+            if (user && user.student && Array.isArray(user.student)) {
+                user.student = user.student[0];
+            }
+
+            return {
+                ...app,
+                users: user,
+                accommodation: Array.isArray(app.accommodation) ? app.accommodation[0] : app.accommodation,
+                unit: Array.isArray(app.unit) ? app.unit[0] : app.unit,
+            };
+        });
+
+        setApplications(mappedData ?? []);
+        setLoading(false);
     }
 
     // Derived State for Pagination - Client-side search for better UX (Name, Student ID, App ID)
