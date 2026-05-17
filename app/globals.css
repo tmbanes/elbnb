@@ -70,6 +70,19 @@
       transform: translateX(100%) translateY(-20px) scale(0.9);
     }
   }
+
+  --animate-collapsible-down: collapsibleDown 0.3s ease-out;
+  --animate-collapsible-up: collapsibleUp 0.3s ease-out;
+
+  @keyframes collapsibleDown {
+    from { height: 0; }
+    to { height: var(--radix-collapsible-content-height); }
+  }
+
+  @keyframes collapsibleUp {
+    from { height: var(--radix-collapsible-content-height); }
+    to { height: 0; }
+  }
 }
 
 :root {
@@ -198,22 +211,7 @@
 }
 
 
-/* Global Page Transitions */
-@keyframes pageSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-main>*:not(.page-loader) {
-  animation: pageSlideIn 0.5s ease-out forwards;
-}
 
 /* 3D Utilities */
 .perspective-2000 {

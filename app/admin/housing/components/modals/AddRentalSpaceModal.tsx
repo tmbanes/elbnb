@@ -37,6 +37,7 @@ interface RentalForm {
   maximum_stay_days: string;
   security_deposit_required: boolean;
   manager_id: string;
+  accommodation_status: string;
 }
 
 interface Props {
@@ -44,6 +45,8 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   existingRental?: any | null;
+  managers?: Manager[];
+  assignedManagerIds?: Set<string>;
 }
 
 const EMPTY: RentalForm = {
@@ -56,6 +59,7 @@ const EMPTY: RentalForm = {
   maximum_stay_days: "",
   security_deposit_required: false,
   manager_id: "",
+  accommodation_status: "active",
 };
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -64,11 +68,13 @@ export default function AddRentalSpaceModal({
   onClose,
   onSuccess,
   existingRental,
+  managers: managersProp,
+  assignedManagerIds,
 }: Props) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<RentalForm>(EMPTY);
   const [units, setUnits] = useState<UnitFormData[]>([]);
-  const [managers, setManagers] = useState<Manager[]>([]);
+  const [managers, setManagers] = useState<Manager[]>(managersProp || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -80,11 +86,17 @@ export default function AddRentalSpaceModal({
   // Fetch managers
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/housing/managers")
+    if (managersProp && managersProp.length > 0) {
+      setManagers(managersProp);
+      return;
+    }
+    fetch("/api/housing/managers?all=true")
       .then((r) => r.json())
-      .then(setManagers)
-      .catch(() => { });
-  }, [isOpen]);
+      .then((data) => {
+        setManagers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setManagers([]));
+  }, [isOpen, managersProp]);
 
   // Pre-fill / reset
   useEffect(() => {
@@ -107,6 +119,7 @@ export default function AddRentalSpaceModal({
         security_deposit_required:
           existingRental.renting_space?.security_deposit_required ?? false,
         manager_id: existingRental.manager_id ?? "",
+        accommodation_status: existingRental.accommodation_status ?? "active",
       });
     } else {
       setForm(EMPTY);
@@ -146,8 +159,8 @@ export default function AddRentalSpaceModal({
       return (
         form.name.trim() !== "" &&
         form.location.trim() !== "" &&
-        form.property_type.trim() !== "" &&
-        !!form.manager_id
+        form.property_type.trim() !== ""
+        // manager_id is optional when editing
       );
     }
     if (step === 1) {
@@ -190,20 +203,31 @@ export default function AddRentalSpaceModal({
     setError(null);
 
     try {
-      const editableUnits = isEditing ? existingUnits : units;
-      const unitCapacitySum = editableUnits.reduce((sum: number, unit: any) => {
-        const capacity = Number(unit.max_occupancy);
-        const count = Number(unit.number_of_units || 1);
-        return Number.isFinite(capacity) && capacity > 0 ? sum + (capacity * count) : sum;
-      }, 0);
-      const computedTotalCapacity = unitCapacitySum;
+      let computedTotalCapacity: number;
+      if (isEditing) {
+        const loadedUnits: any[] = existingRental?.units ?? [];
+        if (loadedUnits.length > 0) {
+          computedTotalCapacity = loadedUnits.reduce(
+            (sum: number, u: any) => sum + (Number(u.max_occupancy) || 0), 0
+          );
+        } else {
+          computedTotalCapacity = Number(existingRental?.total_capacity ?? 0);
+        }
+      } else {
+        computedTotalCapacity = units.reduce((sum: number, unit: any) => {
+          const capacity = Number(unit.max_occupancy);
+          const count = Number(unit.number_of_units || 1);
+          return Number.isFinite(capacity) && capacity > 0 ? sum + (capacity * count) : sum;
+        }, 0);
+      }
 
       const payload = {
         accommodationFields: {
           name: form.name,
           location: form.location,
-          manager_id: form.manager_id,
+          manager_id: form.manager_id === "none" ? null : form.manager_id,
           total_capacity: computedTotalCapacity,
+          accommodation_status: form.accommodation_status,
         },
         rentingFields: {
           property_type: form.property_type,
@@ -442,18 +466,36 @@ export default function AddRentalSpaceModal({
                   <SelectValue placeholder="Select a manager" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">— No Manager —</SelectItem>
                   {managers.map((m) => {
-                    const isAssignedElsewhere = (m.accommodation?.length ?? 0) > 0 && m.users.user_id !== existingRental?.manager_id;
+                    const isAssigned = assignedManagerIds?.has(m.users.user_id) ?? false;
+                    const isCurrentManager = m.users.user_id === existingRental?.manager_id;
+                    const shouldDisable = isAssigned && !isCurrentManager;
                     return (
-                      <SelectItem 
-                        key={m.employee_id} 
+                      <SelectItem
+                        key={m.employee_id}
                         value={m.users.user_id}
-                        disabled={isAssignedElsewhere}
+                        disabled={shouldDisable}
                       >
-                        {m.users.first_name} {m.users.last_name}
+                        {m.users.first_name} {m.users.last_name}{shouldDisable ? " (assigned)" : ""}
                       </SelectItem>
                     );
                   })}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <Label className="font-semibold">Status</Label>
+              <Select
+                value={form.accommodation_status}
+                onValueChange={(val) => handleChange("accommodation_status", val)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
@@ -667,15 +709,18 @@ export default function AddRentalSpaceModal({
                     <SelectValue placeholder="Select a manager" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">— No Manager —</SelectItem>
                     {managers.map((m) => {
-                      const isAssignedElsewhere = (m.accommodation?.length ?? 0) > 0 && m.users.user_id !== existingRental?.manager_id;
+                      const isAssigned = assignedManagerIds?.has(m.users.user_id) ?? false;
+                      const isCurrentManager = m.users.user_id === existingRental?.manager_id;
+                      const shouldDisable = isAssigned && !isCurrentManager;
                       return (
-                        <SelectItem 
-                          key={m.employee_id} 
+                        <SelectItem
+                          key={m.employee_id}
                           value={m.users.user_id}
-                          disabled={isAssignedElsewhere}
+                          disabled={shouldDisable}
                         >
-                          {m.users.first_name} {m.users.last_name}
+                          {m.users.first_name} {m.users.last_name}{shouldDisable ? " (assigned)" : ""}
                         </SelectItem>
                       );
                     })}

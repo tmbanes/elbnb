@@ -19,7 +19,7 @@ function mapInvoiceKindToBillingType(kind: ManualInvoiceItem["kind"]) {
 
 export async function getSingleApplicationService(user: User, id: string) {
   const supabase = await createSupabaseServerClient();
-  
+
   if (user.role === 'student') {
     throw new Error("Students cannot fetch single applications this way yet.");
   }
@@ -47,7 +47,7 @@ export async function getSingleApplicationService(user: User, id: string) {
       .select("accommodation_id")
       .eq("manager_id", user.user_id)
       .single();
-    
+
     if (!managerData || managerData.accommodation_id !== data.preferred_accommodation_id) {
       throw new Error("Unauthorized to view this application.");
     }
@@ -98,7 +98,7 @@ export async function getApplicationsService(user: User) {
   if (user.role === 'student') {
     // Actually the student route uses CreateApplicationService.getApplicationsByUser.
     // We can call it from the route directly. 
-    return []; 
+    return [];
   }
 
   if (user.role === 'dormitory_manager' || user.role === 'housing_admin' || user.role === 'admin') {
@@ -174,7 +174,7 @@ export async function getApplicationsService(user: User) {
 
       if (appError) throw new Error(appError.message);
 
-      return { 
+      return {
         applications: (applications ?? []).map((app: any) => {
           const user = Array.isArray(app.users) ? app.users[0] : app.users;
           if (user && user.student && Array.isArray(user.student)) {
@@ -184,12 +184,206 @@ export async function getApplicationsService(user: User) {
             ...app,
             users: user
           };
-        }) 
+        })
       };
     }
   }
 
   throw new Error("Unauthorized role");
+}
+
+export async function getAdminApplicationsService(user: User, filters: {
+  id?: string | null;
+  status?: string;
+  accommodation?: string;
+  period?: string;
+}) {
+  const supabase = await createSupabaseServerClient();
+  const { id, status = "all", accommodation = "all", period = "all" } = filters;
+
+  // 1. Fetch the accommodations this specific admin manages
+  let managedAccommodationIds: string[] = [];
+  let authorizedAccommodations: any[] = [];
+
+  const { data: adminData } = await supabase
+    .from("housing_admin")
+    .select("accommodation_ids")
+    .eq("user_id", user.user_id)
+    .maybeSingle();
+
+  if (user.role === 'admin') {
+    // Super admins see everything
+    const { data: allAccoms } = await supabase.from("accommodation").select("accommodation_id, name, accommodation_type");
+    authorizedAccommodations = allAccoms || [];
+    managedAccommodationIds = authorizedAccommodations.map(a => a.accommodation_id);
+  } else if (adminData?.accommodation_ids && adminData.accommodation_ids.length > 0) {
+    // Housing admins are restricted to their assigned IDs
+    managedAccommodationIds = adminData.accommodation_ids;
+    const { data: accoms } = await supabase
+      .from("accommodation")
+      .select("accommodation_id, name, accommodation_type")
+      .in("accommodation_id", managedAccommodationIds);
+    authorizedAccommodations = accoms || [];
+  }
+
+  // --- CASE A: Fetch just ONE single application ---
+  if (id) {
+    const { data, error } = await supabaseAdmin
+      .from("accommodation_application")
+      .select(`
+        *,
+        users:user_id (first_name, last_name, email),
+        accommodation:preferred_accommodation_id (accommodation_id, name, location),
+        unit:unit_id (unit_number)
+      `)
+      .eq("application_id", id)
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    // SECURITY GUARD: Ensure this specific application belongs to an accommodation this admin manages
+    if (!managedAccommodationIds.includes(data.preferred_accommodation_id)) {
+      throw new Error("Forbidden: You do not manage this accommodation.");
+    }
+
+    // Fetch available units for the dropdown logic
+    const { data: unitList } = await supabase
+      .from("unit")
+      .select("unit_id, unit_number, unit_type")
+      .eq("accommodation_id", data.preferred_accommodation_id);
+
+    const { data: userAssignments } = await supabaseAdmin
+      .from("accommodation_assignment")
+      .select("assignment_id, assignment_status, application_id")
+      .eq("user_id", data.user_id);
+
+    const assignment = (userAssignments ?? []).find(
+      (a: any) => String(a.application_id) === String(id)
+    );
+
+    let invoiceDraft: any = null;
+    if (assignment?.assignment_id) {
+      const { data: allBillings } = await supabaseAdmin
+        .from("billing")
+        .select(`
+          billing_id,
+          amount,
+          due_date,
+          billing_period_date,
+          status,
+          internal_notes,
+          assignment_id,
+          created_at,
+          billing_item (
+            type,
+            amount
+          )
+        `);
+
+      const latestBilling = (allBillings ?? [])
+        .filter((b: any) => String(b.assignment_id) === String(assignment.assignment_id))
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
+      invoiceDraft = latestBilling ?? null;
+    }
+
+    // Format response exactly how frontend needs it
+    const userObj = Array.isArray(data.users) ? data.users[0] : data.users;
+    return {
+      ...data,
+      users: userObj,
+      accommodation: Array.isArray(data.accommodation) ? data.accommodation[0] : data.accommodation,
+      unit: Array.isArray(data.unit) ? data.unit[0] : data.unit,
+      availableUnits: unitList || [],
+      assignment: assignment ?? null,
+      invoiceDraft,
+      accommodations: authorizedAccommodations,
+    };
+  }
+
+  // --- CASE B: Fetch ALL applications handled by this admin ---
+  if (managedAccommodationIds.length === 0) {
+    return { applications: [], accommodations: [] };
+  }
+
+  let query = supabase
+    .from("accommodation_application")
+    .select(`
+      application_id,
+      application_status,
+      date_submitted,
+      user_id,
+      unit_id,
+      preferred_unit_type,
+      preferred_accommodation_id,
+      users (
+        user_id,
+        first_name,
+        last_name,
+        student:student (
+          student_num
+        )
+      ),
+      accommodation:preferred_accommodation_id (
+        name
+      ),
+      unit:unit_id (
+        unit_id
+      )
+    `);
+
+  // Scope down based on the accommodation filter
+  if (accommodation !== "all") {
+    if (managedAccommodationIds.includes(accommodation)) {
+      query = query.eq("preferred_accommodation_id", accommodation);
+    } else {
+      throw new Error("Forbidden: You do not manage this accommodation.");
+    }
+  } else {
+    query = query.in("preferred_accommodation_id", managedAccommodationIds);
+  }
+
+  // Status Filter
+  if (status !== "all") {
+    query = query.eq("application_status", status);
+  }
+
+  // Period Filter
+  if (period !== "all") {
+    const now = new Date();
+    if (period === "semestral") {
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(now.getMonth() - 6);
+      query = query.gte("date_submitted", sixMonthsAgo.toISOString());
+    } else if (period === "annual") {
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(now.getFullYear() - 1);
+      query = query.gte("date_submitted", oneYearAgo.toISOString());
+    }
+  }
+
+  const { data: applications, error: appError } = await query.order("date_submitted", { ascending: false });
+
+  if (appError) throw new Error(appError.message);
+
+  // Map/Flatten the list dataset cleanly on the server-side
+  const mappedApplications = (applications as any[])?.map((app) => {
+    const userObj = Array.isArray(app.users) ? app.users[0] : app.users;
+    if (userObj && userObj.student && Array.isArray(userObj.student)) {
+      userObj.student = userObj.student[0];
+    }
+    return {
+      ...app,
+      users: userObj,
+      accommodation: Array.isArray(app.accommodation) ? app.accommodation[0] : app.accommodation,
+      unit: Array.isArray(app.unit) ? app.unit[0] : app.unit,
+    };
+  });
+
+  return {
+    applications: mappedApplications ?? [],
+    accommodations: authorizedAccommodations
+  };
 }
 
 export async function processApplicationService(user: User, payload: any) {
@@ -343,7 +537,7 @@ export async function processApplicationService(user: User, payload: any) {
         .eq("application_id", application_id)
         .in("application_status", ["pending_admin", "pending_payment"])
         .single();
-      
+
       if (fetchError || !application) throw new Error("Application not found or not in an approvable state.");
 
       const { data: unit, error: unitError } = await supabase.from("unit").select("unit_id, max_occupancy, current_occupancy, unit_status, rental_fee").eq("unit_id", unit_id!).single();
@@ -454,12 +648,12 @@ export async function createInvoiceService(user: User, payload: any) {
 
   // Create new invoice
   const { data: createdBilling, error: createBillingError } = await supabaseAdmin.from("billing").insert({
-    assignment_id: assignmentId, 
-    amount: totalAmount, 
-    billing_period_date: periodDate.toISOString(), 
-    due_date: dueDate.toISOString(), 
-    status: "unpaid", 
-    payment_method: "cash", 
+    assignment_id: assignmentId,
+    amount: totalAmount,
+    billing_period_date: periodDate.toISOString(),
+    due_date: dueDate.toISOString(),
+    status: "unpaid",
+    payment_method: "cash",
     internal_notes: note || "",
   }).select("billing_id").single();
 
@@ -467,8 +661,8 @@ export async function createInvoiceService(user: User, payload: any) {
 
   const { error: insertItemsError } = await supabaseAdmin.from("billing_item").insert(
     normalizedItems.map((item: any) => ({
-      billing_id: createdBilling.billing_id, 
-      type: mapInvoiceKindToBillingType(item.kind), 
+      billing_id: createdBilling.billing_id,
+      type: mapInvoiceKindToBillingType(item.kind),
       amount: item.amount,
     }))
   );

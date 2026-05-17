@@ -141,32 +141,37 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
     switch (status) {
       case "pending_dorm_manager":
         return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap bg-amber-50 text-amber-700 border-amber-100 animate-pulse">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap bg-[#EEF2FF] text-[#4F46E5]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4F46E5]" />
             Pending Review
           </span>
         );
       case "pending_admin":
       case "pending_payment":
         return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap bg-sky-50 text-sky-700 border-sky-100">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap bg-[#EEF2FF] text-[#4F46E5]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4F46E5]" />
             Pending Admin
           </span>
         );
       case "rejected":
         return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap bg-rose-50 text-rose-700 border-rose-100">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap bg-[#FEF2F2] text-[#B91C1C]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#B91C1C]" />
             Rejected
           </span>
         );
       case "approved":
         return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap bg-emerald-50 text-emerald-700 border-emerald-100">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap bg-[#E7FAD3] text-[#78A24C]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#78A24C]" />
             Approved
           </span>
         );
       default:
         return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap bg-gray-50 text-gray-700 border-gray-100">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap bg-gray-100 text-gray-600">
+            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
             {status.replace(/_/g, ' ')}
           </span>
         );
@@ -223,7 +228,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
       {/* LEFT SIDE (LIST) */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out",
-        selectedAppId ? "hidden lg:flex lg:flex-[7]" : "flex-1"
+        selectedAppId ? "hidden lg:flex" : "flex-1"
       )}>
 
         <div className={cn(
@@ -250,7 +255,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
 
           {/* Search/Filter Bar */}
           <div className="flex items-center justify-between gap-4 bg-[#FDFFF4] p-3 rounded-2xl border border-[#e8e2d6] shadow-sm flex-shrink-0">
-            <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md bg-white focus-within:ring-2 focus-within:ring-[#264384]/10 transition-all">
+            <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md bg-[#FDFFF4] hover:bg-[#F6F8D5] focus-within:bg-[#F6F8D5] transition-all">
               <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
                 <Search className="w-3.5 h-3.5" />
               </div>
@@ -414,17 +419,21 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
 
       {/* RIGHT SIDE (DETAIL PANEL) */}
       <div className={cn(
-        "bg-white border-l border-[#e8e2d6] transition-all duration-500 ease-in-out flex flex-col shadow-2xl z-20",
-        selectedAppId ? "flex-[3] w-full" : "w-0 flex-[0] pointer-events-none opacity-0"
+        "fixed lg:relative top-0 right-0 z-50 lg:z-0 h-full lg:h-auto w-full bg-[#F6F8D5] flex flex-col transition-all duration-500 ease-in-out border-[#e8e2d6]",
+        selectedAppId
+          ? "lg:w-[450px] translate-x-0 opacity-100 border-l overflow-y-auto"
+          : "lg:w-0 translate-x-full lg:translate-x-0 opacity-0 lg:pointer-events-none border-l-0 overflow-hidden"
       )}>
         {selectedApp && (
-          <ReviewApplication
-            application={selectedApp}
-            applicationId={selectedApp.application_id}
-            units={units}
-            onAction={handleAction}
-            onClose={() => setSelectedAppId(null)}
-          />
+          <div className="w-full lg:w-[450px] shrink-0 h-full flex flex-col">
+            <ReviewApplication
+              application={selectedApp}
+              applicationId={selectedApp.application_id}
+              units={units}
+              onAction={handleAction}
+              onClose={() => setSelectedAppId(null)}
+            />
+          </div>
         )}
       </div>
 

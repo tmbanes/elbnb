@@ -1,8 +1,12 @@
+// /api/admin/applications
 import { NextRequest, NextResponse } from "next/server";
 import { withRole } from "@/lib/auth/api-guard";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { createActivityLog, getCurrentUserRole } from "@/services/activity_log/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
+import { User } from "@/types/user.types";
+import { getAdminApplicationsService } from "@/services/application_workflow/applications";
+
 
 type ManualInvoiceItem = {
   kind: "first_rental" | "security_deposit" | "reservation_fee" | "other" | "room_rent";
@@ -18,133 +22,20 @@ function mapInvoiceKindToBillingType(kind: ManualInvoiceItem["kind"]) {
   return "other";
 }
 
-export const GET = withRole(["housing_admin", "admin"], async (req: NextRequest) => {
+export const GET = withRole(["housing_admin", "admin"], async (req: NextRequest, { user }) => {
   try {
-    const supabase = await createSupabaseServerClient();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    const status = searchParams.get("status") || "all";
+    const accommodation = searchParams.get("accommodation") || "all";
+    const period = searchParams.get("period") || "all";
 
-    // If an ID is provided, fetch just that one application
-    if (id) {
-      const { data, error } = await supabaseAdmin
-        .from("accommodation_application")
-        .select(
-          `
-        *,
-        users:user_id (first_name, last_name, email),
-        accommodation:preferred_accommodation_id (accommodation_id, name, location),
-        unit:unit_id (unit_number)
-      `,
-        )
-        .eq("application_id", id)
-        .single();
-
-      if (error)
-        return NextResponse.json({ error: error.message }, { status: 404 });
-
-      // Fetch available units for the dropdown logic
-      const { data: unitList } = await supabase
-        .from("unit")
-        .select("unit_id, unit_number, unit_type")
-        .eq("accommodation_id", data.preferred_accommodation_id);
-
-      const { data: userAssignments } = await supabaseAdmin
-        .from("accommodation_assignment")
-        .select("assignment_id, assignment_status, application_id")
-        .eq("user_id", data.user_id);
-
-      const assignment = (userAssignments ?? []).find(
-        (a: any) => String(a.application_id) === String(id)
-      );
-
-      let invoiceDraft: any = null;
-      if (assignment?.assignment_id) {
-        const { data: allBillings, error: billError } = await supabaseAdmin
-          .from("billing")
-          .select(
-            `
-              billing_id,
-              amount,
-              due_date,
-              billing_period_date,
-              status,
-              internal_notes,
-              assignment_id,
-              created_at,
-              billing_item (
-                type,
-                amount
-              )
-            `,
-          );
-
-        if (billError) {
-          console.error("Billing Query Error:", billError);
-        }
-
-        const latestBilling = (allBillings ?? [])
-          .filter((b: any) => String(b.assignment_id) === String(assignment.assignment_id))
-          .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-
-        invoiceDraft = latestBilling ?? null;
-      }
-
-      return NextResponse.json({
-        ...data,
-        availableUnits: unitList || [],
-        assignment: assignment ?? null,
-        invoiceDraft,
-      });
-    }
-
-    // Fetch all applications that have passed dorm manager review
-    const { data: applications, error: appError } = await supabase
-      .from("accommodation_application")
-      .select(
-        `
-        application_id,
-        preferred_accommodation_id,
-        preferred_accommodation_id,
-        preferred_unit_type,
-        date_submitted,
-        duration_of_stay,
-        check_in,
-        check_out,
-        number_of_companions,
-        application_status,
-        user_id,
-        users (
-          first_name,
-          last_name,
-          email
-        ),
-        accommodation:preferred_accommodation_id (
-          accommodation_id,
-          name,
-          location,
-          unit (
-            unit_id,
-            unit_number,
-            unit_type,
-            max_occupancy,
-            current_occupancy,
-            rental_fee,
-            billing_period,
-            unit_status
-          )
-        )
-      `,
-      )
-      .eq("application_status", "pending_admin")
-      .order("date_submitted", { ascending: false });
-
-    if (appError) throw new Error(appError.message);
-
-    return NextResponse.json({ applications: applications ?? [] });
+    const data = await getAdminApplicationsService(user, { id, status, accommodation, period });
+    return NextResponse.json(data);
   } catch (e) {
-    const message =
-      e instanceof Error ? e.message : "Failed to fetch applications.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const message = e instanceof Error ? e.message : "Failed to fetch applications.";
+    const status = message.includes("Forbidden") ? 403 : message.includes("not found") ? 404 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 });
 
@@ -183,7 +74,7 @@ export const PATCH = withRole(["housing_admin", "admin"], async (req: NextReques
         .select();
 
       if (error) throw new Error(error.message);
-      
+
       if (!data || data.length === 0) {
         return NextResponse.json(
           { error: "Application could not be rejected. It may have already been processed or is in a final state." },
@@ -198,8 +89,8 @@ export const PATCH = withRole(["housing_admin", "admin"], async (req: NextReques
           .select("user_id, users(first_name, last_name)")
           .eq("application_id", application_id)
           .single();
-        
-        const applicantName = appData?.users 
+
+        const applicantName = appData?.users
           ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
           : "Unknown Applicant";
 
@@ -306,8 +197,8 @@ export const PATCH = withRole(["housing_admin", "admin"], async (req: NextReques
           .select("user_id, users:user_id(first_name, last_name)")
           .eq("application_id", application_id)
           .single();
-        
-        const applicantName = (appData as any)?.users 
+
+        const applicantName = (appData as any)?.users
           ? `${(appData as any).users.first_name} ${(appData as any).users.last_name}`
           : "Unknown Applicant";
 
@@ -417,8 +308,8 @@ export const PATCH = withRole(["housing_admin", "admin"], async (req: NextReques
         .select("user_id, users(first_name, last_name)")
         .eq("application_id", application_id)
         .single();
-      
-      const applicantName = appData?.users 
+
+      const applicantName = appData?.users
         ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
         : "Unknown Applicant";
 
@@ -671,8 +562,8 @@ export const POST = withRole(["housing_admin", "admin"], async (req: NextRequest
         .select("user_id, users(first_name, last_name)")
         .eq("application_id", application_id)
         .single();
-      
-      const applicantName = appData?.users 
+
+      const applicantName = appData?.users
         ? `${(appData.users as any).first_name} ${(appData.users as any).last_name}`
         : "Unknown Applicant";
 

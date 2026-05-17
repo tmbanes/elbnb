@@ -94,7 +94,7 @@ export function GuestAccommodationsPreview({ initialAccommodations }: GuestAccom
                                 onClick={() => setSelectedAccommodation(accommodation)}
                                 className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-2xl transition-all active:scale-[0.98] shadow-md shadow-[#6492A7]/10 flex items-center justify-center gap-2"
                             >
-                                {isLoadingUnits && selectedAccommodation?.accommodation_id === accommodation.accommodation_id ? "Loading..." : "Details"}
+                                {isLoadingUnits && (selectedAccommodation as any)?.accommodation_id === accommodation.accommodation_id ? "Loading..." : "Details"}
                             </button>
                         </div>
                     </div>

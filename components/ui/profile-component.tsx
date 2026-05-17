@@ -151,7 +151,7 @@ export function ProfileComponent({ user, metadata, currentAssignment, managerAcc
               )}
               {isManager && (
                 <div className="grid grid-cols-1 gap-y-5 w-full">
-                  {renderLargeValue(managerAccommodation?.name || 'No Assigned Dormitory', "Assigned Accommodation")}
+                  {renderLargeValue(managerAccommodation?.name || 'No Assigned Accommodation', "Assigned Accommodation")}
                   {renderValue(officeLocation, "Office Location")}
 
                   <div className="-mt-2 flex justify-end">

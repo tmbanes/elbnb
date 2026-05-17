@@ -30,6 +30,7 @@ interface DataTableProps<TData, TValue> {
   className?: string
   onRowClick?: (data: TData) => void
   activeRowId?: string
+  fixedLayout?: boolean
 }
 
 
@@ -42,6 +43,7 @@ export function DataTable<TData, TValue>({
   className,
   onRowClick,
   activeRowId,
+  fixedLayout,
 }: DataTableProps<TData, TValue>) {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
@@ -68,13 +70,14 @@ export function DataTable<TData, TValue>({
           {toolbar && <div>{toolbar}</div>}
         </div>
       )}
-      <Table>
+      <Table className={fixedLayout ? "table-fixed" : ""}>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
+                const customWidth = (header.column.columnDef.meta as any)?.width;
                 return (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} style={{ width: customWidth }}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(

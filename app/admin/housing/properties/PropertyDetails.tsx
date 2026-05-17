@@ -77,7 +77,9 @@ export default function PropertyDetail({
   const [addUnitModalOpen, setAddUnitModalOpen] = useState(false);
   const isDorm = property.accommodation_type === "dormitory";
 
-  const totalCapacity = property.total_capacity ?? 0;
+  const totalCapacity = (property.units && property.units.length > 0)
+    ? property.units.reduce((acc, unit) => acc + (unit.max_occupancy ?? 0), 0)
+    : (property.total_capacity ?? 0);
   const currentOccupancy = property.units?.reduce(
     (acc, unit) => acc + (unit.current_occupancy ?? 0), 0
   ) ?? 0;

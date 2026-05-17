@@ -36,6 +36,7 @@ interface DormForm {
   term_type: "semestral" | "annual";
   separate_by_gender: boolean;
   manager_id: string;
+  accommodation_status: string;
 }
 
 interface Props {
@@ -43,6 +44,8 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   existingDorm?: any | null;
+  managers?: Manager[];
+  assignedManagerIds?: Set<string>;
 }
 
 const EMPTY: DormForm = {
@@ -55,6 +58,7 @@ const EMPTY: DormForm = {
   term_type: "semestral",
   separate_by_gender: true,
   manager_id: "",
+  accommodation_status: "active",
 };
 
 export default function AddDormModal({
@@ -62,11 +66,13 @@ export default function AddDormModal({
   onClose,
   onSuccess,
   existingDorm,
+  managers: managersProp,
+  assignedManagerIds,
 }: Props) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<DormForm>(EMPTY);
   const [units, setUnits] = useState<UnitFormData[]>([]);
-  const [managers, setManagers] = useState<Manager[]>([]);
+  const [managers, setManagers] = useState<Manager[]>(managersProp || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -77,11 +83,17 @@ export default function AddDormModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/housing/managers")
+    if (managersProp && managersProp.length > 0) {
+      setManagers(managersProp);
+      return;
+    }
+    fetch("/api/housing/managers?all=true")
       .then((r) => r.json())
-      .then(setManagers)
-      .catch(() => { });
-  }, [isOpen]);
+      .then((data) => {
+        setManagers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setManagers([]));
+  }, [isOpen, managersProp]);
 
   useEffect(() => {
     if (existingDorm) {
@@ -98,6 +110,7 @@ export default function AddDormModal({
         separate_by_gender:
           existingDorm.dormitory?.separate_by_gender ?? true,
         manager_id: existingDorm.manager_id ?? "",
+        accommodation_status: existingDorm.accommodation_status ?? "active",
       });
     } else {
       setForm(EMPTY);
@@ -137,8 +150,8 @@ export default function AddDormModal({
         form.name.trim() !== "" &&
         form.location.trim() !== "" &&
         form.number_of_semesters_allowed.trim() !== "" &&
-        !!form.term_type &&
-        !!form.manager_id
+        !!form.term_type
+        // manager_id is optional when editing
       );
     }
     if (step === 1) {
@@ -177,20 +190,33 @@ export default function AddDormModal({
     setError(null);
 
     try {
-      const editableUnits = isEditing ? existingUnits : units;
-      const unitCapacitySum = editableUnits.reduce((sum: number, unit: any) => {
-        const capacity = Number(unit.max_occupancy);
-        const count = Number(unit.number_of_units || 1);
-        return Number.isFinite(capacity) && capacity > 0 ? sum + (capacity * count) : sum;
-      }, 0);
-      const computedTotalCapacity = unitCapacitySum;
+      let computedTotalCapacity: number;
+      if (isEditing) {
+        const loadedUnits: any[] = existingDorm?.units ?? [];
+        if (loadedUnits.length > 0) {
+          // Sum each unit's max_occupancy (each row = 1 physical unit)
+          computedTotalCapacity = loadedUnits.reduce(
+            (sum: number, u: any) => sum + (Number(u.max_occupancy) || 0), 0
+          );
+        } else {
+          // Units not loaded — preserve the stored value
+          computedTotalCapacity = Number(existingDorm?.total_capacity ?? 0);
+        }
+      } else {
+        computedTotalCapacity = units.reduce((sum: number, unit: any) => {
+          const capacity = Number(unit.max_occupancy);
+          const count = Number(unit.number_of_units || 1);
+          return Number.isFinite(capacity) && capacity > 0 ? sum + (capacity * count) : sum;
+        }, 0);
+      }
 
       const payload = {
         accommodationFields: {
           name: form.name,
           location: form.location,
-          manager_id: form.manager_id,
+          manager_id: form.manager_id === "none" ? null : form.manager_id,
           total_capacity: computedTotalCapacity,
+          accommodation_status: form.accommodation_status,
         },
         dormitoryFields: {
           number_of_semestersAllowed: Number(
@@ -200,7 +226,7 @@ export default function AddDormModal({
           allowed_programs: form.allowed_programs || null,
           term_type: form.term_type,
           separate_by_gender: form.separate_by_gender,
-        },
+        }
       };
 
       const endpoint = isEditing
@@ -396,20 +422,36 @@ export default function AddDormModal({
                   <SelectValue placeholder="Select a manager" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">— No Manager —</SelectItem>
                   {managers.map((m) => {
-                    const assignedAcc = m.accommodation?.[0]?.name;
-                    const isAssignedElsewhere = !!(assignedAcc && m.users.user_id !== existingDorm?.manager_id);
-                    
+                    const isAssigned = assignedManagerIds?.has(m.users.user_id) ?? false;
+                    const isCurrentManager = m.users.user_id === existingDorm?.manager_id;
+                    const shouldDisable = isAssigned && !isCurrentManager;
                     return (
-                      <SelectItem 
-                        key={m.employee_id} 
+                      <SelectItem
+                        key={m.employee_id}
                         value={m.users.user_id}
-                        disabled={isAssignedElsewhere}
+                        disabled={shouldDisable}
                       >
-                        {m.users.first_name} {m.users.last_name}
+                        {m.users.first_name} {m.users.last_name}{shouldDisable ? " (assigned)" : ""}
                       </SelectItem>
                     );
                   })}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <Label className="font-semibold">Status</Label>
+              <Select
+                value={form.accommodation_status}
+                onValueChange={(val) => handleChange("accommodation_status", val)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
@@ -578,17 +620,18 @@ export default function AddDormModal({
                 <SelectValue placeholder="Select a manager" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">— No Manager —</SelectItem>
                 {managers.map((m) => {
-                  const assignedAcc = m.accommodation?.[0]?.name;
-                  const isAssignedElsewhere = !!(assignedAcc && m.users.user_id !== existingDorm?.manager_id);
-
+                  const isAssigned = assignedManagerIds?.has(m.users.user_id) ?? false;
+                  const isCurrentManager = m.users.user_id === existingDorm?.manager_id;
+                  const shouldDisable = isAssigned && !isCurrentManager;
                   return (
-                    <SelectItem 
-                      key={m.employee_id} 
+                    <SelectItem
+                      key={m.employee_id}
                       value={m.users.user_id}
-                      disabled={isAssignedElsewhere}
+                      disabled={shouldDisable}
                     >
-                      {m.users.first_name} {m.users.last_name}
+                      {m.users.first_name} {m.users.last_name}{shouldDisable ? " (assigned)" : ""}
                     </SelectItem>
                   );
                 })}

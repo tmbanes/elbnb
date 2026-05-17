@@ -13,8 +13,8 @@ export default async function AdminBillingPage() {
   // Parallelize the data fetching and the maintenance task
   const [_, billsRes, tenantsRes] = await Promise.all([
     ensureInitialInvoicesForPendingPaymentApplications(),
-    getAllBillsForAdmin("admin"),
-    getActiveTenants()
+    getAllBillsForAdmin(user.role || "", user.user_id || undefined),
+    getActiveTenants(user.role || undefined, user.user_id || undefined)
   ]);
 
   const { data: bills, error } = billsRes;

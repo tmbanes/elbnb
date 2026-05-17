@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { useRealtimeSync } from "@/lib/realtime-sync";
-import { Building2, Home, Users, KeyRound, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, Filter, MoreHorizontal, Download, ChevronLeft, ChevronRight, Eye, Bell, X } from "lucide-react";
+import { Building2, Home, Users, KeyRound, Clock3, Wallet, AlertTriangle, AlertCircle, FileText, House, UserCheck, BarChart3, Search, Filter, MoreHorizontal, Download, ChevronLeft, ChevronRight, Eye, Bell, ArrowRight } from "lucide-react";
 import { Archivo, Archivo_Black } from "next/font/google";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -67,16 +68,17 @@ const pct = (n: number) => `${n.toFixed(1)}%`;
 const unwrap = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] : v);
 const initials = (f: string, l: string) => `${f?.[0] ?? ""}${l?.[0] ?? ""}`.toUpperCase();
 
-const statusBadge = (s: string) => {
-  const map: Record<string, string> = {
-    pending_admin: "bg-[#FEF9C3] text-[#F2C908] border-[#FDE68A]",
-    pending_dorm_manager: "bg-[#FEF9C3] text-[#F2C908] border-[#FDE68A]",
-    pending_payment: "bg-[#fbecd7] text-[#EB8A0B] border-[#f5d0a1]",
-    approved: "bg-[#DFF2E8] text-[#78A24C] border-[#b8e2cb]",
-    rejected: "bg-red-50 text-[#DF3538] border-red-100",
-    cancelled: "bg-gray-50 text-gray-400 border-gray-100",
+const statusBadgeDetails = (s: string) => {
+  const map: Record<string, { badge: string; dot: string; label: string }> = {
+    approved: { badge: "bg-[#E7FAD3] text-[#78A24C]", dot: "bg-[#78A24C]", label: "Approved" },
+    rejected: { badge: "bg-[#FEF2F2] text-[#B91C1C]", dot: "bg-[#B91C1C]", label: "Rejected" },
+    cancelled: { badge: "bg-[#F3F4F6] text-[#6B7280]", dot: "bg-gray-400", label: "Cancelled" },
+    waitlisted: { badge: "bg-[#FFF7ED] text-[#EA580C]", dot: "bg-[#EA580C]", label: "Waitlisted" },
+    pending_admin: { badge: "bg-[#EEF2FF] text-[#4F46E5]", dot: "bg-[#4F46E5]", label: "Pending Admin" },
+    pending_payment: { badge: "bg-[#EEF2FF] text-[#4F46E5]", dot: "bg-[#4F46E5]", label: "Pending Payment" },
+    pending_dorm_manager: { badge: "bg-[#EEF2FF] text-[#4F46E5]", dot: "bg-[#4F46E5]", label: "Pending Manager" },
   };
-  return map[s] ?? "bg-gray-50 text-gray-500 border-gray-100";
+  return map[s] ?? { badge: "bg-gray-100 text-gray-600", dot: "bg-gray-400", label: s.replace(/_/g, " ") };
 };
 
 // ── Pagination Helper ──
@@ -625,99 +627,64 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-10 duration-500 delay-500">
 
           {/* Recent Applications Table */}
-          <Card className="lg:col-span-2 shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-4 rounded-2xl">
-            <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Recent Applications</h2>
-            <div className="relative">
-              <Search className="w-4 h-4 text-[#44291B]/40 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search applications..."
-                value={applicationSearch}
-                onChange={(e) => { setApplicationSearch(e.target.value); setAppPage(1); }}
-                className={`${archivo.className} w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#cfd6e4] text-sm bg-[#FDFFF4] text-[#44291B] placeholder:text-[#44291B]/40 focus:outline-none focus:ring-2 focus:ring-[#78A24C]/20 focus:border-[#78A24C] transition-all h-10`}
-              />
+          <Card className="lg:col-span-2 shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-4 rounded-2xl h-full lg:min-h-[26rem]">
+            <div className="flex justify-between items-center">
+              <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Recent Applications</h2>
+              <Link
+                href="/admin/applications"
+                className="text-xs font-bold text-[#78A24C] hover:text-[#5C7E3A] hover:underline flex items-center gap-1 transition-all"
+              >
+                View All <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
-            <div>
+            <div className="overflow-x-auto flex-1 min-h-0 border border-[#cfd6e4]/50 rounded-xl">
               <table className="w-full text-left border-collapse table-fixed">
                 <thead>
                   <tr className="border-b border-[#cfd6e4] bg-[#FDFFF4]">
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[25%]">Applicant</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[20%]">Property</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[15%]">Type</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[15%]">Date</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest text-right min-w-[140px] w-[25%]">Status</th>
+                    <th className="py-3 px-4 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[35%]">Applicant / Property</th>
+                    <th className="py-3 px-4 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[15%]">Type</th>
+                    <th className="py-3 px-4 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[20%]">Date</th>
+                    <th className="py-3 px-4 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[30%]">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRecentApplications.length === 0 ? (
-                    <tr><td colSpan={5} className="py-12 text-center text-[#44291B]/40 font-bold">No applications found.</td></tr>
-                  ) : filteredRecentApplications.slice((appPage - 1) * APP_PER_PAGE, appPage * APP_PER_PAGE).map(a => {
+                  {recentApplications.length === 0 ? (
+                    <tr><td colSpan={4} className="py-12 text-center text-[#44291B]/40 font-bold">No applications found.</td></tr>
+                  ) : recentApplications.slice(0, 5).map(a => {
                     const u = unwrap(a.users);
                     const acc = unwrap(a.accommodation);
                     const isExpanded = expandedApplication === a.application_id;
                     return (
-                      <React.Fragment key={a.application_id}>
-                        <tr 
-                          onClick={() => setExpandedApplication(isExpanded ? null : a.application_id)}
-                          className={`hover:bg-[#F6F8D5] transition-colors border-b border-[#cfd6e4]/60 last:border-b-0 group cursor-pointer ${isExpanded ? 'bg-[#F6F8D5]' : ''}`}
-                        >
-                          <td className="py-3 px-3 overflow-hidden">
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#44291B] to-[#734A35] text-white flex items-center justify-center text-[10px] font-bold shrink-0">{initials(u?.first_name ?? "", u?.last_name ?? "")}</div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-bold text-[#44291B] truncate">{u?.first_name ?? "—"} {u?.last_name ?? ""}</p>
-                                <p className="text-[10px] text-[#44291B]/50 font-medium truncate">ID: {a.application_id.slice(0, 8)}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-3 px-3 text-sm font-bold text-[#44291B] truncate">{acc?.name ?? "—"}</td>
-                          <td className="py-3 px-3 text-sm font-bold text-[#44291B] capitalize truncate">{a.preferred_unit_type?.replace(/_/g, " ") ?? "—"}</td>
-                          <td className="py-3 px-3 text-xs font-bold text-[#44291B] truncate">{a.date_submitted ? new Date(a.date_submitted).toLocaleDateString() : "—"}</td>
-                          <td className="py-3 px-3 text-right">
-                            <span className={`${archivoBlack.className} px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap ${statusBadge(a.application_status)}`}>
-                              {a.application_status.replace(/_/g, " ")}
-                            </span>
-                          </td>
-                        </tr>
-                        {isExpanded && (
-                          <tr className="bg-[#F6F8D5]/50 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <td colSpan={5} className="py-4 px-6 border-b border-[#cfd6e4]/60">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 p-5 bg-white rounded-2xl border border-[#cfd6e4]/30 shadow-sm">
-                                <div className="sm:col-span-2">
-                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Email Contact</p>
-                                  <p className="text-sm font-bold text-[#44291B] break-all">{u?.email || "No email"}</p>
-                                </div>
-                                <div>
-                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Sex</p>
-                                  <p className="text-sm font-bold text-[#44291B] uppercase tracking-wider">{u?.sex || "—"}</p>
-                                </div>
-                                <div>
-                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Stay Duration</p>
-                                  <p className="text-sm font-bold text-[#44291B]">{a.duration_of_stay || 1} Semester(s)</p>
-                                </div>
-                                <div>
-                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Check-in Date</p>
-                                  <p className="text-sm font-bold text-[#44291B]">{a.check_in ? new Date(a.check_in).toLocaleDateString() : 'Pending'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Companions</p>
-                                  <p className="text-sm font-bold text-[#44291B]">{a.number_of_companions || 0} Person(s)</p>
-                                </div>
-                                <div>
-                                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Submission Date</p>
-                                  <p className="text-sm font-bold text-[#264384]">{new Date(a.date_submitted).toLocaleDateString()}</p>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
+                      <tr key={a.application_id} className="hover:bg-[#F6F8D5] transition-colors border-b border-[#cfd6e4]/60 last:border-b-0 group">
+                        <td className="py-4 px-4">
+                          <p className="text-sm font-semibold text-[#44291B] tracking-tight">{u?.first_name ?? "—"} {u?.last_name ?? ""}</p>
+                          <p className="text-xs text-[#44291B]/60 font-medium mt-0.5">{acc?.name ?? "—"}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-xs font-semibold text-[#44291B]/60 bg-[#44291B]/5 px-2 py-0.5 rounded-md inline-block capitalize tracking-tight">
+                            {a.preferred_unit_type?.replace(/_/g, " ") ?? "—"}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-xs font-medium text-[#44291B]/60">
+                          {a.date_submitted ? new Date(a.date_submitted).toLocaleDateString() : "—"}
+                        </td>
+                        <td className="py-4 px-4">
+                          {(() => {
+                            const st = statusBadgeDetails(a.application_status);
+                            return (
+                              <span className={`${archivoBlack.className} inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${st.badge}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+                                {st.label}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-            <PaginationControls currentPage={appPage} totalPages={Math.ceil(filteredRecentApplications.length / APP_PER_PAGE)} onPageChange={setAppPage} />
           </Card>
 
           {/* Student Management */}
@@ -802,9 +769,15 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                               <p className={`${archivo.className} text-sm font-bold text-[#44291B] truncate`}>{u?.first_name ?? "—"} {u?.last_name ?? ""}</p>
                               <p className={`${archivo.className} text-[10px] text-[#44291B]/50 font-medium truncate uppercase tracking-tight`}>{acc?.name ?? "—"} &middot; {a.preferred_unit_type ?? "—"}</p>
                             </div>
-                            <span className={`${archivoBlack.className} px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap ${statusBadge(a.application_status)}`}>
-                              {a.application_status.replace(/_/g, " ")}
-                            </span>
+                            {(() => {
+                              const st = statusBadgeDetails(a.application_status);
+                              return (
+                                <span className={`${archivoBlack.className} inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${st.badge}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+                                  {st.label}
+                                </span>
+                              );
+                            })()}
                           </div>
                         );
                       })

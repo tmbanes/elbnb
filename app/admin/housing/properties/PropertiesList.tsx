@@ -51,6 +51,7 @@ interface PropertiesListProps {
   }>;
   typeFilter: string | null;
   managerCount: number;
+  totalManagerCount: number;
   addPromptOpen: boolean;
   onFilterChange: (type: string) => void;
   onToggleAddPrompt: () => void;
@@ -111,6 +112,7 @@ export default function PropertiesList({
   tableData = [],
   typeFilter,
   managerCount,
+  totalManagerCount,
   onFilterChange,
   onAddProperty,
   onSelectProperty,
@@ -220,8 +222,8 @@ export default function PropertiesList({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                disabled={managerCount === 0}
-                title={managerCount === 0 ? "Please add a Property Manager first" : ""}
+                disabled={totalManagerCount === 0}
+                title={totalManagerCount === 0 ? "Please add a Property Manager first" : ""}
                 className="flex items-center justify-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4" />
@@ -266,6 +268,7 @@ export default function PropertiesList({
           })}
           data={tableData.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))}
           onRowClick={(row: any) => onSelectProperty(row.id)}
+          fixedLayout
         />
       )}
 

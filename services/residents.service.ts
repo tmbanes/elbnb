@@ -6,7 +6,30 @@ export class ResidentsService {
    * Fetch all residents for an admin.
    * Can optionally filter by a specific unit_id.
    */
-  static async getResidentsForAdmin(unitId?: string) {
+  static async getResidentsForAdmin(adminUserId: string, role: string, unitId?: string) {
+    // 1. Fetch the accommodations this specific admin manages
+    let managedAccommodationIds: string[] = [];
+
+    const { data: adminData, error: adminError } = await supabaseAdmin
+      .from("housing_admin")
+      .select("accommodation_ids")
+      .eq("user_id", adminUserId)
+      .maybeSingle();
+
+    if (role === 'admin') {
+      // Super admins see everything
+      const { data: allAccoms } = await supabaseAdmin.from("accommodation").select("accommodation_id");
+      managedAccommodationIds = (allAccoms || []).map((a: any) => a.accommodation_id);
+    } else if (adminData?.accommodation_ids) {
+      managedAccommodationIds = adminData.accommodation_ids;
+    }
+
+    // If the admin doesn't manage any accommodations, return an empty list immediately
+    if (managedAccommodationIds.length === 0) {
+      return [];
+    }
+
+    // 2. Build the query with an inner join filter (!inner) on accommodation_id
     let query = supabaseAdmin
       .from("accommodation_assignment")
       .select(`
@@ -21,10 +44,14 @@ export class ResidentsService {
         users:user_id ( first_name, last_name, email, profile_picture_url ),
         unit:unit_id (
           unit_id, unit_number, unit_type,
-          accommodation:accommodation_id ( accommodation_id, name, location )
+          accommodation:accommodation_id!inner ( accommodation_id, name, location )
         )
       `);
 
+    // CRITICAL SECURITY FILTER: Restrict to accommodations managed by this admin
+    query = query.in("unit.accommodation_id", managedAccommodationIds);
+
+    // Apply optional Unit Filter
     if (unitId) {
       query = query.eq("unit_id", unitId);
     }
@@ -36,13 +63,20 @@ export class ResidentsService {
       throw new Error(error.message);
     }
 
-    return (assignments || []).map((r: any) => ({
-      ...r,
-      users: Array.isArray(r.users) ? r.users[0] : r.users,
-      unit: Array.isArray(r.unit) ? r.unit[0] : r.unit,
-    }));
-  }
+    // 3. Map and flatten response structure
+    return (assignments || []).map((r: any) => {
+      const unitObj = Array.isArray(r.unit) ? r.unit[0] : r.unit;
 
+      return {
+        ...r,
+        users: Array.isArray(r.users) ? r.users[0] : r.users,
+        unit: unitObj ? {
+          ...unitObj,
+          accommodation: Array.isArray(unitObj.accommodation) ? unitObj.accommodation[0] : unitObj.accommodation
+        } : null,
+      };
+    });
+  }
   /**
    * Fetch all residents strictly assigned to accommodations managed by the given manager ID.
    */

@@ -23,7 +23,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
-  Receipt
+  Receipt,
+  Building
 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -128,6 +129,23 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       case BillingStatus.OVERDUE: return "bg-red-100 text-red-700 border-red-200";
       case BillingStatus.FAILED: return "bg-rose-100 text-rose-700 border-rose-200";
       default: return "bg-slate-100 text-slate-700 border-slate-200";
+    }
+  };
+
+  const getStatusDetails = (status: string) => {
+    switch (status) {
+      case BillingStatus.PAID:
+        return { badge: "bg-[#E7FAD3] text-[#78A24C]", dot: "bg-[#78A24C]", label: "Paid" };
+      case BillingStatus.UNPAID:
+        return { badge: "bg-[#F3F4F6] text-[#6B7280]", dot: "bg-gray-400", label: "Unpaid" };
+      case BillingStatus.PENDING:
+        return { badge: "bg-[#EEF2FF] text-[#4F46E5]", dot: "bg-[#4F46E5]", label: "Pending" };
+      case BillingStatus.OVERDUE:
+        return { badge: "bg-[#FEF2F2] text-[#B91C1C]", dot: "bg-[#B91C1C]", label: "Overdue" };
+      case BillingStatus.FAILED:
+        return { badge: "bg-[#FEF2F2] text-[#B91C1C]", dot: "bg-[#B91C1C]", label: "Failed" };
+      default:
+        return { badge: "bg-gray-100 text-gray-600", dot: "bg-gray-400", label: status };
     }
   };
 
@@ -355,20 +373,20 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       </div>
 
       {/* FILTER & ACTIONS */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4  bg-[#FDFFF4] p-4 rounded-2xl border border-slate-200 shadow-sm print:hidden">
-        <div className="flex  bg-[#FDFFF4] border border-slate-200 rounded-xl overflow-hidden flex-1 max-w-md">
-          <div className="pl-3 flex items-center justify-center text-slate-400">
-            <Search className="w-4 h-4  bg-[#FDFFF4]" />
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-3 rounded-2xl border border-[#e8e2d6] shadow-sm print:hidden">
+        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md bg-[#FDFFF4] hover:bg-[#F6F8D5] focus-within:bg-[#F6F8D5] transition-all">
+          <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
+            <Search className="w-4 h-4 text-[#44291B]/40 shrink-0" />
           </div>
           <input
             type="text"
-            placeholder="Search tenant or invoice #"
+            placeholder="Search tenant or invoice #..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
               setInvoicesPage(1);
             }}
-            className="w-full px-3 py-2  bg-[#FDFFF4] text-sm outline-none"
+            className="w-full px-3 py-2 bg-transparent text-sm outline-none text-[#44291B] placeholder:text-[#44291B]/40 font-medium"
           />
         </div>
 
@@ -380,13 +398,13 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               setInvoicesPage(1);
             }}
           >
-            <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] px-3 text-sm font-medium text-[#30435f] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors">
+            <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors focus:ring-0 shadow-sm">
               <div className="flex items-center gap-2">
-                <Filter className="w-3.5 h-3.5 text-slate-400" />
+                <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
                 <SelectValue placeholder="All Statuses" />
               </div>
             </SelectTrigger>
-            <SelectContent className="z-[70] rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] text-[#44291B]">
+            <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
               <SelectItem value="ALL" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Statuses</SelectItem>
               {INVOICE_STATUSES.map((s) => (
                 <SelectItem key={s} value={s} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
@@ -395,7 +413,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               ))}
             </SelectContent>
           </Select>
-          <div className="h-6 w-px bg-slate-200 mx-2"></div>
+          <div className="h-6 w-px bg-[#e8e2d6] mx-2"></div>
 
           <button
             onClick={sendReminders}
@@ -423,17 +441,17 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       {/* DATA TABLE */}
       <div className="bg-[#FDFFF4] border text-sm  border-[#cfd6e4] rounded-2xl shadow-sm overflow-hidden print:hidden">
         <div className="overflow-x-auto text-[#44291B]">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-[#FDFFF4] border-b border-[#cfd6e4]">
                 <th className="px-6 py-4 font-semibold w-12 pt-[18px]">
                   <input type="checkbox" checked={selectedBillIds.length === filteredBills.length && filteredBills.length > 0} onChange={handleSelectAll} className="rounded border-slate-300" />
                 </th>
-                <th className="px-6 py-4 font-semibold">Tenant / Property</th>
-                <th className="px-6 py-4 font-semibold">Invoice #</th>
-                <th className="px-6 py-4 font-semibold">Amount / Date</th>
-                <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                <th className="px-6 py-4 font-semibold w-[35%]">Tenant / Property</th>
+                <th className="px-6 py-4 font-semibold w-[15%]">Invoice #</th>
+                <th className="px-6 py-4 font-semibold w-[20%]">Amount / Date</th>
+                <th className="px-6 py-4 font-semibold w-[15%]">Status</th>
+                <th className="px-6 py-4 font-semibold text-right w-[15%]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -451,7 +469,10 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                     <p className="font-bold text-[#44291B] flex items-center gap-2">
                       {bill.accommodation_assignment?.users ? `${bill.accommodation_assignment.users.first_name} ${bill.accommodation_assignment.users.last_name}` : "Unknown Tenant"}
                     </p>
-                    <p className="text-xs text-[#44291B]/70">Prop: {bill.accommodation_assignment?.accommodation_application?.preferred_accommodation_id || "N/A"}</p>
+                    <p className="text-xs text-[#44291B]/70 flex items-center gap-1">
+                      <Building className="w-3.5 h-3.5 text-[#44291B]/50" />
+                      {bill.accommodation_assignment?.unit?.accommodation?.name || bill.accommodation_assignment?.accommodation_application?.accommodation?.name || "N/A"}
+                    </p>
                   </td>
                   <td className="px-6 py-4 font-mono text-xs">
                     {bill.billing_id.split("-")[0]}
@@ -461,9 +482,18 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                     <p className="text-xs text-[#44291B]/70 text-nowrap">Due: {format(new Date(bill.due_date), 'MMM dd, yyyy')}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${getStatusColor(bill.status)}`}>
-                      {bill.status.replace(/_/g, " ").toUpperCase()}
-                    </span>
+                    {(() => {
+                      const details = getStatusDetails(bill.status);
+                      return (
+                        <span className={cn(
+                          "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                          details.badge
+                        )}>
+                          <span className={cn("w-1.5 h-1.5 rounded-full", details.dot)} />
+                          {details.label}
+                        </span>
+                      );
+                    })()}
                     {bill.method && <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">{bill.method}</p>}
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -557,9 +587,18 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               <div className="p-6 border-t border-slate-200/80 bg-[#F7F8E8] flex justify-between items-center">
                 <div>
                   <p className="text-sm font-medium text-slate-500">Target Amount: <span className="font-bold text-slate-900 text-lg">₱{viewedReceipt.amount.toLocaleString()}</span></p>
-                  <span className={`mt-1 inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(viewedReceipt.status)}`}>
-                    {viewedReceipt.status}
-                  </span>
+                  {(() => {
+                    const details = getStatusDetails(viewedReceipt.status);
+                    return (
+                      <span className={cn(
+                        "mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                        details.badge
+                      )}>
+                        <span className={cn("w-1.5 h-1.5 rounded-full", details.dot)} />
+                        {details.label}
+                      </span>
+                    );
+                  })()}
                 </div>
                 {viewedReceipt.status === BillingStatus.PENDING && (
                   <div className="flex gap-3">

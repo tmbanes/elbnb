@@ -37,6 +37,7 @@ export const getPropertyColumns = (
       //NAME
       accessorKey: "name",
       header: "NAME",
+      meta: { width: "25%" },
       cell: ({ row }) => {
         const name = row.getValue("name") as string;
         const location = row.original.location;
@@ -59,6 +60,7 @@ export const getPropertyColumns = (
       //TYPE
       accessorKey: "type",
       header: "TYPE",
+      meta: { width: "15%" },
       cell: ({ row }) => {
         const type = row.getValue("type") as string;
 
@@ -77,6 +79,7 @@ export const getPropertyColumns = (
       //MANAGER
       accessorKey: "manager",
       header: "MANAGER",
+      meta: { width: "20%" },
       cell: ({ row }) => {
         const manager = row.getValue("manager") as string;
         return (
@@ -88,6 +91,7 @@ export const getPropertyColumns = (
       //STATUS
       accessorKey: "status",
       header: "Status",
+      meta: { width: "15%" },
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
 
@@ -111,6 +115,7 @@ export const getPropertyColumns = (
       //CAPACITY
       accessorKey: "capacity",
       header: "CAPACITY",
+      meta: { width: "15%" },
       cell: ({ row }) => {
         const property = row.original.original as {
           units?: Array<{ current_occupancy?: number }>;
@@ -147,6 +152,7 @@ export const getPropertyColumns = (
       //ACTIONS
       id: "actions",
       header: "ACTIONS",
+      meta: { width: "10%" },
       cell: ({ row }) => {
         const p = row.original.original
 

@@ -29,6 +29,7 @@ interface GuestDashboardUIProps {
     initialHistory?: any[];
     initialBills?: any[];
     notifications?: any[];
+    accommodations?: any[];
 }
 
 export default function GuestDashboardUI({ 
@@ -37,7 +38,8 @@ export default function GuestDashboardUI({
     initialApplications = [], 
     initialHistory = [], 
     initialBills = [],
-    notifications: initialNotifications = []
+    notifications: initialNotifications = [],
+    accommodations: initialAccommodations = []
 }: GuestDashboardUIProps) {
     const [showLogout, setShowLogout] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -86,8 +88,8 @@ export default function GuestDashboardUI({
     const [applications, setApplications] = useState<any[]>(initialApplications);
     const [isLoadingApplications, setIsLoadingApplications] = useState(false);
     const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
-    const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
-    const [isLoadingAccommodations, setIsLoadingAccommodations] = useState(true);
+    const [accommodations, setAccommodations] = useState<Accommodation[]>(initialAccommodations);
+    const [isLoadingAccommodations, setIsLoadingAccommodations] = useState(!initialAccommodations.length);
     const [history, setHistory] = useState<AccommodationHistory[]>(initialHistory);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [bills, setBills] = useState<any[]>(initialBills);
