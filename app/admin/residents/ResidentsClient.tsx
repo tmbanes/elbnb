@@ -71,9 +71,9 @@ export default function ResidentsClient({
   initialResidents: Resident[];
   initialError: string | null;
 }) {
-  const residents = initialResidents;
+  const residents = initialResidents.filter(r => r.unit && r.unit.accommodation);
   const [error, setError] = useState<string | null>(initialError);
-  const [selectedId, setSelectedId] = useState<string | null>(initialResidents[0]?.assignment_id || null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -156,13 +156,16 @@ export default function ResidentsClient({
     setSuccessMsg(null);
   };
   return (
-    <div className="min-h-screen py-8 px-5 md:px-12 lg:px-30 bg-[#F6F8D5] flex overflow-hidden font-[family-name:var(--font-archivo)]">
+    <div className="h-[100dvh] flex overflow-hidden bg-[#F6F8D5] font-[family-name:var(--font-archivo)]">
       {/* ── LEFT: List panel ───────────────────────────────────────────────── */}
       <div className={cn(
-        "flex-1 min-w-0 overflow-y-auto transition-all duration-300",
-        selectedId ? "hidden lg:block" : "block"
+        "flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out",
+        selectedId ? "hidden lg:flex" : "flex-1"
       )}>
-        <div className="p-4 md:p-6 space-y-6">
+        <div className={cn(
+          "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
+          selectedId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
+        )}>
           <div>
             <h1 className="text-4xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
               Resident Management
@@ -219,12 +222,12 @@ export default function ResidentsClient({
 
           <div className="bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-hidden shadow-sm">
             {paginated.length > 0 ? (
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse table-fixed">
                 <thead>
                   <tr className="border-b border-[#e8e2d6] bg-[#FDFFF4]">
-                    <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Resident</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Accommodation</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Status</th>
+                    <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[45%]">Resident</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[35%]">Accommodation</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[20%]">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -308,38 +311,42 @@ export default function ResidentsClient({
 
       {/* ── RIGHT: Detail panel ────────────────────────────────────────────── */}
       <div className={cn(
-        "w-full lg:w-[450px] border-l border-[#e8e2d6] bg-[#F6F8D5] overflow-y-auto flex flex-col transition-all duration-300 pt-20",
-        selectedId ? "block" : "hidden lg:flex"
+        "fixed lg:relative top-0 right-0 z-50 lg:z-0 h-full lg:h-auto w-full bg-[#F6F8D5] flex flex-col transition-all duration-500 ease-in-out pt-4 lg:pt-20 border-[#e8e2d6]",
+        selectedId
+          ? "lg:w-[450px] translate-x-0 opacity-100 border-l overflow-y-auto"
+          : "lg:w-0 translate-x-full lg:translate-x-0 opacity-0 lg:pointer-events-none border-l-0 overflow-hidden"
       )}>
-        {selected ? (
-          <ResidentDetailPanel
-            resident={selected}
-            onBack={() => setSelectedId(null)}
-            confirmAction={confirmAction}
-            actionDate={actionDate}
-            targetUnit={targetUnit}
-            actionLoading={actionLoading}
-            successMsg={successMsg}
-            onOpenConfirm={openConfirm}
-            onSetActionDate={setActionDate}
-            onSetTargetUnit={setTargetUnit}
-            onConfirm={handleAction}
-            onCancelConfirm={() => setConfirmAction(null)}
-            showOverride={true}
-          />
-        ) : (
-          <div className="flex-1 flex items-center justify-center p-12 text-center">
-            <div className="space-y-3 max-w-xs">
-              <div className="w-14 h-14 bg-[#e8e2d6] rounded-full flex items-center justify-center mx-auto">
-                <History className="w-6 h-6 text-[#44291B]/30" />
+        <div className="w-full lg:w-[450px] shrink-0 h-full flex flex-col">
+          {selected ? (
+            <ResidentDetailPanel
+              resident={selected}
+              onBack={() => setSelectedId(null)}
+              confirmAction={confirmAction}
+              actionDate={actionDate}
+              targetUnit={targetUnit}
+              actionLoading={actionLoading}
+              successMsg={successMsg}
+              onOpenConfirm={openConfirm}
+              onSetActionDate={setActionDate}
+              onSetTargetUnit={setTargetUnit}
+              onConfirm={handleAction}
+              onCancelConfirm={() => setConfirmAction(null)}
+              showOverride={true}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-12 text-center">
+              <div className="space-y-3 max-w-xs">
+                <div className="w-14 h-14 bg-[#e8e2d6] rounded-full flex items-center justify-center mx-auto">
+                  <History className="w-6 h-6 text-[#44291B]/30" />
+                </div>
+                <h2 className="text-lg font-bold text-[#44291B]">No Resident Selected</h2>
+                <p className="text-sm text-[#44291B]/50 leading-relaxed">
+                  Select a resident from the list to view details and manage their stay.
+                </p>
               </div>
-              <h2 className="text-lg font-bold text-[#44291B]">No Resident Selected</h2>
-              <p className="text-sm text-[#44291B]/50 leading-relaxed">
-                Select a resident from the list to view details and manage their stay.
-              </p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -376,9 +383,9 @@ function ResidentDetailPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="lg:hidden p-4 border-b border-[#e8e2d6]">
-        <button onClick={onBack} className="flex items-center gap-2 text-[#264384] font-bold text-sm">
-          <ArrowLeft className="w-4 h-4" /> Back to Residents
+      <div className="p-4 pb-0">
+        <button onClick={onBack} className="flex items-center gap-2 text-[#264384] hover:underline font-bold text-sm">
+          <ArrowLeft className="w-4 h-4" /> Back to List
         </button>
       </div>
 

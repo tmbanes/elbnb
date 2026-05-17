@@ -6,6 +6,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useRealtimeSync } from "@/lib/realtime-sync";
 import { useRouter } from "next/navigation";
 import { updateResidentStatus } from "@/lib/actions/residents.actions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
@@ -62,10 +69,10 @@ interface ManagerResidentsClientProps {
 }
 
 export default function ManagerResidentsClient({ initialResidents, initialAccommodations }: ManagerResidentsClientProps) {
-  const residents = initialResidents;
+  const residents = initialResidents.filter(r => r.unit && r.unit.accommodation);
   const accommodations = initialAccommodations;
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(initialResidents[0]?.assignment_id || null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const router = useRouter();
 
   // Filters
@@ -139,16 +146,16 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F8D5] flex overflow-hidden">
+    <div className="h-[100dvh] flex overflow-hidden bg-[#F6F8D5]">
 
       {/* ── LEFT: List panel ───────────────────────────────────────────────── */}
       <div className={cn(
         "flex-1 min-w-0 transition-all duration-500 ease-in-out",
-        selectedId ? "hidden lg:block lg:flex-[7]" : "flex-1"
+        selectedId ? "hidden lg:flex" : "flex-1"
       )}>
         <div className={cn(
           "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
-          selectedId ? "pl-4 lg:pl-40 pr-4 lg:pr-8" : "px-4 md:px-10 lg:px-12 xl:px-16"
+          selectedId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
         )}>
 
           {/* Header */}
@@ -162,73 +169,78 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
           </div>
 
           {/* Filter bar */}
-          <div className="flex flex-col sm:flex-row gap-3 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm">
-            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-white flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 bg-[#FDFFF4] p-3 rounded-2xl border border-[#e8e2d6] shadow-sm">
+            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] flex-1 max-w-sm hover:bg-[#F6F8D5] focus-within:bg-[#F6F8D5] transition-colors">
               <Search className="w-4 h-4 ml-3 text-[#44291B]/40 shrink-0" />
               <input
                 type="text"
-                placeholder="Search resident..."
+                placeholder="Search resident name or email..."
                 value={search}
                 onChange={e => { setSearch(e.target.value); setPage(1); }}
-                className="flex-1 px-3 py-2.5 text-sm bg-transparent outline-none text-[#44291B] font-medium"
+                className="flex-1 px-3 py-2.5 text-sm bg-transparent outline-none text-[#44291B] placeholder:text-[#44291B]/40 font-medium"
               />
             </div>
 
             {accommodations.length > 1 && (
-              <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
-                <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
-                <select
-                  value={accomFilter}
-                  onChange={e => { setAccomFilter(e.target.value); setPage(1); }}
-                  className="text-sm bg-transparent outline-none text-[#44291B] font-medium cursor-pointer"
-                >
-                  <option value="all">All Properties</option>
+              <Select value={accomFilter} onValueChange={(val) => { setAccomFilter(val); setPage(1); }}>
+                <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm focus:ring-0">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
+                    <SelectValue placeholder="All Properties" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                  <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
                   {accommodations.map(a => (
-                    <option key={a.accommodation_id} value={a.accommodation_id}>{a.name}</option>
+                    <SelectItem key={a.accommodation_id} value={a.accommodation_id} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                      {a.name}
+                    </SelectItem>
                   ))}
-                </select>
-              </div>
+                </SelectContent>
+              </Select>
             )}
 
-            <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
-              <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
-              <select
-                value={statusFilter}
-                onChange={e => { setStatusFilter(e.target.value as FilterStatus); setPage(1); }}
-                className="text-sm bg-transparent outline-none text-[#44291B] font-medium cursor-pointer"
-              >
-                <option value="all">All Status</option>
-                <option value="awaiting">Awaiting Move-in</option>
-                <option value="active">Active Stays</option>
-                <option value="checked-out">Stay History</option>
-              </select>
-            </div>
+            <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val as FilterStatus); setPage(1); }}>
+              <SelectTrigger className="h-10 min-w-[160px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm focus:ring-0">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
+                  <SelectValue placeholder="All Status" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Status</SelectItem>
+                <SelectItem value="awaiting" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Awaiting Move-in</SelectItem>
+                <SelectItem value="active" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Active Stays</SelectItem>
+                <SelectItem value="checked-out" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Stay History</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Table */}
           <div className="bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-x-auto shadow-sm flex flex-col">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse table-fixed">
               <thead>
-                <tr className="border-b border-[#e8e2d6] bg-[#F6F8D5]/80">
-                  <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[30%]">Resident</th>
-                  <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Accommodation</th>
+                <tr className="border-b border-[#e8e2d6] bg-[#FDFFF4]">
+                  <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[45%]">Resident</th>
+                  <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[35%]">Accommodation</th>
                   <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[20%]">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.map(r => {
                   const st = STATUS_MAP[r.assignment_status] || STATUS_MAP.pending;
+                  const isSelected = r.assignment_id === selectedId;
                   return (
                     <tr
                       key={r.assignment_id}
                       onClick={() => selectResident(r.assignment_id)}
                       className={cn(
                         "border-b border-[#e8e2d6]/60 cursor-pointer transition-colors",
-                        r.assignment_id === selectedId ? "bg-[#F0F4FF]" : "hover:bg-[#F6F8D5]"
+                        isSelected ? "bg-[#F6F8D5]" : "hover:bg-[#F6F8D5]"
                       )}
                     >
                       <td className="py-4 px-5">
-                        <p className={cn("text-sm font-bold text-[#44291B]", r.assignment_id === selectedId && "text-[#264384]")}>
+                        <p className="text-sm font-bold text-[#44291B]">
                           {r.users?.first_name || 'Unknown'} {r.users?.last_name || 'User'}
                         </p>
                         <div className="flex items-center gap-1 mt-0.5 text-[#44291B]/50">
@@ -279,130 +291,134 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
 
       {/* ── RIGHT: Detail panel ────────────────────────────────────────────── */}
       <div className={cn(
-        "w-full lg:w-[380px] border-l border-[#e8e2d6] bg-[#F6F8D5] overflow-y-auto flex flex-col transition-all duration-300",
-        selectedId ? "" : "hidden lg:flex"
+        "fixed lg:relative top-0 right-0 z-50 lg:z-0 h-full lg:h-auto w-full bg-[#F6F8D5] flex flex-col transition-all duration-500 ease-in-out pt-4 lg:pt-20 border-[#e8e2d6]",
+        selectedId
+          ? "lg:w-[450px] translate-x-0 opacity-100 border-l overflow-y-auto"
+          : "lg:w-0 translate-x-full lg:translate-x-0 opacity-0 lg:pointer-events-none border-l-0 overflow-hidden"
       )}>
-        {selected ? (
-          <div className="flex flex-col h-full">
-            <div className="lg:hidden p-4 border-b border-[#e8e2d6]">
-              <button onClick={() => setSelectedId(null)} className="flex items-center gap-2 text-[#264384] font-bold text-sm">
-                <ArrowLeft className="w-4 h-4" /> Back to Residents
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 flex-1">
-              <div>
-                <h2 className="text-2xl font-bold text-[#44291B] tracking-tight">
-                  {selected.users?.first_name} {selected.users?.last_name}
-                </h2>
-                <p className="text-sm text-[#44291B]/50 font-medium mt-0.5">{selected.users?.email}</p>
+        <div className="w-full lg:w-[450px] shrink-0 h-full flex flex-col">
+          {selected ? (
+            <div className="flex flex-col h-full">
+              <div className="p-4 pb-0">
+                <button onClick={() => setSelectedId(null)} className="flex items-center gap-2 text-[#264384] hover:underline font-bold text-sm">
+                  <ArrowLeft className="w-4 h-4" /> Back to List
+                </button>
               </div>
 
-              {/* Unit + dates card */}
-              <div className="bg-[#FDFFF4] border border-[#e8e2d6] rounded-2xl overflow-hidden shadow-sm">
-                <div className="flex divide-x divide-[#e8e2d6]">
-                  <div className="px-4 py-3 flex-1">
-                    <p className="text-[9px] font-black text-[#44291B]/40 uppercase tracking-widest mb-1">Unit</p>
-                    <p className="text-lg font-bold text-[#44291B] leading-none">
-                      Rm {selected.unit?.unit_number}
-                    </p>
-                  </div>
-                  <div className="px-4 py-3 flex items-center gap-4 bg-white/40">
-                    <div>
-                      <p className="text-sm font-bold text-[#44291B] tabular-nums">{fmtDate(selected.move_in_date)}</p>
-                      <p className="text-[9px] font-bold text-[#44291B]/40 uppercase tracking-widest mt-0.5">Move In</p>
-                    </div>
-                    <div className="w-px h-6 bg-[#e8e2d6]" />
-                    <div>
-                      <p className="text-sm font-bold text-[#44291B] tabular-nums">{fmtDate(selected.expected_move_out_date)}</p>
-                      <p className="text-[9px] font-bold text-[#44291B]/40 uppercase tracking-widest mt-0.5">Move Out</p>
-                    </div>
-                  </div>
+              <div className="p-6 space-y-4 flex-1">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#44291B] tracking-tight">
+                    {selected.users?.first_name} {selected.users?.last_name}
+                  </h2>
+                  <p className="text-sm text-[#44291B]/50 font-medium mt-0.5">{selected.users?.email}</p>
                 </div>
-              </div>
 
-              {/* History timeline */}
-              <div className="bg-[#FDFFF4] border border-[#e8e2d6] rounded-2xl p-5 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <History className="w-4 h-4 text-[#44291B]/50" />
-                  <span className="text-[10px] font-black text-[#44291B]/50 uppercase tracking-widest">History</span>
-                </div>
-                <div className="relative pl-7 space-y-6 before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[#e8e2d6]">
-                  <div className="relative flex items-start">
-                    <div className="absolute left-[-22px] top-1.5 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10 bg-[#5591AB]" />
-                    <div>
-                      <p className="text-sm font-bold text-[#44291B] leading-none mb-1">Assigned</p>
-                      <p className="text-xs text-[#44291B]/50 font-medium">Room {selected.unit?.unit_number}</p>
+                {/* Unit + dates card */}
+                <div className="bg-[#FDFFF4] border border-[#e8e2d6] rounded-2xl overflow-hidden shadow-sm">
+                  <div className="flex divide-x divide-[#e8e2d6]">
+                    <div className="px-4 py-3 flex-1">
+                      <p className="text-[9px] font-black text-[#44291B]/40 uppercase tracking-widest mb-1">Unit</p>
+                      <p className="text-lg font-bold text-[#44291B] leading-none">
+                        Rm {selected.unit?.unit_number}
+                      </p>
                     </div>
-                  </div>
-                  {selected.assignment_status === 'active' && (
-                    <div className="relative flex items-start">
-                      <div className="absolute left-[-22px] top-1.5 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10 bg-[#78A24C]" />
+                    <div className="px-4 py-3 flex items-center gap-4 bg-white/40">
                       <div>
-                        <p className="text-sm font-bold text-[#44291B] leading-none mb-1">Moved In</p>
-                        <p className="text-xs text-[#44291B]/50 font-medium">{fmtDate(selected.move_in_date)}</p>
+                        <p className="text-sm font-bold text-[#44291B] tabular-nums">{fmtDate(selected.move_in_date)}</p>
+                        <p className="text-[9px] font-bold text-[#44291B]/40 uppercase tracking-widest mt-0.5">Move In</p>
+                      </div>
+                      <div className="w-px h-6 bg-[#e8e2d6]" />
+                      <div>
+                        <p className="text-sm font-bold text-[#44291B] tabular-nums">{fmtDate(selected.expected_move_out_date)}</p>
+                        <p className="text-[9px] font-bold text-[#44291B]/40 uppercase tracking-widest mt-0.5">Move Out</p>
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Success flash */}
-              {successMsg && (
-                <div className="bg-[#E7FAD3] border border-[#78A24C]/40 rounded-xl px-4 py-3 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#78A24C] shrink-0" />
-                  <p className="text-sm font-bold text-[#78A24C]">{successMsg}</p>
-                </div>
-              )}
-
-              {/* Actions */}
-              {!confirmAction ? (
-                <div className="space-y-3 pt-4">
-                  {selected.assignment_status === "waiting_payment" && (
-                    <button
-                      onClick={() => openConfirm("record-move-in")}
-                      className="w-full bg-[#EB8A0B] hover:bg-[#c97509] text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-md"
-                    >
-                      Record Physical Move-in
-                    </button>
-                  )}
-                  {selected.assignment_status === "active" && (
-                    <button
-                      onClick={() => openConfirm("record-move-out")}
-                      className="w-full border border-[#e8e2d6] text-[#44291B] font-bold py-2.5 rounded-xl text-sm hover:bg-[#e8e2d6]/40 transition-colors bg-[#FDFFF4]"
-                    >
-                      Record Move-out
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className={cn("bg-[#FDFFF4] border rounded-2xl p-5 shadow-lg space-y-4",
-                  confirmAction === "record-move-in" ? "border-[#78A24C]" : "border-[#264384]")}>
-                  <p className="text-sm font-bold text-[#44291B]">
-                    {confirmAction === "record-move-in" ? "Confirm Move-In" : "Confirm Move-Out"}
-                  </p>
-                  <input
-                    type="date"
-                    value={actionDate}
-                    onChange={e => setActionDate(e.target.value)}
-                    className="w-full border border-[#e8e2d6] rounded-xl py-2 px-3 text-sm font-bold text-[#44291B] bg-white"
-                  />
-                  <div className="flex gap-2">
-                    <button onClick={() => setConfirmAction(null)} className="flex-1 text-xs font-bold text-[#44291B]/60">Cancel</button>
-                    <button onClick={handleAction} disabled={actionLoading} className={cn("flex-1 py-2 rounded-xl text-white font-bold text-xs",
-                      confirmAction === "record-move-in" ? "bg-[#78A24C]" : "bg-[#264384]")}>
-                      {actionLoading ? "..." : "Confirm"}
-                    </button>
                   </div>
                 </div>
-              )}
+
+                {/* History timeline */}
+                <div className="bg-[#FDFFF4] border border-[#e8e2d6] rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <History className="w-4 h-4 text-[#44291B]/50" />
+                    <span className="text-[10px] font-black text-[#44291B]/50 uppercase tracking-widest">History</span>
+                  </div>
+                  <div className="relative pl-7 space-y-6 before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[#e8e2d6]">
+                    <div className="relative flex items-start">
+                      <div className="absolute left-[-22px] top-1.5 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10 bg-[#5591AB]" />
+                      <div>
+                        <p className="text-sm font-bold text-[#44291B] leading-none mb-1">Assigned</p>
+                        <p className="text-xs text-[#44291B]/50 font-medium">Room {selected.unit?.unit_number}</p>
+                      </div>
+                    </div>
+                    {selected.assignment_status === 'active' && (
+                      <div className="relative flex items-start">
+                        <div className="absolute left-[-22px] top-1.5 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10 bg-[#78A24C]" />
+                        <div>
+                          <p className="text-sm font-bold text-[#44291B] leading-none mb-1">Moved In</p>
+                          <p className="text-xs text-[#44291B]/50 font-medium">{fmtDate(selected.move_in_date)}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Success flash */}
+                {successMsg && (
+                  <div className="bg-[#E7FAD3] border border-[#78A24C]/40 rounded-xl px-4 py-3 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#78A24C] shrink-0" />
+                    <p className="text-sm font-bold text-[#78A24C]">{successMsg}</p>
+                  </div>
+                )}
+
+                {/* Actions */}
+                {!confirmAction ? (
+                  <div className="space-y-3 pt-4">
+                    {selected.assignment_status === "waiting_payment" && (
+                      <button
+                        onClick={() => openConfirm("record-move-in")}
+                        className="w-full bg-[#EB8A0B] hover:bg-[#c97509] text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-md"
+                      >
+                        Record Physical Move-in
+                      </button>
+                    )}
+                    {selected.assignment_status === "active" && (
+                      <button
+                        onClick={() => openConfirm("record-move-out")}
+                        className="w-full border border-[#e8e2d6] text-[#44291B] font-bold py-2.5 rounded-xl text-sm hover:bg-[#e8e2d6]/40 transition-colors bg-[#FDFFF4]"
+                      >
+                        Record Move-out
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className={cn("bg-[#FDFFF4] border rounded-2xl p-5 shadow-lg space-y-4",
+                    confirmAction === "record-move-in" ? "border-[#78A24C]" : "border-[#264384]")}>
+                    <p className="text-sm font-bold text-[#44291B]">
+                      {confirmAction === "record-move-in" ? "Confirm Move-In" : "Confirm Move-Out"}
+                    </p>
+                    <input
+                      type="date"
+                      value={actionDate}
+                      onChange={e => setActionDate(e.target.value)}
+                      className="w-full border border-[#e8e2d6] rounded-xl py-2 px-3 text-sm font-bold text-[#44291B] bg-white"
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={() => setConfirmAction(null)} className="flex-1 text-xs font-bold text-[#44291B]/60">Cancel</button>
+                      <button onClick={handleAction} disabled={actionLoading} className={cn("flex-1 py-2 rounded-xl text-white font-bold text-xs",
+                        confirmAction === "record-move-in" ? "bg-[#78A24C]" : "bg-[#264384]")}>
+                        {actionLoading ? "..." : "Confirm"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center p-12 text-center">
-            <p className="text-sm font-bold text-[#44291B]/40">Select a resident to view details</p>
-          </div>
-        )}
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-12 text-center">
+              <p className="text-sm font-bold text-[#44291B]/40">Select a resident to view details</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

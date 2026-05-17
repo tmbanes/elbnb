@@ -258,13 +258,13 @@ export default function ApplicationList({
     ];
 
     const statusConfig: any = {
-        approved: { class: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-        rejected: { class: "bg-rose-50 text-rose-700 border-rose-100" },
-        cancelled: { class: "bg-slate-50 text-slate-700 border-slate-100" },
-        waitlisted: { class: "bg-amber-50 text-amber-700 border-amber-100" },
-        pending_admin: { class: "bg-sky-50 text-sky-700 border-sky-100" },
-        pending_payment: { class: "bg-purple-50 text-purple-700 border-purple-100" },
-        pending_dorm_manager: { class: "bg-amber-50 text-amber-700 border-amber-100" },
+        approved: { class: "bg-[#E7FAD3] text-[#78A24C]", dot: "bg-[#78A24C]", label: "Approved" },
+        rejected: { class: "bg-[#FEF2F2] text-[#B91C1C]", dot: "bg-[#B91C1C]", label: "Rejected" },
+        cancelled: { class: "bg-[#F3F4F6] text-[#6B7280]", dot: "bg-gray-400", label: "Cancelled" },
+        waitlisted: { class: "bg-[#FFF7ED] text-[#EA580C]", dot: "bg-[#EA580C]", label: "Waitlisted" },
+        pending_admin: { class: "bg-[#EEF2FF] text-[#4F46E5]", dot: "bg-[#4F46E5]", label: "Pending Admin" },
+        pending_payment: { class: "bg-[#EEF2FF] text-[#4F46E5]", dot: "bg-[#4F46E5]", label: "Pending Payment" },
+        pending_dorm_manager: { class: "bg-[#EEF2FF] text-[#4F46E5]", dot: "bg-[#4F46E5]", label: "Pending Manager" },
     };
 
     const [isExiting, setIsExiting] = useState(false);
@@ -650,10 +650,11 @@ export default function ApplicationList({
                                             </td>
                                             <td className="py-4 px-3">
                                                 <span className={cn(
-                                                    "px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap",
-                                                    statusConfig[status]?.class || "bg-gray-100 text-gray-600 border-gray-200"
-                                                )}>
-                                                    {status === "pending_dorm_manager" ? "Pending Manager" : app.application_status.replace(/_/g, " ")}
+                                                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                                                    statusConfig[status]?.class || "bg-gray-100 text-gray-600"
+                                                 )}>
+                                                    <span className={cn("w-1.5 h-1.5 rounded-full", statusConfig[status]?.dot || "bg-gray-400")} />
+                                                    {statusConfig[status]?.label || app.application_status.replace(/_/g, " ")}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-5 text-right">

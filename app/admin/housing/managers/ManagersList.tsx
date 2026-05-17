@@ -53,7 +53,7 @@ export default function ManagersList({
     )}>
       <div>
         <h1 className="text-3xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] mr-2">Managers Page</h1>
-        <p className="text-sm md:text-md text-[#44291B] pt-3">Manage property managers and their assignments</p>
+        <p className="text-sm md:text-md text-[#44291B] pt-3">Explore and manage property managers and their assignments</p>
       </div>
 
       {/* FILTER & ACTIONS */}

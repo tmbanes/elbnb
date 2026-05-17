@@ -49,7 +49,7 @@ export class ResidentsService {
       `);
 
     // CRITICAL SECURITY FILTER: Restrict to accommodations managed by this admin
-    query = query.in("unit.accommodation.accommodation_id", managedAccommodationIds);
+    query = query.in("unit.accommodation_id", managedAccommodationIds);
 
     // Apply optional Unit Filter
     if (unitId) {
