@@ -7,15 +7,14 @@ import StudentHistoryUI from "./StudentHistoryUI";
 
 import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
-export default async function ManagerStudentHistoryPage({ params }: { params: { id: string } }) {
+export default async function ManagerStudentHistoryPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id: studentId } = await params;
     const supabase = await createSupabaseServerClient();
     const user = await getApiAuthenticatedUser();
 
     if (!user) {
         redirect("/onboarding");
     }
-
-    const studentId = params.id;
     const { data: profile } = await userProfileService.getProfile(studentId);
 
     if (!profile) {

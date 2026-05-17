@@ -228,7 +228,8 @@ export default function ReviewApplication({
                 Assign Unit
               </label>
               <select
-                className="w-full bg-white border border-[#e8e2d6] rounded-xl px-3 py-2.5 text-sm font-bold text-[#44291B] outline-none focus:ring-2 focus:ring-[#264384]/20 transition-all cursor-pointer"
+                className="w-full appearance-none border border-[#44291B]/15 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#264384]/15 focus:border-[#264384]/40 transition-all cursor-pointer shadow-sm"
+                style={{ backgroundColor: '#FDFFF4', color: '#44291B' }}
                 value={selectedUnitId}
                 onChange={(e) => setSelectedUnitId(e.target.value)}
               >

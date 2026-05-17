@@ -35,7 +35,11 @@ type PropertyOcc = {
 type AppRow = {
   application_id: string; application_status: string; date_submitted: string;
   preferred_unit_type: string | null;
-  users: { first_name: string; last_name: string; email?: string } | { first_name: string; last_name: string; email?: string }[] | null;
+  duration_of_stay: number | null;
+  check_in: string | null;
+  check_out: string | null;
+  number_of_companions: number | null;
+  users: { first_name: string; last_name: string; email?: string; sex?: string } | { first_name: string; last_name: string; email?: string; sex?: string }[] | null;
   accommodation: { name: string } | { name: string }[] | null;
 };
 type HousedStudent = {
@@ -139,7 +143,20 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
   const [studentSearch, setStudentSearch] = useState("");
   const [studentPage, setStudentPage] = useState(1);
 
+  const [expandedApplication, setExpandedApplication] = useState<string | null>(null);
+
   const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   const [notifications, setNotifications] = useState(initialNotifications);
   const router = useRouter();
 
@@ -282,7 +299,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
   ];
 
   return (
-    <div className="min-h-screen px-20 md:px-36 py-4 md:py-10 bg-[#F6F8D5] selection:bg-[#4A5628] selection:text-white">
+    <div className="min-h-screen px-4 md:px-10 py-4 md:py-10 bg-[#F6F8D5] selection:bg-[#4A5628] selection:text-white">
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* ── Header ── */}
@@ -296,7 +313,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           </div>
           <div className="flex gap-2 items-center">
             {/* Notifications Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={notificationRef}>
               <button
                 className={`relative text-slate-600 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-100 ${showNotifications ? 'bg-slate-100 text-[#5D6BDE]' : ''}`}
                 onClick={() => setShowNotifications(!showNotifications)}
@@ -636,6 +653,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                   ) : recentApplications.slice(0, 5).map(a => {
                     const u = unwrap(a.users);
                     const acc = unwrap(a.accommodation);
+                    const isExpanded = expandedApplication === a.application_id;
                     return (
                       <tr key={a.application_id} className="hover:bg-[#F6F8D5] transition-colors border-b border-[#cfd6e4]/60 last:border-b-0 group">
                         <td className="py-4 px-4">
@@ -670,7 +688,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           </Card>
 
           {/* Student Management */}
-          <Card className="shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl h-full lg:min-h-[26rem]">
+          <Card className="shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl">
             <div className="flex items-center justify-between">
               <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Students</h2>
             </div>
@@ -722,8 +740,8 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
               const pagedList = currentList.slice((studentPage - 1) * STUDENT_PER_PAGE, studentPage * STUDENT_PER_PAGE);
 
               return (
-                <div className="flex flex-col flex-1 min-h-0">
-                  <div className="space-y-1.5 flex-1">
+                <div className="flex flex-col">
+                  <div className="space-y-1.5">
                     {studentTab === "housed" ? (
                       (pagedList as typeof housedStudents).map(s => {
                         const u = unwrap(s.users);

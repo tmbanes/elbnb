@@ -32,20 +32,6 @@ export default async function AccommodationHistoryPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F6F8D5' }}>
-      {/* Container for the Header. 
-          The ApplicationsPage has its own internal container for the cards 
-      */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-        <header className="mb-2">
-          <h1 className="text-4xl font-bold tracking-tight" style={{ color: '#44291B' }}>
-            Accommodation Overview
-          </h1>
-          <p className="mt-2 text-lg" style={{ color: '#44291B', opacity: 0.8 }}>
-            Manage your active requests and view past history.
-          </p>
-        </header>
-      </div>
-
       {/* Render the component with the split sections and beige/blue theme */}
       <ApplicationsPage records={records || []} />
     </div>

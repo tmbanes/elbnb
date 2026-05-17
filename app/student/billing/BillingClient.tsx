@@ -33,6 +33,7 @@ export default function BillingClient({
   summary,
   bills,
   paymentHistory,
+  dashboardPath = "/student/dashboard",
 }: any) {
   const supabase = getSupabaseBrowserClient();
   const router = useRouter();
@@ -384,6 +385,19 @@ export default function BillingClient({
 
   return (
     <>
+      <div className="print:hidden mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => router.push(dashboardPath)}
+          className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-4 transition-all group w-fit"
+        >
+          <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+        </Button>
+        <h1 className="text-4xl md:text-5xl font-black text-[#44291B] tracking-tight mb-2">Billing & Payments</h1>
+        <p className="text-sm md:text-md font-medium text-[#44291B]/80">Manage your invoices and view your payment history.</p>
+      </div>
+
       <style jsx global>{`
       @media print {
         @page {

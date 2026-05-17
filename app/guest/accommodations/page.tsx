@@ -11,8 +11,13 @@ import { AccommodationListView } from '@/components/SearchAccommodations/Accommo
 import { UnitsListView } from '@/components/SearchAccommodations/Units-list-view'
 import next from 'next'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { ViewAccommodation, ViewUnit } from '@/components/SearchAccommodations'
+import { ChevronLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Archivo_Black } from 'next/font/google'
+
+const archivoBlack = Archivo_Black({ subsets: ['latin'], weight: '400' })
 
 type TabType = 'accommodations' | 'units'
 
@@ -43,6 +48,7 @@ export default function SearchAccommodationsPage() {
 }
 
 function SearchAccommodationsContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const initialTab = (searchParams.get('tab') as TabType) || 'accommodations'
   const initialAccommodationId = searchParams.get('accommodationId') || ''
@@ -532,7 +538,15 @@ function SearchAccommodationsContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: '#44291B' }}>Search accommodations</h1>
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/guest/dashboard")}
+            className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group w-fit"
+          >
+            <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+          </Button>
+          <h1 className={`${archivoBlack.className} text-3xl sm:text-4xl font-bold mb-2`} style={{ color: '#44291B' }}>Search accommodations</h1>
           <p style={{ color: '#44291B' }}>Find your perfect housing option</p>
         </div>
 
