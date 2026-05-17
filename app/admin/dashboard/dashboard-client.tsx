@@ -60,6 +60,7 @@ interface Props {
   housedStudents: HousedStudent[];
   billingStatusCounts: Record<string, number>;
   alerts: Alert[];
+  activityLogs?: any[];
 }
 
 // ── Helpers ──
@@ -132,8 +133,42 @@ function DonutChart({ value, size = 120, label, color = "#78A24C" }: { value: nu
   );
 }
 
+function getActionBadgeStyle(action: string): string {
+  const act = (action || "").toLowerCase();
+  if (act.includes("create") || act.includes("add") || act.includes("assign")) {
+    return "bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]";
+  }
+  if (act.includes("approve") || act.includes("pay") || act.includes("success")) {
+    return "bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]";
+  }
+  if (act.includes("update") || act.includes("edit") || act.includes("modify")) {
+    return "bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]";
+  }
+  if (act.includes("delete") || act.includes("remove") || act.includes("reject") || act.includes("cancel")) {
+    return "bg-[#FEF2F2] text-[#B91C1C] border border-[#FECACA]";
+  }
+  return "bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A]";
+}
+
+function getEntityBadgeStyle(entity: string): string {
+  const ent = (entity || "").toLowerCase();
+  if (ent.includes("accommodation") || ent.includes("property")) {
+    return "bg-[#FAF5FF] text-[#6B21A8] border border-[#E9D5FF]";
+  }
+  if (ent.includes("unit") || ent.includes("room")) {
+    return "bg-[#F5F3FF] text-[#4338CA] border border-[#DDD6FE]";
+  }
+  if (ent.includes("application")) {
+    return "bg-[#FDF2F8] text-[#BE185D] border border-[#FBCFE8]";
+  }
+  if (ent.includes("billing") || ent.includes("payment") || ent.includes("invoice")) {
+    return "bg-[#FFF7ED] text-[#C2410C] border border-[#FFEDD5]";
+  }
+  return "bg-[#F8FAFC] text-[#475569] border border-[#E2E8F0]";
+}
+
 // ── Main Component ──
-export function DashboardClient({ user, profile, notifications: initialNotifications, stats, propertyOccupancy, recentApplications, pendingApplications, housedStudents, billingStatusCounts, alerts }: Props) {
+export function DashboardClient({ user, profile, notifications: initialNotifications, stats, propertyOccupancy, recentApplications, pendingApplications, housedStudents, billingStatusCounts, alerts, activityLogs }: Props) {
   const [propFilter, setPropFilter] = useState<"all" | "available">("all");
   const [propSearch, setPropSearch] = useState("");
   const [propPage, setPropPage] = useState(1);
@@ -479,7 +514,10 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           {/* Property Occupancy */}
           <Card className="lg:col-span-2 shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl h-full">
             <div className="flex items-center justify-between">
-              <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Property Occupancy</h2>
+              <div className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-[#44291B]" />
+                <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Property Occupancy</h2>
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -494,21 +532,21 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                 />
               </div>
 
-              <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] w-full sm:w-auto h-10">
-                <Filter className="w-3.5 h-3.5 text-[#44291B]/40 bg-[#FDFFF4]" />
-                <Select
-                  value={propFilter}
-                  onValueChange={(val: "all" | "available") => { setPropFilter(val); setPropPage(1); }}
-                >
-                  <SelectTrigger className="w-full sm:w-[130px] border-none shadow-none bg-[#FDFFF4] focus:ring-0 px-0 text-[#44291B] text-sm h-full  tracking-wide">
+              <Select
+                value={propFilter}
+                onValueChange={(val: "all" | "available") => { setPropFilter(val); setPropPage(1); }}
+              >
+                <SelectTrigger className={`${archivo.className} flex items-center justify-between gap-2 text-sm pl-3 pr-2.5 rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] w-full sm:w-[170px] h-10 text-[#44291B] placeholder:text-[#44291B]/40 focus:outline-none focus:ring-2 focus:ring-[#78A24C]/20 focus:border-[#78A24C] transition-all tracking-wide shadow-none hover:bg-[#FDFFF4]`}>
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-3.5 h-3.5 text-[#44291B]/40 shrink-0" />
                     <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#FDFFF4] border-[#cfd6e4] text-[#44291B]">
-                    <SelectItem value="all" className="text-sm tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">All Properties</SelectItem>
-                    <SelectItem value="available" className="text-sm  tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">Available Only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-[#FDFFF4] border-[#cfd6e4] text-[#44291B]">
+                  <SelectItem value="all" className="text-sm tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">All Properties</SelectItem>
+                  <SelectItem value="available" className="text-sm  tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">Available Only</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-5">
               {filteredProps.length === 0 ? (
@@ -553,7 +591,10 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           {/* Summary Donuts / Financial Summary */}
           <Card className="shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-6 overflow-hidden relative rounded-2xl h-full">
             <div className="w-full flex items-center justify-between">
-              <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Financial Summary</h2>
+              <div className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-[#44291B]" />
+                <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Financial Summary</h2>
+              </div>
             </div>
 
             <div className="flex-1 flex flex-col gap-6 justify-between">
@@ -629,7 +670,10 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           {/* Recent Applications Table */}
           <Card className="lg:col-span-2 shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-4 rounded-2xl h-full lg:min-h-[26rem]">
             <div className="flex justify-between items-center">
-              <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Recent Applications</h2>
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#44291B]" />
+                <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Recent Applications</h2>
+              </div>
               <Link
                 href="/admin/applications"
                 className="text-xs font-bold text-[#78A24C] hover:text-[#5C7E3A] hover:underline flex items-center gap-1 transition-all"
@@ -690,7 +734,10 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           {/* Student Management */}
           <Card className="shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl">
             <div className="flex items-center justify-between">
-              <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Students</h2>
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#44291B]" />
+                <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Students</h2>
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -705,21 +752,21 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                 />
               </div>
 
-              <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] w-full sm:w-auto h-10">
-                <Filter className="w-3.5 h-3.5 text-[#44291B]/40" />
-                <Select
-                  value={studentTab}
-                  onValueChange={(val: "housed" | "waiting") => { setStudentTab(val); setStudentSearch(""); setStudentPage(1); }}
-                >
-                  <SelectTrigger className="w-full sm:w-[130px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] text-sm h-full tracking-wide">
+              <Select
+                value={studentTab}
+                onValueChange={(val: "housed" | "waiting") => { setStudentTab(val); setStudentSearch(""); setStudentPage(1); }}
+              >
+                <SelectTrigger className={`${archivo.className} flex items-center justify-between gap-2 text-sm pl-3 pr-2.5 rounded-xl border border-[#cfd6e4] bg-[#FDFFF4] w-full sm:w-[170px] h-10 text-[#44291B] placeholder:text-[#44291B]/40 focus:outline-none focus:ring-2 focus:ring-[#78A24C]/20 focus:border-[#78A24C] transition-all tracking-wide shadow-none hover:bg-[#FDFFF4]`}>
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-3.5 h-3.5 text-[#44291B]/40 shrink-0" />
                     <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#FDFFF4] border-[#cfd6e4] text-[#44291B]">
-                    <SelectItem value="housed" className="text-sm tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">Housed ({stats.studentsHoused})</SelectItem>
-                    <SelectItem value="waiting" className="text-sm tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">Waiting ({stats.waitingListCount})</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-[#FDFFF4] border-[#cfd6e4] text-[#44291B]">
+                  <SelectItem value="housed" className="text-sm tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">Housed ({stats.studentsHoused})</SelectItem>
+                  <SelectItem value="waiting" className="text-sm tracking-wide focus:bg-[#F6F8D5] focus:text-[#44291B]">Waiting ({stats.waitingListCount})</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {(() => {
@@ -790,11 +837,77 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           </Card>
         </div>
 
-        {/* ── Row: Quick Reports ── */}
-        <div className="grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-12 duration-500 delay-700">
-          <Card className="shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl">
-            <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Quick Reports</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {/* ── Bottom Section: Logs & Reports Side-by-Side ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-12 duration-500 delay-700">
+          
+          {/* Left Side: Activity Logs */}
+          <Card className="lg:col-span-7 shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl h-[490px]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock3 className="w-5 h-5 text-[#44291B]" />
+                <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Activity Logs</h2>
+              </div>
+              <Badge className="bg-[#E7FAD3] text-[#78A24C] border-none font-bold uppercase text-[9px] tracking-wider px-2.5 py-0.5">
+                Real-time
+              </Badge>
+            </div>
+            
+            <div className="space-y-3 overflow-y-auto pr-1 h-[390px]">
+              {!activityLogs || activityLogs.length === 0 ? (
+                <div className="py-8 text-center text-[#44291B]/40 font-semibold italic text-sm">
+                  No activity logs recorded yet.
+                </div>
+              ) : (
+                activityLogs.map((log) => {
+                  const actor = log.users ? (Array.isArray(log.users) ? log.users[0] : log.users) : null;
+                  const actorName = actor ? `${actor.first_name} ${actor.last_name}` : "System";
+                  const timeAgo = new Date(log.timestamp).toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                  
+                  return (
+                    <div key={log.log_id} className="flex items-start gap-3 p-3.5 rounded-xl bg-white/50 border border-[#cfd6e4]/40 hover:bg-[#F6F8D5] transition-all group">
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#264384] to-[#5591AB] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                        {actor ? initials(actor.first_name, actor.last_name) : "SYS"}
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-[#44291B]">
+                            {actorName}
+                          </span>
+                          <span className="text-[10px] text-[#44291B]/45 font-medium whitespace-nowrap">
+                            {timeAgo}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#44291B]/75 leading-relaxed font-medium">
+                          {log.log_desc}
+                        </p>
+                        <div className="flex gap-2 items-center pt-0.5">
+                          <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded tracking-wide ${getActionBadgeStyle(log.action_type)}`}>
+                            {log.action_type ? log.action_type.replace(/_/g, " ") : ""}
+                          </span>
+                          <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded tracking-wide ${getEntityBadgeStyle(log.entity_type)}`}>
+                            {log.entity_type}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </Card>
+
+          {/* Right Side: Quick Reports */}
+          <Card className="lg:col-span-5 shadow-sm border border-[#cfd6e4] bg-[#FDFFF4] ring-0 p-5 flex flex-col gap-5 rounded-2xl h-[490px]">
+            <div className="flex items-center gap-2">
+              <Download className="w-5 h-5 text-[#44291B]" />
+              <h2 className={`${archivoBlack.className} text-xl text-[#44291B]`}>Quick Reports</h2>
+            </div>
+            <div className="flex flex-col gap-2.5">
               {[
                 {
                   label: "Dormitories with occupancy rates",
@@ -885,12 +998,12 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                 <div
                   key={i}
                   onClick={report.action}
-                  className="flex items-center gap-3 p-4 rounded-xl border border-[#cfd6e4]/50 bg-white/50 hover:bg-[#F6F8D5] hover:border-[#cfd6e4] transition-all group cursor-pointer"
+                  className="flex items-center gap-3 py-2 px-3 rounded-xl border border-[#cfd6e4]/50 bg-white/50 hover:bg-[#F6F8D5] hover:border-[#cfd6e4] transition-all group cursor-pointer"
                 >
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-all shadow-sm" style={{ backgroundColor: `${report.color}15`, color: report.color }}>
-                    <report.icon className="w-5 h-5" />
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all shadow-sm" style={{ backgroundColor: `${report.color}15`, color: report.color }}>
+                    <report.icon className="w-4 h-4" />
                   </div>
-                  <span className={`${archivo.className} text-sm text-[#44291B] font-bold leading-snug`}>{report.label}</span>
+                  <span className={`${archivo.className} text-xs text-[#44291B] font-bold leading-snug`}>{report.label}</span>
                 </div>
               ))}
             </div>

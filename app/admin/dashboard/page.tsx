@@ -29,6 +29,7 @@ export default async function AdminDashboardPage() {
   let housedStudents: any[] = [];
   let profile: any = null;
   let notifications: any[] = [];
+  let activityLogs: any[] = [];
 
   if (isHousingAdmin && managedAccommodationIds.length === 0) {
     const [profileRes, notificationsRes] = await Promise.all([
@@ -45,6 +46,12 @@ export default async function AdminDashboardPage() {
     let recentApplicationsQuery: any = supabase.from("accommodation_application").select("application_id, user_id, application_status, date_submitted, preferred_accommodation_id, preferred_unit_type, users(first_name, last_name, email), accommodation(name)");
     let allBillingQuery: any = supabase.from("billing").select("billing_id, amount, status, due_date, created_at, assignment_id");
     let housedStudentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status, users(first_name, last_name, email), unit(unit_number, accommodation(name))");
+    let activityLogsQuery: any = supabase
+      .from("activity_log")
+      .select("log_id, user_id, action_type, entity_type, entity_id, log_desc, timestamp, users(first_name, last_name, email)")
+      .neq("entity_type", "auth")
+      .neq("action_type", "login")
+      .neq("action_type", "logout");
 
     if (isHousingAdmin) {
       accommodationsQuery = accommodationsQuery.in("accommodation_id", managedAccommodationIds);
@@ -71,6 +78,11 @@ export default async function AdminDashboardPage() {
         .eq("assignment_status", "active")
         .in("unit.accommodation_id", managedAccommodationIds)
         .limit(20);
+      if (managedAccommodationIds.length > 0) {
+        activityLogsQuery = activityLogsQuery.or(`user_id.eq.${session.user_id},entity_id.in.(${managedAccommodationIds.join(",")})`);
+      } else {
+        activityLogsQuery = activityLogsQuery.eq("user_id", session.user_id);
+      }
     } else {
       activeAssignmentsQuery = activeAssignmentsQuery.eq("assignment_status", "active");
       pendingApplicationsQuery = pendingApplicationsQuery.in("application_status", ["pending_admin", "pending_dorm_manager"]);
@@ -86,7 +98,8 @@ export default async function AdminDashboardPage() {
       allBillingRes,
       housedStudentsRes,
       profileRes,
-      notificationsRes
+      notificationsRes,
+      activityLogsRes
     ] = await Promise.all([
       accommodationsQuery,
       unitsQuery,
@@ -96,7 +109,8 @@ export default async function AdminDashboardPage() {
       allBillingQuery,
       housedStudentsQuery,
       userProfileService.getProfile(session.user_id),
-      userProfileService.getNotifications(session.user_id)
+      userProfileService.getNotifications(session.user_id),
+      activityLogsQuery.order("timestamp", { ascending: false }).limit(15)
     ]);
 
     accommodations = accommodationsRes.data || [];
@@ -108,6 +122,7 @@ export default async function AdminDashboardPage() {
     housedStudents = housedStudentsRes.data || [];
     profile = profileRes;
     notifications = notificationsRes.data || [];
+    activityLogs = activityLogsRes.data || [];
   }
 
   // Compute derived data
@@ -225,6 +240,7 @@ export default async function AdminDashboardPage() {
       housedStudents={flattenedHoused}
       billingStatusCounts={statusCounts}
       alerts={alerts}
+      activityLogs={activityLogs}
     />
   );
 }
