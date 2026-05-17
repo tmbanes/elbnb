@@ -26,14 +26,18 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
   const [deletedManagerName, setDeletedManagerName] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [managerFilter, setManagerFilter] = useState<"all" | "assigned">("all");
+  const [tableLoading, setTableLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  async function fetchManagers() {
+  async function fetchManagers(filter: "all" | "assigned" = managerFilter) {
     try {
-      const res = await fetch("/api/housing/managers?all=true");
+      setTableLoading(true);
+      const url = filter === "all" ? "/api/housing/managers?all=true" : "/api/housing/managers";
+      const res = await fetch(url);
       const data = await res.json();
       
       if (!res.ok) throw new Error(data.error);
@@ -41,8 +45,13 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setTableLoading(false);
     }
+  }
+
+  function handleFilterChange(filter: "all" | "assigned") {
+    setManagerFilter(filter);
+    fetchManagers(filter);
   }
 
 
@@ -198,6 +207,9 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
        
         <ManagersList
           managers={managers}
+          managerFilter={managerFilter}
+          tableLoading={tableLoading}
+          onFilterChange={handleFilterChange}
           onBackToHousing={handleBackToHousing}
           onAdd={openAddModal}
           onSelect={handleSelect}
@@ -244,7 +256,7 @@ export default function ManagersContent({ initialManagers, initialError }: { ini
         isOpen={modalOpen}
         onClose={closeModal}
         onSuccess={() => {
-          fetchManagers();
+          fetchManagers(managerFilter);
         }}
         existingManager={editingManager}
       />

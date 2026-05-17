@@ -244,7 +244,7 @@ export const HousingService = {
         return [];
       }
 
-      query = query.in("employee_id", validManagerIds);
+      query = query.in("user_id", validManagerIds);
     }
 
     const { data, error } = await query;

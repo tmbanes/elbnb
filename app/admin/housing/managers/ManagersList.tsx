@@ -8,11 +8,21 @@ import { cn } from "@/lib/utils";
 // ui components
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Filter, Loader2 } from "lucide-react";
 import Modal from "@/app/admin/housing/components/modals/Modal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ManagersListProps {
   managers: Manager[];
+  managerFilter: "all" | "assigned";
+  tableLoading: boolean;
+  onFilterChange: (filter: "all" | "assigned") => void;
   onBackToHousing: () => void;
   onAdd: () => void;
   onSelect: (id: string) => void;
@@ -23,6 +33,9 @@ interface ManagersListProps {
 
 export default function ManagersList({
   managers,
+  managerFilter,
+  tableLoading,
+  onFilterChange,
   onBackToHousing,
   onAdd,
   onSelect,
@@ -57,8 +70,8 @@ export default function ManagersList({
       </div>
 
       {/* FILTER & ACTIONS */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border border-[#e8e2d6] shadow-sm mt-4">
-        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md bg-white focus-within:ring-2 focus-within:ring-[#264384]/20 transition-all">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm mt-4">
+        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 w-full md:max-w-md bg-transparent focus-within:ring-2 focus-within:ring-[#264384]/20 transition-all">
           <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
             <Search className="w-4 h-4" />
           </div>
@@ -67,14 +80,32 @@ export default function ManagersList({
             placeholder="Search manager name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2.5 text-sm outline-none bg-white text-[#44291B] placeholder:text-[#44291B]/50"
+            className="w-full px-3 py-2 bg-transparent text-sm outline-none text-[#44291B] placeholder:text-[#44291B]/50"
           />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] w-full sm:w-auto">
+            <Filter className="w-4 h-4 text-[#44291B]/50" />
+            <Select
+              value={managerFilter}
+              onValueChange={(val: any) => onFilterChange(val)}
+            >
+              <SelectTrigger className="w-full sm:w-[170px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
+                <SelectValue placeholder="All Managers" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md">
+                <SelectItem value="all" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Managers</SelectItem>
+                <SelectItem value="assigned" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Assigned to Me</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="hidden sm:block h-6 w-px bg-[#e8e2d6] mx-2"></div>
+
           <Button
             onClick={onAdd}
-            className="flex items-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto"
+            className="flex items-center justify-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Add Manager</span>
@@ -82,7 +113,12 @@ export default function ManagersList({
         </div>
       </div>
 
-      {filteredManagers.length > 0 ? (
+      {tableLoading ? (
+        <div className="flex h-[300px] flex-col items-center justify-center rounded-2xl border border-[#e8e2d6] bg-[#FDFFF4] shadow-sm mt-4 gap-3">
+          <Loader2 className="w-8 h-8 text-[#264384] animate-spin" />
+          <p className="text-sm font-medium text-[#44291B]/70">Updating managers list...</p>
+        </div>
+      ) : filteredManagers.length > 0 ? (
         <DataTable
           columns={getManagerColumns(
             onSelect,

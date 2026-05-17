@@ -10,7 +10,8 @@ export const GET = withRole(['housing_admin', 'admin'], async (req: NextRequest,
       const data = await HousingService.getDorm(id);
       return NextResponse.json(data);
     }
-    const data = await HousingService.getAllDorms(user);
+    const fetchAll = req.nextUrl.searchParams.get("all") === "true";
+    const data = await HousingService.getAllDorms(fetchAll ? undefined : user);
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

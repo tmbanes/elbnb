@@ -187,8 +187,23 @@ export default function ApplicationList({
 
             const data = await response.json();
 
-            // 3. Set the applications state (the server already flattened it)
-            setApplications(data.applications ?? []);
+            // Flatten data if Supabase returns arrays for single joins
+            const rawApps = data.applications ?? [];
+            const mappedData = (rawApps as any[])?.map((app) => {
+                const user = Array.isArray(app.users) ? app.users[0] : app.users;
+                if (user && user.student && Array.isArray(user.student)) {
+                    user.student = user.student[0];
+                }
+
+                return {
+                    ...app,
+                    users: user,
+                    accommodation: Array.isArray(app.accommodation) ? app.accommodation[0] : app.accommodation,
+                    unit: Array.isArray(app.unit) ? app.unit[0] : app.unit,
+                };
+            });
+
+            setApplications(mappedData ?? []);
 
         } catch (err: any) {
             console.error("Frontend fetch error:", err.message);
@@ -196,24 +211,6 @@ export default function ApplicationList({
         } finally {
             setLoading(false);
         }
-
-        // Flatten data if Supabase returns arrays for single joins
-        const mappedData = (data as any[])?.map((app) => {
-            const user = Array.isArray(app.users) ? app.users[0] : app.users;
-            if (user && user.student && Array.isArray(user.student)) {
-                user.student = user.student[0];
-            }
-
-            return {
-                ...app,
-                users: user,
-                accommodation: Array.isArray(app.accommodation) ? app.accommodation[0] : app.accommodation,
-                unit: Array.isArray(app.unit) ? app.unit[0] : app.unit,
-            };
-        });
-
-        setApplications(mappedData ?? []);
-        setLoading(false);
     }
 
     // Derived State for Pagination - Client-side search for better UX (Name, Student ID, App ID)

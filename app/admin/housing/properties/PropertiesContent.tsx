@@ -46,17 +46,21 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
   const [isDeletingProperty, setIsDeletingProperty] = useState(false);
   const [isDeletingUnit, setIsDeletingUnit] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [assignmentFilter, setAssignmentFilter] = useState<"all" | "assigned">("assigned");
+  const [tableLoading, setTableLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
   
 
-  async function fetchProperties() {
+  async function fetchProperties(filter: "all" | "assigned" = assignmentFilter) {
     try {
+      setTableLoading(true);
+      const suffix = filter === "all" ? "?all=true" : "";
       const [dormsRes, rentalsRes, allManagersRes] = await Promise.all([
-        fetch("/api/housing/dorms"),
-        fetch("/api/housing/rental-spaces"),
+        fetch(`/api/housing/dorms${suffix}`),
+        fetch(`/api/housing/rental-spaces${suffix}`),
         fetch("/api/housing/managers?all=true"),
       ]);
       const [dorms, rentals, freshManagers] = await Promise.all([
@@ -78,8 +82,13 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setTableLoading(false);
     }
+  }
+
+  function handleAssignmentFilterChange(val: "all" | "assigned") {
+    setAssignmentFilter(val);
+    fetchProperties(val);
   }
 
 
@@ -282,6 +291,9 @@ export default function PropertiesContent({ initialData }: { initialData: { prop
           filtered={filtered}
           tableData={tableData}
           typeFilter={typeFilter}
+          assignmentFilter={assignmentFilter}
+          tableLoading={tableLoading}
+          onAssignmentFilterChange={handleAssignmentFilterChange}
           managerCount={assignedManagerCount}
           totalManagerCount={totalManagerCount}
           addPromptOpen={addPromptOpen}

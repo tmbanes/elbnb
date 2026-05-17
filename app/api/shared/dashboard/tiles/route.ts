@@ -44,9 +44,9 @@ export const GET = withRole([...ALL_ROLES], async (req, { user }) => {
       return NextResponse.json({ error: result.error || 'No data found' }, { status: 400 });
     }
 
-    let data = result.data;
+    let data: any = result.data;
     if (type === 'accommodations' && Array.isArray(data)) {
-      data = await withResolvedAccommodationImages(data);
+      data = await withResolvedAccommodationImages(data as any);
     }
 
     if (type !== 'accommodations' && Array.isArray(data)) {
