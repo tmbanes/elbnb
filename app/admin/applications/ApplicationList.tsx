@@ -56,11 +56,9 @@ export default function ApplicationList({
     initialData: any;
 }) {
     const supabase = getSupabaseBrowserClient();
-    
+
     // Sync applications in real-time
-    useRealtimeSync('accommodation_application', undefined, '*', () => {
-        fetchApplications();
-    });
+    useRealtimeSync('accommodation_application', undefined, '*'); // [CHANGES] realtimesync does the fetching
 
     // Data State
     const [applications, setApplications] = useState<Application[]>(initialData.applications);
@@ -81,7 +79,7 @@ export default function ApplicationList({
         e.stopPropagation();
         const app = applications.find(a => a.application_id === id);
         if (!app || !["pending_dorm_manager", "pending_admin"].includes(app.application_status)) return;
-        
+
         setSelectedIds(prev => {
             const next = new Set(prev);
             if (next.has(id)) next.delete(id);
@@ -93,7 +91,7 @@ export default function ApplicationList({
     const toggleSelectAll = () => {
         const batchableApps = paginated.filter(app => ["pending_dorm_manager", "pending_admin"].includes(app.application_status));
         const batchableIds = batchableApps.map(app => app.application_id);
-        
+
         if (batchableIds.length === 0) return;
 
         const allBatchableSelected = batchableIds.every(id => selectedIds.has(id));
@@ -126,7 +124,7 @@ export default function ApplicationList({
                 return res;
             });
             await Promise.all(promises);
-            
+
             // Refresh
             fetchApplications();
             setSelectedIds(new Set());
@@ -233,7 +231,7 @@ export default function ApplicationList({
             if (user && user.student && Array.isArray(user.student)) {
                 user.student = user.student[0];
             }
-            
+
             return {
                 ...app,
                 users: user,
@@ -255,12 +253,12 @@ export default function ApplicationList({
         const fullName = `${firstName} ${lastName}`;
         const studentNum = (app.users?.student as any)?.student_num?.toLowerCase() || "";
         const appId = app.application_id?.toLowerCase() || "";
-        
-        return fullName.includes(s) || 
-               firstName.includes(s) || 
-               lastName.includes(s) || 
-               studentNum.includes(s) || 
-               appId.includes(s);
+
+        return fullName.includes(s) ||
+            firstName.includes(s) ||
+            lastName.includes(s) ||
+            studentNum.includes(s) ||
+            appId.includes(s);
     });
 
     const paginated = filteredApplication.slice(
@@ -347,11 +345,11 @@ export default function ApplicationList({
 
     const triggerBatchAction = async (action: string) => {
         setBatchActionType(action);
-        
+
         // Fetch units for selected applications
         const selectedApps = applications.filter(app => selectedIds.has(app.application_id));
         const propertyIds = Array.from(new Set(selectedApps.map(app => app.preferred_accommodation_id).filter(Boolean) as string[]));
-        
+
         if (propertyIds.length > 0) {
             setLoading(true);
             try {
@@ -362,7 +360,7 @@ export default function ApplicationList({
                         .select('*')
                         .eq('accommodation_id', pid)
                         .eq('unit_status', 'active');
-                    
+
                     if (!error) {
                         const available = (data || []).filter(u => u.current_occupancy < u.max_occupancy);
                         unitMap[pid] = available;
@@ -384,13 +382,13 @@ export default function ApplicationList({
                 setLoading(false);
             }
         }
-        
+
         setShowBatchModal(true);
     };
 
     const confirmBatchAction = async () => {
         if (!batchActionType) return;
-        
+
 
 
         // VALIDATION: Check all applications have a unit assigned (for approve actions)
@@ -602,10 +600,10 @@ export default function ApplicationList({
                             <tr className="border-b border-[#e8e2d6] bg-[#FDFFF4]">
                                 <th className="py-3 px-3">
                                     <div className="flex items-center justify-center">
-                                        <input 
-                                            type="checkbox" 
+                                        <input
+                                            type="checkbox"
                                             checked={
-                                                paginated.filter(app => ["pending_dorm_manager", "pending_admin"].includes(app.application_status)).length > 0 && 
+                                                paginated.filter(app => ["pending_dorm_manager", "pending_admin"].includes(app.application_status)).length > 0 &&
                                                 paginated.filter(app => ["pending_dorm_manager", "pending_admin"].includes(app.application_status)).every(app => selectedIds.has(app.application_id))
                                             }
                                             onChange={toggleSelectAll}
@@ -652,16 +650,16 @@ export default function ApplicationList({
                                             <td className="py-4 px-3">
                                                 <div className="flex items-center justify-center">
                                                     {["pending_dorm_manager", "pending_admin"].includes(app.application_status) ? (
-                                                        <input 
-                                                            type="checkbox" 
+                                                        <input
+                                                            type="checkbox"
                                                             checked={isBatchSelected}
                                                             onClick={(e) => e.stopPropagation()}
                                                             onChange={(e) => toggleSelect(app.application_id, e as any)}
                                                             className="w-4 h-4 rounded border-[#e8e2d6] text-[#264384] focus:ring-[#264384] cursor-pointer transition-all"
                                                         />
                                                     ) : (
-                                                        <div 
-                                                            className="w-4 h-4 rounded border-2 border-[#e8e2d6]/60 bg-slate-100/50 cursor-not-allowed flex items-center justify-center" 
+                                                        <div
+                                                            className="w-4 h-4 rounded border-2 border-[#e8e2d6]/60 bg-slate-100/50 cursor-not-allowed flex items-center justify-center"
                                                             title="Bulk action not available for this status"
                                                         >
                                                             <div className="w-1.5 h-[1.5px] bg-[#e8e2d6] rounded-full" />
@@ -685,9 +683,9 @@ export default function ApplicationList({
                                                 </span>
                                             </td>
                                             <td className="py-4 px-5 text-right">
-                                                <Button 
-                                                    size="sm" 
-                                                    variant="ghost" 
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
                                                     className="p-2 text-slate-500 bg-slate-100/50 hover:text-[#264384] hover:bg-[#AFBFE1] rounded-xl h-9 w-9 p-0 flex items-center justify-center ml-auto transition-all"
                                                 >
                                                     <Eye className="w-4 h-4" />
@@ -738,17 +736,17 @@ export default function ApplicationList({
                             <span className={cn("text-base tracking-tight leading-none uppercase font-bold", archivo.className)}>Applications Selected</span>
                         </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-3 pr-2">
-                        <Button 
+                        <Button
                             onClick={() => handleBatchAction("reject")}
-                            variant="ghost" 
+                            variant="ghost"
                             className="bg-rose-600 text-white hover:bg-rose-700 font-bold text-xs h-11 px-6 rounded-2xl transition-all shadow-lg active:scale-95 group"
                             disabled={loading}
                         >
                             Reject All
                         </Button>
-                        <Button 
+                        <Button
                             onClick={() => triggerBatchAction("pending_payment")}
                             className={cn("bg-white text-[#264384] hover:bg-gray-100 font-bold text-xs h-11 px-8 rounded-2xl shadow-xl transition-all active:scale-95", archivo.className)}
                             disabled={loading}
@@ -756,7 +754,7 @@ export default function ApplicationList({
                             {loading ? "Processing..." : "Approve & Assign"}
                         </Button>
                         <div className="w-[1px] h-8 bg-white/10 mx-2" />
-                        <button 
+                        <button
                             onClick={handleCloseSelection}
                             className="p-2.5 hover:bg-white/10 rounded-full transition-all hover:rotate-90 duration-300"
                             title="Cancel Selection"
@@ -797,8 +795,8 @@ export default function ApplicationList({
                                             batchStep === 1
                                                 ? "bg-[#264384] border-[#264384] text-white shadow-lg shadow-[#264384]/30"
                                                 : batchStep > 1
-                                                ? "bg-[#264384] border-[#264384] text-white"
-                                                : "bg-white border-[#e8e2d6] text-[#44291B]/30"
+                                                    ? "bg-[#264384] border-[#264384] text-white"
+                                                    : "bg-white border-[#e8e2d6] text-[#44291B]/30"
                                         )}>
                                             {batchStep > 1 ? (
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>

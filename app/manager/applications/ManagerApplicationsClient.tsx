@@ -45,7 +45,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
   const toggleSelectAll = () => {
     const batchableApps = paginated.filter(app => app.application_status === "pending_dorm_manager");
     const batchableIds = batchableApps.map(app => app.application_id);
-    
+
     if (batchableIds.length === 0) return;
 
     const allBatchableSelected = batchableIds.every(id => selectedIds.has(id));
@@ -63,7 +63,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
 
   const handleBatchAction = async (action: ManagerAction) => {
     if (selectedIds.size === 0) return;
-    
+
     // Check if units are assigned for all forwards
     if (action === "forward") {
       const allAssigned = Array.from(selectedIds).every(id => selectedUnits[id]);
@@ -75,13 +75,13 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
 
     setLoading(true);
     try {
-      const promises = Array.from(selectedIds).map(id => 
+      const promises = Array.from(selectedIds).map(id =>
         updateApplicationStatus(id, action, selectedUnits[id])
       );
       await Promise.all(promises);
-      
-      setApplications(prev => prev.map(a => 
-        selectedIds.has(a.application_id) 
+
+      setApplications(prev => prev.map(a =>
+        selectedIds.has(a.application_id)
           ? { ...a, application_status: action === "forward" ? "pending_admin" : "rejected" }
           : a
       ));
@@ -111,13 +111,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
     }
   }, []);
 
-  useRealtimeSync('accommodation_application', undefined, '*', () => {
-    load();
-  });
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  useRealtimeSync('accommodation_application', undefined, '*');
 
   async function handleAction(id: string, action: ManagerAction, unitId?: string) {
     await updateApplicationStatus(id, action, unitId);
@@ -177,43 +171,52 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
     }
   };
 
-    const [showBatchModal, setShowBatchModal] = useState(false);
-    const [batchActionType, setBatchActionType] = useState<ManagerAction | null>(null);
-    const [selectedUnits, setSelectedUnits] = useState<Record<string, string>>({});
-    const [removingId, setRemovingId] = useState<string | null>(null);
-    const [batchError, setBatchError] = useState<string | null>(null);
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [batchActionType, setBatchActionType] = useState<ManagerAction | null>(null);
+  const [selectedUnits, setSelectedUnits] = useState<Record<string, string>>({});
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [batchError, setBatchError] = useState<string | null>(null);
 
-    const handleCloseSelection = () => {
-        setSelectedIds(new Set());
-        setSelectedUnits({});
-        setBatchError(null);
-    };
+  const handleCloseSelection = () => {
+    setSelectedIds(new Set());
+    setSelectedUnits({});
+    setBatchError(null);
+  };
 
-    const triggerBatchAction = (action: ManagerAction) => {
-      setBatchActionType(action);
-      setShowBatchModal(true);
-    };
+  const triggerBatchAction = (action: ManagerAction) => {
+    setBatchActionType(action);
+    setShowBatchModal(true);
+  };
 
-    const confirmBatchAction = async () => {
-      if (!batchActionType) return;
-      
-      // Duplicate applicant check
-      const selectedApps = applications.filter(app => selectedIds.has(app.application_id));
-      const userIds = selectedApps.map(app => app.user_id);
-      if (new Set(userIds).size < userIds.length) {
-        setBatchError("Duplicate applicants detected. You cannot forward more than one application per student.");
-        return;
+  const confirmBatchAction = async () => {
+    if (!batchActionType) return;
+
+    // Duplicate applicant check
+    const selectedApps = applications.filter(app => selectedIds.has(app.application_id));
+    const userIds = selectedApps.map(app => app.user_id);
+    if (new Set(userIds).size < userIds.length) {
+      setBatchError("Duplicate applicants detected. You cannot forward more than one application per student.");
+      return;
+    }
+
+    setBatchError(null);
+    if (batchActionType === "forward") {
+      const allAssigned = Array.from(selectedIds).every(id => selectedUnits[id]);
+      if (!allAssigned) {
+        setBatchError("Please assign a unit for all applications before forwarding.");
+        return; //early return prevents modal closing
       }
+    }
 
-      setBatchError(null);
-      await handleBatchAction(batchActionType);
-      if (!batchError) setShowBatchModal(false);
-    };
+    await handleBatchAction(batchActionType);
+    setShowBatchModal(false);
+    if (!batchError) setShowBatchModal(false);
+  };
 
-    const selectedAppsData = applications.filter(app => selectedIds.has(app.application_id));
+  const selectedAppsData = applications.filter(app => selectedIds.has(app.application_id));
 
-    return (
-      <div className="h-[100dvh] flex overflow-hidden bg-[#F6F8D5] font-[family-name:var(--font-archivo)] relative">
+  return (
+    <div className="h-[100dvh] flex overflow-hidden bg-[#F6F8D5] font-[family-name:var(--font-archivo)] relative">
 
       {/* LEFT SIDE (LIST) */}
       <div className={cn(
@@ -272,10 +275,10 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                   <tr className="border-b border-[#e8e2d6]">
                     <th className="py-3 px-3">
                       <div className="flex items-center justify-center">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={
-                            paginated.filter(app => app.application_status === "pending_dorm_manager").length > 0 && 
+                            paginated.filter(app => app.application_status === "pending_dorm_manager").length > 0 &&
                             paginated.filter(app => app.application_status === "pending_dorm_manager").every(app => selectedIds.has(app.application_id))
                           }
                           onChange={toggleSelectAll}
@@ -315,16 +318,16 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                           <td className="py-4 px-3">
                             <div className="flex items-center justify-center">
                               {app.application_status === "pending_dorm_manager" ? (
-                                <input 
-                                  type="checkbox" 
+                                <input
+                                  type="checkbox"
                                   checked={isBatchSelected}
                                   onClick={(e) => e.stopPropagation()}
                                   onChange={(e) => toggleSelect(app.application_id, e as any)}
                                   className="w-4 h-4 rounded border-[#e8e2d6] text-[#264384] focus:ring-[#264384] cursor-pointer transition-all"
                                 />
                               ) : (
-                                <div 
-                                  className="w-4 h-4 rounded border-2 border-[#e8e2d6]/60 bg-slate-100/50 cursor-not-allowed flex items-center justify-center" 
+                                <div
+                                  className="w-4 h-4 rounded border-2 border-[#e8e2d6]/60 bg-slate-100/50 cursor-not-allowed flex items-center justify-center"
                                   title="Bulk action not available for this status"
                                 >
                                   <div className="w-1.5 h-[1.5px] bg-[#e8e2d6] rounded-full" />
@@ -425,27 +428,27 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
               <span className={cn("text-base tracking-tight leading-none uppercase font-bold", archivo.className)}>Applications Selected</span>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3 pr-2">
-            <Button 
+            <Button
               onClick={() => handleBatchAction("reject")}
-              variant="ghost" 
+              variant="ghost"
               className="bg-rose-600 text-white hover:bg-rose-700 font-bold text-xs h-11 px-6 rounded-2xl transition-all shadow-lg active:scale-95 group"
               disabled={loading}
             >
               Reject All
             </Button>
-            <Button 
+            <Button
               onClick={() => triggerBatchAction("forward")}
               className={cn("bg-white text-[#264384] hover:bg-gray-100 font-bold text-xs h-11 px-8 rounded-2xl shadow-xl transition-all active:scale-95", archivo.className)}
               disabled={loading}
             >
               {loading ? "Processing..." : "Forward to Admin"}
             </Button>
-            
+
             <div className="w-[1px] h-8 bg-white/10 mx-2" />
-            
-            <button 
+
+            <button
               onClick={handleCloseSelection}
               className="p-2.5 hover:bg-white/10 rounded-full transition-all hover:rotate-90 duration-300"
               title="Cancel Selection"
@@ -477,11 +480,11 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                   const isRemoving = removingId === app.application_id;
 
                   return (
-                    <div 
-                      key={app.application_id} 
+                    <div
+                      key={app.application_id}
                       className={cn(
-                          "transition-all duration-500 ease-in-out origin-top px-2",
-                          isRemoving ? "max-h-0 opacity-0 mb-0 scale-95 overflow-hidden" : "max-h-[500px] opacity-100 mb-4"
+                        "transition-all duration-500 ease-in-out origin-top px-2",
+                        isRemoving ? "max-h-0 opacity-0 mb-0 scale-95 overflow-hidden" : "max-h-[500px] opacity-100 mb-4"
                       )}
                     >
                       <div className={cn(
@@ -489,28 +492,28 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                         isRemoving && "translate-x-full"
                       )}>
                         {/* REMOVE BUTTON */}
-                        <button 
-                            onClick={() => {
-                                setRemovingId(app.application_id);
-                                setTimeout(() => {
-                                    setSelectedIds(prev => {
-                                        const next = new Set(prev);
-                                        next.delete(app.application_id);
-                                        if (next.size === 0) setShowBatchModal(false);
-                                        return next;
-                                    });
-                                    setSelectedUnits(prev => {
-                                        const next = { ...prev };
-                                        delete next[app.application_id];
-                                        return next;
-                                    });
-                                    setRemovingId(null);
-                                }, 500);
-                            }}
-                            className="absolute top-3 right-3 w-7 h-7 bg-white border border-[#e8e2d6] text-rose-500 rounded-full shadow-md flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all hover:bg-rose-50 hover:scale-110 z-10"
-                            title="Remove from batch"
+                        <button
+                          onClick={() => {
+                            setRemovingId(app.application_id);
+                            setTimeout(() => {
+                              setSelectedIds(prev => {
+                                const next = new Set(prev);
+                                next.delete(app.application_id);
+                                if (next.size === 0) setShowBatchModal(false);
+                                return next;
+                              });
+                              setSelectedUnits(prev => {
+                                const next = { ...prev };
+                                delete next[app.application_id];
+                                return next;
+                              });
+                              setRemovingId(null);
+                            }, 500);
+                          }}
+                          className="absolute top-3 right-3 w-7 h-7 bg-white border border-[#e8e2d6] text-rose-500 rounded-full shadow-md flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all hover:bg-rose-50 hover:scale-110 z-10"
+                          title="Remove from batch"
                         >
-                            <X className="w-3.5 h-3.5" />
+                          <X className="w-3.5 h-3.5" />
                         </button>
 
                         <div className="flex items-center justify-between">
@@ -526,7 +529,7 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
                         {batchActionType === 'forward' && (
                           <div className="space-y-1.5 pt-2 border-t border-[#e8e2d6]/40">
                             <label className="text-[10px] font-extrabold text-[#44291B]/40 uppercase tracking-widest pl-1">Assign Unit</label>
-                            <select 
+                            <select
                               value={selectedUnits[app.application_id] || ""}
                               onChange={(e) => setSelectedUnits(prev => ({ ...prev, [app.application_id]: e.target.value }))}
                               className="w-full bg-[#F6F8D5]/50 border border-[#e8e2d6] rounded-xl px-3 py-2 text-xs font-bold text-[#44291B] outline-none focus:ring-2 focus:ring-[#264384]/10 transition-all"
@@ -552,21 +555,21 @@ export default function ManagerApplicationsClient({ user, initialData }: { user:
               </div>
 
               {batchError && (
-                  <div className="flex items-center gap-3 p-4 bg-rose-50 border border-rose-100 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
-                      <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
-                      <p className="text-[11px] font-bold text-rose-700 uppercase tracking-tight leading-tight">{batchError}</p>
-                  </div>
+                <div className="flex items-center gap-3 p-4 bg-rose-50 border border-rose-100 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+                  <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+                  <p className="text-[11px] font-bold text-rose-700 uppercase tracking-tight leading-tight">{batchError}</p>
+                </div>
               )}
 
               <div className="flex items-center gap-3 pt-2">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   onClick={() => setShowBatchModal(false)}
                   className="flex-1 h-12 rounded-2xl font-bold text-slate-500 hover:bg-slate-100"
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={confirmBatchAction}
                   disabled={loading}
                   className={cn("flex-[2] h-12 rounded-2xl bg-[#264384] text-white hover:bg-[#1e3569] uppercase text-[11px] tracking-widest shadow-lg transition-transform active:scale-95", archivoBlack.className)}
