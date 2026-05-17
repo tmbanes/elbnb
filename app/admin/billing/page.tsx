@@ -57,10 +57,7 @@ export default async function AdminBillingPage() {
   return (
     <main className="min-h-screen px-20 md:px-36 py-4 md:py-10" style={{ backgroundColor: '#F6F8D5' }}>
       <div className="max-w-7xl mx-auto space-y-8">
-        <div className="mb-8">
-          <h1 className={`${archivoBlack.className} pt-6 space-y-4 text-5xl font-bold text-[#44291B] tracking-tight`}>Billing Management</h1>
-          <p className={`${archivo.className}  mt-1 mb-4 text-sm text-[#44291B]`}>Overview of all tenant invoices, payments, and revenue.</p>
-        </div>
+
 
         <AdminBillingClient
           adminId={user.user_id}

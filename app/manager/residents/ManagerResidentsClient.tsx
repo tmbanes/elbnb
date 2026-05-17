@@ -160,6 +160,14 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
 
           {/* Header */}
           <div>
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/manager/dashboard")}
+              className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#FDFFF4] -ml-2 mb-2 transition-all group w-fit"
+            >
+              <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+            </Button>
             <h1 className={`${archivoBlack.className} pt-6 text-3xl md:text-5xl text-[#44291B] tracking-tight`}>
               Resident Management
             </h1>

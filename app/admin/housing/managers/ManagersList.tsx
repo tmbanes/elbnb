@@ -44,6 +44,7 @@ export default function ManagersList({
   selectedId,
 }: ManagersListProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   const filteredManagers = managers.filter((m) => {
     const name = `${m.users.first_name} ${m.users.last_name}`.toLowerCase();
@@ -64,6 +65,14 @@ export default function ManagersList({
       "flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 font-[family-name:var(--font-archivo)]",
       selectedId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
     )}>
+      <Button
+        variant="ghost"
+        onClick={() => router.push("/admin/dashboard")}
+        className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group w-fit"
+      >
+        <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+        <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+      </Button>
       <div>
         <h1 className="text-3xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] mr-2">Managers Page</h1>
         <p className="text-sm md:text-md text-[#44291B] pt-3">Explore and manage property managers and their assignments</p>
