@@ -30,16 +30,7 @@ export default async function GuestDashboardPage() {
     accommodationsRes
   ] = await Promise.all([
     userProfileService.getProfile(user.user_id),
-    supabase
-      .from('accommodation_assignment')
-      .select(`
-              *,
-              accommodation:accommodation_id (*),
-              unit:unit_id (*)
-          `)
-      .eq('user_id', user.user_id)
-      .in('assignment_status', ['active', 'waiting_payment', 'pending'])
-      .maybeSingle(),
+    userProfileService.getCurrentAccommodation(user.user_id),
     supabase
       .from('accommodation_application')
       .select('*')
@@ -56,11 +47,22 @@ export default async function GuestDashboardPage() {
   const [resolvedActiveResidency, resolvedHistory, resolvedApplications, resolvedAccommodations] = await Promise.all([
     // Active residency
     (async () => {
-      const activeResidency = activeResidencyRes.data;
-      if (activeResidency?.accommodation?.image) {
-        activeResidency.accommodation.image = await resolveAccommodationImageDisplayUrl(activeResidency.accommodation.image).catch(() => null);
+      const currentRes = activeResidencyRes.data as any;
+      if (!currentRes) return null;
+
+      const accommodation = currentRes.unit?.accommodation || null;
+      if (accommodation?.image) {
+        accommodation.image = await resolveAccommodationImageDisplayUrl(accommodation.image).catch(() => null);
       }
-      return activeResidency;
+
+      return {
+        ...currentRes,
+        accommodation,
+        unit: currentRes.unit ? {
+          unit_number: currentRes.unit.unit_number,
+          unit_type: currentRes.unit.unit_type
+        } : null
+      };
     })(),
     // History
     Promise.all((historyRes.data || []).map(async (item: any) => {

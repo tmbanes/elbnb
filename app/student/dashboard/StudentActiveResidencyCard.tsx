@@ -104,10 +104,10 @@ export function StudentActiveResidencyCard({ user, currentResidency }: StudentAc
 
                     {currentResidency?.unit?.accommodation?.image && (
                         <div className="absolute inset-0 z-0 opacity-10">
-                            <Image 
-                                src={currentResidency.unit.accommodation.image} 
-                                alt="Background" 
-                                fill 
+                            <Image
+                                src={currentResidency.unit.accommodation.image}
+                                alt="Background"
+                                fill
                                 className="object-cover"
                             />
                         </div>

@@ -175,7 +175,7 @@ not yet tested
   */
 
   async getAccommodationHistory(user_id: string) {
-    const client = await supabase();
+    const client = supabaseAdmin;
     const { data, error } = await client
       .from("accommodation_application")
       .select(`
@@ -286,7 +286,7 @@ not yet tested
   },
 
   async getCurrentAccommodation(user_id: string) {
-    const client = await supabase();
+    const client = supabaseAdmin;
     const { data, error } = await client
       .from("accommodation_assignment")
       .select(`
@@ -300,18 +300,17 @@ not yet tested
           accommodation:accommodation_id (
             name,
             location,
-            renewal_end_date,
             image,
             accommodation_images(url, is_primary, storage_path)
           )
         )
       `)
-
       .eq("user_id", user_id)
       .in("assignment_status", ["active", "waiting_payment", "pending"])
-      .maybeSingle();
+      .order("move_in_date", { ascending: false })
+      .limit(1);
 
-    const res = data as any;
+    const res = (data && data.length > 0) ? (data[0] as any) : null;
     if (res?.unit?.accommodation) {
       let displayImage = res.unit.accommodation.image;
       const images = res.unit.accommodation.accommodation_images || [];
@@ -328,7 +327,7 @@ not yet tested
   },
 
   async getDashboardStats(user_id: string) {
-    const client = await supabase();
+    const client = supabaseAdmin;
 
     // Get summary of bills
     const { data: billingData } = await client
@@ -337,7 +336,7 @@ not yet tested
       .eq("accommodation_assignment.user_id", user_id);
 
     let totalBalance = 0;
-    billingData?.forEach(bill => {
+    billingData?.forEach((bill: any) => {
       if (bill.status !== 'paid') totalBalance += bill.amount;
     });
 
