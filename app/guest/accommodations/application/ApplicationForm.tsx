@@ -204,7 +204,7 @@ const triggerErrorClass =
 export default function ApplyAccommodationForm({ authUser }: { authUser: any }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const accommodationIdFromQuery = searchParams.get("accommodationId") ?? "";
+  const accommodationIdFromQuery = searchParams.get("accommodationId") ?? searchParams.get("id") ?? "";
   const unitIdFromQuery = searchParams.get("unitId") ?? "";
 
   const [accommodation, setAccommodation] = useState<Accommodation | null>(
@@ -389,6 +389,10 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
           null;
         setAccommodation(matched);
 
+        if (matched) {
+          setValue("preferred_accommodation_id", matched.accommodation_id, { shouldValidate: true });
+        }
+
         const resUnit = await fetch(
           `/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodationIdFromQuery}`,
         );
@@ -404,6 +408,9 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
           const matchedUnit =
             dataUnits.find((u) => u.unit_id === unitIdFromQuery) ?? null;
           setUnit(matchedUnit);
+          if (matchedUnit) {
+            setValue("preferred_unit_type", matchedUnit.unit_type, { shouldValidate: true });
+          }
         }
       } catch (error) {
         console.error("Failed to fetch accommodation:", error);
@@ -707,6 +714,9 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                       readOnly
                       className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`}
                       value={accommodation?.name || "Loading..."}
+                    />
+                    <input
+                      type="hidden"
                       {...register("preferred_accommodation_id")}
                     />
                   </Field>

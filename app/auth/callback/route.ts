@@ -26,7 +26,7 @@ export async function GET(request: Request) {
         });
 
         // Skip auth-callback bounce and determine exact target immediately
-        if (!next || next === "/auth-callback") {
+        if (!next || next === "/auth-callback" || next === "/") {
           if (!(user as any).is_profile_complete) {
             next = "/complete-profile";
           } else {
