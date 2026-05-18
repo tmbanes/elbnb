@@ -24,7 +24,6 @@ export default async function AdminDashboardPage() {
   let accommodations: any[] = [];
   let units: any[] = [];
   let studentsHousedCount = 0;
-  let studentsHousedCount = 0;
   let pendingApplications: any[] = [];
   let recentApplications: any[] = [];
   let allBilling: any[] = [];
@@ -41,9 +40,6 @@ export default async function AdminDashboardPage() {
     profile = profileRes;
     notifications = notificationsRes.data || [];
   } else {
-    let accommodationsQuery: any = supabase.from("accommodation").select("accommodation_id, name, accommodation_type, accommodation_status");
-    let unitsQuery: any = supabase.from("unit").select("accommodation_id, max_occupancy, current_occupancy, unit_status");
-    let activeAssignmentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id", { count: 'exact', head: true });
     let accommodationsQuery: any = supabase.from("accommodation").select("accommodation_id, name, accommodation_type, accommodation_status");
     let unitsQuery: any = supabase.from("unit").select("accommodation_id, max_occupancy, current_occupancy, unit_status");
     let activeAssignmentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id", { count: 'exact', head: true });
