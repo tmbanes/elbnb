@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search, Filter, Building2, History, ArrowLeft, AlertCircle,
   CheckCircle2, Clock, ShieldAlert, CalendarArrowDown, CalendarArrowUp,
-  RefreshCw, Loader2, ChevronLeft, ChevronRight, MapPin, Mail,
+  RefreshCw, Loader2, ChevronLeft, ChevronRight, MapPin, Mail, Receipt,
 } from "lucide-react";
 import {
   Select,
@@ -36,6 +36,13 @@ interface Resident {
     unit_id: string; unit_number: string; unit_type: string;
     accommodation: { accommodation_id: string; name: string; location: string };
   };
+  billing?: {
+    billing_id: string;
+    amount: number;
+    status: string;
+    due_date: string;
+    created_at: string;
+  }[];
 }
 
 type FilterStatus = "all" | "awaiting" | "active" | "checked-out";
@@ -73,7 +80,39 @@ export default function ResidentsClient({
   initialResidents: Resident[];
   initialError: string | null;
 }) {
-  const residents = initialResidents.filter(r => r.unit && r.unit.accommodation);
+  // Deduplicate residents by user_id to ensure each resident only appears once in the list.
+  // Since the backend query already orders by move_in_date DESC, this will automatically keep the most recent stay.
+  // We aggregate all invoices from all stays for the same resident to display them all under "Invoices & Bills".
+  const residents = useMemo(() => {
+    const billingsByUser: Record<string, any[]> = {};
+    for (const r of initialResidents) {
+      if (r.user_id && r.billing) {
+        if (!billingsByUser[r.user_id]) {
+          billingsByUser[r.user_id] = [];
+        }
+        for (const bill of r.billing) {
+          if (!billingsByUser[r.user_id].some((b) => b.billing_id === bill.billing_id)) {
+            billingsByUser[r.user_id].push(bill);
+          }
+        }
+      }
+    }
+
+    const seen = new Set<string>();
+    return initialResidents
+      .filter((r) => r.unit && r.unit.accommodation)
+      .filter((r) => {
+        if (!r.user_id) return true;
+        if (seen.has(r.user_id)) return false;
+        seen.add(r.user_id);
+        return true;
+      })
+      .map((r) => ({
+        ...r,
+        billing: r.user_id ? billingsByUser[r.user_id] : r.billing,
+      }));
+  }, [initialResidents]);
+
   const [error, setError] = useState<string | null>(initialError);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -177,8 +216,8 @@ export default function ResidentsClient({
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm">
-            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] flex-1 max-w-sm hover:bg-[#F6F8D5] transition-colors">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm">
+            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] flex-1 w-full md:max-w-md transition-colors">
               <Search className="w-4 h-4 ml-3 text-[#44291B]/40 shrink-0" />
               <input
                 type="text"
@@ -189,37 +228,39 @@ export default function ResidentsClient({
               />
             </div>
 
-            <Select value={accomFilter} onValueChange={(val) => { setAccomFilter(val); setPage(1); }}>
-              <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
-                  <SelectValue placeholder="All Properties" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
-                <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
-                {accommodations.map(a => (
-                  <SelectItem key={a.accommodation_id} value={a.accommodation_id} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
-                    {a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
+              <Select value={accomFilter} onValueChange={(val) => { setAccomFilter(val); setPage(1); }}>
+                <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm w-full md:w-auto">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
+                    <SelectValue placeholder="All Properties" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                  <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
+                  {accommodations.map(a => (
+                    <SelectItem key={a.accommodation_id} value={a.accommodation_id} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                      {a.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val as FilterStatus); setPage(1); }}>
-              <SelectTrigger className="h-10 min-w-[160px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
-                  <SelectValue placeholder="All Status" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
-                <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Status</SelectItem>
-                <SelectItem value="awaiting" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Awaiting Move-in</SelectItem>
-                <SelectItem value="active" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Active Stays</SelectItem>
-                <SelectItem value="checked-out" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Stay History</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val as FilterStatus); setPage(1); }}>
+                <SelectTrigger className="h-10 min-w-[160px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm w-full md:w-auto">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
+                    <SelectValue placeholder="All Status" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                  <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Status</SelectItem>
+                  <SelectItem value="awaiting" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Awaiting Move-in</SelectItem>
+                  <SelectItem value="active" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Active Stays</SelectItem>
+                  <SelectItem value="checked-out" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Stay History</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-hidden shadow-sm">
@@ -392,11 +433,22 @@ function ResidentDetailPanel({
       </div>
 
       <div className="p-6 space-y-4 flex-1">
-        <div>
-          <h2 className="text-2xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
-            {resident.users.first_name} {resident.users.last_name}
-          </h2>
-          <p className="text-sm text-[#44291B]/50 font-medium mt-0.5">{resident.users.email}</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
+              {resident.users.first_name} {resident.users.last_name}
+            </h2>
+            <p className="text-sm text-[#44291B]/50 font-medium mt-0.5">{resident.users.email}</p>
+          </div>
+          {resident.assignment_status && STATUS_MAP[resident.assignment_status as AssignmentStatus] && (
+            <span className={cn(
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 mt-1",
+              STATUS_MAP[resident.assignment_status as AssignmentStatus].badge
+            )}>
+              <span className={cn("w-1.5 h-1.5 rounded-full", STATUS_MAP[resident.assignment_status as AssignmentStatus].dot)} />
+              {STATUS_MAP[resident.assignment_status as AssignmentStatus].label}
+            </span>
+          )}
         </div>
 
         <div className="bg-[#FDFFF4] border border-[#e8e2d6] rounded-2xl overflow-hidden shadow-sm">
@@ -421,23 +473,91 @@ function ResidentDetailPanel({
           </div>
         </div>
 
+        {/* Invoices & Bills Section */}
+        {resident.billing && resident.billing.length > 0 && (
+          <div className="bg-[#FDFFF4] border border-[#e8e2d6] rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-2 border-b border-[#e8e2d6] pb-2">
+              <Receipt className="w-4 h-4 text-[#264384]" />
+              <span className="text-[10px] font-black text-[#44291B]/50 uppercase tracking-widest">
+                Invoices & Bills ({resident.billing.length})
+              </span>
+            </div>
+            
+            <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
+              {[...resident.billing]
+                .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .map((bill: any) => (
+                  <div key={bill.billing_id} className="p-3 bg-white border border-[#e8e2d6]/60 rounded-xl space-y-2 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-[#44291B]">₱{bill.amount?.toLocaleString()}</p>
+                        <p className="text-[9px] font-bold text-[#44291B]/40 uppercase tracking-tight">Amount Billed</p>
+                      </div>
+                      <span className={cn(
+                        "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider",
+                        bill.status === "paid"
+                          ? "bg-[#E7FAD3] text-[#78A24C]"
+                          : bill.status === "unpaid"
+                            ? "bg-[#FFF7ED] text-[#EA580C]"
+                            : "bg-gray-100 text-gray-500"
+                      )}>
+                        {bill.status === "paid" ? "Paid" : "Unpaid"}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-[#44291B]/60 flex items-center justify-between pt-1 border-t border-[#e8e2d6]/20">
+                      <span>Due: {fmtDate(bill.due_date)}</span>
+                      <span>Created: {fmtDate(bill.created_at)}</span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+            
+            {resident.billing.some((bill: any) => bill.status === "unpaid") && (
+              <p className="text-[10px] text-[#EA580C] font-semibold bg-[#FFF7ED] p-2.5 rounded-xl border border-[#EA580C]/20 leading-normal">
+                ⚠️ Resident has unpaid bills. Payments must be recorded to secure slot or maintain status.
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="bg-[#FDFFF4] border border-[#e8e2d6] rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <History className="w-4 h-4 text-[#44291B]/50" />
             <span className="text-[10px] font-black text-[#44291B]/50 uppercase tracking-widest">History</span>
           </div>
-          <div className="relative pl-7 space-y-6 before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[#e8e2d6]">
-            <TimelineEvent color="bg-[#5591AB]" title="Assigned" subtitle={`Room ${resident.unit?.unit_number} • ${fmtDate(resident.move_in_date)}`} />
-            {(isActive || isCheckedOut) && (
-              <TimelineEvent color="bg-[#78A24C]" title="Moved In" subtitle={fmtDate(resident.move_in_date)} />
-            )}
-            {isCheckedOut && (
-              <TimelineEvent
-                color={isCompleted ? "bg-[#0369A1]" : isTerminated ? "bg-[#B91C1C]" : "bg-gray-400"}
-                title={isCompleted ? "Completed Stay" : isTerminated ? "Stay Terminated" : "Assignment Cancelled"}
-                subtitle={fmtDate(resident.actual_move_out_date || resident.expected_move_out_date)}
-              />
-            )}
+          <div className="space-y-6">
+            {(() => {
+              const events = [];
+              if (isCheckedOut) {
+                events.push({
+                  color: isCompleted ? "bg-[#0369A1]" : isTerminated ? "bg-[#B91C1C]" : "bg-gray-400",
+                  title: isCompleted ? "Completed Stay" : isTerminated ? "Stay Terminated" : "Assignment Cancelled",
+                  subtitle: fmtDate(resident.actual_move_out_date || resident.expected_move_out_date),
+                });
+              }
+              if (isActive || isCheckedOut) {
+                events.push({
+                  color: "bg-[#78A24C]",
+                  title: "Moved In",
+                  subtitle: fmtDate(resident.move_in_date),
+                });
+              }
+              events.push({
+                color: "bg-[#5591AB]",
+                title: "Assigned",
+                subtitle: `Room ${resident.unit?.unit_number} • ${fmtDate(resident.move_in_date)}`,
+              });
+
+              return events.map((ev, index) => (
+                <TimelineEvent
+                  key={ev.title}
+                  color={ev.color}
+                  title={ev.title}
+                  subtitle={ev.subtitle}
+                  isLast={index === events.length - 1}
+                />
+              ));
+            })()}
           </div>
         </div>
 
@@ -546,10 +666,15 @@ function ResidentDetailPanel({
   );
 }
 
-function TimelineEvent({ color, title, subtitle }: any) {
+function TimelineEvent({ color, title, subtitle, isLast }: any) {
   return (
-    <div className="relative flex items-start">
-      <div className={cn("absolute left-[-22px] top-1.5 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10", color)} />
+    <div className="relative pl-7">
+      {/* Connector line */}
+      {!isLast && (
+        <div className="absolute left-[9px] top-3.5 bottom-[-24px] w-[2px] bg-[#e8e2d6]" />
+      )}
+      {/* Dot */}
+      <div className={cn("absolute left-0 top-1.5 w-3 h-3 rounded-full border-2 border-white shadow-sm z-10", color)} />
       <div>
         <p className="text-sm font-bold text-[#44291B] leading-none mb-1">{title}</p>
         <p className="text-xs text-[#44291B]/50 font-medium">{subtitle}</p>

@@ -492,7 +492,7 @@ export default function ApplicationList({
             <div className="flex flex-row items-center justify-between gap-2 bg-[#FDFFF4] p-3 rounded-2xl border border-[#e8e2d6] shadow-sm mt-4 overflow-x-auto scrollbar-hide">
 
                 {/* Search */}
-                <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 min-w-[140px] max-w-xs">
+                <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 min-w-[140px] max-w-md">
                     <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
                         <Search className="w-3.5 h-3.5" />
                     </div>
@@ -510,7 +510,7 @@ export default function ApplicationList({
                     <div className="flex items-center gap-2 text-sm px-2 rounded-xl border border-[#e8e2d6] shrink-0">
                         <Filter className="w-3.5 h-3.5 text-[#44291B]/50" />
                         <Select value={status} onValueChange={(val) => { setStatus(val); setPage(1); }}>
-                            <SelectTrigger className="w-[100px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-bold h-9 text-xs">
+                            <SelectTrigger className="w-[100px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
                                 <SelectValue placeholder="Status" />
                             </SelectTrigger>
                             <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
@@ -526,7 +526,7 @@ export default function ApplicationList({
                     <div className="flex items-center gap-2 text-sm px-2 rounded-xl border border-[#e8e2d6] shrink-0">
                         <Filter className="w-3.5 h-3.5 text-[#44291B]/50" />
                         <Select value={accommodation} onValueChange={(val) => { setAccommodation(val); setPage(1); }}>
-                            <SelectTrigger className="w-[110px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-bold h-9 text-xs">
+                            <SelectTrigger className="w-[110px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
                                 <SelectValue placeholder="Property" />
                             </SelectTrigger>
                             <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
@@ -542,7 +542,7 @@ export default function ApplicationList({
                     <div className="flex items-center gap-2 text-sm px-2 rounded-xl border border-[#e8e2d6] shrink-0">
                         <Filter className="w-3.5 h-3.5 text-[#44291B]/50" />
                         <Select value={period} onValueChange={(val) => { setPeriod(val); setPage(1); }}>
-                            <SelectTrigger className="w-[90px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-bold h-9 text-xs">
+                            <SelectTrigger className="w-[90px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
                                 <SelectValue placeholder="Period" />
                             </SelectTrigger>
                             <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
@@ -660,7 +660,7 @@ export default function ApplicationList({
                                                 <span className={cn(
                                                     "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
                                                     statusConfig[status]?.class || "bg-gray-100 text-gray-600"
-                                                 )}>
+                                                )}>
                                                     <span className={cn("w-1.5 h-1.5 rounded-full", statusConfig[status]?.dot || "bg-gray-400")} />
                                                     {statusConfig[status]?.label || app.application_status.replace(/_/g, " ")}
                                                 </span>

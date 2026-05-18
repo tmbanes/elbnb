@@ -83,79 +83,138 @@ export default function ManagerDashboardUI({
     const [dormName] = useState(initialData.accom?.name || "No Dorm Assigned");
     const [dormLocation] = useState(initialData.accom?.location || "");
 
+    // --- Residents / Waitlist Data Fetch ---
+    const { data: residentsData } = useSWR(
+        "/api/manager/dashboard/residents",
+        fetcher,
+        { revalidateOnFocus: false }
+    );
+
     // --- Operations Metrics ---
-    const [totalRooms] = useState(initialData.units.length);
-    const [occupiedCount] = useState(initialData.assignments.length);
-    const [availableCount] = useState(() => {
-        const totalCap = initialData.units.reduce((acc, u) => acc + (u.max_occupancy || 0), 0);
-        return Math.max(0, totalCap - initialData.assignments.length);
-    });
-    const [occupiedRate] = useState(() => {
-        const totalCap = initialData.units.reduce((acc, u) => acc + (u.max_occupancy || 0), 0);
-        const count = initialData.assignments.length;
-        return totalCap > 0 ? ((count / totalCap) * 100).toFixed(1) : "0.0";
-    });
-    const [waitlistCount] = useState(initialData.waitlist.length);
+    const totalRooms = initialData.units.length;
+    const occupiedCount = residentsData?.residents ? residentsData.residents.length : initialData.assignments.length;
+    const availableCount = (() => {
+        const totalCap = initialData.units.reduce((acc: number, u: any) => acc + (u.max_occupancy || 0), 0);
+        return Math.max(0, totalCap - occupiedCount);
+    })();
+    const occupiedRate = (() => {
+        const totalCap = initialData.units.reduce((acc: number, u: any) => acc + (u.max_occupancy || 0), 0);
+        return totalCap > 0 ? ((occupiedCount / totalCap) * 100).toFixed(1) : "0.0";
+    })();
+    const waitlistCount = residentsData?.waitlist ? residentsData.waitlist.length : initialData.waitlist.length;
 
     // --- Room Grid ---
-    const [dbRooms] = useState(() => {
+    const dbRooms = React.useMemo(() => {
         const occupantsMap = new Map<string, any[]>();
-        initialData.assignments.forEach((asg: any) => {
-            if (!occupantsMap.has(asg.unit_id)) occupantsMap.set(asg.unit_id, []);
-            occupantsMap.get(asg.unit_id)!.push({
-                id: asg.user_id,
-                assignment_id: asg.assignment_id,
-                name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
-                student_number: 'Not provided', // Would need additional student fetch if needed
-                move_in_date: asg.move_in_date,
-                payment_status: 'Unknown',
-                avatar: asg.users?.profile_picture_url || null,
+        
+        if (residentsData?.residents) {
+            residentsData.residents.forEach((r: any) => {
+                if (!occupantsMap.has(r.unit_id)) occupantsMap.set(r.unit_id, []);
+                occupantsMap.get(r.unit_id)!.push({
+                    id: r.user_id,
+                    assignment_id: r.assignment_id,
+                    name: r.name,
+                    student_number: r.student_number,
+                    move_in_date: r.move_in_date,
+                    payment_status: r.payment_status,
+                    avatar: r.profile_picture_url || null,
+                });
             });
-        });
+        } else {
+            initialData.assignments.forEach((asg: any) => {
+                if (!occupantsMap.has(asg.unit_id)) occupantsMap.set(asg.unit_id, []);
+                const u = asg.users || {};
+                const studentNum = u.student?.student_number || u.student?.[0]?.student_number || "Not provided";
+                occupantsMap.get(asg.unit_id)!.push({
+                    id: asg.user_id,
+                    assignment_id: asg.assignment_id,
+                    name: `${u.first_name || ""} ${u.last_name || ""}`.trim(),
+                    student_number: studentNum,
+                    move_in_date: asg.move_in_date,
+                    payment_status: "Unknown",
+                    avatar: asg.users?.profile_picture_url || null,
+                });
+            });
+        }
 
         return initialData.units.map((u: any) => {
             const occupants = occupantsMap.get(u.unit_id) ?? [];
             const count = occupants.length;
-            let status = 'vacant';
-            if (u.unit_status === 'inactive' || u.unit_status === 'maintenance') status = 'maintenance';
-            else if (count >= u.max_occupancy) status = 'full';
-            else if (count > 0) status = 'partial';
+            let status = "vacant";
+            if (u.unit_status === "inactive" || u.unit_status === "maintenance") status = "maintenance";
+            else if (count >= u.max_occupancy) status = "full";
+            else if (count > 0) status = "partial";
             return { id: u.unit_number, unit_id: u.unit_id, status, current: count, max: u.max_occupancy, occupants };
         });
-    });
+    }, [residentsData, initialData]);
+
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
     const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
 
     // --- Residents / Waitlist Table ---
-    const [allStudents] = useState(() => {
-        return initialData.assignments.map((asg: any) => ({
-            type: 'resident' as const,
-            id: asg.users?.user_id || asg.user_id,
-            assignment_id: asg.assignment_id,
-            name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
-            student_number: 'Not provided',
-            college: 'Not specified',
-            room_number: asg.unit?.unit_number || 'Unassigned',
-            move_in_date: asg.move_in_date,
-            payment_status: 'Unknown',
-        }));
-    });
-    const [waitlistStudents] = useState(() => {
+    const allStudents = React.useMemo(() => {
+        if (residentsData?.residents) {
+            return residentsData.residents.map((r: any) => ({
+                type: "resident" as const,
+                id: r.user_id,
+                assignment_id: r.assignment_id,
+                name: r.name,
+                student_number: r.student_number,
+                college: r.college,
+                room_number: r.room_number,
+                unit_number: r.room_number,
+                move_in_date: r.move_in_date,
+                payment_status: r.payment_status,
+            }));
+        }
+        return initialData.assignments.map((asg: any) => {
+            const u = asg.users || {};
+            const studentNum = u.student?.student_number || u.student?.[0]?.student_number || "Not provided";
+            const college = u.student?.college || u.student?.[0]?.college || "Not specified";
+            return {
+                type: "resident" as const,
+                id: u.user_id || asg.user_id,
+                assignment_id: asg.assignment_id,
+                name: `${u.first_name || ""} ${u.last_name || ""}`.trim(),
+                student_number: studentNum,
+                college: college,
+                room_number: asg.unit?.unit_number || "Unassigned",
+                unit_number: asg.unit?.unit_number || "Unassigned",
+                move_in_date: asg.move_in_date,
+                payment_status: "Unknown",
+            };
+        });
+    }, [residentsData, initialData]);
+
+    const waitlistStudents = React.useMemo(() => {
+        if (residentsData?.waitlist) {
+            return residentsData.waitlist.map((w: any) => ({
+                type: "waitlist" as const,
+                id: w.user_id,
+                application_id: w.application_id,
+                name: w.name,
+                student_number: w.student_number,
+                college: w.college,
+                date_submitted: w.date_submitted,
+                preferred_unit_type: w.preferred_unit_type,
+            }));
+        }
         return initialData.waitlist.map((app: any) => {
             const u = app.users || {};
             return {
-                type: 'waitlist' as const,
+                type: "waitlist" as const,
                 id: u.user_id || app.user_id,
                 application_id: app.application_id,
-                name: `${u.first_name || ''} ${u.last_name || ''}`.trim(),
-                student_number: u.student?.student_number || u.student?.[0]?.student_number || 'N/A',
-                college: u.student?.college || u.student?.[0]?.college || 'N/A',
+                name: `${u.first_name || ""} ${u.last_name || ""}`.trim(),
+                student_number: u.student?.student_number || u.student?.[0]?.student_number || "N/A",
+                college: u.student?.college || u.student?.[0]?.college || "N/A",
                 date_submitted: app.date_submitted,
                 preferred_unit_type: app.preferred_unit_type,
             };
         });
-    });
-    const [activeTab, setActiveTab] = useState<'residents' | 'waitlist'>('residents');
+    }, [residentsData, initialData]);
+
+    const [activeTab, setActiveTab] = useState<"residents" | "waitlist">("residents");
     const [tableSearch, setTableSearch] = useState("");
     const [tablePage, setTablePage] = useState(1);
     const [tableFilters, setTableFilters] = useState({
@@ -210,7 +269,7 @@ export default function ManagerDashboardUI({
     const rooms = dbRooms.length > 0 ? dbRooms : [];
 
     const currentData = activeTab === 'residents' ? allStudents : waitlistStudents;
-    const filteredStudents = currentData.filter(student => {
+    const filteredStudents = currentData.filter((student: any) => {
         const matchesSearch = (student.name || "").toLowerCase().includes(tableSearch.toLowerCase()) ||
             (student.student_number || "").toLowerCase().includes(tableSearch.toLowerCase());
         const matchesCollege = tableFilters.college === "all" || student.college === tableFilters.college;

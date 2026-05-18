@@ -27,6 +27,7 @@ type Stats = {
   totalProperties: number; totalUnits: number; occupiedUnits: number; availableUnits: number;
   studentsHoused: number; waitingListCount: number; revenueThisMonth: number; overdueCount: number;
   occupancyRate: number; collectionRate: number; totalCollected: number; totalBilled: number;
+  unpaidBalance: number; overdueBalance: number;
 };
 type PropertyOcc = {
   id: string; name: string; type: string; status: string;
@@ -442,10 +443,12 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
           {/* Financials */}
           <div className="space-y-2">
             <h3 className={`${archivo.className} text-[11px] font-bold uppercase tracking-[0.12em] text-[#6B7280] ml-1`}>Financials</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Revenue (MTD)", value: fmt(stats.revenueThisMonth), color: "#78A24C", desc: "This month", icon: Wallet },
-                { label: "Overdue Payments", value: stats.overdueCount, color: stats.overdueCount > 0 ? "#DF3538" : "#78A24C", desc: stats.overdueCount > 0 ? "Action required" : "All clear", icon: AlertTriangle },
+                { label: "Total Revenue", value: fmt(stats.totalCollected), color: "#5591AB", desc: "All-time collected", icon: Wallet },
+                { label: "Revenue (MTD)", value: fmt(stats.revenueThisMonth), color: "#78A24C", desc: "Current month", icon: BarChart3 },
+                { label: "Unpaid Balance", value: fmt(stats.unpaidBalance), color: "#EB8A0B", desc: "Awaiting payment", icon: Clock3 },
+                { label: "Overdue Balance", value: fmt(stats.overdueBalance), color: stats.overdueBalance > 0 ? "#DF3538" : "#78A24C", desc: stats.overdueBalance > 0 ? "Action required" : "All clear", icon: AlertTriangle },
               ].map((card, i) => (
                 <Card key={i} className="shadow-sm border-none hover:shadow-md transition-all duration-300 ring-0 py-5 group cursor-default rounded-2xl" style={{ backgroundColor: card.color }}>
                   <CardContent className="p-0 px-5 flex flex-col gap-1 relative overflow-hidden">
@@ -453,7 +456,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
                       <span className={`${archivo.className} text-[11px] font-bold uppercase tracking-wider text-white/90`}>{card.label}</span>
                       <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm"><card.icon className="w-5 h-5 text-white" /></div>
                     </div>
-                    <span className={`${archivoBlack.className} text-[38px] leading-tight text-white`}>{typeof card.value === "string" ? card.value : card.value.toLocaleString()}</span>
+                    <span className={`${archivoBlack.className} text-[38px] leading-tight text-white`}>{card.value}</span>
                     <span className={`${archivo.className} text-[11px] text-white/80 font-medium`}>{card.desc}</span>
                   </CardContent>
                 </Card>

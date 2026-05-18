@@ -126,11 +126,11 @@ export default function Auth() {
       />
 
       {/* House UI */}
-      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
+      <div className="relative z-10 w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] max-w-lg sm:max-w-2xl md:max-w-4xl lg:max-w-5xl flex flex-col items-center">
 
         {/* Roof */}
         <div
-          className="w-[140%] h-40 bg-[#3e2319] border-b-4 border-[#2d1a12] mb-[-4px] relative z-20"
+          className="w-[110%] sm:w-[115%] md:w-[115%] lg:w-[120%] h-28 sm:h-36 md:h-48 lg:h-56 bg-[#3e2319] border-b-4 border-[#2d1a12] mb-[-4px] relative z-20 transition-all duration-300"
           style={{
             clipPath: 'polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%)',
             backgroundImage: STYLES.gradients.roof
@@ -139,42 +139,42 @@ export default function Auth() {
 
         {/* Upper wall / window (Sign Up) */}
         <div
-          className="w-[120%] aspect-[30/7] bg-[#3e2319] border-x-2 border-[#2d1a12] relative overflow-hidden flex items-center justify-center"
+          className="w-full aspect-[30/11] sm:aspect-[30/9] md:aspect-[30/7] bg-[#3e2319] border-x-2 border-[#2d1a12] relative overflow-hidden flex items-center justify-center transition-all duration-300"
           style={{ backgroundImage: STYLES.gradients.wall }}
         >
-          <div className="w-[45%] h-[100%] grid grid-cols-2 gap-1 relative">
-            <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${upperOpen ? '-translate-x-full' : 'translate-x-0'}`}>
+          <div className="w-[47%] h-[100%] grid grid-cols-2 gap-0.5 sm:gap-1 relative">
+            <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-0.5 sm:p-1 gap-0.5 sm:gap-1 ${upperOpen ? '-translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${upperOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
               ))}
-              <div className="absolute right-0.5 top-1/2 -translate-y-1/2 flex items-center">
-                <button type="button" onClick={(e) => { e.stopPropagation(); toggleUpper(); }} className="w-10 h-10 rounded-full bg-[#3e2319] border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
-                  {upperOpen ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+              <div className="absolute right-0 sm:right-0.5 top-1/2 -translate-y-1/2 flex items-center">
+                <button type="button" onClick={(e) => { e.stopPropagation(); toggleUpper(); }} className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full bg-[#3e2319] border-2 sm:border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
+                  {upperOpen ? <ArrowRight className="w-2 h-2 sm:w-3 sm:h-3" /> : <ArrowLeft className="w-2 h-2 sm:w-3 sm:h-3" />}
                 </button>
               </div>
             </div>
 
-            <div className={`absolute inset-y-0 right-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${upperOpen ? 'translate-x-full' : 'translate-x-0'}`}>
+            <div className={`absolute inset-y-0 right-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-0.5 sm:p-1 gap-0.5 sm:gap-1 ${upperOpen ? 'translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${upperOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
               ))}
-              <div className="absolute left-0.5 top-1/2 -translate-y-1/2 flex items-center">
-                <button type="button" onClick={(e) => { e.stopPropagation(); toggleUpper(); }} className="w-10 h-10 rounded-full bg-[#3e2319] border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
-                  {upperOpen ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
+              <div className="absolute left-0 sm:left-0.5 top-1/2 -translate-y-1/2 flex items-center">
+                <button type="button" onClick={(e) => { e.stopPropagation(); toggleUpper(); }} className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full bg-[#3e2319] border-2 sm:border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
+                  {upperOpen ? <ArrowLeft className="w-2 h-2 sm:w-3 sm:h-3" /> : <ArrowRight className="w-2 h-2 sm:w-3 sm:h-3" />}
                 </button>
               </div>
             </div>
 
 
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-0 p-4 gap-2">
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-0 p-2 sm:p-4 gap-1 sm:gap-2">
               {upperOpen && (
                 <>
-                  <h2 className="text-xl font-bold text-[#fcf4d9]">New Here? Click to Register!</h2>
-                  <button type="button" onClick={() => goTo('/signup')} className="px-20 py-3 bg-[#fbbc05] text-[#1a1a1a] rounded-full font-semibold hover:bg-[#fcf4d9] transition-all">
+                  <h2 className="text-[9px] sm:text-[11px] md:text-sm lg:text-base font-bold text-[#fcf4d9] text-center">New Here? Click to Register!</h2>
+                  <button type="button" onClick={() => goTo('/signup')} className="px-6 sm:px-12 md:px-20 py-1.5 sm:py-2 md:py-3 bg-[#fbbc05] text-[#1a1a1a] rounded-full font-semibold hover:bg-[#fcf4d9] transition-all text-[7px] sm:text-[10px] md:text-sm">
                     Sign Up
                   </button>
-                  <p className="text-sm mt-2 text-[#fcf4d9]">
-                    Already have an account? <button type="button" onClick={() => setOpenPanel("lower")} className="underline font-bold hover:text-[#fcf4d9]">Click Here</button> to Login.
+                  <p className="text-[6px] sm:text-[9px] md:text-xs mt-0.5 sm:mt-2 text-[#fcf4d9] text-center leading-tight">
+                    Already have an account?<br className="block sm:hidden" /> <button type="button" onClick={() => setOpenPanel("lower")} className="underline font-bold hover:text-[#fcf4d9]">Click Here</button> to Login.
                   </p>
                 </>
               )}
@@ -183,74 +183,73 @@ export default function Auth() {
         </div>
 
         {/* Middle band with logo */}
-        <div className="w-[125%] h-10 bg-[#3e2319] border-y-4 border-[#2d1a12] rounded-t-sm flex justify-center items-center relative z-30">
+        <div className="w-[105%] h-6 sm:h-8 md:h-10 bg-[#3e2319] border-y-2 sm:border-y-4 border-[#2d1a12] rounded-t-sm flex justify-center items-center relative z-30 transition-all duration-300">
           <button
             type="button"
             onClick={() => goTo('/')}
-            className="w-20 h-20 rounded-full bg-[#2d1a12] flex items-center justify-center mb-[12px] shadow-lg hover:bg-[#fbbc05] transition-colors duration-300 cursor-pointer group relative"
+            className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-[#2d1a12] flex items-center justify-center mb-[8px] sm:mb-[12px] shadow-lg hover:bg-[#fbbc05] transition-colors duration-300 cursor-pointer group relative"
             title="Go to Home"
           >
-            <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#fcf4d9] text-[#2d1a12] text-[10px] px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap font-black uppercase tracking-widest border-2 border-[#2d1a12] shadow-xl translate-y-2 group-hover:translate-y-0">
+            <span className="absolute -top-8 sm:-top-10 left-1/2 -translate-x-1/2 bg-[#fcf4d9] text-[#2d1a12] text-[8px] sm:text-[10px] px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap font-black uppercase tracking-widest border-2 border-[#2d1a12] shadow-xl translate-y-2 group-hover:translate-y-0">
               Back to Home
             </span>
 
-            <img src="/assets/logo-icon-white.png" className="w-13 h-13 transition-all duration-300 group-hover:invert" alt="logo" />
+            <img src="/assets/logo-icon-white.png" className="w-8 h-8 sm:w-10 sm:h-10 md:w-13 md:h-13 transition-all duration-300 group-hover:invert" alt="logo" />
           </button>
-
         </div>
 
         {/* Lower wall / door (Log In) */}
         <div
-          className="w-[125%] aspect-[30/7] bg-[#fcf4d9] border-x-2 border-[#2d1a12] border-b-4 flex items-end justify-center relative overflow-hidden"
+          className="w-full aspect-[30/11] sm:aspect-[30/9] md:aspect-[30/7] bg-[#fcf4d9] border-x-2 border-[#2d1a12] border-b-4 flex items-center justify-center relative overflow-hidden transition-all duration-300"
           style={{ backgroundImage: STYLES.gradients.lowerWall }}
         >
-          <div className="w-[45%] h-[100%] grid grid-cols-2 gap-1 relative">
-            <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${lowerOpen ? '-translate-x-full' : 'translate-x-0'}`}>
+          <div className="w-[47%] h-[100%] grid grid-cols-2 gap-0.5 sm:gap-1 relative">
+            <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-0.5 sm:p-1 gap-0.5 sm:gap-1 ${lowerOpen ? '-translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${lowerOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
               ))}
-              <div className="absolute right-0.5 top-1/2 -translate-y-1/2 flex items-center">
-                <button onClick={(e) => { e.stopPropagation(); toggleLower(); }} className="w-10 h-10 rounded-full bg-[#3e2319] border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
-                  {lowerOpen ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+              <div className="absolute right-0 sm:right-0.5 top-1/2 -translate-y-1/2 flex items-center">
+                <button onClick={(e) => { e.stopPropagation(); toggleLower(); }} className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full bg-[#3e2319] border-2 sm:border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
+                  {lowerOpen ? <ArrowRight className="w-2 h-2 sm:w-3 sm:h-3" /> : <ArrowLeft className="w-2 h-2 sm:w-3 sm:h-3" />}
                 </button>
               </div>
             </div>
 
-            <div className={`absolute inset-y-0 right-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-1 gap-1 ${lowerOpen ? 'translate-x-full' : 'translate-x-0'}`}>
+            <div className={`absolute inset-y-0 right-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-0.5 sm:p-1 gap-0.5 sm:gap-1 ${lowerOpen ? 'translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${lowerOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
               ))}
-              <div className="absolute left-0.5 top-1/2 -translate-y-1/2 flex items-center">
-                <button onClick={(e) => { e.stopPropagation(); toggleLower(); }} className="w-10 h-10 rounded-full bg-[#3e2319] border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
-                  {lowerOpen ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
+              <div className="absolute left-0 sm:left-0.5 top-1/2 -translate-y-1/2 flex items-center">
+                <button onClick={(e) => { e.stopPropagation(); toggleLower(); }} className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full bg-[#3e2319] border-2 sm:border-4 border-[#fcf4d9] text-[#fcf4d9] text-xs flex items-center justify-center hover:bg-[#2d1a12] transition-colors">
+                  {lowerOpen ? <ArrowLeft className="w-2 h-2 sm:w-3 sm:h-3" /> : <ArrowRight className="w-2 h-2 sm:w-3 sm:h-3" />}
                 </button>
               </div>
             </div>
           </div>
 
 
-          <div className={`absolute inset-0 z-0 flex flex-col items-center justify-center p-4 gap-4 transition-colors duration-500 ${lowerOpen ? 'bg-[#fcf4d9]' : 'bg-transparent'}`}>
+          <div className={`absolute inset-0 z-0 flex flex-col items-center justify-center p-2 sm:p-4 gap-1 sm:gap-2 md:gap-4 transition-colors duration-500 ${lowerOpen ? 'bg-[#fcf4d9]' : 'bg-transparent'}`}>
             {lowerOpen && (
               <>
-                <h2 className="text-xl font-bold text-[#1e1e1e] text-center">Choose Login Method</h2>
-                <div className="flex flex-col gap-3 w-full items-center">
+                <h2 className="text-[9px] sm:text-[11px] md:text-sm lg:text-base font-bold text-[#1e1e1e] text-center">Choose Login Method</h2>
+                <div className="flex flex-col gap-1 sm:gap-2 md:gap-3 w-full items-center">
                   <button
                     type="button"
                     onClick={() => goTo('/login')}
-                    className="w-full max-w-[240px] h-10 px-4 bg-[#3e2319] text-[#fcf4d9] rounded-full hover:bg-[#2d1a12] transition-all text-sm font-medium"
+                    className="w-full max-w-[120px] sm:max-w-[180px] md:max-w-[240px] h-6 sm:h-8 md:h-10 px-2 sm:px-4 bg-[#3e2319] text-[#fcf4d9] rounded-full hover:bg-[#2d1a12] transition-all text-[7px] sm:text-[10px] md:text-xs font-medium"
                   >
                     Log In with Email
                   </button>
                   <button
                     type="button"
                     onClick={() => goTo('/google-login')}
-                    className="w-full max-w-[240px] h-10 px-4 bg-[#fbbc05] text-[#2d1a1a] rounded-full hover:bg-[#f9d776] transition-all text-sm font-medium"
+                    className="w-full max-w-[120px] sm:max-w-[180px] md:max-w-[240px] h-6 sm:h-8 md:h-10 px-2 sm:px-4 bg-[#fbbc05] text-[#2d1a1a] rounded-full hover:bg-[#f9d776] transition-all text-[7px] sm:text-[10px] md:text-xs font-medium"
                   >
                     Log In with Google
                   </button>
                 </div>
-                <p className="text-sm mt-2 text-[#1e1e1e]">
-                  New Here? <button type="button" onClick={() => setOpenPanel("upper")} className="underline font-bold hover:text-[#3e2319]">Click Here</button> to Register.
+                <p className="text-[6px] sm:text-[9px] md:text-xs mt-0.5 sm:mt-2 text-[#1e1e1e] text-center leading-tight">
+                  New Here?<br className="block sm:hidden" /> <button type="button" onClick={() => setOpenPanel("upper")} className="underline font-bold hover:text-[#3e2319]">Click Here</button> to Register.
                 </p>
               </>
             )}

@@ -8,6 +8,7 @@ interface ViewUnitProps {
   unit: Unit
   onBack: () => void
   onApply?: () => void
+  hasThreeApplications?: boolean
 }
 
 export const ViewUnit: React.FC<ViewUnitProps> = ({
@@ -15,6 +16,7 @@ export const ViewUnit: React.FC<ViewUnitProps> = ({
   unit,
   onBack,
   onApply,
+  hasThreeApplications = false,
 }) => {
   const displayPrice = unit.rental_fee
   const displayCapacity = unit.max_occupancy
@@ -164,16 +166,18 @@ export const ViewUnit: React.FC<ViewUnitProps> = ({
 
                   <button 
                     onClick={onApply}
-                    disabled={!accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)}
+                    disabled={hasThreeApplications || !accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)}
                     className={`w-full py-6 font-black text-sm uppercase tracking-[0.2em] rounded-3xl transition-all active:scale-[0.98] shadow-2xl ${
-                      !accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)
+                      hasThreeApplications || !accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)
                         ? 'bg-gray-400 text-white cursor-not-allowed opacity-60'
                         : 'bg-[#44291B] text-white hover:bg-[#5D3A29]'
                     }`}
                   >
-                    {!accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application) 
-                      ? 'Closed' 
-                      : 'Apply Now'}
+                    {hasThreeApplications 
+                      ? 'Limit Reached (3 Sent)' 
+                      : (!accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application) 
+                        ? 'Closed' 
+                        : 'Apply Now')}
                   </button>
                 </div>
 

@@ -57,9 +57,10 @@ function SearchAccommodationsContent() {
 
   // Data states
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
-  const [units, setUnits] = useState<Unit[]>([])
   const [filteredAccommodations, setFilteredAccommodations] = useState<Accommodation[]>([])
+  const [units, setUnits] = useState<Unit[]>([])
   const [filteredUnits, setFilteredUnits] = useState<Unit[]>([])
+  const [hasThreeApplications, setHasThreeApplications] = useState<boolean>(false)
 
   // Filter states
   const [accommodationFilters, setAccommodationFilters] = useState<AccommodationFiltersType>({
@@ -325,9 +326,10 @@ function SearchAccommodationsContent() {
       setLoading(true)
       setError(null)
       try {
-        const [accomRes, unitsRes] = await Promise.all([
+        const [accomRes, unitsRes, appsRes] = await Promise.all([
           fetch('/api/shared/dashboard/tiles?type=accommodations'),
           fetch('/api/shared/dashboard/tiles?type=units'),
+          fetch('/api/applications'),
         ])
 
         if (!accomRes.ok) throw new Error('Failed to fetch accommodations')
@@ -335,6 +337,14 @@ function SearchAccommodationsContent() {
 
         const accomData: Accommodation[] = await accomRes.json()
         const unitsData: Unit[] = await unitsRes.json()
+
+        if (appsRes.ok) {
+          const appsData = await appsRes.json()
+          const sentCount = appsData.data.filter(
+            (app: any) => app.application_status !== 'cancelled' && app.application_status !== 'rejected'
+          ).length
+          setHasThreeApplications(sentCount >= 3)
+        }
 
         setAccommodations(accomData)
         setUnits(unitsData)
@@ -515,6 +525,7 @@ function SearchAccommodationsContent() {
             onApply={() => {
                 window.location.href = `/guest/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}&unitId=${selectedUnit.unit_id}`
             }}
+            hasThreeApplications={hasThreeApplications}
           />
         ) : (
           <ViewAccommodation 
@@ -532,6 +543,7 @@ function SearchAccommodationsContent() {
             onApply={() => {
                 window.location.href = `/guest/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}`
             }}
+            hasThreeApplications={hasThreeApplications}
           />
         )
       ) : (
@@ -748,6 +760,7 @@ function SearchAccommodationsContent() {
                             onSeeUnitsClick={handleSeeUnitsClick}
                             basePath="/guest/accommodations"
                             userRole="guest"
+                            hasThreeApplications={hasThreeApplications}
                           />
                       </div>
                     ))}
@@ -764,6 +777,7 @@ function SearchAccommodationsContent() {
                     units={units}
                     userRole="guest"
                     onDetailsClick={handleAccommodationDetailsClick}
+                    hasThreeApplications={hasThreeApplications}
                   />
                 )}
               </div>
@@ -903,6 +917,7 @@ function SearchAccommodationsContent() {
                             accommodation={accommodation}
                             onDetailsClick={handleUnitDetailsClick}
                             userRole="guest"
+                            hasThreeApplications={hasThreeApplications}
                           />
                         </div>
                       )
@@ -918,6 +933,7 @@ function SearchAccommodationsContent() {
                     validCurrentPage={validCurrentUnitsPage}
                     basePath="/guest/accommodations"
                     onDetailsClick={handleUnitDetailsClick}
+                    hasThreeApplications={hasThreeApplications}
                   />
                 )}
               </div>

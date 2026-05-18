@@ -15,11 +15,15 @@ import {
 } from "@/components/ui/table";
 import { CancelApplicationModal } from "./CancelModal";
 import { AccommodationApplication } from "@/types/user_profile";
-import { Check, Clock, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Clock, X, ChevronLeft, ChevronRight, Filter, Plus } from "lucide-react";
 import { cn } from "@/lib/utils/ui-utils";
 import { PaymentModal } from "./PaymentModal";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Archivo_Black } from "next/font/google";
+
+const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 interface ApplicationsPageProps {
   records: AccommodationApplication[];
@@ -62,8 +66,13 @@ function formatDate(dateString: string | undefined | null, fallback = "—") {
   return date.toLocaleDateString('en-US', { timeZone: 'UTC' });
 }
 
+import { useRealtimeSync } from "@/lib/realtime-sync";
+
 export default function ApplicationsPage({ records }: ApplicationsPageProps) {
   const router = useRouter();
+  // Sync applications in real-time
+  useRealtimeSync('accommodation_application', undefined, '*');
+
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const ITEMS_PER_PAGE = 5;
@@ -108,10 +117,10 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
             <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
           </Button>
           <header className="mb-2">
-            <h1 className="text-4xl font-bold tracking-tight" style={{ color: '#44291B' }}>
+            <h1 className={`${archivoBlack.className} pt-6 text-4xl md:text-5xl`} style={{ color: '#44291B' }}>
               Accommodation Overview
             </h1>
-            <p className="mt-2 text-lg" style={{ color: '#44291B', opacity: 0.8 }}>
+            <p className="mt-2 text-sm sm:text-sm" style={{ color: '#44291B' }}>
               Manage your active requests and view past history.
             </p>
           </header>
@@ -119,9 +128,26 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
 
         {/* SECTION 1: ACTIVE APPLICATIONS */}
         <section className="space-y-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-1.5 h-8 bg-[#264384] rounded-full" />
-            <h2 className="text-2xl font-bold text-[#44291B]">Active Applications</h2>
+          
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-8 bg-[#264384] rounded-full" />
+              <h2 className={`${archivoBlack.className} text-xl md:text-2xl text-[#44291B] tracking-tight`}>Active Applications</h2>
+            </div>
+            
+            <Button
+              onClick={() => router.push("/guest/accommodations")}
+              disabled={activeApplications.length >= MAX_CARDS}
+              className={cn(
+                "flex items-center gap-2 font-bold tracking-wide transition-all",
+                activeApplications.length >= MAX_CARDS 
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed" // Grayed out state
+                  : "bg-[#264384] hover:bg-[#1a2d5c] text-white shadow-sm" // Active state
+              )}
+            >
+              <Plus className="w-4 h-4" />
+              Start New Application
+            </Button>
           </div>
 
           {activeApplications.length > 0 ? (
@@ -272,30 +298,37 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-3">
               <div className="w-1.5 h-8 bg-[#44291B]/20 rounded-full" />
-              <h2 className="text-2xl font-bold text-[#44291B]">Application History</h2>
+              <h2 className={`${archivoBlack.className} text-xl md:text-2xl text-[#44291B] tracking-tight`}>Application History</h2>
             </div>
 
-            <div className="relative">
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="appearance-none pl-4 pr-9 py-2.5 text-sm font-semibold rounded-xl border border-[#44291B]/15 shadow-sm outline-none cursor-pointer transition-all hover:border-[#264384]/30 focus:ring-2 focus:ring-[#264384]/15 focus:border-[#264384]/40"
-                style={{ backgroundColor: '#FDFFF4', color: '#44291B' }}
-              >
-                <option value="all">All Statuses</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="#44291B" strokeOpacity="0.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="h-10 w-full sm:w-auto min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors focus:ring-0 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
+                  <SelectValue placeholder="All Statuses" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                  All statuses
+                </SelectItem>
+                <SelectItem value="approved" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                  Approved
+                </SelectItem>
+                <SelectItem value="rejected" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                  Rejected
+                </SelectItem>
+                <SelectItem value="cancelled" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                  Cancelled
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* TABLE CONTAINER - Styled from AdminBillingClient */}

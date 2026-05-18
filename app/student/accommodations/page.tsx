@@ -44,9 +44,10 @@ export default function SearchAccommodationsPage() {
   // Data states
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
   const [units, setUnits] = useState<Unit[]>([])
-  const [filteredAccommodations, setFilteredAccommodations] = useState<Accommodation[]>([])
   const [filteredUnits, setFilteredUnits] = useState<Unit[]>([])
+  const [filteredAccommodations, setFilteredAccommodations] = useState<Accommodation[]>([])
   const [appliedAccommodationIds, setAppliedAccommodationIds] = useState<Set<string>>(new Set())
+  const [hasThreeApplications, setHasThreeApplications] = useState<boolean>(false)
 
   // Filter states
   const [accommodationFilters, setAccommodationFilters] = useState<AccommodationFiltersType>({
@@ -348,6 +349,11 @@ export default function SearchAccommodationsPage() {
               .map((app: any) => app.preferred_accommodation_id)
           )
           setAppliedAccommodationIds(appliedIds)
+
+          const sentCount = appsData.data.filter(
+            (app: any) => app.application_status !== 'cancelled' && app.application_status !== 'rejected'
+          ).length
+          setHasThreeApplications(sentCount >= 3)
         }
 
         setAccommodations(accomData)
@@ -511,6 +517,7 @@ export default function SearchAccommodationsPage() {
             onApply={() => {
               window.location.href = `/student/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}&unitId=${selectedUnit.unit_id}`
             }}
+            hasThreeApplications={hasThreeApplications}
           />
         ) : (
           <ViewAccommodation
@@ -528,6 +535,7 @@ export default function SearchAccommodationsPage() {
             onApply={() => {
               window.location.href = `/student/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}`
             }}
+            hasThreeApplications={hasThreeApplications}
           />
         )
       ) : (
@@ -722,6 +730,7 @@ export default function SearchAccommodationsPage() {
                               basePath="/student/accommodations"
                               userRole="student"
                               appliedAccommodationIds={appliedAccommodationIds}
+                              hasThreeApplications={hasThreeApplications}
                             />
                           </div>
                         ))}
@@ -740,6 +749,7 @@ export default function SearchAccommodationsPage() {
                       units={units}
                       appliedAccommodationIds={appliedAccommodationIds}
                       onDetailsClick={handleAccommodationDetailsClick}
+                      hasThreeApplications={hasThreeApplications}
                     />
                   )}
                 </div>
@@ -852,6 +862,7 @@ export default function SearchAccommodationsPage() {
                                 onDetailsClick={handleUnitDetailsClick}
                                 appliedAccommodationIds={appliedAccommodationIds}
                                 userRole="student"
+                                hasThreeApplications={hasThreeApplications}
                               />
                             </div>
                           )
@@ -869,6 +880,7 @@ export default function SearchAccommodationsPage() {
                       basePath="/student/accommodations"
                       appliedAccommodationIds={appliedAccommodationIds}
                       onDetailsClick={handleUnitDetailsClick}
+                      hasThreeApplications={hasThreeApplications}
                     />
                   )}
                 </div>

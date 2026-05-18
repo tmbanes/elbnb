@@ -1,12 +1,13 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { redirect } from "next/navigation";
 import { DashboardClient } from "./dashboard-client";
 import { userProfileService } from "@/services/user_profile";
 import { requireRole } from "@/lib/auth/session";
+import { getAllBillsForAdmin } from "@/services/user-services";
 
 export default async function AdminDashboardPage() {
   const session = await requireRole(['housing_admin', 'admin']);
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin;
 
   let managedAccommodationIds: string[] = [];
   const isHousingAdmin = session.role === "housing_admin";
@@ -44,7 +45,6 @@ export default async function AdminDashboardPage() {
     let activeAssignmentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id", { count: 'exact', head: true });
     let pendingApplicationsQuery: any = supabase.from("accommodation_application").select("application_id, user_id, application_status, date_submitted, preferred_accommodation_id, preferred_unit_type, users(first_name, last_name, email), accommodation(name)");
     let recentApplicationsQuery: any = supabase.from("accommodation_application").select("application_id, user_id, application_status, date_submitted, preferred_accommodation_id, preferred_unit_type, users(first_name, last_name, email), accommodation(name)");
-    let allBillingQuery: any = supabase.from("billing").select("amount, status, created_at");
     let housedStudentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status, users(first_name, last_name, email), unit(unit_number, accommodation(name))");
     let activityLogsQuery: any = supabase
       .from("activity_log")
@@ -56,7 +56,7 @@ export default async function AdminDashboardPage() {
     if (isHousingAdmin) {
       accommodationsQuery = accommodationsQuery.in("accommodation_id", managedAccommodationIds);
       unitsQuery = unitsQuery.in("accommodation_id", managedAccommodationIds);
-      
+
       activeAssignmentsQuery = activeAssignmentsQuery
         .select("assignment_id, unit!inner(accommodation_id)", { count: 'exact', head: true })
         .eq("assignment_status", "active")
@@ -68,10 +68,6 @@ export default async function AdminDashboardPage() {
 
       recentApplicationsQuery = recentApplicationsQuery
         .in("preferred_accommodation_id", managedAccommodationIds);
-
-      allBillingQuery = allBillingQuery
-        .select("amount, status, created_at, accommodation_assignment!inner(unit!inner(accommodation_id))")
-        .in("accommodation_assignment.unit.accommodation_id", managedAccommodationIds);
 
       housedStudentsQuery = housedStudentsQuery
         .select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status, users(first_name, last_name, email), unit!inner(unit_number, accommodation!inner(name, accommodation_id))")
@@ -95,7 +91,7 @@ export default async function AdminDashboardPage() {
       activeAssignmentsRes,
       pendingApplicationsRes,
       recentApplicationsRes,
-      allBillingRes,
+      billsRes,
       housedStudentsRes,
       profileRes,
       notificationsRes,
@@ -106,7 +102,7 @@ export default async function AdminDashboardPage() {
       activeAssignmentsQuery,
       pendingApplicationsQuery.order("date_submitted", { ascending: false }),
       recentApplicationsQuery.order("date_submitted", { ascending: false }).limit(8),
-      allBillingQuery,
+      getAllBillsForAdmin(session.role || "", session.user_id || undefined),
       housedStudentsQuery,
       userProfileService.getProfile(session.user_id),
       userProfileService.getNotifications(session.user_id),
@@ -119,7 +115,7 @@ export default async function AdminDashboardPage() {
     studentsHousedCount = activeAssignmentsRes.count || 0;
     pendingApplications = pendingApplicationsRes.data || [];
     recentApplications = recentApplicationsRes.data || [];
-    allBilling = allBillingRes.data || [];
+    allBilling = billsRes.data || [];
     housedStudents = housedStudentsRes.data || [];
     profile = profileRes;
     notifications = notificationsRes.data || [];
@@ -137,14 +133,24 @@ export default async function AdminDashboardPage() {
 
   // Revenue this month
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const monthlyBilling = allBilling?.filter(b => b.created_at && b.created_at >= startOfMonth) ?? [];
-  const revenueThisMonth = monthlyBilling.reduce((sum, b) => sum + (b.amount || 0), 0);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthlyBilling = allBilling?.filter(b => {
+    if (!b.created_at) return false;
+    const createdDate = new Date(b.created_at);
+    return createdDate >= startOfMonth;
+  }) ?? [];
+  const revenueThisMonth = monthlyBilling
+    .filter(b => b.status === "paid" || b.status === "paid_late")
+    .reduce((sum, b) => sum + (b.amount || 0), 0);
 
   // Overdue
   const overdueBilling = allBilling?.filter(b => b.status === "overdue") ?? [];
   const overdueCount = overdueBilling.length;
-  const overdueTotal = overdueBilling.reduce((sum, b) => sum + (b.amount || 0), 0);
+  const overdueBalance = overdueBilling.reduce((sum, b) => sum + (b.amount || 0), 0);
+
+  // Unpaid
+  const unpaidBilling = allBilling?.filter(b => b.status === "unpaid") ?? [];
+  const unpaidBalance = unpaidBilling.reduce((sum, b) => sum + (b.amount || 0), 0);
 
   // Payment status distribution
   const statusCounts: Record<string, number> = {};
@@ -189,7 +195,7 @@ export default async function AdminDashboardPage() {
     else if (p.rate >= 75) alerts.push({ type: "warning", message: `${p.name} is nearing capacity (${p.rate.toFixed(0)}%)` });
   });
   if (waitingListCount > 5) alerts.push({ type: "info", message: `${waitingListCount} students on waiting list` });
-  if (overdueCount > 0) alerts.push({ type: "danger", message: `${overdueCount} overdue payment${overdueCount > 1 ? "s" : ""} totaling ₱${overdueTotal.toLocaleString()}` });
+  if (overdueCount > 0) alerts.push({ type: "danger", message: `${overdueCount} overdue payment${overdueCount > 1 ? "s" : ""} totaling ₱${overdueBalance.toLocaleString()}` });
 
   // Flatten applications and assignments data
   const flattenedRecent = (recentApplications || []).map((app: any) => ({
@@ -234,6 +240,8 @@ export default async function AdminDashboardPage() {
         collectionRate,
         totalCollected,
         totalBilled,
+        unpaidBalance,
+        overdueBalance,
       }}
       propertyOccupancy={propertyOccupancy}
       recentApplications={flattenedRecent}

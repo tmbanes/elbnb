@@ -15,6 +15,7 @@ interface AccommodationCardProps {
   basePath?: string
   userRole?: 'student' | 'guest'
   appliedAccommodationIds?: Set<string>
+  hasThreeApplications?: boolean
 }
 
 export function AccommodationCard({
@@ -25,6 +26,7 @@ export function AccommodationCard({
   basePath = '/student/accommodations',
   userRole = 'student',
   appliedAccommodationIds = new Set(),
+  hasThreeApplications = false,
 }: AccommodationCardProps) {
   const vacantUnits = units.filter((unit) => unit.vacant_slots > 0)
   const hasVacant = vacantUnits.length > 0
@@ -131,7 +133,14 @@ export function AccommodationCard({
         {/* Actions */}
         <div className="flex flex-col gap-2 mt-auto">
           {userRole === 'student' ? (
-            isApplicationOpen ? (
+            hasThreeApplications ? (
+              <button
+                disabled
+                className="w-full px-4 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed text-center"
+              >
+                Limit Reached (3 Sent)
+              </button>
+            ) : isApplicationOpen ? (
               hasVacant ? (
                 appliedAccommodationIds.has(accommodation.accommodation_id) ? (
                   <button
