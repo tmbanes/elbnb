@@ -24,6 +24,7 @@ export default async function AdminDashboardPage() {
   let accommodations: any[] = [];
   let units: any[] = [];
   let studentsHousedCount = 0;
+  let studentsHousedCount = 0;
   let pendingApplications: any[] = [];
   let recentApplications: any[] = [];
   let allBilling: any[] = [];
@@ -43,6 +44,9 @@ export default async function AdminDashboardPage() {
     let accommodationsQuery: any = supabase.from("accommodation").select("accommodation_id, name, accommodation_type, accommodation_status");
     let unitsQuery: any = supabase.from("unit").select("accommodation_id, max_occupancy, current_occupancy, unit_status");
     let activeAssignmentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id", { count: 'exact', head: true });
+    let accommodationsQuery: any = supabase.from("accommodation").select("accommodation_id, name, accommodation_type, accommodation_status");
+    let unitsQuery: any = supabase.from("unit").select("accommodation_id, max_occupancy, current_occupancy, unit_status");
+    let activeAssignmentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id", { count: 'exact', head: true });
     let pendingApplicationsQuery: any = supabase.from("accommodation_application").select("application_id, user_id, application_status, date_submitted, preferred_accommodation_id, preferred_unit_type, users(first_name, last_name, email), accommodation(name)");
     let recentApplicationsQuery: any = supabase.from("accommodation_application").select("application_id, user_id, application_status, date_submitted, preferred_accommodation_id, preferred_unit_type, users(first_name, last_name, email), accommodation(name)");
     let housedStudentsQuery: any = supabase.from("accommodation_assignment").select("assignment_id, user_id, unit_id, move_in_date, expected_move_out_date, assignment_status, users(first_name, last_name, email), unit(unit_number, accommodation(name))");
@@ -52,11 +56,11 @@ export default async function AdminDashboardPage() {
       .neq("entity_type", "auth")
       .neq("action_type", "login")
       .neq("action_type", "logout");
- 
+
     if (isHousingAdmin) {
       accommodationsQuery = accommodationsQuery.in("accommodation_id", managedAccommodationIds);
       unitsQuery = unitsQuery.in("accommodation_id", managedAccommodationIds);
-      
+
       activeAssignmentsQuery = activeAssignmentsQuery
         .select("assignment_id, unit!inner(accommodation_id)", { count: 'exact', head: true })
         .eq("assignment_status", "active")
@@ -84,7 +88,7 @@ export default async function AdminDashboardPage() {
       pendingApplicationsQuery = pendingApplicationsQuery.in("application_status", ["pending_admin", "pending_dorm_manager"]);
       housedStudentsQuery = housedStudentsQuery.eq("assignment_status", "active").limit(20);
     }
- 
+
     const [
       accommodationsRes,
       unitsRes,
@@ -108,7 +112,7 @@ export default async function AdminDashboardPage() {
       userProfileService.getNotifications(session.user_id),
       activityLogsQuery.order("timestamp", { ascending: false }).limit(15)
     ]);
- 
+
     accommodations = accommodationsRes.data || [];
     units = unitsRes.data || [];
     // Only capture count for students housed metric

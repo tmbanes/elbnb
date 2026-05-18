@@ -27,17 +27,17 @@ export const getApiAuthenticatedUser = cache(async (): Promise<User | null> => {
     if (dbUser) {
         // Use database values as primary, metadata as fallback
         metadata = { ...metadata, ...dbUser };
-        
+
         // If metadata is out of sync, trigger a background update
         if (dbUser.role !== user.user_metadata?.role) {
             supabase.auth.updateUser({
-                data: { 
+                data: {
                     role: dbUser.role,
                     first_name: dbUser.first_name,
                     last_name: dbUser.last_name,
                     user_status: dbUser.user_status
                 }
-            }).catch(() => {});
+            }).catch(() => { });
         }
 
         // Query sub-table to verify profile completion
@@ -47,7 +47,7 @@ export const getApiAuthenticatedUser = cache(async (): Promise<User | null> => {
                 .select("student_num")
                 .eq("user_id", user.id)
                 .maybeSingle();
-            
+
             if (!studentData || !studentData.student_num || studentData.student_num === "none") {
                 isProfileComplete = false;
             } else {
