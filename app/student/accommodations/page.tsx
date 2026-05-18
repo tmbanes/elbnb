@@ -44,6 +44,7 @@ export default function SearchAccommodationsPage() {
   // Data states
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
   const [units, setUnits] = useState<Unit[]>([])
+  const [filteredUnits, setFilteredUnits] = useState<Unit[]>([])
   const [filteredAccommodations, setFilteredAccommodations] = useState<Accommodation[]>([])
   const [appliedAccommodationIds, setAppliedAccommodationIds] = useState<Set<string>>(new Set())
   const [hasThreeApplications, setHasThreeApplications] = useState<boolean>(false)

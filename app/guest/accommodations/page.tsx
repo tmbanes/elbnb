@@ -57,6 +57,7 @@ function SearchAccommodationsContent() {
 
   // Data states
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
+  const [filteredAccommodations, setFilteredAccommodations] = useState<Accommodation[]>([])
   const [units, setUnits] = useState<Unit[]>([])
   const [filteredUnits, setFilteredUnits] = useState<Unit[]>([])
   const [hasThreeApplications, setHasThreeApplications] = useState<boolean>(false)

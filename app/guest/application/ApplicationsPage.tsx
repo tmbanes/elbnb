@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { CancelApplicationModal } from "./CancelModal";
 import { AccommodationApplication } from "@/types/user_profile";
-import { Check, Clock, X, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Check, Clock, X, ChevronLeft, ChevronRight, Filter, Plus } from "lucide-react";
 import { cn } from "@/lib/utils/ui-utils";
 import { PaymentModal } from "./PaymentModal";
 import { useRouter } from "next/navigation";

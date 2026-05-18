@@ -126,11 +126,11 @@ export default function Auth() {
       />
 
       {/* House UI */}
-      <div className="relative z-10 w-[70%] sm:w-[65%] max-w-sm sm:max-w-md md:max-w-xl lg:max-w-2xl flex flex-col items-center">
+      <div className="relative z-10 w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] max-w-lg sm:max-w-2xl md:max-w-4xl lg:max-w-5xl flex flex-col items-center">
 
         {/* Roof */}
         <div
-          className="w-[140%] h-24 sm:h-32 md:h-40 bg-[#3e2319] border-b-4 border-[#2d1a12] mb-[-4px] relative z-20 transition-all duration-300"
+          className="w-[110%] sm:w-[115%] md:w-[115%] lg:w-[120%] h-28 sm:h-36 md:h-48 lg:h-56 bg-[#3e2319] border-b-4 border-[#2d1a12] mb-[-4px] relative z-20 transition-all duration-300"
           style={{
             clipPath: 'polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%)',
             backgroundImage: STYLES.gradients.roof
@@ -139,10 +139,10 @@ export default function Auth() {
 
         {/* Upper wall / window (Sign Up) */}
         <div
-          className="w-[120%] aspect-[30/12] sm:aspect-[30/9] md:aspect-[30/7] bg-[#3e2319] border-x-2 border-[#2d1a12] relative overflow-hidden flex items-center justify-center transition-all duration-300"
+          className="w-full aspect-[30/11] sm:aspect-[30/9] md:aspect-[30/7] bg-[#3e2319] border-x-2 border-[#2d1a12] relative overflow-hidden flex items-center justify-center transition-all duration-300"
           style={{ backgroundImage: STYLES.gradients.wall }}
         >
-          <div className="w-[45%] h-[100%] grid grid-cols-2 gap-0.5 sm:gap-1 relative">
+          <div className="w-[47%] h-[100%] grid grid-cols-2 gap-0.5 sm:gap-1 relative">
             <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-0.5 sm:p-1 gap-0.5 sm:gap-1 ${upperOpen ? '-translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${upperOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
@@ -169,11 +169,11 @@ export default function Auth() {
             <div className="absolute inset-0 flex flex-col items-center justify-center z-0 p-2 sm:p-4 gap-1 sm:gap-2">
               {upperOpen && (
                 <>
-                  <h2 className="text-[10px] sm:text-sm md:text-xl font-bold text-[#fcf4d9] text-center">New Here? Click to Register!</h2>
-                  <button type="button" onClick={() => goTo('/signup')} className="px-6 sm:px-12 md:px-20 py-1.5 sm:py-2 md:py-3 bg-[#fbbc05] text-[#1a1a1a] rounded-full font-semibold hover:bg-[#fcf4d9] transition-all text-[8px] sm:text-xs md:text-base">
+                  <h2 className="text-[9px] sm:text-[11px] md:text-sm lg:text-base font-bold text-[#fcf4d9] text-center">New Here? Click to Register!</h2>
+                  <button type="button" onClick={() => goTo('/signup')} className="px-6 sm:px-12 md:px-20 py-1.5 sm:py-2 md:py-3 bg-[#fbbc05] text-[#1a1a1a] rounded-full font-semibold hover:bg-[#fcf4d9] transition-all text-[7px] sm:text-[10px] md:text-sm">
                     Sign Up
                   </button>
-                  <p className="text-[7px] sm:text-[10px] md:text-sm mt-0.5 sm:mt-2 text-[#fcf4d9] text-center leading-tight">
+                  <p className="text-[6px] sm:text-[9px] md:text-xs mt-0.5 sm:mt-2 text-[#fcf4d9] text-center leading-tight">
                     Already have an account?<br className="block sm:hidden" /> <button type="button" onClick={() => setOpenPanel("lower")} className="underline font-bold hover:text-[#fcf4d9]">Click Here</button> to Login.
                   </p>
                 </>
@@ -183,7 +183,7 @@ export default function Auth() {
         </div>
 
         {/* Middle band with logo */}
-        <div className="w-[125%] h-6 sm:h-8 md:h-10 bg-[#3e2319] border-y-2 sm:border-y-4 border-[#2d1a12] rounded-t-sm flex justify-center items-center relative z-30 transition-all duration-300">
+        <div className="w-[105%] h-6 sm:h-8 md:h-10 bg-[#3e2319] border-y-2 sm:border-y-4 border-[#2d1a12] rounded-t-sm flex justify-center items-center relative z-30 transition-all duration-300">
           <button
             type="button"
             onClick={() => goTo('/')}
@@ -200,10 +200,10 @@ export default function Auth() {
 
         {/* Lower wall / door (Log In) */}
         <div
-          className="w-[125%] aspect-[30/12] sm:aspect-[30/9] md:aspect-[30/7] bg-[#fcf4d9] border-x-2 border-[#2d1a12] border-b-4 flex items-end justify-center relative overflow-hidden transition-all duration-300"
+          className="w-full aspect-[30/11] sm:aspect-[30/9] md:aspect-[30/7] bg-[#fcf4d9] border-x-2 border-[#2d1a12] border-b-4 flex items-center justify-center relative overflow-hidden transition-all duration-300"
           style={{ backgroundImage: STYLES.gradients.lowerWall }}
         >
-          <div className="w-[45%] h-[100%] grid grid-cols-2 gap-0.5 sm:gap-1 relative">
+          <div className="w-[47%] h-[100%] grid grid-cols-2 gap-0.5 sm:gap-1 relative">
             <div className={`absolute inset-y-0 left-0 w-1/2 bg-[#fcf4d9] border-2 border-[#2d1a12] transition-transform duration-700 z-10 grid grid-cols-2 grid-rows-2 p-0.5 sm:p-1 gap-0.5 sm:gap-1 ${lowerOpen ? '-translate-x-full' : 'translate-x-0'}`}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`border-2 border-[#44291B] rounded-sm transition-colors duration-700 ${lowerOpen ? 'bg-[#F2C908]' : 'bg-[#1e1e1e]'}`} />
@@ -231,24 +231,24 @@ export default function Auth() {
           <div className={`absolute inset-0 z-0 flex flex-col items-center justify-center p-2 sm:p-4 gap-1 sm:gap-2 md:gap-4 transition-colors duration-500 ${lowerOpen ? 'bg-[#fcf4d9]' : 'bg-transparent'}`}>
             {lowerOpen && (
               <>
-                <h2 className="text-[10px] sm:text-sm md:text-xl font-bold text-[#1e1e1e] text-center">Choose Login Method</h2>
+                <h2 className="text-[9px] sm:text-[11px] md:text-sm lg:text-base font-bold text-[#1e1e1e] text-center">Choose Login Method</h2>
                 <div className="flex flex-col gap-1 sm:gap-2 md:gap-3 w-full items-center">
                   <button
                     type="button"
                     onClick={() => goTo('/login')}
-                    className="w-full max-w-[120px] sm:max-w-[180px] md:max-w-[240px] h-6 sm:h-8 md:h-10 px-2 sm:px-4 bg-[#3e2319] text-[#fcf4d9] rounded-full hover:bg-[#2d1a12] transition-all text-[8px] sm:text-xs md:text-sm font-medium"
+                    className="w-full max-w-[120px] sm:max-w-[180px] md:max-w-[240px] h-6 sm:h-8 md:h-10 px-2 sm:px-4 bg-[#3e2319] text-[#fcf4d9] rounded-full hover:bg-[#2d1a12] transition-all text-[7px] sm:text-[10px] md:text-xs font-medium"
                   >
                     Log In with Email
                   </button>
                   <button
                     type="button"
                     onClick={() => goTo('/google-login')}
-                    className="w-full max-w-[120px] sm:max-w-[180px] md:max-w-[240px] h-6 sm:h-8 md:h-10 px-2 sm:px-4 bg-[#fbbc05] text-[#2d1a1a] rounded-full hover:bg-[#f9d776] transition-all text-[8px] sm:text-xs md:text-sm font-medium"
+                    className="w-full max-w-[120px] sm:max-w-[180px] md:max-w-[240px] h-6 sm:h-8 md:h-10 px-2 sm:px-4 bg-[#fbbc05] text-[#2d1a1a] rounded-full hover:bg-[#f9d776] transition-all text-[7px] sm:text-[10px] md:text-xs font-medium"
                   >
                     Log In with Google
                   </button>
                 </div>
-                <p className="text-[7px] sm:text-[10px] md:text-sm mt-0.5 sm:mt-2 text-[#1e1e1e] text-center leading-tight">
+                <p className="text-[6px] sm:text-[9px] md:text-xs mt-0.5 sm:mt-2 text-[#1e1e1e] text-center leading-tight">
                   New Here?<br className="block sm:hidden" /> <button type="button" onClick={() => setOpenPanel("upper")} className="underline font-bold hover:text-[#3e2319]">Click Here</button> to Register.
                 </p>
               </>
