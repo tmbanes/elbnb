@@ -319,402 +319,402 @@ export default function CompleteProfile({ user }: { user: User | null }) {
           </div>
         </div>
 
-      <Card className="w-full bg-[#5591AB] border-0 shadow-2xl rounded-3xl overflow-hidden">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-[#F6F8D5]">Complete your profile</CardTitle>
-          <CardDescription className="text-[#F6F8D5]">
-            Please provide your personal details to finish signing up as a <span className="capitalize font-semibold underline underline-offset-4">{selectedRole ?? "user"}</span>.
-          </CardDescription>
-        </CardHeader>
+        <Card className="w-full bg-[#5591AB] border-0 shadow-2xl rounded-3xl overflow-hidden">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold text-[#F6F8D5]">Complete your profile</CardTitle>
+            <CardDescription className="text-[#F6F8D5]">
+              Please provide your personal details to finish signing up as a <span className="capitalize font-semibold underline underline-offset-4">{selectedRole ?? "user"}</span>.
+            </CardDescription>
+          </CardHeader>
 
-        <CardContent className="space-y-6">
+          <CardContent className="space-y-6">
 
-          {/* Progress Indicator */}
-          <div className="flex items-center justify-between mb-4 px-2">
-            <span className={`text-[10px] font-black uppercase tracking-widest ${step >= 1 ? 'text-[#F6F8D5]' : 'text-[#F6F8D5]/40'}`}>Step 1</span>
-            <div className={`flex-1 h-1.5 mx-3 rounded-full overflow-hidden bg-[#F6F8D5]/20`}>
-              <div className={`h-full bg-[#fbbc05] rounded-full transition-all duration-500 ease-out ${step === 1 ? 'w-1/2' : 'w-full'}`}></div>
-            </div>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${step >= 2 ? 'text-[#F6F8D5]' : 'text-[#F6F8D5]/40'}`}>Step 2</span>
-          </div>
-
-          {step === 1 && (
-            <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
-              {!user?.role && (
-                <div className="space-y-2">
-              <Label className={label_style}>Role <span className="text-red-500">*</span></Label>
-              <Select
-                onValueChange={(value) => {
-                  const role = value as ProfileCompletionRole;
-                  setSelectedRole(role);
-                  setRoleData(role === "student" ? initialStudentData : initialGuestData);
-                  setError(null);
-                }}
-                value={selectedRole ?? undefined}
-              >
-                <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="guest">Guest</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Personal Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-[#F6F8D5] border-b border-[#F6F8D5]/20 pb-1">Personal Information</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label className={label_style}>First Name <span className="text-red-500">*</span></Label>
-                <Input
-                  name="first_name"
-                  className={field_style}
-                  value={personalDetails.first_name}
-                  onChange={(e) => handlePersonalFieldChange("first_name", e.target.value)}
-                  placeholder="First name"
-                  required
-                />
+            {/* Progress Indicator */}
+            <div className="flex items-center justify-between mb-4 px-2">
+              <span className={`text-[10px] font-black uppercase tracking-widest ${step >= 1 ? 'text-[#F6F8D5]' : 'text-[#F6F8D5]/40'}`}>Step 1</span>
+              <div className={`flex-1 h-1.5 mx-3 rounded-full overflow-hidden bg-[#F6F8D5]/20`}>
+                <div className={`h-full bg-[#fbbc05] rounded-full transition-all duration-500 ease-out ${step === 1 ? 'w-1/2' : 'w-full'}`}></div>
               </div>
-              <div className="space-y-2">
-                <Label className={label_style}>Middle Name</Label>
-                <Input
-                  name="middle_name"
-                  className={field_style}
-                  value={personalDetails.middle_name}
-                  onChange={(e) => handlePersonalFieldChange("middle_name", e.target.value)}
-                  placeholder="Middle name (optional)"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className={label_style}>Last Name <span className="text-red-500">*</span></Label>
-              <Input
-                name="last_name"
-                className={full_width}
-                value={personalDetails.last_name}
-                onChange={(e) => handlePersonalFieldChange("last_name", e.target.value)}
-                placeholder="Last name"
-                required
-              />
+              <span className={`text-[10px] font-black uppercase tracking-widest ${step >= 2 ? 'text-[#F6F8D5]' : 'text-[#F6F8D5]/40'}`}>Step 2</span>
             </div>
 
-            <div className="space-y-2">
-              <Label className={label_style}>Contact Number</Label>
-              <Input
-                type="tel"
-                name="contact_number"
-                maxLength={11}
-                className={full_width}
-                value={personalDetails.contact_number}
-                onChange={(e) => handlePersonalFieldChange("contact_number", e.target.value.replace(/[^0-9]/g, ''))}
-                placeholder="e.g. 09760799992"
-              />
-              <p className="text-[10px] text-[#2d1a12]/60 font-semibold pl-1">Format: 11 digits (e.g. 09760799992)</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className={label_style}>Sex <span className="text-red-500">*</span></Label>
-              <Select
-                onValueChange={(value) =>
-                  handlePersonalFieldChange("sex", value as string)
-                }
-                defaultValue={personalDetails.sex}
-                required
-              >
-                <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
-                  {SEX.map((sex) => (
-                    <SelectItem key={sex} value={sex}>
-                      {sex}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Birthdate Field */}
-            <div className="space-y-2">
-              <Label className={label_style}>Birthdate <span className="text-red-500">*</span></Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal h-11 bg-[#fcf4d9] text-[#2d1a12] border-none rounded-full",
-                      !personalDetails.birthdate && "text-[#2d1a12]/30"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {personalDetails.birthdate ? format(personalDetails.birthdate, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#fcf4d9] border-none" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={personalDetails.birthdate}
-                    onSelect={(date) => handlePersonalFieldChange("birthdate", date as any)}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    captionLayout="dropdown"
-                    fromYear={1900}
-                    toYear={new Date().getFullYear()}
-                    initialFocus
-                    className="rounded-xl border-none text-[#2d1a12]"
-                    classNames={{
-                      dropdown: "absolute inset-0 opacity-0 cursor-pointer bg-[#fcf4d9] text-[#2d1a12] [color-scheme:light] [&>option]:bg-[#fcf4d9] [&>option]:text-[#2d1a12]",
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-              <div className="flex flex-col gap-3 pt-4">
-                <Button onClick={handleNextStep} className={button_style}>Next Step</Button>
-                <Button
-                  variant="ghost"
-                  onClick={handleSignOut}
-                  disabled={loading}
-                  className="w-full h-11 rounded-full border-2 border-[#F6F8D5]/40 text-[#F6F8D5] hover:bg-[#F6F8D5]/10 hover:text-[#F6F8D5]"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out & Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && selectedRole && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-[#F6F8D5] border-b border-[#F6F8D5]/20 pb-1 capitalize">{selectedRole} Details</h3>
-
-              {selectedRole === "student" ? (
-                <div className="grid gap-4 sm:grid-cols-2">
+            {step === 1 && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
+                {!user?.role && (
                   <div className="space-y-2">
-                    <Label className={label_style}>Student Number <span className="text-red-500">*</span></Label>
-                    <Input
-                      type="text"
-                      className={field_style}
-                      value={(roleData as StudentRoleData).student_num ?? ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("student_num", e.target.value)
-                      }
-                      placeholder="20XXXXXXXX (9 digits)"
-                      required
-                    />
-                    <p className="text-[10px] text-[#2d1a12]/60 font-semibold pl-1">Format: 9 digits (e.g. 202314986)</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className={label_style}>Degree Program <span className="text-red-500">*</span></Label>
-                    <Select
-                      onValueChange={(value) =>
-                        handleRoleFieldChange("degree_program", value)
-                      }
-                      value={(roleData as StudentRoleData).degree_program}
-                      required
-                    >
-                      <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
-                        {UPLB_PROGRAMS[(roleData as StudentRoleData).college].map((prog) => (
-                          <SelectItem key={prog} value={prog}>
-                            {prog}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className={label_style}>Enrollment Status <span className="text-red-500">*</span></Label>
-                    <Select
-                      onValueChange={(value) =>
-                        handleRoleFieldChange("enrollment_status", value)
-                      }
-                      defaultValue={(roleData as StudentRoleData).enrollment_status}
-                      required
-                    >
-                      <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
-                        {enrollmentOptions.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className={label_style}>College <span className="text-red-500">*</span></Label>
+                    <Label className={label_style}>Role <span className="text-red-500">*</span></Label>
                     <Select
                       onValueChange={(value) => {
-                        handleRoleFieldChange("college", value);
-                        handleRoleFieldChange("degree_program", "");
+                        const role = value as ProfileCompletionRole;
+                        setSelectedRole(role);
+                        setRoleData(role === "student" ? initialStudentData : initialGuestData);
+                        setError(null);
                       }}
-                      defaultValue={(roleData as StudentRoleData).college}
+                      value={selectedRole ?? undefined}
+                    >
+                      <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
+                        <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="guest">Guest</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Personal Details */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-[#F6F8D5] border-b border-[#F6F8D5]/20 pb-1">Personal Information</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label className={label_style}>First Name <span className="text-red-500">*</span></Label>
+                      <Input
+                        name="first_name"
+                        className={field_style}
+                        value={personalDetails.first_name}
+                        onChange={(e) => handlePersonalFieldChange("first_name", e.target.value)}
+                        placeholder="First name"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className={label_style}>Middle Name</Label>
+                      <Input
+                        name="middle_name"
+                        className={field_style}
+                        value={personalDetails.middle_name}
+                        onChange={(e) => handlePersonalFieldChange("middle_name", e.target.value)}
+                        placeholder="Middle name (optional)"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={label_style}>Last Name <span className="text-red-500">*</span></Label>
+                    <Input
+                      name="last_name"
+                      className={full_width}
+                      value={personalDetails.last_name}
+                      onChange={(e) => handlePersonalFieldChange("last_name", e.target.value)}
+                      placeholder="Last name"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className={label_style}>Contact Number</Label>
+                    <Input
+                      type="tel"
+                      name="contact_number"
+                      maxLength={11}
+                      className={full_width}
+                      value={personalDetails.contact_number}
+                      onChange={(e) => handlePersonalFieldChange("contact_number", e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="e.g. 09760799992"
+                    />
+                    <p className="text-[10px] text-[#2d1a12]/60 font-semibold pl-1">Format: 11 digits (e.g. 09760799992)</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className={label_style}>Sex <span className="text-red-500">*</span></Label>
+                    <Select
+                      onValueChange={(value) =>
+                        handlePersonalFieldChange("sex", value as string)
+                      }
+                      defaultValue={personalDetails.sex}
                       required
                     >
                       <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
-                        {COLLEGES.map((college) => (
-                          <SelectItem key={college} value={college}>
-                            {college}
+                        {SEX.map((sex) => (
+                          <SelectItem key={sex} value={sex}>
+                            {sex}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label className={label_style}>Home Address <span className="text-red-500">*</span></Label>
-                    <Input
-                      className={full_width}
-                      value={(roleData as StudentRoleData).home_address ?? ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("home_address", e.target.value)
-                      }
-                      placeholder="Full Address"
-                      required
-                    />
-                  </div>
-
+                  {/* Birthdate Field */}
                   <div className="space-y-2">
-                    <Label className={label_style}>Emergency Person <span className="text-red-500">*</span></Label>
-                    <Input
-                      className={field_style}
-                      value={(roleData as StudentRoleData).emergency_person ?? ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("emergency_person", e.target.value)
-                      }
-                      placeholder="Name of emergency contact"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className={label_style}>Emergency Contact # <span className="text-red-500">*</span></Label>
-                    <Input
-                      type="text"
-                      className={field_style}
-                      value={(roleData as StudentRoleData).emergency_contact || ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("emergency_contact", e.target.value)
-                      }
-                      placeholder="09XXXXXXXXX"
-                      required
-                    />
+                    <Label className={label_style}>Birthdate <span className="text-red-500">*</span></Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal h-11 bg-[#fcf4d9] text-[#2d1a12] border-none rounded-full",
+                            !personalDetails.birthdate && "text-[#2d1a12]/30"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {personalDetails.birthdate ? format(personalDetails.birthdate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-[#fdfff4] border-none" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={personalDetails.birthdate}
+                          onSelect={(date) => handlePersonalFieldChange("birthdate", date as any)}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          captionLayout="dropdown"
+                          fromYear={1900}
+                          toYear={new Date().getFullYear()}
+                          initialFocus
+                          className="rounded-xl border-none text-[#2d1a12]"
+                          classNames={{
+                            dropdown: "absolute inset-0 opacity-0 cursor-pointer bg-[#fdfff4] text-[#2d1a12] [color-scheme:light] [&>option]:bg-[#fdfff4] [&>option]:text-[#2d1a12]",
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
-              ) : (
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label className={label_style}>Valid ID <span className="text-red-500">*</span></Label>
-                    <Input
-                      type="text"
-                      className={field_style}
-                      value={(roleData as GuestRoleData).valid_id || ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("valid_id", e.target.value)
-                      }
-                      placeholder="ID Number / Type"
-                    />
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label className={label_style}>Purpose of Visit <span className="text-red-500">*</span></Label>
-                    <Input
-                      className={field_style}
-                      value={(roleData as GuestRoleData).purpose_visit ?? ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("purpose_visit", e.target.value)
-                      }
-                      placeholder="e.g. Temporary stay, visiting family"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className={label_style}>Home Address <span className="text-red-500">*</span></Label>
-                    <Input
-                      className={full_width}
-                      value={(roleData as GuestRoleData).home_address ?? ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("home_address", e.target.value)
-                      }
-                      placeholder="Full Address"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className={label_style}>Emergency Person <span className="text-red-500">*</span></Label>
-                    <Input
-                      className={field_style}
-                      value={(roleData as GuestRoleData).emergency_person ?? ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("emergency_person", e.target.value)
-                      }
-                      placeholder="Name of emergency contact"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className={label_style}>Emergency Contact # <span className="text-red-500">*</span></Label>
-                    <Input
-                      className={field_style}
-                      value={(roleData as GuestRoleData).emergency_contact ?? ""}
-                      onChange={(e) =>
-                        handleRoleFieldChange("emergency_contact", e.target.value)
-                      }
-                      placeholder="09XXXXXXXXX"
-                      required
-                    />
-                  </div>
+                <div className="flex flex-col gap-3 pt-4">
+                  <Button onClick={handleNextStep} className={button_style}>Next Step</Button>
+                  <Button
+                    variant="ghost"
+                    onClick={handleSignOut}
+                    disabled={loading}
+                    className="w-full h-11 rounded-full border-2 border-[#F6F8D5]/40 text-[#F6F8D5] hover:bg-[#F6F8D5]/10 hover:text-[#F6F8D5]"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out & Cancel
+                  </Button>
                 </div>
-              )}
-            </div>
-
-              <div className="flex flex-col gap-3 pt-4">
-                <Button
-                  onClick={handleContinue}
-                  disabled={loading || !selectedRole}
-                  className={button_style}
-                >
-                  {loading && !error ? "Saving..." : "Finish Setup"}
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  onClick={handlePrevStep}
-                  disabled={loading}
-                  className="w-full h-11 rounded-full border-2 border-[#F6F8D5]/40 text-[#F6F8D5] hover:bg-[#F6F8D5]/10 hover:text-[#F6F8D5]"
-                >
-                  Go Back
-                </Button>
               </div>
-            </div>
-          )}
+            )}
 
-          {error && (
-            <p className="text-sm bg-red-500/20 text-red-100 p-3 rounded-full text-center">{error}</p>
-          )}
-        </CardContent>
-      </Card>
+            {step === 2 && selectedRole && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-[#F6F8D5] border-b border-[#F6F8D5]/20 pb-1 capitalize">{selectedRole} Details</h3>
+
+                  {selectedRole === "student" ? (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label className={label_style}>Student Number <span className="text-red-500">*</span></Label>
+                        <Input
+                          type="text"
+                          className={field_style}
+                          value={(roleData as StudentRoleData).student_num ?? ""}
+                          onChange={(e) =>
+                            handleRoleFieldChange("student_num", e.target.value)
+                          }
+                          placeholder="20XXXXXXXX (9 digits)"
+                          required
+                        />
+                        <p className="text-[10px] text-[#2d1a12]/60 font-semibold pl-1">Format: 9 digits (e.g. 202314986)</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className={label_style}>Degree Program <span className="text-red-500">*</span></Label>
+                        <Select
+                          onValueChange={(value) =>
+                            handleRoleFieldChange("degree_program", value)
+                          }
+                          value={(roleData as StudentRoleData).degree_program}
+                          required
+                        >
+                          <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
+                            {UPLB_PROGRAMS[(roleData as StudentRoleData).college].map((prog) => (
+                              <SelectItem key={prog} value={prog}>
+                                {prog}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className={label_style}>Enrollment Status <span className="text-red-500">*</span></Label>
+                        <Select
+                          onValueChange={(value) =>
+                            handleRoleFieldChange("enrollment_status", value)
+                          }
+                          defaultValue={(roleData as StudentRoleData).enrollment_status}
+                          required
+                        >
+                          <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
+                            {enrollmentOptions.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className={label_style}>College <span className="text-red-500">*</span></Label>
+                        <Select
+                          onValueChange={(value) => {
+                            handleRoleFieldChange("college", value);
+                            handleRoleFieldChange("degree_program", "");
+                          }}
+                          defaultValue={(roleData as StudentRoleData).college}
+                          required
+                        >
+                          <SelectTrigger className="w-full bg-[#fcf4d9] text-[#2d1a12]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#fcf4d9] text-[#2d1a12]">
+                            {COLLEGES.map((college) => (
+                              <SelectItem key={college} value={college}>
+                                {college}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label className={label_style}>Home Address <span className="text-red-500">*</span></Label>
+                        <Input
+                          className={full_width}
+                          value={(roleData as StudentRoleData).home_address ?? ""}
+                          onChange={(e) =>
+                            handleRoleFieldChange("home_address", e.target.value)
+                          }
+                          placeholder="Full Address"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className={label_style}>Emergency Person <span className="text-red-500">*</span></Label>
+                        <Input
+                          className={field_style}
+                          value={(roleData as StudentRoleData).emergency_person ?? ""}
+                          onChange={(e) =>
+                            handleRoleFieldChange("emergency_person", e.target.value)
+                          }
+                          placeholder="Name of emergency contact"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className={label_style}>Emergency Contact # <span className="text-red-500">*</span></Label>
+                        <Input
+                          type="text"
+                          className={field_style}
+                          value={(roleData as StudentRoleData).emergency_contact || ""}
+                          onChange={(e) =>
+                            handleRoleFieldChange("emergency_contact", e.target.value)
+                          }
+                          placeholder="09XXXXXXXXX"
+                          required
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <Label className={label_style}>Valid ID <span className="text-red-500">*</span></Label>
+                        <Input
+                          type="text"
+                          className={field_style}
+                          value={(roleData as GuestRoleData).valid_id || ""}
+                          onChange={(e) =>
+                            handleRoleFieldChange("valid_id", e.target.value)
+                          }
+                          placeholder="ID Number / Type"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className={label_style}>Purpose of Visit <span className="text-red-500">*</span></Label>
+                        <Input
+                          className={field_style}
+                          value={(roleData as GuestRoleData).purpose_visit ?? ""}
+                          onChange={(e) =>
+                            handleRoleFieldChange("purpose_visit", e.target.value)
+                          }
+                          placeholder="e.g. Temporary stay, visiting family"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className={label_style}>Home Address <span className="text-red-500">*</span></Label>
+                        <Input
+                          className={full_width}
+                          value={(roleData as GuestRoleData).home_address ?? ""}
+                          onChange={(e) =>
+                            handleRoleFieldChange("home_address", e.target.value)
+                          }
+                          placeholder="Full Address"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className={label_style}>Emergency Person <span className="text-red-500">*</span></Label>
+                        <Input
+                          className={field_style}
+                          value={(roleData as GuestRoleData).emergency_person ?? ""}
+                          onChange={(e) =>
+                            handleRoleFieldChange("emergency_person", e.target.value)
+                          }
+                          placeholder="Name of emergency contact"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className={label_style}>Emergency Contact # <span className="text-red-500">*</span></Label>
+                        <Input
+                          className={field_style}
+                          value={(roleData as GuestRoleData).emergency_contact ?? ""}
+                          onChange={(e) =>
+                            handleRoleFieldChange("emergency_contact", e.target.value)
+                          }
+                          placeholder="09XXXXXXXXX"
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-3 pt-4">
+                  <Button
+                    onClick={handleContinue}
+                    disabled={loading || !selectedRole}
+                    className={button_style}
+                  >
+                    {loading && !error ? "Saving..." : "Finish Setup"}
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    onClick={handlePrevStep}
+                    disabled={loading}
+                    className="w-full h-11 rounded-full border-2 border-[#F6F8D5]/40 text-[#F6F8D5] hover:bg-[#F6F8D5]/10 hover:text-[#F6F8D5]"
+                  >
+                    Go Back
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <p className="text-sm bg-red-500/20 text-red-100 p-3 rounded-full text-center">{error}</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <style jsx global>{`
