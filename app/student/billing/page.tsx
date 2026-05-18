@@ -16,9 +16,6 @@ export default async function StudentBillingPage() {
     redirect("/onboarding");
   }
 
-  // Trigger invoice generation in background
-  ensureInitialInvoicesForUser(user.user_id).catch(console.error);
-
   const [summaryRes, billsRes, historyRes] = await Promise.all([
     getUserPaymentSummary(user.user_id, "student"),
     getStudentBillsDetailed(user.user_id),

@@ -115,10 +115,11 @@ export async function adminCreateBillAction(
       .from("billing")
       .select("billing_id")
       .eq("assignment_id", billingData.assignment_id)
+      .in("status", ["unpaid", "draft", "overdue", "failed"])
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    
+
     if (!fetchError && existing?.billing_id) {
       // Invoice already exists, update it instead of creating a new one
       const updateResult = await updateAdminInvoiceWithItems("admin", existing.billing_id, {
@@ -126,7 +127,7 @@ export async function adminCreateBillAction(
         due_date: billingData.due_date instanceof Date ? billingData.due_date.toISOString() : billingData.due_date,
         payment_method: billingData.payment_method,
       }, items);
-      
+
       if (!updateResult?.error) {
         (updateResult as any).mode = "updated";
         revalidatePath("/admin/dashboard/billing");

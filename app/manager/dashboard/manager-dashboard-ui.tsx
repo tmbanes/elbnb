@@ -269,7 +269,7 @@ export default function ManagerDashboardUI({
     const rooms = dbRooms.length > 0 ? dbRooms : [];
 
     const currentData = activeTab === 'residents' ? allStudents : waitlistStudents;
-    const filteredStudents = currentData.filter(student => {
+    const filteredStudents = currentData.filter((student: any) => {
         const matchesSearch = (student.name || "").toLowerCase().includes(tableSearch.toLowerCase()) ||
             (student.student_number || "").toLowerCase().includes(tableSearch.toLowerCase());
         const matchesCollege = tableFilters.college === "all" || student.college === tableFilters.college;
