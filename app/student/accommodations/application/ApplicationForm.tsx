@@ -759,13 +759,13 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                           >
                             <SelectValue placeholder="Select type" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white">
                             {dynamicUnitTypes.length > 0 ? (
                               dynamicUnitTypes.map((type) => (
                                 <SelectItem
                                   key={type}
                                   value={type}
-                                  className="capitalize"
+                                  className="capitalize focus:bg-[#FDFFF4] hover:bg-[#FDFFF4]"
                                 >
                                   {type === "wholeunit" ? "Whole Unit" : type}
                                 </SelectItem>
@@ -815,7 +815,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                             <CalendarIcon className="h-4 w-4 text-[#78A24C]" />
                           </button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
+                        <PopoverContent className="w-auto p-0 z-[80] bg-[#FDFFF4] border-none rounded-xl" align="start">
                           <Calendar
                             mode="single"
                             selected={field.value}
@@ -824,6 +824,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                               date < new Date(new Date().setHours(0, 0, 0, 0))
                             }
                             initialFocus
+                            className="bg-[#FDFFF4] rounded-xl"
                           />
                         </PopoverContent>
                       </Popover>

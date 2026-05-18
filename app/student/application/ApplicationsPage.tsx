@@ -15,11 +15,12 @@ import {
 } from "@/components/ui/table";
 import { CancelApplicationModal } from "./CancelModal";
 import { AccommodationApplication } from "@/types/user_profile";
-import { Check, Clock, X, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Check, Clock, X, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { cn } from "@/lib/utils/ui-utils";
 import { PaymentModal } from "./PaymentModal";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Archivo_Black } from "next/font/google";
 
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
@@ -300,34 +301,40 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
               <h2 className={`${archivoBlack.className} text-xl md:text-2xl text-[#44291B] tracking-tight`}>Application History</h2>
             </div>
 
-            {/* Filter styled to match the Admin Client */}
-            <div className="relative">
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="appearance-none pl-4 pr-9 py-2.5 text-sm font-semibold rounded-xl border border-[#44291B]/15 shadow-sm outline-none cursor-pointer transition-all hover:border-[#264384]/30 focus:ring-2 focus:ring-[#264384]/15 focus:border-[#264384]/40"
-                style={{ backgroundColor: '#FDFFF4', color: '#44291B' }}
-              >
-                <option value="all">All Statuses</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="#44291B" strokeOpacity="0.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
+
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="h-10 w-full sm:w-auto min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors focus:ring-0 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
+                  <SelectValue placeholder="All Statuses" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                  All statuses
+                </SelectItem>
+                <SelectItem value="approved" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                  Approved
+                </SelectItem>
+                <SelectItem value="rejected" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                  Rejected
+                </SelectItem>
+                <SelectItem value="cancelled" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                  Cancelled
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* TABLE CONTAINER - Styled from AdminBillingClient */}
+          {/* TABLE CONTAINER */}
           <div className="bg-white border text-sm border-slate-200 rounded-2xl shadow-sm overflow-hidden">
 
-            {/* Note: Kept your custom blue header as it houses your specific submission log assets */}
             <div className="relative bg-[#264384] py-4 px-6 overflow-hidden">
               <div className="flex justify-between items-center relative z-10">
                 <span className={`${archivoBlack.className} text-white text-sm uppercase tracking-widest`}>Submission Log</span>
