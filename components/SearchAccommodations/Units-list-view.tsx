@@ -13,6 +13,7 @@ interface UnitListViewProps {
   basePath: string
   appliedAccommodationIds?: Set<string>
   onDetailsClick?: (unit: Unit) => void
+  hasThreeApplications?: boolean
 }
 
 export function UnitsListView({
@@ -25,6 +26,7 @@ export function UnitsListView({
   basePath,
   appliedAccommodationIds = new Set(),
   onDetailsClick,
+  hasThreeApplications = false,
 }: UnitListViewProps) {
   return (
     <div className="space-y-6">
@@ -176,7 +178,14 @@ export function UnitsListView({
                   </button>
 
                   {/* APPLY BUTTON */}
-                  {isApplicationOpen ? (
+                  {hasThreeApplications ? (
+                    <button
+                      disabled
+                      className="px-8 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed transition-all text-center animate-none"
+                    >
+                      Limit Reached (3 Sent)
+                    </button>
+                  ) : isApplicationOpen ? (
                     vacantSlots > 0 ? (
                       appliedAccommodationIds.has(unit.accommodation_id) ? (
                         <button

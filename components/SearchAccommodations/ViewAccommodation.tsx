@@ -12,6 +12,7 @@ interface ViewAccommodationProps {
   onUnitTypeClick?: (unit: Unit) => void
   userRole?: 'student' | 'guest'
   isFetchingUnits?: boolean
+  hasThreeApplications?: boolean
 }
 
 export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
@@ -22,6 +23,7 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
   onUnitTypeClick,
   userRole = 'student',
   isFetchingUnits = false,
+  hasThreeApplications = false,
 }) => {
   const displayCapacity = accommodation.total_capacity
   const displayImages = accommodation.images || (accommodation.image ? [accommodation.image] : [])
@@ -526,14 +528,16 @@ export const ViewAccommodation: React.FC<ViewAccommodationProps> = ({
               <div className="mt-4">
                 <button
                   className={`w-full py-6 text-white font-archivo font-black text-sm rounded-[2rem] shadow-2xl transition-all uppercase tracking-[0.2em] ${
-                    !accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)
+                    hasThreeApplications || !accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)
                       ? 'bg-gray-400 cursor-not-allowed opacity-60'
                       : 'bg-[#264384] hover:scale-[1.05] hover:bg-[#1a2f5e] active:scale-[0.95]'
                   }`}
                   onClick={onApply}
-                  disabled={!accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)}
+                  disabled={hasThreeApplications || !accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application)}
                 >
-                  {!accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application) ? 'Closed' : 'Apply Now'}
+                  {hasThreeApplications 
+                    ? 'Limit Reached (3 Sent)' 
+                    : (!accommodation.allowed_application || new Date() > new Date(accommodation.allowed_application) ? 'Closed' : 'Apply Now')}
                 </button>
               </div>
 

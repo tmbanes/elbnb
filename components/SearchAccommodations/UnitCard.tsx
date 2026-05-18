@@ -11,6 +11,7 @@ interface UnitCardProps {
   onDetailsClick: (unit: Unit) => void;
   appliedAccommodationIds?: Set<string>;
   userRole?: string;
+  hasThreeApplications?: boolean;
 }
 
 export function UnitCard({
@@ -19,6 +20,7 @@ export function UnitCard({
   onDetailsClick,
   appliedAccommodationIds = new Set(),
   userRole = 'guest',
+  hasThreeApplications = false,
 }: UnitCardProps) {
   const hasVacancy = unit.vacant_slots > 0;
 
@@ -117,7 +119,14 @@ export function UnitCard({
 
         {/* Actions */}
         <div className="flex flex-col gap-2 mt-auto">
-          {isApplicationOpen ? (
+          {hasThreeApplications ? (
+            <button
+              disabled
+              className="w-full px-4 py-2.5 rounded-lg text-sm font-bold bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none text-center"
+            >
+              Limit Reached (3 Sent)
+            </button>
+          ) : isApplicationOpen ? (
             hasVacancy ? (
               appliedAccommodationIds.has(unit.accommodation_id) ? (
                 <button
