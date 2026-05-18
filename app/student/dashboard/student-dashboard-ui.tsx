@@ -207,16 +207,7 @@ export default function StudentDashboardUI({
         <div className={`min-h-screen bg-[#F6F8D5] py-6 px-6 lg:py-10 lg:px-[1in] text-slate-800 flex flex-col items-center ${archivo.className}`}>
             <div className="w-full max-w-[1100px]">
                 {/* TOP BAR */}
-                <header className="flex justify-between items-center mb-10 w-full relative z-50">
-                    <div className="flex flex-col">
-                        <h1 className="text-[28px] font-black text-slate-900 leading-tight">
-                            Student Dashboard
-                        </h1>
-                        <p className="text-[13px] text-slate-500 font-medium">
-                            Welcome back, {user?.first_name}!
-                        </p>
-                    </div>
-
+                <header className="flex justify-end items-center mb-10 w-full relative z-50">
                     <div className="flex items-center gap-6">
                         {/* NOTIFICATIONS */}
                         <div className="relative">
