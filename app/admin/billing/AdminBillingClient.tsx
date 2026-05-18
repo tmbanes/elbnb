@@ -341,7 +341,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       </div>
 
       {/* SUMMARY */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 print:hidden">
         <div className="bg-[#5591AB] text-white p-6 rounded-2xl border border-[#4b839b] shadow-sm">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-xs font-bold tracking-wide uppercase text-white/90">Total Revenue</h3>
@@ -373,8 +373,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       </div>
 
       {/* FILTER & ACTIONS */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-3 rounded-2xl border border-[#e8e2d6] shadow-sm print:hidden">
-        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 max-w-md bg-[#FDFFF4] hover:bg-[#F6F8D5] focus-within:bg-[#F6F8D5] transition-all">
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-3 rounded-2xl border border-[#e8e2d6] shadow-sm print:hidden">
+        <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 w-full lg:max-w-md bg-[#FDFFF4] transition-all">
           <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
             <Search className="w-4 h-4 text-[#44291B]/40 shrink-0" />
           </div>
@@ -390,7 +390,7 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
           />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end">
           <Select
             value={statusFilter}
             onValueChange={(value) => {
@@ -398,40 +398,44 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
               setInvoicesPage(1);
             }}
           >
-            <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors focus:ring-0 shadow-sm">
+            <SelectTrigger className="h-10 w-full sm:w-auto min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors focus:ring-0 shadow-sm">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
                 <SelectValue placeholder="All Statuses" />
               </div>
             </SelectTrigger>
             <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
-              <SelectItem value="ALL" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Statuses</SelectItem>
+              <SelectItem value="ALL" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                All statuses
+              </SelectItem>
               {INVOICE_STATUSES.map((s) => (
                 <SelectItem key={s} value={s} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
-                  {s.replace(/_/g, " ").toUpperCase()}
+                  <span className="capitalize">
+                    {s.replace(/_/g, " ").toLowerCase()}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <div className="h-6 w-px bg-[#e8e2d6] mx-2"></div>
+          <div className="hidden sm:block h-6 w-px bg-[#e8e2d6] mx-2"></div>
 
           <button
             onClick={sendReminders}
-            className="flex items-center gap-2 text-sm font-medium text-[#44291B]  bg-[#FDFFF4] border border-slate-200 px-4 py-2 rounded-xl hover:bg-[#F6F8D5] transition"
+            className="flex items-center justify-center gap-2 text-sm font-medium text-[#44291B] bg-[#FDFFF4] border border-slate-200 px-4 py-2 rounded-xl hover:bg-[#F6F8D5] transition h-10 w-full sm:w-auto"
           >
             <Send className="w-4 h-4" /> Remind
           </button>
 
           <button
             onClick={exportSelected}
-            className="flex items-center gap-2 text-sm font-medium text-[#44291B]  bg-[#FDFFF4] border border-slate-200 px-4 py-2 rounded-xl hover:bg-[#F6F8D5] transition"
+            className="flex items-center justify-center gap-2 text-sm font-medium text-[#44291B] bg-[#FDFFF4] border border-slate-200 px-4 py-2 rounded-xl hover:bg-[#F6F8D5] transition h-10 w-full sm:w-auto"
           >
             <Download className="w-4 h-4" /> PDF
           </button>
 
           <button
             onClick={() => setIsCreatingBill(true)}
-            className="flex items-center gap-2 text-sm font-medium text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto w-full sm:w-auto"
+            className="flex items-center justify-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-10 w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" /> Create
           </button>
@@ -439,25 +443,25 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
       </div>
 
       {/* DATA TABLE */}
-      <div className="bg-[#FDFFF4] border text-sm  border-[#cfd6e4] rounded-2xl shadow-sm overflow-hidden print:hidden">
-        <div className="overflow-x-auto text-[#44291B]">
-          <table className="w-full text-left border-collapse table-fixed">
+      <div className="bg-[#FDFFF4] border text-sm border-[#cfd6e4] rounded-2xl shadow-sm overflow-hidden print:hidden">
+        <div className="overflow-x-auto text-[#44291B] scrollbar-hide">
+          <table className="w-full text-left border-collapse table-auto">
             <thead>
               <tr className="bg-[#FDFFF4] border-b border-[#cfd6e4]">
-                <th className="px-6 py-4 font-semibold w-12 pt-[18px]">
+                <th className="px-2 sm:px-6 py-4 font-semibold w-8 sm:w-12 pt-[18px]">
                   <input type="checkbox" checked={selectedBillIds.length === filteredBills.length && filteredBills.length > 0} onChange={handleSelectAll} className="rounded border-slate-300" />
                 </th>
-                <th className="px-6 py-4 font-semibold w-[35%]">Tenant / Property</th>
-                <th className="px-6 py-4 font-semibold w-[15%]">Invoice #</th>
-                <th className="px-6 py-4 font-semibold w-[20%]">Amount / Date</th>
-                <th className="px-6 py-4 font-semibold w-[15%]">Status</th>
-                <th className="px-6 py-4 font-semibold text-right w-[15%]">Actions</th>
+                <th className="px-2 sm:px-6 py-4 font-semibold">Tenant / Property</th>
+                <th className="px-2 sm:px-6 py-4 font-semibold hidden sm:table-cell w-[15%]">Invoice #</th>
+                <th className="px-2 sm:px-6 py-4 font-semibold w-[22%]">Amount / Date</th>
+                <th className="px-2 sm:px-6 py-4 font-semibold w-[18%]">Status</th>
+                <th className="px-2 sm:px-6 py-4 font-semibold text-right w-[15%]">Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginatedBills.map((bill: any) => (
                 <tr key={bill.billing_id} className="border-b border-[#e2e4c0] last:border-0 hover:bg-[#F6F8D5] transition-colors">
-                  <td className="px-6 py-4">
+                  <td className="px-2 sm:px-6 py-4">
                     <input
                       type="checkbox"
                       onChange={() => toggleSelection(bill.billing_id)}
@@ -465,52 +469,52 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                       className="rounded border-slate-300"
                     />
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-[#44291B] flex items-center gap-2">
+                  <td className="px-2 sm:px-6 py-4">
+                    <p className="font-bold text-[#44291B] flex items-center gap-2 text-xs sm:text-sm">
                       {bill.accommodation_assignment?.users ? `${bill.accommodation_assignment.users.first_name} ${bill.accommodation_assignment.users.last_name}` : "Unknown Tenant"}
                     </p>
-                    <p className="text-xs text-[#44291B]/70 flex items-center gap-1">
-                      <Building className="w-3.5 h-3.5 text-[#44291B]/50" />
+                    <p className="text-[10px] sm:text-xs text-[#44291B]/70 flex items-center gap-1">
+                      <Building className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#44291B]/50" />
                       {bill.accommodation_assignment?.unit?.accommodation?.name || bill.accommodation_assignment?.accommodation_application?.accommodation?.name || "N/A"}
                     </p>
                   </td>
-                  <td className="px-6 py-4 font-mono text-xs">
+                  <td className="px-2 sm:px-6 py-4 font-mono text-[10px] sm:text-xs hidden sm:table-cell">
                     {bill.billing_id.split("-")[0]}
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-[#44291B]">₱{bill.amount.toLocaleString()}</p>
-                    <p className="text-xs text-[#44291B]/70 text-nowrap">Due: {format(new Date(bill.due_date), 'MMM dd, yyyy')}</p>
+                  <td className="px-2 sm:px-6 py-4">
+                    <p className="font-bold text-[#44291B] text-xs sm:text-sm">₱{bill.amount.toLocaleString()}</p>
+                    <p className="text-[10px] sm:text-xs text-[#44291B]/70 text-nowrap">Due: {format(new Date(bill.due_date), 'MMM dd, yyyy')}</p>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-2 sm:px-6 py-4">
                     {(() => {
                       const details = getStatusDetails(bill.status);
                       return (
                         <span className={cn(
-                          "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                          "inline-flex items-center gap-1 px-1.5 sm:gap-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
                           details.badge
                         )}>
-                          <span className={cn("w-1.5 h-1.5 rounded-full", details.dot)} />
+                          <span className={cn("w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full", details.dot)} />
                           {details.label}
                         </span>
                       );
                     })()}
-                    {bill.method && <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">{bill.method}</p>}
+                    {bill.method && <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 mt-1">{bill.method}</p>}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
+                  <td className="px-2 sm:px-6 py-4 text-right">
+                    <div className="flex justify-end gap-1 sm:gap-2">
                       <button
                         onClick={() => openEditor(bill)}
-                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition tooltip-trigger"
+                        className="p-1 sm:p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition tooltip-trigger"
                       >
-                        <FileEdit className="w-4 h-4" />
+                        <FileEdit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </button>
 
                       <button
                         disabled={!bill.transaction_reference}
                         onClick={() => openReceiptViewer(bill)}
-                        className={`p-2 rounded-lg transition ${bill.transaction_reference ? 'text-[#264384] bg-[#AFBFE1] hover:bg-[#5273BC] hover:text-white' : 'text-slate-300 bg-slate-50 cursor-not-allowed'}`}
+                        className={`p-1 sm:p-2 rounded-lg transition ${bill.transaction_reference ? 'text-[#264384] bg-[#AFBFE1] hover:bg-[#5273BC] hover:text-white' : 'text-slate-300 bg-slate-50 cursor-not-allowed'}`}
                       >
-                        {bill.status === BillingStatus.PENDING ? <Eye className="w-4 h-4 animate-pulse" /> : <Receipt className="w-4 h-4" />}
+                        {bill.status === BillingStatus.PENDING ? <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-pulse" /> : <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                       </button>
                     </div>
                   </td>
@@ -527,8 +531,8 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
           </table>
         </div>
         {filteredBills.length > 0 && (
-          <div className="px-6 py-4 bg-[#FDFFF4] border-t border-[#cfd6e4] flex items-center justify-between">
-            <p className="text-xs text-slate-500 font-medium">
+          <div className="px-4 sm:px-6 py-4 bg-[#FDFFF4] border-t border-[#cfd6e4] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-slate-500 font-medium text-center sm:text-left">
               Showing {paginatedBills.length} of {filteredBills.length} results
             </p>
             <div className="flex gap-2">
@@ -732,13 +736,13 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                         {editDueDate ? format(new Date(editDueDate), "PPP") : <span>Pick a date</span>}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[80]" align="start">
+                    <PopoverContent className="w-auto p-0 z-[80] bg-[#FDFFF4] border-none rounded-xl" align="start">
                       <Calendar
                         mode="single"
                         selected={editDueDate ? new Date(editDueDate) : undefined}
                         onSelect={(date) => setEditDueDate(date ? format(date, "yyyy-MM-dd") : "")}
                         initialFocus
-                        className="bg-white rounded-xl"
+                        className="bg-[#FDFFF4] rounded-xl"
                       />
                     </PopoverContent>
                   </Popover>
@@ -830,13 +834,13 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                       {newBillDueDate ? format(new Date(newBillDueDate), "PPP") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-[80]" align="start">
+                  <PopoverContent className="w-auto p-0 z-[80] bg-[#FDFFF4] border-none rounded-xl" align="start">
                     <Calendar
                       mode="single"
                       selected={newBillDueDate ? new Date(newBillDueDate) : undefined}
                       onSelect={(date) => setNewBillDueDate(date ? format(date, "yyyy-MM-dd") : "")}
                       initialFocus
-                      className="bg-white rounded-xl"
+                      className="bg-[#FDFFF4] rounded-xl"
                     />
                   </PopoverContent>
                 </Popover>

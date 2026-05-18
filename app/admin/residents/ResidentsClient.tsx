@@ -177,8 +177,8 @@ export default function ResidentsClient({
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm">
-            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] flex-1 max-w-sm hover:bg-[#F6F8D5] transition-colors">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm">
+            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] flex-1 w-full md:max-w-md transition-colors">
               <Search className="w-4 h-4 ml-3 text-[#44291B]/40 shrink-0" />
               <input
                 type="text"
@@ -189,37 +189,39 @@ export default function ResidentsClient({
               />
             </div>
 
-            <Select value={accomFilter} onValueChange={(val) => { setAccomFilter(val); setPage(1); }}>
-              <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
-                  <SelectValue placeholder="All Properties" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
-                <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
-                {accommodations.map(a => (
-                  <SelectItem key={a.accommodation_id} value={a.accommodation_id} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
-                    {a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
+              <Select value={accomFilter} onValueChange={(val) => { setAccomFilter(val); setPage(1); }}>
+                <SelectTrigger className="h-10 min-w-[180px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm w-full md:w-auto">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
+                    <SelectValue placeholder="All Properties" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                  <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
+                  {accommodations.map(a => (
+                    <SelectItem key={a.accommodation_id} value={a.accommodation_id} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                      {a.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val as FilterStatus); setPage(1); }}>
-              <SelectTrigger className="h-10 min-w-[160px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
-                  <SelectValue placeholder="All Status" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
-                <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Status</SelectItem>
-                <SelectItem value="awaiting" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Awaiting Move-in</SelectItem>
-                <SelectItem value="active" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Active Stays</SelectItem>
-                <SelectItem value="checked-out" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Stay History</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val as FilterStatus); setPage(1); }}>
+                <SelectTrigger className="h-10 min-w-[160px] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] px-3 text-sm font-medium text-[#44291B] flex items-center gap-2 hover:bg-[#F6F8D5] transition-colors shadow-sm w-full md:w-auto">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
+                    <SelectValue placeholder="All Status" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                  <SelectItem value="all" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Status</SelectItem>
+                  <SelectItem value="awaiting" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Awaiting Move-in</SelectItem>
+                  <SelectItem value="active" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Active Stays</SelectItem>
+                  <SelectItem value="checked-out" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Stay History</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-hidden shadow-sm">

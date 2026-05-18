@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import {
     Card,
@@ -414,33 +423,44 @@ export default function ReviewApplication({
                 <label className="text-[10px] font-extrabold text-[#44291B]/40 uppercase tracking-widest block pl-1">
                   Select Available Unit
                 </label>
-                <select
-                  className="w-full bg-white border border-[#e8e2d6] rounded-xl px-3 py-2.5 text-sm font-bold text-[#44291B] outline-none focus:ring-2 focus:ring-[#264384]/20 transition-all cursor-pointer"
-                  value={selectedUnitId}
-                  onChange={(e) => setSelectedUnitId(e.target.value)}
-                >
-                  <option value="">Choose a unit...</option>
-                  <optgroup label="Matching Preferred Type">
-                    {(appData.availableUnits || [])
-                      .filter((u: any) => u.unit_type === appData.preferred_unit_type)
-                      .map((unit: any) => (
-                        <option key={unit.unit_id} value={unit.unit_id}>
-                          Unit {unit.unit_number} ({unit.unit_type.replace(/_/g, ' ')})
-                        </option>
-                      ))
-                    }
-                  </optgroup>
-                  <optgroup label="Other Available Units">
-                    {(appData.availableUnits || [])
-                      .filter((u: any) => u.unit_type !== appData.preferred_unit_type)
-                      .map((unit: any) => (
-                        <option key={unit.unit_id} value={unit.unit_id}>
-                          Unit {unit.unit_number} ({unit.unit_type.replace(/_/g, ' ')})
-                        </option>
-                      ))
-                    }
-                  </optgroup>
-                </select>
+                <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] bg-white h-11 w-full shadow-sm hover:bg-[#F6F8D5] transition-colors focus-within:bg-[#F6F8D5]">
+                  <UserIcon className="w-4 h-4 text-[#44291B]/50 shrink-0" />
+                  <Select 
+                    value={selectedUnitId || "none"} 
+                    onValueChange={(val) => setSelectedUnitId(val === "none" ? "" : val)}
+                  >
+                    <SelectTrigger className="w-full border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-bold h-full">
+                      <SelectValue placeholder="Choose a unit..." />
+                    </SelectTrigger>
+                    <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                      <SelectItem value="none" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Choose a unit...</SelectItem>
+                      
+                      <SelectGroup>
+                        <SelectLabel className="px-2 py-1.5 text-[10px] font-extrabold text-[#44291B]/40 uppercase tracking-widest">Matching Preferred Type</SelectLabel>
+                        {(appData.availableUnits || [])
+                          .filter((u: any) => u.unit_type === appData.preferred_unit_type)
+                          .map((unit: any) => (
+                            <SelectItem key={unit.unit_id} value={unit.unit_id} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                              Unit {unit.unit_number} ({unit.unit_type.replace(/_/g, ' ')})
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectGroup>
+
+                      <SelectGroup>
+                        <SelectLabel className="px-2 py-1.5 text-[10px] font-extrabold text-[#44291B]/40 uppercase tracking-widest mt-2 border-t border-[#e8e2d6]/50 pt-2">Other Available Units</SelectLabel>
+                        {(appData.availableUnits || [])
+                          .filter((u: any) => u.unit_type !== appData.preferred_unit_type)
+                          .map((unit: any) => (
+                            <SelectItem key={unit.unit_id} value={unit.unit_id} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                              Unit {unit.unit_number} ({unit.unit_type.replace(/_/g, ' ')})
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
           </div>
@@ -685,30 +705,48 @@ export default function ReviewApplication({
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-extrabold text-[#44291B]/40 uppercase tracking-widest block pl-1">Unit Assignment</label>
-                  <select
-                    className="w-full bg-white border border-[#e8e2d6] rounded-xl px-3 py-2.5 text-sm font-bold text-[#44291B] outline-none disabled:opacity-50"
-                    value={selectedUnitId}
-                    onChange={(e) => setSelectedUnitId(e.target.value)}
-                    disabled={appData.application_status !== "pending_admin"}
-                  >
-                    <option value="">Choose Unit...</option>
-                    <optgroup label="Matching Preferred Type">
-                      {(appData.availableUnits || [])
-                        .filter((u: any) => u.unit_type === appData.preferred_unit_type)
-                        .map((u: any) => (
-                          <option key={u.unit_id} value={u.unit_id}>Unit {u.unit_number} ({u.unit_type.replace(/_/g, ' ')})</option>
-                        ))
-                      }
-                    </optgroup>
-                    <optgroup label="Other Available Units">
-                      {(appData.availableUnits || [])
-                        .filter((u: any) => u.unit_type !== appData.preferred_unit_type)
-                        .map((u: any) => (
-                          <option key={u.unit_id} value={u.unit_id}>Unit {u.unit_number} ({u.unit_type.replace(/_/g, ' ')})</option>
-                        ))
-                      }
-                    </optgroup>
-                  </select>
+                  <div className={cn(
+                    "flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] bg-white h-11 w-full shadow-sm hover:bg-[#F6F8D5] transition-colors focus-within:bg-[#F6F8D5]",
+                    appData.application_status !== "pending_admin" && "opacity-50 cursor-not-allowed"
+                  )}>
+                    <UserIcon className="w-4 h-4 text-[#44291B]/50 shrink-0" />
+                    <Select 
+                      disabled={appData.application_status !== "pending_admin"}
+                      value={selectedUnitId || "none"} 
+                      onValueChange={(val) => setSelectedUnitId(val === "none" ? "" : val)}
+                    >
+                      <SelectTrigger className="w-full border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-bold h-full disabled:opacity-100">
+                        <SelectValue placeholder="Choose Unit..." />
+                      </SelectTrigger>
+                      <SelectContent className="z-[70] rounded-xl border border-[#e8e2d6] bg-[#FDFFF4] text-[#44291B]">
+                        <SelectItem value="none" className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Choose Unit...</SelectItem>
+                        
+                        <SelectGroup>
+                          <SelectLabel className="px-2 py-1.5 text-[10px] font-extrabold text-[#44291B]/40 uppercase tracking-widest">Matching Preferred Type</SelectLabel>
+                          {(appData.availableUnits || [])
+                            .filter((u: any) => u.unit_type === appData.preferred_unit_type)
+                            .map((u: any) => (
+                              <SelectItem key={u.unit_id} value={u.unit_id} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                                Unit {u.unit_number} ({u.unit_type.replace(/_/g, ' ')})
+                              </SelectItem>
+                            ))
+                          }
+                        </SelectGroup>
+
+                        <SelectGroup>
+                          <SelectLabel className="px-2 py-1.5 text-[10px] font-extrabold text-[#44291B]/40 uppercase tracking-widest mt-2 border-t border-[#e8e2d6]/50 pt-2">Other Available Units</SelectLabel>
+                          {(appData.availableUnits || [])
+                            .filter((u: any) => u.unit_type !== appData.preferred_unit_type)
+                            .map((u: any) => (
+                              <SelectItem key={u.unit_id} value={u.unit_id} className="text-sm font-medium focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                                Unit {u.unit_number} ({u.unit_type.replace(/_/g, ' ')})
+                              </SelectItem>
+                            ))
+                          }
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 

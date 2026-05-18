@@ -6,6 +6,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useRealtimeSync } from "@/lib/realtime-sync";
 import { useRouter } from "next/navigation";
 import { updateResidentStatus } from "@/lib/actions/residents.actions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
@@ -162,46 +169,60 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
           </div>
 
           {/* Filter bar */}
-          <div className="flex flex-col sm:flex-row gap-3 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm">
-            <div className="flex items-center border border-[#e8e2d6] rounded-xl bg-white flex-1">
-              <Search className="w-4 h-4 ml-3 text-[#44291B]/40 shrink-0" />
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#FDFFF4] p-4 rounded-2xl border border-[#e8e2d6] shadow-sm">
+            <div className="flex border border-[#e8e2d6] rounded-xl overflow-hidden flex-1 w-full md:max-w-md bg-transparent">
+              <div className="pl-3 flex items-center justify-center text-[#44291B]/50">
+                <Search className="w-4 h-4" />
+              </div>
               <input
                 type="text"
                 placeholder="Search resident..."
                 value={search}
                 onChange={e => { setSearch(e.target.value); setPage(1); }}
-                className="flex-1 px-3 py-2.5 text-sm bg-transparent outline-none text-[#44291B] font-medium"
+                className="w-full px-3 py-2 bg-transparent text-sm outline-none text-[#44291B] placeholder:text-[#44291B]/50 font-medium"
               />
             </div>
 
-            {accommodations.length > 1 && (
-              <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
-                <Building2 className="w-4 h-4 text-[#44291B]/40 shrink-0" />
-                <select
-                  value={accomFilter}
-                  onChange={e => { setAccomFilter(e.target.value); setPage(1); }}
-                  className="text-sm bg-transparent outline-none text-[#44291B] font-medium cursor-pointer"
-                >
-                  <option value="all">All Properties</option>
-                  {accommodations.map(a => (
-                    <option key={a.accommodation_id} value={a.accommodation_id}>{a.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+              {accommodations.length > 1 && (
+                <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] w-full sm:w-auto bg-transparent">
+                  <Building2 className="w-4 h-4 text-[#44291B]/50 shrink-0" />
+                  <Select
+                    value={accomFilter}
+                    onValueChange={(val) => { setAccomFilter(val); setPage(1); }}
+                  >
+                    <SelectTrigger className="w-full sm:w-[140px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
+                      <SelectValue placeholder="All Properties" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md">
+                      <SelectItem value="all" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Properties</SelectItem>
+                      {accommodations.map(a => (
+                        <SelectItem key={a.accommodation_id} value={a.accommodation_id} className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-            <div className="flex items-center gap-2 border border-[#e8e2d6] rounded-xl bg-[#FDFFF4] px-3 py-2">
-              <Filter className="w-4 h-4 text-[#44291B]/40 shrink-0" />
-              <select
-                value={statusFilter}
-                onChange={e => { setStatusFilter(e.target.value as FilterStatus); setPage(1); }}
-                className="text-sm bg-transparent outline-none text-[#44291B] font-medium cursor-pointer"
-              >
-                <option value="all">All Status</option>
-                <option value="awaiting">Awaiting Move-in</option>
-                <option value="active">Active Stays</option>
-                <option value="checked-out">Stay History</option>
-              </select>
+              <div className="flex items-center gap-2 text-sm px-3 rounded-xl border border-[#e8e2d6] w-full sm:w-auto bg-transparent">
+                <Filter className="w-4 h-4 text-[#44291B]/50 shrink-0" />
+                <Select
+                  value={statusFilter}
+                  onValueChange={(val) => { setStatusFilter(val as FilterStatus); setPage(1); }}
+                >
+                  <SelectTrigger className="w-full sm:w-[140px] border-none shadow-none bg-transparent focus:ring-0 px-0 text-[#44291B] font-medium h-9">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#FDFFF4] text-[#44291B] border-[#e8e2d6] rounded-xl shadow-md">
+                    <SelectItem value="all" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">All Status</SelectItem>
+                    <SelectItem value="awaiting" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Awaiting Move-in</SelectItem>
+                    <SelectItem value="active" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Active Stays</SelectItem>
+                    <SelectItem value="checked-out" className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer">Stay History</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -224,7 +245,7 @@ export default function ManagerResidentsClient({ initialResidents, initialAccomm
                       onClick={() => selectResident(r.assignment_id)}
                       className={cn(
                         "border-b border-[#e8e2d6]/60 cursor-pointer transition-colors",
-                        r.assignment_id === selectedId ? "bg-[#F0F4FF]" : "hover:bg-[#F6F8D5]"
+                        r.assignment_id === selectedId ? "bg-[#F6F8D5]" : "hover:bg-[#F6F8D5]/60"
                       )}
                     >
                       <td className="py-4 px-5">
