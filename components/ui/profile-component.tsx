@@ -74,6 +74,8 @@ export function ProfileComponent({ user, metadata, currentAssignment, managerAcc
   const emergencyContact = metadata?.emergency_contact || 'N/A';
   const emergencyPerson = metadata?.emergency_person || 'N/A';
   const formattedBirthdate = user?.birthdate || metadata?.birthdate || 'N/A';
+  const sex = user?.sex || metadata?.sex || 'N/A';
+  const displaySex = sex === 'M' ? 'Male' : sex === 'F' ? 'Female' : sex;
 
   // Standard renderer: Greys out "N/A"
   const renderValue = (val: string, label: string) => (
@@ -190,8 +192,9 @@ export function ProfileComponent({ user, metadata, currentAssignment, managerAcc
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-y-8 gap-x-6">
                   <div className="md:col-span-12">
                     <h4 className={`${SubheaderMd} opacity-90 tracking-wide uppercase mb-3`}>{firstFolderSubheader}</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6">
                       {renderValue(formattedBirthdate, 'Birthdate')}
+                      {renderValue(displaySex, 'Sex')}
                       {isStudent && (
                         <>
                           {renderValue(studentNum, 'Student Number')}
