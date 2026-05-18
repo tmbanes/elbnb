@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { CancelApplicationModal } from "./CancelModal";
 import { AccommodationApplication } from "@/types/user_profile";
-import { Check, Clock, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Clock, X, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils/ui-utils";
 import { PaymentModal } from "./PaymentModal";
 import { useRouter } from "next/navigation";
@@ -127,9 +127,26 @@ export default function ApplicationsPage({ records }: ApplicationsPageProps) {
 
         {/* SECTION 1: ACTIVE APPLICATIONS */}
         <section className="space-y-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-1.5 h-8 bg-[#264384] rounded-full" />
-            <h2 className={`${archivoBlack.className} text-xl md:text-2xl text-[#44291B] tracking-tight`}>Active Applications</h2>
+          
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-8 bg-[#264384] rounded-full" />
+              <h2 className={`${archivoBlack.className} text-xl md:text-2xl text-[#44291B] tracking-tight`}>Active Applications</h2>
+            </div>
+            
+            <Button
+              onClick={() => router.push("/student/accommodations")}
+              disabled={activeApplications.length >= MAX_CARDS}
+              className={cn(
+                "flex items-center gap-2 font-bold tracking-wide transition-all",
+                activeApplications.length >= MAX_CARDS 
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed" // Grayed out state
+                  : "bg-[#264384] hover:bg-[#1a2d5c] text-white shadow-sm" // Active state
+              )}
+            >
+              <Plus className="w-4 h-4" />
+              Start New Application
+            </Button>
           </div>
 
           {activeApplications.length > 0 ? (
