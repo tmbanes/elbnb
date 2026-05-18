@@ -338,14 +338,7 @@ export function DashboardClient({ user, profile, notifications: initialNotificat
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Header */}
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div>
-            <h1 className={`${archivoBlack.className} text-3xl md:text-5xl text-[#44291B] mr-2`}>Admin Dashboard</h1>
-            <p className={`${archivo.className} text-[#44291B] pt-3 md:text-md text-sm flex items-center gap-2`}>
-              <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5C9E44] opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-[#5C9E44]" /></span>
-              Live overview &middot; {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-            </p>
-          </div>
+        <header className="flex flex-col sm:flex-row justify-end items-start sm:items-end gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex gap-2 items-center">
             {/* Notifications Dropdown */}
             <div className="relative" ref={notificationRef}>
