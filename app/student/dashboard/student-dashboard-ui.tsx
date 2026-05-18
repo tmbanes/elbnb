@@ -196,7 +196,7 @@ export default function StudentDashboardUI({
                     isFetchingUnits={isLoadingUnits}
                     onBack={() => setSelectedAccommodation(null)}
 
-                    onApply={() => router.push(`/student/accommodations/application?id=${selectedAccommodation.accommodation_id}`)}
+                    onApply={() => router.push(`/student/accommodations/application?accommodationId=${selectedAccommodation.accommodation_id}`)}
                     userRole="student"
                 />
             </div>
