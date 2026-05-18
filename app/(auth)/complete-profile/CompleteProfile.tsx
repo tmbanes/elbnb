@@ -125,6 +125,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState(1);
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
 
@@ -159,8 +160,7 @@ export default function CompleteProfile({ user }: { user: User | null }) {
     }
   };
 
-  const validateForm = () => {
-    // 1. Personal Details Validation
+  const validateStep1 = () => {
     if (!personalDetails.first_name.trim()) return "First name is required.";
     if (!personalDetails.last_name.trim()) return "Last name is required.";
     if (!personalDetails.sex) return "Sex is required.";
@@ -168,14 +168,13 @@ export default function CompleteProfile({ user }: { user: User | null }) {
     if (personalDetails.contact_number && !/^\d{11}$/.test(personalDetails.contact_number)) {
       return "Contact number must be exactly 11 digits.";
     }
-
-    // 2. Role Specific Validation
     if (!selectedRole) return "Please select a role.";
+    return null;
+  };
 
+  const validateStep2 = () => {
     if (selectedRole === "student") {
       const data = roleData as StudentRoleData;
-
-      // Basic empty checks
       if (!data.student_num.trim()) return "Student number is required.";
       if (!data.degree_program.trim()) return "Degree program is required.";
       if (!data.college) return "College is required.";
@@ -183,14 +182,8 @@ export default function CompleteProfile({ user }: { user: User | null }) {
       if (!data.home_address.trim()) return "Home address is required.";
       if (!data.emergency_person.trim()) return "Emergency person name is required.";
       if (!data.emergency_contact.trim()) return "Emergency contact number is required.";
-
-      // Format checks
-      if (!/^\d{9}$/.test(data.student_num)) {
-        return "Student number must be exactly 9 digits (e.g. 202312345).";
-      }
-      if (!/^09\d{9}$/.test(data.emergency_contact)) {
-        return "Emergency contact must be in the format 09XXXXXXXXX.";
-      }
+      if (!/^\d{9}$/.test(data.student_num)) return "Student number must be exactly 9 digits (e.g. 202312345).";
+      if (!/^09\d{9}$/.test(data.emergency_contact)) return "Emergency contact must be in the format 09XXXXXXXXX.";
     }
 
     if (selectedRole === "guest") {
@@ -200,20 +193,30 @@ export default function CompleteProfile({ user }: { user: User | null }) {
       if (!data.emergency_person.trim()) return "Emergency person name is required.";
       if (!data.emergency_contact.trim()) return "Emergency contact number is required.";
       if (!data.home_address.trim()) return "Home address is required.";
-
-      // Format check for guest too
-      if (!/^09\d{9}$/.test(data.emergency_contact)) {
-        return "Emergency contact must be in the format 09XXXXXXXXX.";
-      }
+      if (!/^09\d{9}$/.test(data.emergency_contact)) return "Emergency contact must be in the format 09XXXXXXXXX.";
     }
-
     return null;
+  };
+
+  const handleNextStep = () => {
+    const err = validateStep1();
+    if (err) {
+      setError(err);
+      return;
+    }
+    setError(null);
+    setStep(2);
+  };
+
+  const handlePrevStep = () => {
+    setError(null);
+    setStep(1);
   };
 
   const handleContinue = async () => {
     if (!selectedRole) return;
 
-    const validationError = validateForm();
+    const validationError = validateStep2();
     if (validationError) {
       setError(validationError);
       return;
@@ -266,9 +269,57 @@ export default function CompleteProfile({ user }: { user: User | null }) {
   };
 
   return (
-    <main className="min-h-screen w-full flex flex-col items-center justify-center bg-[#8dbd59] p-4 font-sans selection:bg-emerald-500/30">
+    <main className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-[#87CEEB] p-4 font-sans selection:bg-emerald-500/30">
+      {/* Grain filter */}
+      <svg className="hidden">
+        <filter id="grain-profile">
+          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+          <feComposite operator="in" in2="SourceGraphic" />
+          <feColorMatrix type="matrix" values="1 0 0 0 0,0 1 0 0 0,0 0 1 0 0,0 0 0 0.08 0" />
+          <feBlend mode="multiply" in2="SourceGraphic" />
+        </filter>
+      </svg>
 
-      <Card className="w-full max-w-xl bg-[#5591AB]">
+      {/* Clouds — left */}
+      <div className="absolute top-[8%] left-[-2%] pointer-events-none z-[5]">
+        <img src="/logo/clouds/cloud-element-23.png" alt="" className="w-56 md:w-80 opacity-90 float-animation" />
+      </div>
+      <div className="absolute top-[35%] left-[-3%] pointer-events-none z-[3]">
+        <img src="/logo/clouds/cloud-element-23.png" alt="" className="w-36 md:w-52 opacity-40 float-animation-reverse" />
+      </div>
+      <div className="absolute top-[5%] left-[25%] pointer-events-none z-[4]">
+        <img src="/logo/clouds/cloud-element-25.png" alt="" className="w-32 md:w-44 opacity-60 float-animation-slow" />
+      </div>
+
+      {/* Clouds — right */}
+      <div className="absolute top-[8%] right-[-2%] pointer-events-none z-[5]">
+        <img src="/logo/clouds/cloud-element-24.png" alt="" className="w-64 md:w-96 opacity-85 float-animation-reverse" />
+      </div>
+      <div className="absolute top-[20%] right-[18%] pointer-events-none z-[4]">
+        <img src="/logo/clouds/cloud-element-24.png" alt="" className="w-28 md:w-40 opacity-60 float-animation" />
+      </div>
+      <div className="absolute top-[42%] right-[8%] pointer-events-none z-[5]">
+        <img src="/logo/clouds/cloud-element-23.png" alt="" className="w-24 md:w-36 opacity-70 float-animation-slow" />
+      </div>
+
+      {/* Green hills */}
+      <div className="absolute bottom-0 left-[30%] -translate-x-1/2 w-[280vw] md:w-[180vw] h-[28vh] z-[1] pointer-events-none"
+        style={{ background: '#98C965', borderTopLeftRadius: '50% 100%', borderTopRightRadius: '50% 100%', filter: 'url(#grain-profile)' }} />
+      <div className="absolute bottom-0 left-[75%] -translate-x-1/2 w-[260vw] md:w-[160vw] h-[22vh] z-[2] pointer-events-none"
+        style={{ background: '#8ABF55', borderTopLeftRadius: '50% 100%', borderTopRightRadius: '50% 100%', filter: 'url(#grain-profile)' }} />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[250vw] md:w-[150vw] h-[16vh] z-[3] pointer-events-none"
+        style={{ background: '#7EB647', borderTopLeftRadius: '50% 100%', borderTopRightRadius: '50% 100%', filter: 'url(#grain-profile)' }} />
+
+      {/* Card container */}
+      <div className="relative z-10 w-full max-w-xl px-4 py-8 space-y-4">
+        {/* Logo badge */}
+        <div className="flex items-center justify-center relative z-20 translate-y-8">
+          <div className="w-20 h-20 bg-[#F6F8D5] border-4 border-[#3e2319] rounded-full flex items-center justify-center shadow-lg" style={{ filter: 'url(#grain-profile)' }}>
+            <img src="/logo/logo_house.png" alt="ELbnb" className="h-10 w-auto" />
+          </div>
+        </div>
+
+      <Card className="w-full bg-[#5591AB] border-0 shadow-2xl rounded-3xl overflow-hidden">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-[#F6F8D5]">Complete your profile</CardTitle>
           <CardDescription className="text-[#F6F8D5]">
@@ -278,8 +329,19 @@ export default function CompleteProfile({ user }: { user: User | null }) {
 
         <CardContent className="space-y-6">
 
-          {!user?.role && (
-            <div className="space-y-2">
+          {/* Progress Indicator */}
+          <div className="flex items-center justify-between mb-4 px-2">
+            <span className={`text-[10px] font-black uppercase tracking-widest ${step >= 1 ? 'text-[#F6F8D5]' : 'text-[#F6F8D5]/40'}`}>Step 1</span>
+            <div className={`flex-1 h-1.5 mx-3 rounded-full overflow-hidden bg-[#F6F8D5]/20`}>
+              <div className={`h-full bg-[#fbbc05] rounded-full transition-all duration-500 ease-out ${step === 1 ? 'w-1/2' : 'w-full'}`}></div>
+            </div>
+            <span className={`text-[10px] font-black uppercase tracking-widest ${step >= 2 ? 'text-[#F6F8D5]' : 'text-[#F6F8D5]/40'}`}>Step 2</span>
+          </div>
+
+          {step === 1 && (
+            <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
+              {!user?.role && (
+                <div className="space-y-2">
               <Label className={label_style}>Role <span className="text-red-500">*</span></Label>
               <Select
                 onValueChange={(value) => {
@@ -413,10 +475,25 @@ export default function CompleteProfile({ user }: { user: User | null }) {
             </div>
           </div>
 
-          {/* Role-specific Form */}
-          {selectedRole && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold text-[#F6F8D5] border-b border-[#F6F8D5]/20 pb-1 capitalize">{selectedRole} Details</h3>
+              <div className="flex flex-col gap-3 pt-4">
+                <Button onClick={handleNextStep} className={button_style}>Next Step</Button>
+                <Button
+                  variant="ghost"
+                  onClick={handleSignOut}
+                  disabled={loading}
+                  className="w-full h-11 rounded-full border-2 border-[#F6F8D5]/40 text-[#F6F8D5] hover:bg-[#F6F8D5]/10 hover:text-[#F6F8D5]"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out & Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && selectedRole && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-[#F6F8D5] border-b border-[#F6F8D5]/20 pb-1 capitalize">{selectedRole} Details</h3>
 
               {selectedRole === "student" ? (
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -611,34 +688,48 @@ export default function CompleteProfile({ user }: { user: User | null }) {
                 </div>
               )}
             </div>
+
+              <div className="flex flex-col gap-3 pt-4">
+                <Button
+                  onClick={handleContinue}
+                  disabled={loading || !selectedRole}
+                  className={button_style}
+                >
+                  {loading && !error ? "Saving..." : "Finish Setup"}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={handlePrevStep}
+                  disabled={loading}
+                  className="w-full h-11 rounded-full border-2 border-[#F6F8D5]/40 text-[#F6F8D5] hover:bg-[#F6F8D5]/10 hover:text-[#F6F8D5]"
+                >
+                  Go Back
+                </Button>
+              </div>
+            </div>
           )}
-
-          {/* Actions */}
-          <div className="flex flex-col gap-3">
-            <Button
-              onClick={handleContinue}
-              disabled={loading || !selectedRole}
-              className={button_style}
-            >
-              {loading && !error ? "Saving..." : "Finish Setup"}
-            </Button>
-
-            <Button
-              variant="ghost"
-              onClick={handleSignOut}
-              disabled={loading}
-              className="w-full h-11 rounded-full border-2 border-[#F6F8D5]/40 text-[#F6F8D5] hover:bg-[#F6F8D5]/10 hover:text-[#F6F8D5]"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out & Cancel
-            </Button>
-          </div>
 
           {error && (
             <p className="text-sm bg-red-500/20 text-red-100 p-3 rounded-full text-center">{error}</p>
           )}
         </CardContent>
       </Card>
+      </div>
+
+      <style jsx global>{`
+        @keyframes cloudFloat {
+          0%, 100% { transform: translateX(0px); }
+          50% { transform: translateX(25px); }
+        }
+        @keyframes cloudFloatReverse {
+          0%, 100% { transform: translateX(0px); }
+          50% { transform: translateX(-20px); }
+        }
+        .float-animation { animation: cloudFloat 12s ease-in-out infinite; }
+        .float-animation-reverse { animation: cloudFloatReverse 15s ease-in-out infinite; }
+        .float-animation-slow { animation: cloudFloat 18s ease-in-out infinite; }
+      `}</style>
     </main>
   );
 }
