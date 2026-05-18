@@ -18,7 +18,7 @@ export default async function AccommodationHistoryPage() {
   }
 
   // Keep billing invoices in sync for pending_payment applications.
-  await ensureInitialInvoicesForUser(user.user_id);
+  ensureInitialInvoicesForUser(user.user_id).catch(console.error);
 
   // Fetch data from service layer
   const { data: records, error } = await userProfileService.getAccommodationHistory(user.user_id);

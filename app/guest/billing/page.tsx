@@ -16,7 +16,7 @@ export default async function GuestBillingPage() {
   }
 
   // Backfill safety net
-  await ensureInitialInvoicesForUser(user.user_id);
+  ensureInitialInvoicesForUser(user.user_id).catch(console.error);
 
   const [summaryRes, billsRes, historyRes] = await Promise.all([
     getUserPaymentSummary(user.user_id, "guest"),

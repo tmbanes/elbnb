@@ -1,6 +1,7 @@
 "use server";
 
 import { getSupabaseAdmin } from "@/lib/supabase/admin-client";
+import { requireRole } from "@/lib/auth/session";
 import {
   ACCOMMODATION_IMAGE_BUCKET,
   accommodationImageStoragePath,
@@ -94,6 +95,7 @@ export async function withResolvedAccommodationImages<
 
 
 export async function uploadAccommodationImage(formData: FormData) {
+  await requireRole(['housing_admin', 'admin']);
   const file = formData.get("file") as File;
   const accommodationId = formData.get("accommodationId") as string;
 
@@ -139,6 +141,7 @@ export async function uploadAccommodationImage(formData: FormData) {
 }
 
 export async function deleteAccommodationImage(accommodationId: string, fileName: string) {
+  await requireRole(['housing_admin', 'admin']);
   if (!accommodationId || !fileName) {
     throw new Error("Missing accommodationId or fileName");
   }
@@ -183,6 +186,7 @@ export async function deleteAccommodationImage(accommodationId: string, fileName
 }
 
 export async function setPrimaryImage(accommodationId: string, imageUrl: string) {
+  await requireRole(['housing_admin', 'admin']);
   if (!accommodationId || !imageUrl) {
     throw new Error("Missing accommodationId or imageUrl");
   }
