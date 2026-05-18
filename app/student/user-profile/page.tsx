@@ -25,11 +25,22 @@ export default async function StudentProfilePage() {
     ...(dbMetadata || {})
   };
 
+  // Fetch active assignment for the student
+  const { data: assignmentData } = await supabaseAdmin
+    .from('accommodation_assignment')
+    .select('*, accommodation(*), unit(*)')
+    .eq('user_id', user.user_id)
+    .eq('assignment_status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
   return (
     <main>
       <ProfileComponent
         user={user}
         metadata={mergedMetadata}
+        currentAssignment={assignmentData}
       />
     </main>
   )

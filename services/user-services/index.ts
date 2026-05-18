@@ -1088,6 +1088,25 @@ export async function getAccomodationHistory(user_id: string) {
   return { data: flattened as AccommodationHistory[] | null, error };
 }
 
+
+//======================================================//
+// GET EXISTING INVOICE FOR ASSIGNMENT
+//======================================================//
+
+export async function getExistingInvoiceForAssignment(assignment_id: string) {
+  const supabase = supabaseAdmin;
+
+  const { data, error } = await supabase
+    .from("billing")
+    .select("billing_id")
+    .eq("assignment_id", assignment_id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return { data, error };
+}
+
 //======================================================//
 // CREATE BILLING WITH DETAILED ITEMS
 //======================================================//
@@ -1595,12 +1614,12 @@ export async function getUserPaymentSummary(user_id: string, role: UserRole) {
 // ADMIN BILLING VIEWS
 //======================================================//
 
-export async function getAllBillsForAdmin(role: UserRole) {
-  if (role !== "admin") return { data: null, error: "Unauthorized" };
+export async function getAllBillsForAdmin(role: string, userId?: string) {
+  if (role !== "admin" && role !== "housing_admin") return { data: null, error: { message: "Unauthorized" } as any };
 
   const supabase = supabaseAdmin;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("billing")
     .select(`
       billing_id,
@@ -1616,7 +1635,7 @@ export async function getAllBillsForAdmin(role: UserRole) {
         type,
         amount
       ),
-      accommodation_assignment (
+      accommodation_assignment!inner (
         assignment_id,
         application_id,
         user_id,
@@ -1625,12 +1644,35 @@ export async function getAllBillsForAdmin(role: UserRole) {
           last_name
         ),
         accommodation_application (
-          preferred_accommodation_id
+          preferred_accommodation_id,
+          accommodation (
+            name
+          )
+        ),
+        unit!inner (
+          accommodation_id,
+          accommodation!inner (
+            name
+          )
         )
       )
-    `)
-    .order("created_at", { ascending: false });
+    `);
 
+  if (role === "housing_admin" && userId) {
+    const { data: adminData } = await supabase
+      .from("housing_admin")
+      .select("accommodation_ids")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const managedAccommodationIds = adminData?.accommodation_ids || [];
+    if (managedAccommodationIds.length === 0) {
+      return { data: [], error: null };
+    }
+    query = query.in("accommodation_assignment.unit.accommodation_id", managedAccommodationIds);
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
   return { data, error };
 }
 
@@ -1720,8 +1762,10 @@ export async function updateAdminInvoiceWithItems(
 // TENANT LOOKUP FOR ADMIN BILLING
 //======================================================//
 
-export async function getActiveTenants() {
-  return await supabaseAdmin
+export async function getActiveTenants(role?: string, userId?: string) {
+  const supabase = supabaseAdmin;
+
+  let query = supabase
     .from("accommodation_assignment")
     .select(`
       assignment_id,
@@ -1729,8 +1773,26 @@ export async function getActiveTenants() {
       users (
         first_name,
         last_name
+      ),
+      unit!inner (
+        accommodation_id
       )
-    `)
-    .in("assignment_status", ["active", "waiting_payment", "pending"]);
+    `);
+
+  if (role === "housing_admin" && userId) {
+    const { data: adminData } = await supabase
+      .from("housing_admin")
+      .select("accommodation_ids")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const managedAccommodationIds = adminData?.accommodation_ids || [];
+    if (managedAccommodationIds.length === 0) {
+      return { data: [], error: null };
+    }
+    query = query.in("unit.accommodation_id", managedAccommodationIds);
+  }
+
+  return await query.in("assignment_status", ["active", "waiting_payment", "pending"]);
 }
 

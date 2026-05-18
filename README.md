@@ -1,65 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ELBNB 🏠
+### *Pahingahan para sa Pangarap.*
 
-## Getting Started
+ELBnb is a centralized campus housing management platform developed for the University of the Philippines Los Baños (UPLB). It replaces manual and fragmented accommodation processes by integrating application submission, approval workflows, room assignment, occupancy monitoring, and billing into a single web-based system — built for Iskos and Iskas, by people who know the Elbi life.
 
-First, run the development server:
+> *"From Elbi, For Elbi."*
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Why ELbnb?
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Finding a home in Los Baños shouldn't be another hurdle to your degree. Between hell weeks, long walks from Upper Campus, and late-night org meetings — you give your 100% to your studies. You deserve a place that gives 100% back.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+ELBnb connects students with safe, comfortable, study-ready spaces. It isn't just a housing directory; it's a curated ecosystem of dorms and apartments that prioritizes security, proximity, and a conducive environment for the modern student.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 🏢 Dorms & Rentals
+Compare dorms with custom curfew rules and gender/sex policies, or choose flexible renting spaces. Finding your fit takes seconds.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 📊 Real-Time Occupancy
+View open bedspaces and vacant studio slots instantly before you apply, ensuring full transparency in availability.
 
-## Deploy on Vercel
+### 📋 Seamless Applications
+Apply directly, upload required documents, and track your move-in status from your unified student dashboard.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 🛡️ Tailored Dashboards
+Distinct, customized portals for three dedicated roles, providing targeted tools for every user in the ecosystem:
+* **Students:** Browse available units, check real-time occupancy, and book your move-in with just a few clicks.
+* **Managers:** Manage resident lists, track maintenance, and oversee multiple buildings from one dashboard.
+* **Admins:** Configure dormitory inventory, manage user roles, and generate comprehensive campus housing reports.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
 
-## File Tree
+## Tech Stack
 
-```
-elbnb/
-├ app/
-│   ├ api/              - Backend API route handlers (authentication, database operations, business logic)
-│   ├ (auth)/           - Authentication pages (login, signup, etc.)
-│   ├ (public)/         - Public pages accessible without authentication
-│   └ dashboard/        - Authenticated user dashboard pages
-│
-├ components/           - Reusable UI components
-│   ├ auth/             - Authentication UI components (forms, modals)
-│   ├ ui/               - Base UI components (buttons, inputs, cards)
-│   └ shared/           - Shared layout and common components (navbar, footer)
-│
-├ lib/                  - Core utilities and configuration logic
-│   └ supabase/         - Supabase client configuration and database access
-│
-├ services/             - Business logic layer and API service functions
-│
-├ public/               - Static assets accessible from the browser
-│   ├ assets/
-│   └ images/
-│
-├ styles/               - Global styling and CSS configuration
-├ types/                - TypeScript type definitions and interfaces
-└ middleware/           - Request-level logic such as authentication guards
-```
+**Next.js** · **React** · **TypeScript** · **Supabase** · **Tailwind CSS** · **shadcn/ui** · **Radix UI** · **TanStack Table** · **React Hook Form** · **Zod** · **jsPDF** · **pnpm**
+
+---
+
+## Contributing
+
+Developed as part of the requirements for **CMSC 128** at the University of the Philippines Los Baños (AY 2025–2026).
+
+Branch off `develop` for features and fixes. Follow conventional commits (`feat:`, `fix:`, `chore:`). Open a pull request back into `develop`.
+
+---
+
+© 2026 ELBNB. All rights reserved.

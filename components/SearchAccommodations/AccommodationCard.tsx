@@ -2,6 +2,10 @@
 
 import Link from 'next/link'
 import { Accommodation, Unit } from '@/types/accommodation_units'
+import { formatImageUrl } from '@/lib/utils/image-utils'
+import { ImageWithLoader } from '@/components/shared/ImageWithLoader'
+import { Banknote } from 'lucide-react'
+
 
 interface AccommodationCardProps {
   accommodation: Accommodation
@@ -32,21 +36,20 @@ export function AccommodationCard({
   if (deadline) deadline.setHours(23, 59, 59, 999);
   const isApplicationOpen = deadline ? today <= deadline : false;
 
+
   return (
+
     <div className="flex-shrink-0 w-72 min-h-[420px] rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-out overflow-hidden group flex flex-col transform-gpu will-change-transform" style={{ backgroundColor: '#FDFFF4' }}>
       {/* Image */}
       <div className="h-48 relative overflow-hidden flex-shrink-0 bg-gray-200">
         {accommodation.image ? (
-          <img
+          <ImageWithLoader
             src={accommodation.image}
             alt={accommodation.name}
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              // Hide broken image and reveal placeholder behind it
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
           />
         ) : (
+
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
             <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -79,13 +82,13 @@ export function AccommodationCard({
       {/* Content */}
       <div className="p-5 flex-1 flex flex-col">
         {/* Title */}
-        <h3 className="text-2xl font-black mb-2 line-clamp-2 min-h-[4rem]" style={{ color: '#44291B', lineHeight: '2rem' }} title={accommodation.name}>
+        <h3 className="text-2xl font-black mb-2 line-clamp-2 min-h-[4rem]" style={{ color: '#000000', lineHeight: '2rem' }} title={accommodation.name}>
           {accommodation.name}
         </h3>
 
         {/* Key Details */}
         <div className="flex flex-col gap-2 mb-4 flex-1">
-          <div className="flex items-start gap-2 text-sm" style={{ color: '#44291B' }}>
+          <div className="flex items-start gap-2 text-sm" style={{ color: '#000000' }}>
             <svg className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -94,10 +97,34 @@ export function AccommodationCard({
           </div>
 
           <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#264384' }}>
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
+            <Banknote className="w-4 h-4 text-gray-400" />
             {units.length > 0 ? `From ₱${Math.min(...units.map((u: any) => u.rental_fee)).toLocaleString()}` : 'Price not set'}
+          </div>
+
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#264384' }}>
+            {(!accommodation.accomm_sex || accommodation.accomm_sex.toLowerCase() === 'all' || accommodation.accomm_sex.toLowerCase() === 'coed') && (
+              <>
+                <svg className="w-4 h-4 text-purple-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="15" r="5" />
+                  <path d="M9 20v3M7 22h4" />
+                  <circle cx="15" cy="9" r="5" />
+                  <path d="M18.5 5.5L22 2M17 2h5v5" />
+                </svg>
+                <span>COED</span>
+              </>
+            )}
+            {(accommodation.accomm_sex?.toLowerCase() === 'female' || accommodation.accomm_sex?.toLowerCase() === 'f') && (
+              <>
+                <svg className="w-4 h-4 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6"/><path d="M12 16v6M9 19h6"/></svg>
+                <span>Female only</span>
+              </>
+            )}
+            {(accommodation.accomm_sex?.toLowerCase() === 'male' || accommodation.accomm_sex?.toLowerCase() === 'm') && (
+              <>
+                <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6"/><path d="M14.243 9.757L21 3M16 3h5v5"/></svg>
+                <span>Male only</span>
+              </>
+            )}
           </div>
         </div>
 

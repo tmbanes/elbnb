@@ -17,6 +17,7 @@ export interface BillingCreation {
   payment_method: string;
   transaction_reference?: string | null;
   receipt_files?: string[] | null;
+  internal_notes?: string | null;
 }
 
 // Used when fetching billing

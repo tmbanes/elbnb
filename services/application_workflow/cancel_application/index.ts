@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server-client'
+import { supabaseAdmin } from '@/lib/supabase/admin-client'
 import { AccommodationApplication, ApplicationStatus, CancellableStatus } from '@/types/application_workflow'
 import { createActivityLog, getCurrentUserRole } from '@/services/activity_log/server'
 
@@ -37,6 +38,26 @@ export class CancelApplicationService {
     
     if (error) {
       throw new Error(`Failed to update application: ${error.message}`)
+    }
+
+    // Also update the billing status to cancelled if it exists
+    const { data: assignment, error: assignmentError } = await supabaseAdmin
+      .from("accommodation_assignment")
+      .select("assignment_id")
+      .eq("application_id", application.application_id)
+      .maybeSingle();
+
+    if (!assignmentError && assignment?.assignment_id) {
+      await supabaseAdmin
+        .from("billing")
+        .delete()
+        .eq("assignment_id", assignment.assignment_id)
+        .in("status", ["unpaid", "pending", "pending_verification", "overdue"]);
+        
+      await supabaseAdmin
+        .from("accommodation_assignment")
+        .update({ assignment_status: "cancelled" })
+        .eq("assignment_id", assignment.assignment_id);
     }
 
     // Log the cancellation

@@ -37,7 +37,7 @@ export default function ApplicationsClient({ user, initialData }: ApplicationsCl
             {/* LEFT SIDE (LIST) */}
             <div className={cn(
                 "flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out",
-                selectedId ? "hidden lg:flex lg:flex-[7]" : "flex-1"
+                selectedId ? "hidden lg:flex" : "flex-1"
             )}>
                 <div className={cn(
                     "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
@@ -49,15 +49,19 @@ export default function ApplicationsClient({ user, initialData }: ApplicationsCl
 
             {/* RIGHT SIDE (DETAIL PANEL) */}
             <div className={cn(
-                "bg-[#F6F8D5] border-l border-[#e8e2d6] transition-all duration-500 ease-in-out flex flex-col z-20 overflow-hidden",
-                selectedId ? "flex-1 lg:flex-[3] w-full h-full" : "w-0 flex-[0] pointer-events-none opacity-0"
+                "fixed lg:relative top-0 right-0 z-50 lg:z-0 h-full lg:h-auto w-full bg-[#F6F8D5] flex flex-col transition-all duration-500 ease-in-out border-[#e8e2d6]",
+                selectedId
+                    ? "lg:w-[450px] translate-x-0 opacity-100 border-l overflow-y-auto"
+                    : "lg:w-0 translate-x-full lg:translate-x-0 opacity-0 lg:pointer-events-none border-l-0 overflow-hidden"
             )}>
                 {selectedId && (
-                    <ReviewApplication
-                        applicationId={selectedId}
-                        onClose={() => setSelectedId(null)}
-                        onAction={handleApplicationAction}
-                    />
+                    <div className="w-full lg:w-[450px] shrink-0 h-full flex flex-col">
+                        <ReviewApplication
+                            applicationId={selectedId}
+                            onClose={() => setSelectedId(null)}
+                            onAction={handleApplicationAction}
+                        />
+                    </div>
                 )}
             </div>
         </div>

@@ -3,6 +3,7 @@
 import { Unit, Accommodation } from "@/types/accommodation_units";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { Banknote } from "lucide-react";
 
 interface UnitCardProps {
   unit: Unit;
@@ -67,7 +68,7 @@ export function UnitCard({
         {/* Title */}
         <h3
           className="text-2xl font-black mb-1 line-clamp-2 min-h-[4rem]"
-          style={{ color: "#44291B", lineHeight: "2rem" }}
+          style={{ color: "#000000", lineHeight: "2rem" }}
         >
           {userRole === "student" 
             ? String(unit.unit_number || '').toUpperCase()
@@ -76,7 +77,7 @@ export function UnitCard({
         </h3>
 
         {/* ACCOMMODATION NAME */}
-        <div className="flex items-center gap-2 text-sm font-bold mt-1" style={{ color: "#44291B" }}>
+        <div className="flex items-center gap-2 text-sm font-bold mt-1" style={{ color: "#000000" }}>
           <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
@@ -84,7 +85,7 @@ export function UnitCard({
         </div>
 
         {/* LOCATION */}
-        <div className="flex items-start gap-2 text-[11px] mb-3 opacity-80" style={{ color: "#44291B" }}>
+        <div className="flex items-start gap-2 text-[11px] mb-3 opacity-80" style={{ color: "#000000" }}>
           <svg className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -93,7 +94,7 @@ export function UnitCard({
         </div>
 
         {/* Key Details */}
-        <div className="flex flex-col gap-1 mb-3 flex-1 text-xs" style={{ color: "#44291B" }}>
+        <div className="flex flex-col gap-1 mb-3 flex-1 text-xs" style={{ color: "#000000" }}>
           {userRole !== "guest" && <p>Type: <span className="font-medium">{unit.unit_type}</span></p>}
           {userRole !== "guest" && <p>Furnishing: <span className="font-medium">{unit.furnishing_status}</span></p>}
           {userRole === "guest" ? (
@@ -105,13 +106,11 @@ export function UnitCard({
 
         {/* Price */}
         <div className="flex items-center gap-1.5 mb-4">
-          <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <Banknote className="w-4 h-4 text-gray-400" />
           <span className="text-sm font-semibold" style={{ color: "#264384" }}>
             {unit.rental_fee ? `₱${unit.rental_fee.toLocaleString()}` : "Price not set"}
             {unit.rental_fee && unit.billing_period ? (
-              <span className="text-xs font-normal ml-1" style={{ color: "#44291B" }}>/ {unit.billing_period}</span>
+              <span className="text-xs font-normal ml-1" style={{ color: "#000000" }}>/ {unit.billing_period}</span>
             ) : null}
           </span>
         </div>

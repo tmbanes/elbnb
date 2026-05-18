@@ -26,7 +26,7 @@ const FACES = [
     role: "Managers",
     icon: <Building2 className="w-10 h-10" />,
     title: "Streamline Operations",
-    desc: "Manage resident lists, track maintenance, and oversee multiple dormitory buildings from one dashboard.",
+    desc: "Manage resident lists, track maintenance, and oversee dormitory buildings from one dashboard.",
     accent: "#D48806",
     bg: "bg-[#FFF8E1]",
   },
@@ -41,16 +41,10 @@ const FACES = [
 ];
 
 const FEATURES = [
-  { icon: "mdi:map-marker", title: "Proximity to Campus", desc: "Filter by distance from your college or the nearest jeepney route." },
-  { icon: "mdi:shield-check", title: "Verified & Secure", desc: "We vet our listings to ensure your safety and peace of mind." },
-  { icon: "mdi:wifi", title: "Study-Ready Spaces", desc: "Dedicated tags for high-speed Wi-Fi, quiet zones, and well-lit desks." },
-  { icon: "mdi:handshake", title: "Community First", desc: "Connect with potential roommates who share your vibe and your degree program." }
-];
-
-const CATEGORIES = [
-  { title: "Solo Sanctuary", desc: "Studios & solo rooms for the focused student.", icon: "mdi:home" },
-  { title: "The Study Squad", desc: "Shared housing for groups and barkadas (2–4 bedrooms).", icon: "mdi:account-group" },
-  { title: "Budget-Friendly", desc: "Quality living that fits the student allowance.", icon: "mdi:creation" }
+  { icon: "mdi:home-city", title: "Dorms & Rentals", desc: "Compare dorms with curfew and gender rules, or choose flexible renting spaces." },
+  { icon: "mdi:bed-king-outline", title: "Real-Time Occupancy", desc: "View open bedspaces and vacant studio slots instantly before you apply." },
+  { icon: "mdi:account-cog", title: "Seamless Applications", desc: "Apply, upload documents, and track your move-in status from your dashboard." },
+  { icon: "mdi:shield-account", title: "Tailored Dashboards", desc: "Distinct, customized portals for students, building managers, and housing admins." }
 ];
 
 const FOOTER_COLS = [
@@ -136,7 +130,12 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
   const handleCTAClick = (e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setRipple({ active: true, x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-    setTimeout(() => router.push('/onboarding'), 800);
+    if (!initialUser) setTimeout(() => router.push('/onboarding'), 800);
+    else if (initialUser && !initialUser.role) setTimeout(() => router.push('/complete-profile'), 800);
+    else if (initialUser.role === "student") setTimeout(() => router.push('/student/dashboard'), 800);
+    else if (initialUser.role === "dormitory_manager") setTimeout(() => router.push('/manager/dashboard'), 800);
+    else if (initialUser.role === "housing_admin") setTimeout(() => router.push('/admin/dashboard'), 800);
+
   };
 
   const handleHeroMouseMove = (e: React.MouseEvent) => {
@@ -196,9 +195,20 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
 
         <nav className="hidden md:flex items-center gap-10">
           {[['#features', 'Features'], ['#roles', 'For Who?'], ['#get-started', 'Get Started']].map(([href, label]) => (
-            <Link key={href} href={href} className="text-[#3E2723]/60 hover:text-[#7EB647] transition-colors font-semibold uppercase tracking-widest text-[11px]">
+            <a
+              key={href}
+              href={href}
+              onClick={(e) => {
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                  target.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
+              className="text-[#3E2723]/60 hover:text-[#7EB647] transition-colors font-semibold uppercase tracking-widest text-[11px] cursor-pointer"
+            >
               {label}
-            </Link>
+            </a>
           ))}
         </nav>
 
@@ -213,7 +223,8 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
       <main>
         {/* ─── HERO SECTION ─── */}
         <section
-          className="relative min-h-screen flex flex-col items-center justify-center px-6 text-center pt-24 pb-0 overflow-hidden bg-[#87CEEB]"
+          className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 text-center pt-24 pb-0 overflow-hidden bg-[#87CEEB]"
+
           onMouseMove={handleHeroMouseMove}
           onMouseLeave={handleHeroMouseLeave}
         >
@@ -300,7 +311,7 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
         </section>
 
         {/* ─── CONTENT SECTION (TEXTURED GREEN WITH HERO TEXT & BUTTONS) ─── */}
-        <div className="relative text-white pt-32 -mt-[120px] pb-10">
+        <div className="relative z-20 text-white pt-32 -mt-[120px] pb-10">
 
           {/* Global Layer 1: Textured green contiguous background */}
           <div className="absolute inset-0 z-0 bg-[#7EB647]" style={{ filter: 'url(#grain)' }} />
@@ -461,35 +472,6 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
 
               <div className="h-px bg-white/10 mx-8 md:mx-20" />
 
-              {/* ─── PROPERTY CATEGORIES ─── */}
-              <section className="py-28 px-6 max-w-5xl mx-auto space-y-14">
-                <Reveal delay={0}>
-                  <div className="text-center space-y-3 max-w-xl mx-auto">
-                    <p className="text-white/50 uppercase tracking-[0.2em] text-xs font-bold">Browse By Type</p>
-                    <h2 className={`${HeaderMd} text-3xl md:text-5xl`}>Find your fit.</h2>
-                  </div>
-                </Reveal>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {CATEGORIES.map((cat, i) => (
-                    <Reveal key={i} delay={150 + (i * 150)}>
-                      <div className="group h-full bg-white/5 backdrop-blur-sm hover:bg-white/15 transition-all duration-300 hover:-translate-y-2 rounded-3xl p-8 border border-white/10 cursor-pointer space-y-4">
-                        <span className="text-4xl block mb-6 transform group-hover:scale-110 transition-transform origin-left">
-                          <Icon icon={cat.icon} />
-                        </span>
-                        <h3 className={`${SubheaderLg} text-xl font-bold`}>{cat.title}</h3>
-                        <p className={`${BodyMd} text-white/60 leading-relaxed`}>{cat.desc}</p>
-                        <div className="pt-4 flex items-center gap-2 text-white/50 group-hover:text-white font-bold text-sm transition-colors">
-                          Browse Listings <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
-                        </div>
-                      </div>
-                    </Reveal>
-                  ))}
-                </div>
-              </section>
-
-              <div className="h-px bg-white/10 mx-8 md:mx-20" />
-
               {/* ─── BIG CTA ─── */}
               <section id="get-started" className="py-28 px-6 max-w-5xl mx-auto space-y-14">
                 <Reveal delay={0}>
@@ -560,7 +542,7 @@ export function RotatingLanding({ initialUser }: { initialUser: any }) {
 
       {/* ─── GLOBAL STYLES ─── */}
       <style jsx global>{`
-        body { background-color: #F4F5E1; scroll-behavior: smooth; }
+        html, body { background-color: #F4F5E1; scroll-behavior: smooth !important; }
         
         @keyframes rippleExpand {
           0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }

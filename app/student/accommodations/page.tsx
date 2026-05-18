@@ -9,12 +9,12 @@ import { AccommodationFilters } from '@/components/SearchAccommodations/Accommod
 import { UnitFilters } from '@/components/SearchAccommodations/UnitFilters'
 import { AccommodationListView } from '@/components/SearchAccommodations/Accommodation-list-view'
 import { UnitsListView } from '@/components/SearchAccommodations/Units-list-view'
-import next from 'next'
-import Link from 'next/link'
 import { ViewAccommodation, ViewUnit } from '@/components/SearchAccommodations'
-import { Archivo, Archivo_Black } from 'next/font/google'
+import { Archivo_Black } from 'next/font/google'
+import { ChevronLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 
-const archivo = Archivo({ subsets: ['latin'] })
 const archivoBlack = Archivo_Black({ subsets: ['latin'], weight: '400' })
 
 type TabType = 'accommodations' | 'units'
@@ -39,6 +39,7 @@ interface UnitFiltersType {
 
 export default function SearchAccommodationsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('accommodations')
+  const router = useRouter()
 
   // Data states
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
@@ -85,6 +86,7 @@ export default function SearchAccommodationsPage() {
   const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null)
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
   const [accommodationUnits, setAccommodationUnits] = useState<Unit[]>([])
+  const [isFetchingAccommodationUnits, setIsFetchingAccommodationUnits] = useState(false)
   const [isViewingUnit, setIsViewingUnit] = useState(false)
   const [unitViewSource, setUnitViewSource] = useState<'accommodation' | 'search'>('accommodation')
 
@@ -132,6 +134,16 @@ export default function SearchAccommodationsPage() {
     });
   }, [accommodations]);
 
+  const normalizeSexValue = (value?: string | null) => {
+    const sex = value?.toLowerCase()
+
+    if (sex === 'f' || sex === 'female') return 'female'
+    if (sex === 'm' || sex === 'male') return 'male'
+    if (sex === 'coed') return 'coed'
+
+    return sex ?? ''
+  }
+
   // Apply accommodation filters
   const applyAccommodationFilters = useCallback(
     (list: Accommodation[], allUnits: Unit[], filters: AccommodationFiltersType, search: string = '') => {
@@ -148,7 +160,17 @@ export default function SearchAccommodationsPage() {
       }
 
       if (filters.sexFilter) {
-        filtered = filtered.filter((a) => a.accomm_sex?.toLowerCase() === filters.sexFilter?.toLowerCase())
+        const selectedSex = normalizeSexValue(filters.sexFilter)
+
+        filtered = filtered.filter((a) => {
+          const dormSex = normalizeSexValue(a.accomm_sex)
+
+          if (selectedSex === 'male' || selectedSex === 'female') {
+            return dormSex === selectedSex || dormSex === 'coed'
+          }
+
+          return dormSex === selectedSex
+        })
       }
 
       if (filters.minPrice !== '') {
@@ -309,7 +331,7 @@ export default function SearchAccommodationsPage() {
         const [accomRes, unitsRes, appsRes] = await Promise.all([
           fetch('/api/shared/dashboard/tiles?type=accommodations'),
           fetch('/api/shared/dashboard/tiles?type=units'),
-          fetch('/api/student/applications'),
+          fetch('/api/applications'),
         ])
 
         if (!accomRes.ok) throw new Error('Failed to fetch accommodations')
@@ -399,8 +421,9 @@ export default function SearchAccommodationsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
 
     // Fetch all units for this accommodation to show real data
+    setIsFetchingAccommodationUnits(true)
     try {
-      const res = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
+      const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
       if (res.ok) {
         const data = await res.json()
         setAccommodationUnits(data)
@@ -408,6 +431,8 @@ export default function SearchAccommodationsPage() {
     } catch (err) {
       console.error('Failed to fetch accommodation units:', err)
       setAccommodationUnits([])
+    } finally {
+      setIsFetchingAccommodationUnits(false)
     }
   }
 
@@ -441,7 +466,7 @@ export default function SearchAccommodationsPage() {
 
       // Also fetch units context if needed
       try {
-        const res = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
+        const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
         if (res.ok) {
           const data = await res.json()
           setAccommodationUnits(data)
@@ -492,6 +517,7 @@ export default function SearchAccommodationsPage() {
             accommodation={selectedAccommodation}
             units={accommodationUnits}
             userRole="student"
+            isFetchingUnits={isFetchingAccommodationUnits}
             onUnitTypeClick={(unit) => {
               setSelectedUnit(unit)
               setIsViewingUnit(true)
@@ -508,6 +534,14 @@ export default function SearchAccommodationsPage() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-6 xl:px-6 py-6">
           {/* Header */}
           <div className="mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/student/dashboard")}
+              className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group w-fit"
+            >
+              <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+            </Button>
             <h1 className={`${archivoBlack.className} pt-9 text-4xl md:text-5xl mb-2`} style={{ color: '#44291B' }}>
               Search Accommodations
             </h1>

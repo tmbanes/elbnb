@@ -133,14 +133,30 @@ export default function ReviewApplication({
   const mapBillingTypeToInvoiceKind = (type: string): any => {
     if (type === "security_deposit") return "security_deposit";
     if (type === "reservation_fee") return "reservation_fee";
+    if (type === "room_rent" || type === "first_rental") return "first_rental";
     return "other";
   };
 
   const createDefaultInvoiceItem = (): ApplicationInvoiceItemInput => ({
-    kind: "other",
+    kind: "first_rental",
     amount: 0,
     required_to_secure_slot: true,
   });
+
+  useEffect(() => {
+    if (selectedUnitId && !appData?.invoiceDraft) {
+      const unit = appData?.availableUnits?.find((u: any) => u.unit_id === selectedUnitId);
+      if (unit && invoiceItems.length === 1 && (invoiceItems[0].amount === 0 || !invoiceItems[0].amount)) {
+        setInvoiceItems([
+          {
+            kind: "first_rental",
+            amount: unit.rental_fee || 0,
+            required_to_secure_slot: true,
+          }
+        ]);
+      }
+    }
+  }, [selectedUnitId, appData?.availableUnits, appData?.invoiceDraft]);
 
   async function handleConfirm() {
     if (!confirmAction) return;
@@ -404,11 +420,26 @@ export default function ReviewApplication({
                   onChange={(e) => setSelectedUnitId(e.target.value)}
                 >
                   <option value="">Choose a unit...</option>
-                  {(appData.availableUnits || []).map((unit: any) => (
-                    <option key={unit.unit_id} value={unit.unit_id}>
-                      Unit {unit.unit_number} ({unit.unit_type})
-                    </option>
-                  ))}
+                  <optgroup label="Matching Preferred Type">
+                    {(appData.availableUnits || [])
+                      .filter((u: any) => u.unit_type === appData.preferred_unit_type)
+                      .map((unit: any) => (
+                        <option key={unit.unit_id} value={unit.unit_id}>
+                          Unit {unit.unit_number} ({unit.unit_type.replace(/_/g, ' ')})
+                        </option>
+                      ))
+                    }
+                  </optgroup>
+                  <optgroup label="Other Available Units">
+                    {(appData.availableUnits || [])
+                      .filter((u: any) => u.unit_type !== appData.preferred_unit_type)
+                      .map((unit: any) => (
+                        <option key={unit.unit_id} value={unit.unit_id}>
+                          Unit {unit.unit_number} ({unit.unit_type.replace(/_/g, ' ')})
+                        </option>
+                      ))
+                    }
+                  </optgroup>
                 </select>
               </div>
             )}
@@ -661,9 +692,22 @@ export default function ReviewApplication({
                     disabled={appData.application_status !== "pending_admin"}
                   >
                     <option value="">Choose Unit...</option>
-                    {(appData.availableUnits || []).map((u: any) => (
-                      <option key={u.unit_id} value={u.unit_id}>Unit {u.unit_number}</option>
-                    ))}
+                    <optgroup label="Matching Preferred Type">
+                      {(appData.availableUnits || [])
+                        .filter((u: any) => u.unit_type === appData.preferred_unit_type)
+                        .map((u: any) => (
+                          <option key={u.unit_id} value={u.unit_id}>Unit {u.unit_number} ({u.unit_type.replace(/_/g, ' ')})</option>
+                        ))
+                      }
+                    </optgroup>
+                    <optgroup label="Other Available Units">
+                      {(appData.availableUnits || [])
+                        .filter((u: any) => u.unit_type !== appData.preferred_unit_type)
+                        .map((u: any) => (
+                          <option key={u.unit_id} value={u.unit_id}>Unit {u.unit_number} ({u.unit_type.replace(/_/g, ' ')})</option>
+                        ))
+                      }
+                    </optgroup>
                   </select>
                 </div>
               </div>

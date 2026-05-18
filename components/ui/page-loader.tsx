@@ -29,7 +29,9 @@ export function PageLoader() {
   }, [])
 
   return (
-    <div className="page-loader fixed inset-0 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm z-[9999] animate-in fade-in zoom-in-95 duration-500 ease-out">
+    <div className="page-loader fixed inset-0 flex flex-col items-center justify-center bg-[#fcf4d9] z-[5] animate-in fade-in zoom-in-95 duration-500 ease-out">
+
+
       <div className="relative flex items-center justify-center mb-6 w-40 h-40">
         {/* Next frame underneath */}
         <img

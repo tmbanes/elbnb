@@ -21,6 +21,7 @@ export type ManagerColumn = {
   name: string
   email: string
   office: string
+  accommodations: string
   original: Manager
 }
 
@@ -32,6 +33,7 @@ export const getManagerColumns = (
     {
       accessorKey: "name",
       header: "NAME",
+      meta: { width: "25%" },
       cell: ({ row }) => (
         <p className="font-bold text-[#44291B]">{row.getValue("name")}</p>
       ),
@@ -39,20 +41,36 @@ export const getManagerColumns = (
     {
       accessorKey: "email",
       header: "EMAIL",
+      meta: { width: "30%" },
       cell: ({ row }) => (
         <p className="font-semibold text-[#44291B]">{row.getValue("email")}</p>
       ),
     },
     {
+      accessorKey: "accommodations",
+      header: "ASSIGNED PROPERTIES",
+      meta: { width: "35%" },
+      cell: ({ row }) => (
+        <p className="font-medium text-[#44291B]/80 max-w-[200px] truncate" title={row.getValue("accommodations")}>
+          {row.getValue("accommodations") || "None"}
+        </p>
+      ),
+    },
+    {
       id: "actions",
       header: "ACTIONS",
+      meta: { width: "10%" },
       cell: ({ row }) => {
         const manager = row.original.original
 
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-[#F6F8D5]">
+              <Button 
+                variant="ghost" 
+                className="h-8 w-8 p-0 hover:bg-[#F6F8D5]"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -62,14 +80,20 @@ export const getManagerColumns = (
 
               <DropdownMenuItem
                 className="focus:bg-[#F6F8D5] focus:text-[#44291B] cursor-pointer"
-                onClick={() => openEditModal(manager)}>
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEditModal(manager);
+                }}>
                 <Pencil className="mr-2 h-4 w-4" />
                 <span>Edit</span>
               </DropdownMenuItem>
 
               <DropdownMenuItem
                 className="focus:bg-[#F6F8D5] text-[#DF3538] focus:text-[#DF3538] cursor-pointer"
-                onClick={() => handleDelete(manager.employee_id)}>
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(manager.employee_id);
+                }}>
                 <Trash2 className="mr-2 h-4 w-4 text-[#DF3538]" />
                 <span className="font-medium">Delete</span>
               </DropdownMenuItem>

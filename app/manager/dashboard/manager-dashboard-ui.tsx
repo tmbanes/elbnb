@@ -4,11 +4,13 @@
 
 import React, { useEffect, useState } from "react";
 import {
-    Search, Bell, Building2, Users, FileText,
+    Bell, Building2, Users, FileText,
     Banknote, LogOut, UserPlus, ArrowLeftRight, AlertTriangle, BarChart2, CheckCircle2, ChevronRight,
     Filter, User, Plus, RotateCcw, Clock, Send, History
 } from "lucide-react";
 import { useRealtimeSync } from "@/lib/realtime-sync";
+import { DashboardRealtimeSync } from "@/components/DashboardRealtimeSync";
+import { ManagerDashboardHeader } from "./ManagerDashboardHeader";
 import {
     Dialog,
     DialogContent,
@@ -23,13 +25,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import Image from "next/image";
 import Link from "next/link";
 import { Archivo } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => {
+    if (!res.ok) throw new Error('Failed to fetch data');
+    return res.json();
+});
 
 
 const archivo = Archivo({ subsets: ["latin"] });
@@ -62,27 +69,10 @@ export default function ManagerDashboardUI({
     isLoggingOut
 }: ManagerDashboardUIProps) {
     const [dashboardView, setDashboardView] = useState<'operations' | 'financials'>('operations');
-    const [showLogout, setShowLogout] = useState(false);
-    const [showNotifications, setShowNotifications] = useState(false);
-    const [notifications, setNotifications] = useState(initialNotifications);
     const [hasMounted, setHasMounted] = useState(false);
     const router = useRouter();
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
-            setNotifications(initialNotifications.map(n => ({
-                ...n,
-                is_read: n.is_read || readIds.includes(n.id)
-            })));
-        }
-    }, [initialNotifications]);
-
     useEffect(() => { setHasMounted(true); }, []);
-
-    // Sync notifications in real-time
-    // Since notifications are fetched from activity_log, we watch that table
-    useRealtimeSync('activity_log', undefined, 'INSERT');
 
     const [roomView, setRoomView] = useState<'grid' | 'list'>('grid');
 
@@ -116,7 +106,7 @@ export default function ManagerDashboardUI({
                 id: asg.user_id,
                 assignment_id: asg.assignment_id,
                 name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
-                student_number: 'N/A', // Would need additional student fetch if needed
+                student_number: 'Not provided', // Would need additional student fetch if needed
                 move_in_date: asg.move_in_date,
                 payment_status: 'Unknown',
                 avatar: asg.users?.profile_picture_url || null,
@@ -140,12 +130,12 @@ export default function ManagerDashboardUI({
     const [allStudents] = useState(() => {
         return initialData.assignments.map((asg: any) => ({
             type: 'resident' as const,
-            id: asg.user_id,
+            id: asg.users?.user_id || asg.user_id,
             assignment_id: asg.assignment_id,
             name: `${asg.users?.first_name || ''} ${asg.users?.last_name || ''}`.trim(),
-            student_number: 'N/A',
-            college: 'N/A',
-            room_number: asg.unit?.unit_number || 'N/A',
+            student_number: 'Not provided',
+            college: 'Not specified',
+            room_number: asg.unit?.unit_number || 'Unassigned',
             move_in_date: asg.move_in_date,
             payment_status: 'Unknown',
         }));
@@ -155,7 +145,7 @@ export default function ManagerDashboardUI({
             const u = app.users || {};
             return {
                 type: 'waitlist' as const,
-                id: app.user_id,
+                id: u.user_id || app.user_id,
                 application_id: app.application_id,
                 name: `${u.first_name || ''} ${u.last_name || ''}`.trim(),
                 student_number: u.student?.student_number || u.student?.[0]?.student_number || 'N/A',
@@ -179,13 +169,20 @@ export default function ManagerDashboardUI({
     const studentsPerPage = 5;
 
     // --- Financials ---
-    const [financialsLoading, setFinancialsLoading] = useState(false);
-    const [expectedRevenue, setExpectedRevenue] = useState(0);
-    const [actualCollected, setActualCollected] = useState(0);
-    const [outstandingBalance, setOutstandingBalance] = useState(0);
-    const [unpaidInvoiceCount, setUnpaidInvoiceCount] = useState(0);
-    const [collectionRate, setCollectionRate] = useState(0);
-    const [delinquencyList, setDelinquencyList] = useState<any[]>([]);
+    const { data: financialsData, isLoading: isFinancialsLoading } = useSWR(
+        dashboardView === 'financials' ? '/api/manager/dashboard/financials' : null,
+        fetcher,
+        { revalidateOnFocus: false }
+    );
+
+    const expectedRevenue = financialsData?.expectedRevenue ?? 0;
+    const actualCollected = financialsData?.actualCollected ?? 0;
+    const outstandingBalance = financialsData?.outstandingBalance ?? 0;
+    const unpaidInvoiceCount = financialsData?.unpaidInvoiceCount ?? 0;
+    const collectionRate = financialsData?.collectionRate ?? 0;
+    const delinquencyList = financialsData?.delinquencyList ?? [];
+    const financialsLoading = dashboardView === 'financials' && isFinancialsLoading;
+
     const [delinquencyFilter, setDelinquencyFilter] = useState("all");
     const [delinquencySortDays, setDelinquencySortDays] = useState(true);
 
@@ -195,6 +192,7 @@ export default function ManagerDashboardUI({
 
     // --- Recent Applications ---
     const [recentApplications] = useState(initialData.recentApplications);
+    const [expandedApplication, setExpandedApplication] = useState<string | null>(null);
 
     // --- Move-out Alerts ---
     const [moveOutAlerts] = useState(initialData.moveOutAlerts);
@@ -206,32 +204,7 @@ export default function ManagerDashboardUI({
     };
 
 
-    // ─── Fetch financials when tab is active ─────────────────────────────────
-    useEffect(() => {
-        if (dashboardView !== 'financials') return;
-        async function fetchFinancials() {
-            setFinancialsLoading(true);
-            try {
-                const res = await fetch('/api/manager/dashboard/financials');
-                if (!res.ok) {
-                    const text = await res.text();
-                    throw new Error(`Financials route error ${res.status}: ${text.slice(0, 200)}`);
-                }
-                const data = await res.json();
-                setExpectedRevenue(data.expectedRevenue ?? 0);
-                setActualCollected(data.actualCollected ?? 0);
-                setOutstandingBalance(data.outstandingBalance ?? 0);
-                setUnpaidInvoiceCount(data.unpaidInvoiceCount ?? 0);
-                setCollectionRate(data.collectionRate ?? 0);
-                setDelinquencyList(data.delinquencyList ?? []);
-            } catch (err) {
-                console.error("Failed to load financial data:", err);
-            } finally {
-                setFinancialsLoading(false);
-            }
-        }
-        fetchFinancials();
-    }, [dashboardView]);
+    // Financials are now fetched and cached using useSWR above
 
     // ─── Derived ---
     const rooms = dbRooms.length > 0 ? dbRooms : [];
@@ -250,13 +223,13 @@ export default function ManagerDashboardUI({
 
     // Delinquency filter + sort
     const filteredDelinquency = delinquencyList
-        .filter(d => {
+        .filter((d: any) => {
             if (delinquencyFilter === 'all') return true;
             if (delinquencyFilter === 'Pending') return d.status === 'Unpaid';
             if (delinquencyFilter === 'Overdue') return d.status === 'Overdue';
             return true;
         })
-        .sort((a, b) => delinquencySortDays ? b.days_overdue - a.days_overdue : a.name.localeCompare(b.name));
+        .sort((a: any, b: any) => delinquencySortDays ? b.days_overdue - a.days_overdue : a.name.localeCompare(b.name));
 
     // Activity log color + label
     const activityColor = (type: string) => {
@@ -310,129 +283,11 @@ export default function ManagerDashboardUI({
 
     return (
         <div className={`flex h-screen bg-[#F6F8D5] overflow-hidden ${archivo.className}`}>
+            <DashboardRealtimeSync table="activity_log" event="INSERT" />
             <div className="flex-1 flex flex-col h-full overflow-hidden">
                 <div className="flex-1 overflow-auto pb-10" suppressHydrationWarning>
                     {/* TOP HEADER */}
-                    <header className="flex justify-between items-center px-8 lg:px-16 xl:px-24 mt-6 mb-4">
-                        <div className="relative w-full max-w-[400px]">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <input
-                                type="text"
-                                placeholder="Search data, students, or rooms..."
-                                className="w-full pl-11 pr-4 py-2.5 bg-slate-200/50 rounded-full text-sm border-none focus:ring-2 focus:ring-slate-300 outline-none font-medium placeholder:text-slate-400"
-                            />
-                        </div>
-                        <div className="flex items-center gap-6">
-                            <div className="relative">
-                                <button
-                                    className={`relative text-slate-600 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-100 ${showNotifications ? 'bg-slate-100 text-[#5D6BDE]' : ''}`}
-                                    onClick={() => setShowNotifications(!showNotifications)}
-                                >
-                                    <Bell className="w-5 h-5" />
-                                    {notifications.filter(n => !n.is_read).length > 0 && (
-                                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#A05C5C] rounded-full ring-2 ring-[#F6F8D5]"></span>
-                                    )}
-                                </button>
-
-                                {showNotifications && (
-                                    <div className="absolute right-0 top-full mt-4 w-80 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[60] overflow-hidden">
-                                        <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
-                                            <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
-                                            <button
-                                                className="text-[10px] font-bold text-[#5D6BDE] uppercase tracking-wider hover:underline transition-colors"
-                                                onClick={() => {
-                                                    if (typeof window !== 'undefined') {
-                                                        const existingIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
-                                                        const allIds = Array.from(new Set([...existingIds, ...notifications.map(n => n.id)]));
-                                                        localStorage.setItem('read_notifications', JSON.stringify(allIds));
-                                                    }
-                                                    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-                                                }}
-                                            >
-                                                Mark all as read
-                                            </button>
-                                        </div>
-                                        <div className="max-h-[350px] overflow-y-auto">
-                                            {notifications.length > 0 ? (
-                                                notifications.map((n, i) => (
-                                                    <div
-                                                        key={i}
-                                                        className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer group"
-                                                        onClick={() => {
-                                                            const readIds = JSON.parse(localStorage.getItem('read_notifications') || '[]');
-                                                            if (!readIds.includes(n.id)) {
-                                                                readIds.push(n.id);
-                                                                localStorage.setItem('read_notifications', JSON.stringify(readIds));
-                                                            }
-                                                            setNotifications(prev => prev.map((notif, idx) =>
-                                                                idx === i ? { ...notif, is_read: true } : notif
-                                                            ));
-                                                            if (n.link) router.push(n.link);
-                                                        }}
-                                                    >
-                                                        <div className="flex gap-3">
-                                                            <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-[#5D6BDE]' : 'bg-transparent'}`}></div>
-                                                            <div>
-                                                                <p className="text-[13px] font-bold text-slate-900 mb-1 group-hover:text-[#5D6BDE] transition-colors">{n.title}</p>
-                                                                <p className="text-[12px] text-slate-500 leading-relaxed mb-1.5">{n.message}</p>
-                                                                <p className="text-[10px] text-slate-400 font-medium">{new Date(n.created_at).toLocaleDateString()}</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="py-10 text-center">
-                                                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                        <Bell className="w-5 h-5 text-slate-300" />
-                                                    </div>
-                                                    <p className="text-slate-400 text-xs italic">No notifications yet.</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <button
-                                            className="w-full py-3 text-[11px] font-bold text-slate-500 hover:text-[#5D6BDE] transition-colors border-t border-slate-50"
-                                            onClick={() => { setShowNotifications(false); router.push('/manager/notifications'); }}
-                                        >
-                                            View All Activity
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="relative">
-                                <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setShowLogout(!showLogout)}>
-                                    <div className="flex flex-col items-end">
-                                        <span className="text-[13px] font-bold text-slate-900 leading-tight">{managerName}</span>
-                                        <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase">MANAGER</span>
-                                    </div>
-                                    <div className="w-9 h-9 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
-                                        {managerAvatar ? (
-                                            <Image
-                                                src={managerAvatar}
-                                                alt="Profile"
-                                                width={36}
-                                                height={36}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            managerInitials
-                                        )}
-                                    </div>
-                                </div>
-                                {showLogout && (
-                                    <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-slate-100 p-2 z-50">
-                                        <button
-                                            onClick={onLogout}
-                                            disabled={isLoggingOut}
-                                            className="w-full flex items-center gap-2 text-left px-3 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
-                                        >
-                                            <LogOut className="w-4 h-4" />
-                                            {isLoggingOut ? "Exiting..." : "Log out"}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </header>
+                    <ManagerDashboardHeader profile={profile} initialNotifications={initialNotifications} />
 
                     <div className="px-8 lg:px-16 xl:px-24">
                         {/* TITLE */}
@@ -473,16 +328,16 @@ export default function ManagerDashboardUI({
                                 {/* METRICS GRID */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
                                     {/* Total Rooms */}
-                                    <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100/50 flex flex-col justify-between h-[180px]">
-                                        <h3 className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">Total Rooms</h3>
+                                    <div className="bg-[#eb8b0d] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] text-white">
+                                        <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase">Total Rooms</h3>
                                         <div>
-                                            <p className="text-[38px] font-black text-[#0B3A64] leading-none mb-1">{totalRooms}</p>
-                                            <p className="text-[11px] text-slate-500 font-medium">Certified Living Units</p>
+                                            <p className="text-[38px] font-black text-white leading-none mb-1">{totalRooms}</p>
+                                            <p className="text-[11px] text-white/80 font-medium">Certified Living Units</p>
                                         </div>
                                     </div>
 
                                     {/* Occupancy */}
-                                    <div className="bg-[#5D84A6] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] relative overflow-hidden text-white">
+                                    <div className="bg-[#79a34e] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] relative overflow-hidden text-white">
                                         <div className="absolute -right-4 -bottom-4 opacity-10"><BarChart2 className="w-32 h-32" /></div>
                                         <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase relative z-10">Occupancy</h3>
                                         <div className="relative z-10">
@@ -498,14 +353,14 @@ export default function ManagerDashboardUI({
                                     </div>
 
                                     {/* Pending Assignment */}
-                                    <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100/50 flex flex-col justify-between h-[180px]">
+                                    <div className="bg-[#5b93ad] rounded-[20px] p-5 shadow-sm flex flex-col justify-between h-[180px] text-white">
                                         <div className="flex justify-between items-center">
-                                            <h3 className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">Pending Assignment</h3>
-                                            <span className="bg-[#5591AB]/10 text-[#5591AB] text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Waitlist</span>
+                                            <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase">Pending Assignment</h3>
+                                            <span className="bg-white/20 text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Waitlist</span>
                                         </div>
                                         <div>
-                                            <p className="text-[38px] font-black text-[#5591AB] leading-none mb-1">{waitlistCount}</p>
-                                            <p className="text-[11px] text-slate-500 font-medium">Approved Students Waiting</p>
+                                            <p className="text-[38px] font-black text-white leading-none mb-1">{waitlistCount}</p>
+                                            <p className="text-[11px] text-white/80 font-medium">Approved Students Waiting</p>
                                         </div>
                                     </div>
 
@@ -549,7 +404,7 @@ export default function ManagerDashboardUI({
                                                 }
                                             </div>
                                         ) : (
-                                            <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+                                            <div className="flex-1 overflow-y-auto space-y-2 mb-4 pr-2">
                                                 {rooms.map(room => {
                                                     return (
                                                         <div key={room.unit_id}
@@ -590,26 +445,22 @@ export default function ManagerDashboardUI({
                                             </button>
                                         </div>
                                         {activityLog.length > 0 ? (
-                                            <div className="space-y-3 flex-1 overflow-y-auto">
-                                                {activityLog.map((log: any) => {
-                                                    return (
-                                                        <div key={log.log_id} className="flex items-start justify-between gap-3">
-                                                            <div className="flex items-start gap-3">
-                                                                <div className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: activityColor(log.action_type) }}></div>
-                                                                <div>
-                                                                    <p className="text-[12px] font-bold text-[#0B3A64] leading-snug">
-                                                                        {log.action_type?.replace(/_/g, ' ').replace(/\w/g, (c: string) => c.toUpperCase())}
-                                                                        {log.user_role && <span className="text-slate-400 font-medium"> by {log.user_role}</span>}
-                                                                    </p>
-                                                                    {log.log_desc && <p className="text-[10px] text-slate-400 mt-0.5">{log.log_desc}</p>}
-                                                                </div>
+                                            <div className="space-y-3 flex-1 overflow-y-auto pr-2">
+                                                {activityLog.map((log: any) => (
+                                                    <div key={log.log_id} className="flex items-start justify-between gap-3">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: activityColor(log.action_type) }}></div>
+                                                            <div>
+                                                                <p className="text-[12px] font-bold text-[#0B3A64] leading-snug">
+                                                                    {log.log_desc || log.action_type?.replace(/_/g, ' ').replace(/ \w/g, (c: string) => c.toUpperCase())}
+                                                                </p>
                                                             </div>
-                                                            <span className="text-[10px] text-slate-300 font-bold flex-shrink-0">
-                                                                {new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
-                                                            </span>
                                                         </div>
-                                                    );
-                                                })}
+                                                        <span className="text-[10px] text-slate-300 font-bold flex-shrink-0">
+                                                            {new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                             </div>
                                         ) : (
                                             <div className="flex-1 flex items-center justify-center">
@@ -633,11 +484,7 @@ export default function ManagerDashboardUI({
                                             </div>
 
                                             <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-                                                <div className="relative flex-1 xl:flex-none xl:w-[240px]">
-                                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                                                    <input type="text" placeholder="Search Name/ID..." value={tableSearch} onChange={(e) => setTableSearch(e.target.value)} className="w-full pl-11 pr-4 py-2.5 bg-[#F8F9FD] border border-slate-100 rounded-full text-[12px] outline-none focus:ring-2 focus:ring-[#5591AB]/10 font-medium placeholder:text-slate-400" />
-                                                </div>
-                                                <div className="flex flex-wrap items-center gap-2">
+                                                <div className="flex flex-wrap items-center gap-2 ml-auto">
                                                     <div className="flex items-center gap-2 bg-[#F8F9FD] px-3 py-1 rounded-full border border-slate-100">
                                                         <Select value={tableFilters.college} onValueChange={(v) => setTableFilters(prev => { return { ...prev, college: v }; })}>
                                                             <SelectTrigger className="h-7 border-none bg-transparent text-[11px] font-bold text-[#0B3A64] focus:ring-0 w-[90px] p-0 px-2"><SelectValue placeholder="College" /></SelectTrigger>
@@ -669,7 +516,6 @@ export default function ManagerDashboardUI({
                                                     )}
 
                                                     <button onClick={handleResetFilters} className="p-2 text-slate-400 hover:text-[#DE7A6A] transition-all hover:rotate-180 duration-500" title="Reset Filters"><RotateCcw className="w-4 h-4" /></button>
-                                                    <button className="flex items-center gap-2 px-5 py-2 bg-[#5591AB] text-white rounded-full text-[12px] font-bold hover:bg-[#467A91] hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm"><Search className="w-3.5 h-3.5" />Search</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -724,7 +570,7 @@ export default function ManagerDashboardUI({
                                                             ) : (
                                                                 <td className="py-5 px-2 text-right">
                                                                     <span className="text-[13px] font-bold text-slate-600">
-                                                                        {student.date_submitted ? new Date(student.date_submitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                                                        {student.date_submitted ? new Date(student.date_submitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date'}
                                                                     </span>
                                                                 </td>
                                                             )}
@@ -801,36 +647,70 @@ export default function ManagerDashboardUI({
                                                         // Ensure student_number is extracted correctly if nested
                                                         const studentNumber = app.student_number || u.student?.student_number || u.student?.[0]?.student_number || 'N/A';
                                                         const dateSubmitted = app.date_submitted || app.date || null;
+                                                        const isExpanded = expandedApplication === app.application_id;
 
                                                         return (
-                                                            <tr key={app.application_id} className="border-b border-slate-50 last:border-0 hover:bg-[#F9FBFD] transition-colors">
-                                                                <td className="py-4 px-6">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">{initials}</div>
-                                                                        <div>
-                                                                            <p className="text-[13px] font-black text-[#0B3A64] leading-none">{name}</p>
-                                                                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">{app.preferred_unit_type || dormName}</p>
+                                                            <React.Fragment key={app.application_id}>
+                                                                <tr 
+                                                                    onClick={() => setExpandedApplication(isExpanded ? null : app.application_id)}
+                                                                    className={`border-b border-slate-50 last:border-0 hover:bg-[#F9FBFD] transition-colors cursor-pointer ${isExpanded ? 'bg-[#F9FBFD]' : ''}`}
+                                                                >
+                                                                    <td className="py-4 px-6">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-8 h-8 rounded-full bg-[#5D6BDE] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">{initials}</div>
+                                                                            <div>
+                                                                                <p className="text-[13px] font-black text-[#0B3A64] leading-none">{name}</p>
+                                                                                <p className="text-[10px] text-slate-400 font-medium mt-0.5">{app.preferred_unit_type || dormName}</p>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="py-4 px-4">
-                                                                    <span className="text-[11px] text-slate-400 font-bold">
-                                                                        {dateSubmitted ? new Date(dateSubmitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-4 px-6 text-right">
-                                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap ${statusColor}`}>
-                                                                        {statusLabel}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-4 px-6 text-right">
-                                                                    <Link href={`/manager/student-history/${app.user_id}`}>
-                                                                        <button className="text-slate-300 hover:text-[#5591AB] transition-colors">
-                                                                            <History className="w-4 h-4" />
-                                                                        </button>
-                                                                    </Link>
-                                                                </td>
-                                                            </tr>
+                                                                    </td>
+                                                                    <td className="py-4 px-4">
+                                                                        <span className="text-[11px] text-slate-400 font-bold">
+                                                                            {dateSubmitted ? new Date(dateSubmitted).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="py-4 px-6 text-right">
+                                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap ${statusColor}`}>
+                                                                            {statusLabel}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="py-4 px-6 text-right">
+                                                                        <Link href={`/manager/student-history/${u.user_id || app.user_id}`} onClick={(e) => e.stopPropagation()}>
+                                                                            <button className="text-slate-300 hover:text-[#5591AB] transition-colors">
+                                                                                <History className="w-4 h-4" />
+                                                                            </button>
+                                                                        </Link>
+                                                                    </td>
+                                                                </tr>
+                                                                {isExpanded && (
+                                                                    <tr className="bg-slate-50/50 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                                        <td colSpan={4} className="py-4 px-6 border-b border-slate-100">
+                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                                                                <div className="sm:col-span-2">
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Email Contact</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64] break-all">{u.email || "No email"}</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Sex</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64] uppercase tracking-wider">{u.sex || "—"}</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Stay Duration</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64]">{app.duration_of_stay || 1} Semester(s)</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Check-in Date</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64]">{app.check_in ? new Date(app.check_in).toLocaleDateString() : 'Pending'}</p>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Companions</p>
+                                                                                    <p className="text-[13px] font-black text-[#0B3A64]">{app.number_of_companions || 0} Person(s)</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                )}
+                                                            </React.Fragment>
                                                         );
                                                     }) : (
                                                         <tr>
@@ -1191,25 +1071,25 @@ function PendingApprovalsCard() {
     const urgentCount = pendingApps.length;
 
     return (
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100/50 flex flex-col h-[180px]">
+        <div className="bg-[#284485] rounded-[20px] p-5 shadow-sm flex flex-col h-[180px] text-white">
             <div className="flex justify-between items-center mb-3">
-                <h3 className="text-[10px] font-bold text-[#0B3A64] tracking-[0.1em] uppercase">Pending Approvals</h3>
+                <h3 className="text-[10px] font-bold text-white/70 tracking-[0.1em] uppercase">Pending Approvals</h3>
                 {urgentCount > 0 && (
                     <span className="bg-[#D03027] text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">{urgentCount} Urgent</span>
                 )}
             </div>
             <div className="flex-1 flex flex-col gap-2 overflow-y-auto pr-1">
                 {loading ? (
-                    <p className="text-[11px] text-slate-300 font-bold uppercase tracking-widest mt-auto mb-auto text-center">Loading...</p>
+                    <p className="text-[11px] text-white/40 font-bold uppercase tracking-widest mt-auto mb-auto text-center">Loading...</p>
                 ) : pendingApps.length === 0 ? (
-                    <p className="text-[11px] text-slate-300 font-bold uppercase tracking-widest mt-auto mb-auto text-center">No pending approvals</p>
+                    <p className="text-[11px] text-white/40 font-bold uppercase tracking-widest mt-auto mb-auto text-center">No pending approvals</p>
                 ) : pendingApps.slice(0, 3).map((app: any) => {
                     return (
-                        <div key={app.application_id} className="bg-[#F6F8E8] rounded-lg p-2 flex items-start gap-2.5">
-                            <div className="text-[#7A9D54] mt-0.5"><UserPlus className="w-3.5 h-3.5" /></div>
+                        <div key={app.application_id} className="bg-white/10 rounded-lg p-2 flex items-start gap-2.5">
+                            <div className="text-white/70 mt-0.5"><UserPlus className="w-3.5 h-3.5" /></div>
                             <div className="overflow-hidden">
-                                <p className="text-[11px] font-bold text-[#0B3A64] leading-tight mb-0.5 truncate">Application Review</p>
-                                <p className="text-[9px] text-slate-500 font-medium truncate">
+                                <p className="text-[11px] font-bold text-white leading-tight mb-0.5 truncate">Application Review</p>
+                                <p className="text-[9px] text-white/60 font-medium truncate">
                                     {app.users?.first_name} {app.users?.last_name}
                                 </p>
                             </div>

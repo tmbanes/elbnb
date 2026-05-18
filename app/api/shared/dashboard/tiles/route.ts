@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth/api-guard';
 import { UnitAccomodationsDisplayService } from '@/services/unit_accommodation/index';
+import { withResolvedAccommodationImages } from '@/lib/actions/housing-actions';
+
 
 const ALL_ROLES = ['student', 'guest', 'housing_admin', 'dormitory_manager'] as const;
 
@@ -42,13 +44,18 @@ export const GET = withRole([...ALL_ROLES], async (req, { user }) => {
       return NextResponse.json({ error: result.error || 'No data found' }, { status: 400 });
     }
 
-    let data = result.data;
+    let data: any = result.data;
+    if (type === 'accommodations' && Array.isArray(data)) {
+      data = await withResolvedAccommodationImages(data as any);
+    }
+
     if (type !== 'accommodations' && Array.isArray(data)) {
       data = data.map((unit: any) => ({
         ...unit,
         vacant_slots: unit.max_occupancy - unit.current_occupancy,
       }));
     }
+
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {

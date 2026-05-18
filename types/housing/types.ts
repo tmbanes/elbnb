@@ -22,6 +22,7 @@ export interface Property {
   accommodation_status: string;
   total_capacity: number;
   manager_id: string;
+  accomm_sex?: string;
   dormitory_manager?: {
     employee_id: string;
     users: { first_name: string; last_name: string; email: string };
@@ -55,4 +56,5 @@ export interface Manager {
     email: string;
     role: string;
   };
+  accommodation?: { name: string }[];
 }

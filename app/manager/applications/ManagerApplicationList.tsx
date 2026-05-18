@@ -92,10 +92,10 @@ export default function ManagerApplicationList({
     ];
 
     const statusConfig: any = {
-        pending_dorm_manager: { class: "bg-amber-50 text-amber-700 border-amber-100 animate-pulse" },
-        pending_admin: { class: "bg-sky-50 text-sky-700 border-sky-100" },
-        rejected: { class: "bg-rose-50 text-rose-700 border-rose-100" },
-        approved: { class: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+        pending_dorm_manager: { class: "bg-[#EEF2FF] text-[#4F46E5]", dot: "bg-[#4F46E5]", label: "Pending Review" },
+        pending_admin: { class: "bg-[#EEF2FF] text-[#4F46E5]", dot: "bg-[#4F46E5]", label: "Forwarded to Admin" },
+        rejected: { class: "bg-[#FEF2F2] text-[#B91C1C]", dot: "bg-[#B91C1C]", label: "Rejected" },
+        approved: { class: "bg-[#E7FAD3] text-[#78A24C]", dot: "bg-[#78A24C]", label: "Approved" },
     };
 
     return (
@@ -173,7 +173,14 @@ export default function ManagerApplicationList({
             {/* TABLE */}
             <div className="bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left border-collapse table-fixed">
+                        <colgroup>
+                            <col className="w-[35%]" />
+                            <col className="w-[18%]" />
+                            <col className="w-[17%]" />
+                            <col className="w-[18%]" />
+                            <col className="w-[12%]" />
+                        </colgroup>
                         <thead>
                             <tr className="border-b border-[#e8e2d6] bg-[#FDFFF4]">
                                 <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Applicant</th>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { Accommodation, Unit, AccommodationType, FurnishingStatus, UnitType, PropertyType } from '@/types/accommodation_units'
 import { Carousel } from '@/components/SearchAccommodations/Carousel'
 import { AccommodationCard } from '@/components/SearchAccommodations/AccommodationCard'
@@ -11,7 +11,13 @@ import { AccommodationListView } from '@/components/SearchAccommodations/Accommo
 import { UnitsListView } from '@/components/SearchAccommodations/Units-list-view'
 import next from 'next'
 import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { ViewAccommodation, ViewUnit } from '@/components/SearchAccommodations'
+import { ChevronLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Archivo_Black } from 'next/font/google'
+
+const archivoBlack = Archivo_Black({ subsets: ['latin'], weight: '400' })
 
 type TabType = 'accommodations' | 'units'
 
@@ -34,7 +40,20 @@ interface UnitFiltersType {
 }
 
 export default function SearchAccommodationsPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('accommodations')
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F6F8D5] flex items-center justify-center font-black text-[#264384] animate-pulse">LOADING ELBNB SEARCH...</div>}>
+      <SearchAccommodationsContent />
+    </Suspense>
+  )
+}
+
+function SearchAccommodationsContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialTab = (searchParams.get('tab') as TabType) || 'accommodations'
+  const initialAccommodationId = searchParams.get('accommodationId') || ''
+
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab)
 
   // Data states
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
@@ -57,8 +76,8 @@ export default function SearchAccommodationsPage() {
     furnishingStatus: '',
     availability: 'vacant',
     propertyType: '',
-    accommodationType: '',
-    accommodationId: '',
+    accommodationType: 'renting_space',
+    accommodationId: initialAccommodationId,
   })
   const [sortBy, setSortBy] = useState<string>('')
 
@@ -80,6 +99,7 @@ export default function SearchAccommodationsPage() {
   const [selectedAccommodation, setSelectedAccommodation] = useState<Accommodation | null>(null)
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
   const [accommodationUnits, setAccommodationUnits] = useState<Unit[]>([])
+  const [isFetchingAccommodationUnits, setIsFetchingAccommodationUnits] = useState(false)
   const [isViewingUnit, setIsViewingUnit] = useState(false)
   const [unitViewSource, setUnitViewSource] = useState<'accommodation' | 'search'>('accommodation')
 
@@ -117,6 +137,16 @@ export default function SearchAccommodationsPage() {
     });
   }, [accommodations]);
 
+  const normalizeSexValue = (value?: string | null) => {
+    const sex = value?.toLowerCase()
+
+    if (sex === 'f' || sex === 'female') return 'female'
+    if (sex === 'm' || sex === 'male') return 'male'
+    if (sex === 'coed') return 'coed'
+
+    return sex ?? ''
+  }
+
   // Apply accommodation filters
   const applyAccommodationFilters = useCallback(
     (list: Accommodation[], allUnits: Unit[], filters: AccommodationFiltersType, search: string = '') => {
@@ -133,7 +163,17 @@ export default function SearchAccommodationsPage() {
       }
 
       if (filters.sexFilter) {
-        filtered = filtered.filter((a) => (a as any).accomm_sex?.toLowerCase() === filters.sexFilter?.toLowerCase())
+        const selectedSex = normalizeSexValue(filters.sexFilter)
+
+        filtered = filtered.filter((a) => {
+          const dormSex = normalizeSexValue((a as any).accomm_sex)
+
+          if (selectedSex === 'male' || selectedSex === 'female') {
+            return dormSex === selectedSex || dormSex === 'coed'
+          }
+
+          return dormSex === selectedSex
+        })
       }
 
       if (filters.minPrice !== '') {
@@ -198,7 +238,11 @@ export default function SearchAccommodationsPage() {
   // Apply unit filters
   const applyUnitFilters = useCallback(
     (list: Unit[], filters: UnitFiltersType, accomList: Accommodation[], search: string = '') => {
-      let filtered = list
+      // Only show units that belong to renting spaces
+      let filtered = list.filter((u) => {
+        const accom = accomList.find((a) => a.accommodation_id === u.accommodation_id)
+        return accom?.accommodation_type === 'renting_space'
+      })
 
       if (filters.unitType) {
         filtered = filtered.filter((u) => u.unit_type === filters.unitType)
@@ -221,14 +265,7 @@ export default function SearchAccommodationsPage() {
         filtered = filtered.filter((u) => rentingSpaceIds.has(u.accommodation_id))
       }
 
-      if (filters.accommodationType) {
-        const matchingAccomIds = new Set(
-          accomList
-            .filter((a) => a.accommodation_type === filters.accommodationType)
-            .map((a) => a.accommodation_id)
-        )
-        filtered = filtered.filter((u) => matchingAccomIds.has(u.accommodation_id))
-      }
+
 
       if (filters.accommodationId) {
         filtered = filtered.filter((u) => u.accommodation_id === filters.accommodationId)
@@ -371,8 +408,9 @@ export default function SearchAccommodationsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
 
     // Fetch all units for this accommodation to show real data
+    setIsFetchingAccommodationUnits(true)
     try {
-      const res = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
+      const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
       if (res.ok) {
         const data = await res.json()
         setAccommodationUnits(data)
@@ -380,6 +418,8 @@ export default function SearchAccommodationsPage() {
     } catch (err) {
       console.error('Failed to fetch accommodation units:', err)
       setAccommodationUnits([])
+    } finally {
+      setIsFetchingAccommodationUnits(false)
     }
   }
 
@@ -391,7 +431,7 @@ export default function SearchAccommodationsPage() {
     setUnitFilters(newFilters)
     applyUnitFilters(units, newFilters, accommodations, searchQuery)
 
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // No scroll to top on see units click
   }, [units, accommodations, unitFilters, applyUnitFilters, searchQuery])
 
   useEffect(() => {
@@ -413,7 +453,7 @@ export default function SearchAccommodationsPage() {
 
       // Also fetch units context if needed
       try {
-        const res = await fetch(`/api/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
+        const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`)
         if (res.ok) {
           const data = await res.json()
           setAccommodationUnits(data)
@@ -481,6 +521,7 @@ export default function SearchAccommodationsPage() {
             accommodation={selectedAccommodation}
             units={accommodationUnits}
             userRole="guest"
+            isFetchingUnits={isFetchingAccommodationUnits}
             onUnitTypeClick={(unit) => {
                 setSelectedUnit(unit)
                 setIsViewingUnit(true)
@@ -497,7 +538,15 @@ export default function SearchAccommodationsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: '#44291B' }}>Search accommodations</h1>
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/guest/dashboard")}
+            className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group w-fit"
+          >
+            <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+          </Button>
+          <h1 className={`${archivoBlack.className} text-3xl sm:text-4xl font-bold mb-2`} style={{ color: '#44291B' }}>Search accommodations</h1>
           <p style={{ color: '#44291B' }}>Find your perfect housing option</p>
         </div>
 
@@ -724,7 +773,7 @@ export default function SearchAccommodationsPage() {
 
         {/* UNITS TAB */}
         {activeTab === 'units' && (
-          <div>
+          <div className="animate-in fade-in duration-500">
             {/* Filters */}
             <UnitFilters
               accommodationType={unitFilters.accommodationType}
@@ -751,6 +800,33 @@ export default function SearchAccommodationsPage() {
               <div>
                 <h2 className="text-2xl font-bold mb-1" style={{ color: '#44291B' }}>SEARCH RESULTS</h2>
                 <p className="text-sm" style={{ color: '#44291B' }}>Explore available units</p>
+                {unitFilters.accommodationId && (
+                  <div className="mt-4 flex items-center gap-3 py-1.5 px-3 bg-[#264384]/5 rounded-xl border border-[#264384]/10 w-fit animate-in fade-in slide-in-from-left-2 duration-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#264384] animate-pulse" />
+                    <p className="text-[10px] font-black text-[#44291B] uppercase tracking-widest">
+                      Showing units for <span className="text-[#264384] ml-1">{accommodations.find(a => a.accommodation_id === unitFilters.accommodationId)?.name || 'Accommodation'}</span>
+                    </p>
+                    <div className="flex items-center gap-2 ml-2 border-l border-[#264384]/10 pl-2">
+                      <button
+                        onClick={() => {
+                          handleUnitFilterChange({ accommodationId: '' });
+                        }}
+                        className="flex items-center gap-1 text-[10px] font-black text-[#264384] uppercase tracking-widest hover:underline transition-all opacity-60 hover:opacity-100"
+                      >
+                        Clear
+                      </button>
+                      <div className="w-1 h-1 rounded-full bg-[#264384]/20" />
+                      <button
+                        onClick={() => {
+                          setActiveTab('accommodations');
+                        }}
+                        className="flex items-center gap-1 text-[10px] font-black text-[#264384] uppercase tracking-widest hover:underline transition-all opacity-60 hover:opacity-100"
+                      >
+                        Back to Accommodations
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* View Mode Toggle Switch */}

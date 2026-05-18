@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 
 interface Manager {
   employee_id: string;
@@ -36,6 +36,8 @@ interface DormForm {
   term_type: "semestral" | "annual";
   separate_by_gender: boolean;
   manager_id: string;
+  accommodation_status: string;
+  accomm_sex: string;
 }
 
 interface Props {
@@ -43,6 +45,8 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   existingDorm?: any | null;
+  managers?: Manager[];
+  assignedManagerIds?: Set<string>;
 }
 
 const EMPTY: DormForm = {
@@ -55,6 +59,8 @@ const EMPTY: DormForm = {
   term_type: "semestral",
   separate_by_gender: true,
   manager_id: "",
+  accommodation_status: "active",
+  accomm_sex: "",
 };
 
 export default function AddDormModal({
@@ -62,11 +68,13 @@ export default function AddDormModal({
   onClose,
   onSuccess,
   existingDorm,
+  managers: managersProp,
+  assignedManagerIds,
 }: Props) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<DormForm>(EMPTY);
   const [units, setUnits] = useState<UnitFormData[]>([]);
-  const [managers, setManagers] = useState<Manager[]>([]);
+  const [managers, setManagers] = useState<Manager[]>(managersProp || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -77,11 +85,17 @@ export default function AddDormModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/admin/housing/managers")
+    if (managersProp && managersProp.length > 0) {
+      setManagers(managersProp);
+      return;
+    }
+    fetch("/api/housing/managers?all=true")
       .then((r) => r.json())
-      .then(setManagers)
-      .catch(() => { });
-  }, [isOpen]);
+      .then((data) => {
+        setManagers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setManagers([]));
+  }, [isOpen, managersProp]);
 
   useEffect(() => {
     if (existingDorm) {
@@ -98,6 +112,8 @@ export default function AddDormModal({
         separate_by_gender:
           existingDorm.dormitory?.separate_by_gender ?? true,
         manager_id: existingDorm.manager_id ?? "",
+        accommodation_status: existingDorm.accommodation_status ?? "active",
+        accomm_sex: existingDorm.accomm_sex ?? "",
       });
     } else {
       setForm(EMPTY);
@@ -138,7 +154,8 @@ export default function AddDormModal({
         form.location.trim() !== "" &&
         form.number_of_semesters_allowed.trim() !== "" &&
         !!form.term_type &&
-        !!form.manager_id
+        !!form.accomm_sex
+        // manager_id is optional when editing
       );
     }
     if (step === 1) {
@@ -156,7 +173,7 @@ export default function AddDormModal({
       );
     }
     if (step === 2) return form.name.trim() !== "" && form.location.trim() !== "";
-    if (step === 3) return form.number_of_semesters_allowed.trim() !== "" && !!form.term_type;
+    if (step === 3) return form.number_of_semesters_allowed.trim() !== "" && !!form.term_type && !!form.accomm_sex;
     if (step === 4) return !!form.manager_id;
     return true;
   }
@@ -177,20 +194,34 @@ export default function AddDormModal({
     setError(null);
 
     try {
-      const editableUnits = isEditing ? existingUnits : units;
-      const unitCapacitySum = editableUnits.reduce((sum: number, unit: any) => {
-        const capacity = Number(unit.max_occupancy);
-        const count = Number(unit.number_of_units || 1);
-        return Number.isFinite(capacity) && capacity > 0 ? sum + (capacity * count) : sum;
-      }, 0);
-      const computedTotalCapacity = unitCapacitySum;
+      let computedTotalCapacity: number;
+      if (isEditing) {
+        const loadedUnits: any[] = existingDorm?.units ?? [];
+        if (loadedUnits.length > 0) {
+          // Sum each unit's max_occupancy (each row = 1 physical unit)
+          computedTotalCapacity = loadedUnits.reduce(
+            (sum: number, u: any) => sum + (Number(u.max_occupancy) || 0), 0
+          );
+        } else {
+          // Units not loaded — preserve the stored value
+          computedTotalCapacity = Number(existingDorm?.total_capacity ?? 0);
+        }
+      } else {
+        computedTotalCapacity = units.reduce((sum: number, unit: any) => {
+          const capacity = Number(unit.max_occupancy);
+          const count = Number(unit.number_of_units || 1);
+          return Number.isFinite(capacity) && capacity > 0 ? sum + (capacity * count) : sum;
+        }, 0);
+      }
 
       const payload = {
         accommodationFields: {
           name: form.name,
           location: form.location,
-          manager_id: form.manager_id,
+          manager_id: form.manager_id === "none" ? null : form.manager_id,
           total_capacity: computedTotalCapacity,
+          accommodation_status: form.accommodation_status,
+          accomm_sex: form.accomm_sex,
         },
         dormitoryFields: {
           number_of_semestersAllowed: Number(
@@ -200,12 +231,12 @@ export default function AddDormModal({
           allowed_programs: form.allowed_programs || null,
           term_type: form.term_type,
           separate_by_gender: form.separate_by_gender,
-        },
+        }
       };
 
       const endpoint = isEditing
-        ? `/api/admin/housing/dorms?id=${existingDorm.accommodation_id}`
-        : "/api/admin/housing/dorms";
+        ? `/api/housing/dorms?id=${existingDorm.accommodation_id}`
+        : "/api/housing/dorms";
 
       const res = await fetch(endpoint, {
         method: isEditing ? "PATCH" : "POST",
@@ -235,7 +266,7 @@ export default function AddDormModal({
               (u) => u.unit_type.trim() && u.max_occupancy && u.rental_fee
             )
             .map((u) =>
-              fetch("/api/admin/housing/units", {
+              fetch("/api/housing/units", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -357,14 +388,35 @@ export default function AddDormModal({
                 </Select>
               </Field>
             </div>
-            <Field>
-              <Label className="font-semibold">Curfew Time</Label>
-              <Input
-                type="time"
-                value={form.curfew_time}
-                onChange={(e) => handleChange("curfew_time", e.target.value)}
-              />
-            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <Label className="font-semibold">Curfew Time</Label>
+                <Input
+                  type="time"
+                  value={form.curfew_time}
+                  onChange={(e) => handleChange("curfew_time", e.target.value)}
+                />
+              </Field>
+              <Field>
+                <Label className="font-semibold">
+                  Allowed Sex <span className="text-[#DF3538]">*</span>
+                </Label>
+                <Select
+                  value={form.accomm_sex}
+                  onValueChange={(val) => handleChange("accomm_sex", val)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select allowed sex" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Male</SelectItem>
+                    <SelectItem value="F">Female</SelectItem>
+                    <SelectItem value="COED">Co-ed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
             <Field>
               <Label className="font-semibold">Allowed Programs</Label>
               <Textarea
@@ -396,20 +448,36 @@ export default function AddDormModal({
                   <SelectValue placeholder="Select a manager" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">— No Manager —</SelectItem>
                   {managers.map((m) => {
-                    const assignedAcc = m.accommodation?.[0]?.name;
-                    const isAssignedElsewhere = !!(assignedAcc && m.users.user_id !== existingDorm?.manager_id);
-                    
+                    const isAssigned = assignedManagerIds?.has(m.users.user_id) ?? false;
+                    const isCurrentManager = m.users.user_id === existingDorm?.manager_id;
+                    const shouldDisable = isAssigned && !isCurrentManager;
                     return (
-                      <SelectItem 
-                        key={m.employee_id} 
+                      <SelectItem
+                        key={m.employee_id}
                         value={m.users.user_id}
-                        disabled={isAssignedElsewhere}
+                        disabled={shouldDisable}
                       >
-                        {m.users.first_name} {m.users.last_name}
+                        {m.users.first_name} {m.users.last_name}{shouldDisable ? " (assigned)" : ""}
                       </SelectItem>
                     );
                   })}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <Label className="font-semibold">Status</Label>
+              <Select
+                value={form.accommodation_status}
+                onValueChange={(val) => handleChange("accommodation_status", val)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
@@ -578,17 +646,18 @@ export default function AddDormModal({
                 <SelectValue placeholder="Select a manager" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">— No Manager —</SelectItem>
                 {managers.map((m) => {
-                  const assignedAcc = m.accommodation?.[0]?.name;
-                  const isAssignedElsewhere = !!(assignedAcc && m.users.user_id !== existingDorm?.manager_id);
-
+                  const isAssigned = assignedManagerIds?.has(m.users.user_id) ?? false;
+                  const isCurrentManager = m.users.user_id === existingDorm?.manager_id;
+                  const shouldDisable = isAssigned && !isCurrentManager;
                   return (
-                    <SelectItem 
-                      key={m.employee_id} 
+                    <SelectItem
+                      key={m.employee_id}
                       value={m.users.user_id}
-                      disabled={isAssignedElsewhere}
+                      disabled={shouldDisable}
                     >
-                      {m.users.first_name} {m.users.last_name}
+                      {m.users.first_name} {m.users.last_name}{shouldDisable ? " (assigned)" : ""}
                     </SelectItem>
                   );
                 })}
@@ -612,7 +681,12 @@ export default function AddDormModal({
             onClick={handleSubmit}
             className="bg-[#5591AB] hover:bg-[#467a8f]! text-white"
           >
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Saving...</span>
+              </div>
+            ) : "Save Changes"}
           </Button>
         </div>
       ) : (
@@ -647,11 +721,16 @@ export default function AddDormModal({
                   : "bg-[#78A24C] hover:bg-[#E7FAD3]! text-white hover:text-[#78A24C]!"
               )}
             >
-              {loading
-                ? "Saving..."
-                : isEditing
-                ? "Save Changes"
-                : "Create Dormitory"}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              ) : isEditing ? (
+                "Save Changes"
+              ) : (
+                "Create Dormitory"
+              )}
             </Button>
           )}
         </div>

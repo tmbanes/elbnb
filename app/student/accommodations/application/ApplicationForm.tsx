@@ -30,6 +30,7 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   Upload,
   CheckCircle,
+  AlertCircle,
   Calendar as CalendarIcon,
   Loader2,
   ChevronLeft,
@@ -108,7 +109,7 @@ function SectionCard({
     <div
       className={`
         relative rounded-2xl border-2 bg-white mb-4 transition-all duration-300 ease-in-out
-        hover:scale-[1.01] hover:shadow-xl hover:border-[#78A24C] group
+        group
         ${highlighted ? "border-blue-400 shadow-md" : "border-[#78A24C]/30"}
         ${className || "p-6"}
       `}
@@ -127,7 +128,7 @@ function SectionCard({
       <div className="flex items-center mb-6">
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${highlighted ? "bg-[#F2C908]" : "bg-[#78A24C]/25"}`}>
           {icon && (
-            <span className="text-[#567536] [&>svg]:w-[18px] [&>svg]:h-[18px] group-hover:animate-pulse">
+            <span className="text-[#567536] [&>svg]:w-[18px] [&>svg]:h-[18px]">
               {icon}
             </span>
           )}
@@ -203,6 +204,8 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormValues | null>(null);
   const [dynamicUnitTypes, setDynamicUnitTypes] = useState<string[]>([]);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [userInfo, setUserInfo] = useState({
     firstName: "",
@@ -279,14 +282,15 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
       }));
 
       // Single request — no Content-Type header, browser sets multipart boundary
-      const response = await fetch("/api/student/applications", {
+      const response = await fetch("/api/applications", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to submit.");
+        setErrorMessage(errorData.error || "Failed to submit.");
+        setShowError(true);
         setShowSuccess(false);
         return;
       }
@@ -311,7 +315,8 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
       setShowSuccess(true);
     } catch (error) {
       console.error("Submission error:", error);
-      alert("An unexpected error occurred.");
+      setErrorMessage("An unexpected error occurred. Please try again.");
+      setShowError(true);
       setShowSuccess(false);
     } finally {
       setIsSubmitting(false);
@@ -322,25 +327,22 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const userProfile = await getCurrentUserFromApi();
 
-        if (userProfile && userProfile.role) {
-          setUserId(userProfile.user_id);
-          setUserRole(userProfile.role);
+        const res = await fetch("/api/user/profile");
+        const userProfile = await res.json();
 
-          const studentId = authUser?.student_number || "";
-          const contactNumber = authUser?.phone_number || "";
-
+        if (userProfile) {
           setUserInfo({
             firstName: userProfile.first_name || "",
             lastName: userProfile.last_name || "",
             email: userProfile.email || "",
-            contactNumber: contactNumber,
-            studentId: studentId,
+            contactNumber: userProfile.contact_number || "",
+            studentId: userProfile.student_num || "",
             role: userProfile.role || "",
             sex: userProfile.sex || "",
           });
         }
+
       } catch (err) {
         console.error("Auth error:", err);
       }
@@ -376,6 +378,10 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
         // Derive available unit types from the fetched units
         const types = Array.from(new Set(dataUnits.map(u => u.unit_type)));
         setDynamicUnitTypes(types);
+
+        if (types.length === 1 && !unitIdFromQuery) {
+          setValue("preferred_unit_type", types[0], { shouldValidate: true });
+        }
 
         if (unitIdFromQuery) {
           const matchedUnit =
@@ -431,7 +437,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">Student ID</p>
-              <p className="text-base text-[#3d2000] font-bold">{userInfo.studentId || "N/A"}</p>
+              <p className="text-base text-[#3d2000] font-bold">{userInfo.studentId || "--"}</p>
             </div>
             <div>
               <p className="text-xs font-semibold text-[#78A24C] uppercase tracking-wide">Contact Number</p>
@@ -554,7 +560,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
                       <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-wider">
                         Location
@@ -570,6 +576,36 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                       <p className="text-sm text-[#3d2000] capitalize">
                         {accommodation.accommodation_type.replace("_", " ")}
                       </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-wider">
+                        Sex Allowed
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5 text-sm font-bold text-[#3d2000]">
+                        {(!accommodation.accomm_sex || accommodation.accomm_sex.toLowerCase() === 'all' || accommodation.accomm_sex.toLowerCase() === 'coed') && (
+                          <>
+                            <svg className="w-4 h-4 text-purple-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="9" cy="15" r="5" />
+                              <path d="M9 20v3M7 22h4" />
+                              <circle cx="15" cy="9" r="5" />
+                              <path d="M18.5 5.5L22 2M17 2h5v5" />
+                            </svg>
+                            <span>COED</span>
+                          </>
+                        )}
+                        {(accommodation.accomm_sex?.toLowerCase() === 'female' || accommodation.accomm_sex?.toLowerCase() === 'f') && (
+                          <>
+                            <svg className="w-4 h-4 text-pink-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6" /><path d="M12 16v6M9 19h6" /></svg>
+                            <span>Female only</span>
+                          </>
+                        )}
+                        {(accommodation.accomm_sex?.toLowerCase() === 'male' || accommodation.accomm_sex?.toLowerCase() === 'm') && (
+                          <>
+                            <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6" /><path d="M14.243 9.757L21 3M16 3h5v5" /></svg>
+                            <span>Male only</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -613,9 +649,14 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                   </div>
                 ) : (
                   <div className="border-t border-[#78A24C]/20 pt-6">
-                    <p className="text-xs text-[#6a5a3a] italic">
-                      No specific unit selected
-                    </p>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-[10px] font-bold text-[#78A24C] uppercase tracking-widest">
+                        Unit Assignment
+                      </p>
+                      <p className="text-sm text-[#3d2000] font-medium italic">
+                        To be assigned by Dorm Manager upon approval.
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -652,7 +693,7 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
                   </Field>
                 </div>
                 <Field label="Student ID">
-                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.studentId || "N/A"} />
+                  <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.studentId || "--"} />
                 </Field>
                 <Field label="Contact Number">
                   <Input readOnly className={`${inputClass} bg-gray-50 text-[#3d2000] font-medium cursor-not-allowed`} value={userInfo.contactNumber || "--"} />
@@ -967,6 +1008,36 @@ export default function ApplyAccommodationForm({ authUser }: { authUser: any }) 
               Confirm
             </Button>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Submission Error Modal */}
+      <Dialog
+        open={showError}
+        onOpenChange={setShowError}
+      >
+        <DialogContent className="bg-[#FDFFF4] rounded-2xl max-w-sm text-center">
+          <DialogHeader>
+            <div className="flex justify-center mb-2">
+              <div className="bg-[#DF3538] rounded-full p-3">
+                <AlertCircle className="h-10 w-10 text-white" />
+              </div>
+            </div>
+            <DialogTitle className="text-xl font-black text-[#3d2000] text-center">
+              Submission Error
+            </DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-[#5a4a2a] text-center leading-relaxed">
+            {errorMessage}
+          </p>
+
+          <Button
+            onClick={() => setShowError(false)}
+            className="w-full bg-[#DF3538] hover:bg-red-600 text-white font-bold rounded-xl py-3 mt-2"
+          >
+            Go Back
+          </Button>
         </DialogContent>
       </Dialog>
     </div>

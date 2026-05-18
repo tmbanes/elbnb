@@ -9,7 +9,7 @@ interface CarouselProps {
 export function Carousel({ children }: CarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-
+  
   // Hover-based scroll state
   const isScrollingRef = useRef<boolean>(false)
   const scrollDirectionRef = useRef<'left' | 'right' | null>(null)
@@ -94,7 +94,7 @@ export function Carousel({ children }: CarouselProps) {
           position: 'relative',
         }}
       >
-        <div className="transition-all duration-300 rounded-2xl mb-12">
+        <div className="transition-all duration-300 rounded-2xl">
           {child}
         </div>
       </div>
@@ -102,7 +102,7 @@ export function Carousel({ children }: CarouselProps) {
   })
 
   return (
-    <div
+    <div 
       className="relative group w-full"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => {
@@ -113,7 +113,7 @@ export function Carousel({ children }: CarouselProps) {
       {/* Scroll Container */}
       <div
         ref={scrollContainerRef}
-        className="flex overflow-x-auto pt-16 pb-16 snap-x snap-mandatory px-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex overflow-x-auto pt-16 pb-24 snap-x snap-mandatory px-16 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-16"
       >
         {wrappedChildren}
       </div>

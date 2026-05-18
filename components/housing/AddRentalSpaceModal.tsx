@@ -60,10 +60,18 @@ export default function AddRentalSpaceModal({
   // Fetch managers
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/admin/housing/managers")
+    fetch("/api/housing/managers?all=true")
       .then((r) => r.json())
-      .then(setManagers)
-      .catch(() => {});
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setManagers(data);
+        } else if (data && Array.isArray(data.data)) {
+          setManagers(data.data);
+        } else {
+          setManagers([]);
+        }
+      })
+      .catch(() => setManagers([]));
   }, [isOpen]);
 
   // Pre-fill when editing
@@ -125,7 +133,7 @@ export default function AddRentalSpaceModal({
       if (isEditing && existingRental) {
         // ── UPDATE ──────────────────────────────────────────────────────────
         const res = await fetch(
-          `/api/admin/housing/rental-spaces?id=${existingRental.accommodation_id}`,
+          `/api/housing/rental-spaces?id=${existingRental.accommodation_id}`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -155,7 +163,7 @@ export default function AddRentalSpaceModal({
         if (!res.ok) throw new Error(data.error || "Update failed");
       } else {
         // ── CREATE ──────────────────────────────────────────────────────────
-        const res = await fetch("/api/admin/housing/rental-spaces", {
+        const res = await fetch("/api/housing/rental-spaces", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -368,11 +376,15 @@ export default function AddRentalSpaceModal({
                 className={inputCls}
               >
                 <option value="">Select a manager...</option>
-                {managers.map((m) => (
-                  <option key={m.employee_id} value={m.users.user_id}>
-                    {m.users.first_name} {m.users.last_name}
-                  </option>
-                ))}
+                {managers.map((m) => {
+                  const firstName = Array.isArray(m.users) ? m.users[0]?.first_name : m.users?.first_name;
+                  const lastName = Array.isArray(m.users) ? m.users[0]?.last_name : m.users?.last_name;
+                  return (
+                    <option key={m.employee_id} value={m.employee_id}>
+                      {firstName} {lastName}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             {form.manager_id && (

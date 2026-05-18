@@ -50,20 +50,6 @@ export function UnitFilters({
         {/* Filters Group */}
         <div className="flex-1 flex flex-wrap items-center gap-4 md:gap-6">
           
-          {/* Accommodation Type */}
-          <div className="flex-shrink-0 min-w-[180px]">
-            <FilterDropdown
-              label="Accommodation Type"
-              value={accommodationType}
-              onChange={(v) => onAccommodationTypeChange(v as AccommodationType | '')}
-              disabled={loading}
-              options={[
-                { value: 'dormitory', label: 'Dormitory' },
-                { value: 'renting_space', label: 'Renting Space' },
-              ]}
-            />
-          </div>
-
           {/* Unit Type */}
           <div className="flex-shrink-0 min-w-[140px]">
             <FilterDropdown

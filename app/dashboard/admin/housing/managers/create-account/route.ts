@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
 import { randomBytes } from "crypto";
+import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
 function generatePassword(): string {
   const upper = "ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -32,7 +33,7 @@ function generatePassword(): string {
   return parts.join("");
 }
 
-// POST /api/admin/housing/managers/create-account
+// POST /api/housing/managers/create-account
 // Creates a Supabase Auth user. The handle_new_user trigger automatically
 // inserts into public.users AND public.dormitory_manager using the metadata.
 export async function POST(req: NextRequest) {
@@ -42,6 +43,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "first_name, last_name, and email are required" },
       { status: 400 }
+    );
+  }
+
+  // Security check: ensure requester is an authenticated housing admin
+  const user = await getApiAuthenticatedUser();
+  if (!user || user.role !== "housing_admin") {
+    return NextResponse.json(
+      { error: "Unauthorized. Only housing administrators can create manager accounts." },
+      { status: 403 }
     );
   }
 
@@ -72,12 +82,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // generated_password is returned ONCE — never stored in plaintext
+  // temporary_password is returned ONCE to match frontend expectations
   return NextResponse.json(
     {
       user_id: data.user.id,
       employee_id,
-      generated_password: password,
+      temporary_password: password,
     },
     { status: 201 }
   );

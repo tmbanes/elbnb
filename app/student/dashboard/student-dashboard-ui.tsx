@@ -1,12 +1,8 @@
 "use client";
-
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import {
-    Search, Bell, Building2, History, FileText,
-    Folder, Download, Plus, ArrowRight, LogOut,
-    Calendar, CheckCircle2, AlertCircle, X
-} from "lucide-react";
+import Link from "next/link";
+import { History, FileText, ArrowRight, Bell, AlertCircle, Building2, Calendar, LogOut } from "lucide-react";
 import { Archivo } from "next/font/google";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { useRouter } from "next/navigation";
@@ -27,10 +23,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { submitExtensionRequest } from "./actions";
 import { createActivityLog } from "@/services/activity_log";
+import { formatImageUrl } from "@/lib/utils/image-utils";
+import { ImageWithLoader } from "@/components/shared/ImageWithLoader";
 
-import { useRealtimeSync } from "@/lib/realtime-sync";
-import { ViewAccommodation } from "@/components/SearchAccommodations";
+
+
+
+import { StudentAccommodationsPreview } from "./StudentAccommodationsPreview";
+import { StudentActiveResidencyCard } from "./StudentActiveResidencyCard";
+import { DashboardRealtimeSync } from "@/components/DashboardRealtimeSync";
 import { Accommodation, Unit } from "@/types/accommodation_units";
+import { useRealtimeSync } from "@/lib/realtime-sync";
+import { ViewAccommodation } from "@/components/SearchAccommodations/ViewAccommodation";
 
 const archivo = Archivo({ subsets: ["latin"] });
 
@@ -42,7 +46,6 @@ interface StudentDashboardUIProps {
     bills: any[];
     stats: any;
     accommodations: any[];
-    documents: any[];
     notifications: any[];
 }
 
@@ -54,7 +57,6 @@ export default function StudentDashboardUI({
     bills,
     stats,
     accommodations,
-    documents,
     notifications: initialNotifications
 }: StudentDashboardUIProps) {
     const [showLogout, setShowLogout] = useState(false);
@@ -120,7 +122,9 @@ export default function StudentDashboardUI({
 
     const handleViewDetails = async (accommodation: Accommodation) => {
         setSelectedAccommodation(accommodation);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         setIsLoadingUnits(true);
+
         try {
             const res = await fetch(`/api/shared/dashboard/tiles?type=units-by-accommodation&accommodationId=${accommodation.accommodation_id}`);
             if (res.ok) {
@@ -174,13 +178,12 @@ export default function StudentDashboardUI({
         return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
     };
 
-    // Active Residency Details
     const dormName = currentResidency?.unit?.accommodation?.name || "No Active Residency";
-    const dormAddress = currentResidency?.unit?.accommodation?.location || "N/A";
+    const dormAddress = currentResidency?.unit?.accommodation?.location || "No location details available yet";
     const roomNumber = currentResidency?.unit?.unit_number ? `Room ${currentResidency.unit.unit_number}` : "";
-    const checkInDate = currentResidency?.move_in_date ? new Date(currentResidency.move_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A";
-    const status = currentResidency?.assignment_status ? (currentResidency.assignment_status.charAt(0).toUpperCase() + currentResidency.assignment_status.slice(1).replace('_', ' ')) : "N/A";
-    const unitType = currentResidency?.unit?.unit_type ? (currentResidency.unit.unit_type.charAt(0).toUpperCase() + currentResidency.unit.unit_type.slice(1)) : "N/A";
+    const checkInDate = currentResidency?.move_in_date ? new Date(currentResidency.move_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Not yet scheduled";
+    const status = currentResidency?.assignment_status ? (currentResidency.assignment_status.charAt(0).toUpperCase() + currentResidency.assignment_status.slice(1).replace('_', ' ')) : "No active residency yet";
+    const unitType = currentResidency?.unit?.unit_type ? (currentResidency.unit.unit_type.charAt(0).toUpperCase() + currentResidency.unit.unit_type.slice(1)) : "No unit assigned yet";
 
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -190,7 +193,9 @@ export default function StudentDashboardUI({
                 <ViewAccommodation
                     accommodation={selectedAccommodation}
                     units={accommodationUnits}
+                    isFetchingUnits={isLoadingUnits}
                     onBack={() => setSelectedAccommodation(null)}
+
                     onApply={() => router.push(`/student/accommodations/application?id=${selectedAccommodation.accommodation_id}`)}
                     userRole="student"
                 />
@@ -200,56 +205,35 @@ export default function StudentDashboardUI({
 
     return (
         <div className={`min-h-screen bg-[#F6F8D5] py-6 px-6 lg:py-10 lg:px-[1in] text-slate-800 flex flex-col items-center ${archivo.className}`}>
-
-            {/* SUCCESS TOAST */}
-            {showSuccessToast && (
-                <div className="fixed top-8 right-8 z-[100] animate-in slide-in-from-right-10 duration-500">
-                    <div className="bg-white border-l-4 border-emerald-500 shadow-2xl rounded-xl p-4 flex items-center gap-4 max-w-md">
-                        <div className="bg-emerald-100 p-2 rounded-full">
-                            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        <div>
-                            <p className="font-bold text-slate-900 text-sm">Extension Submitted!</p>
-                            <p className="text-slate-500 text-xs">Your request to extend stay has been sent for processing.</p>
-                        </div>
-                        <button onClick={() => setShowSuccessToast(false)} className="text-slate-400 hover:text-slate-600 ml-2">
-                            <X className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-            )}
-
             <div className="w-full max-w-[1100px]">
                 {/* TOP BAR */}
-                <header className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center w-full mb-12 gap-4">
-                    <div className="flex items-center gap-4 w-full md:w-auto">
-                        <div className="relative w-full md:w-[350px]">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <input
-                                type="text"
-                                placeholder="Search data, students, or rooms..."
-                                className="w-full pl-11 pr-4 py-3 bg-slate-100/80 rounded-full text-sm border-none focus:ring-2 focus:ring-slate-300 outline-none font-medium placeholder:text-slate-400"
-                            />
-                        </div>
-
+                <header className="flex justify-between items-center mb-10 w-full relative z-50">
+                    <div className="flex flex-col">
+                        <h1 className="text-[28px] font-black text-slate-900 leading-tight">
+                            Student Dashboard
+                        </h1>
+                        <p className="text-[13px] text-slate-500 font-medium">
+                            Welcome back, {user?.first_name}!
+                        </p>
                     </div>
 
-                    <div className="flex items-center gap-6 self-end md:self-auto">
-                        {/* NOTIFICATIONS BELL */}
+                    <div className="flex items-center gap-6">
+                        {/* NOTIFICATIONS */}
                         <div className="relative">
                             <button
                                 onClick={() => setShowNotifications(!showNotifications)}
                                 className="relative text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
                             >
                                 <Bell className="w-5 h-5" />
-                                {unreadCount > 0 && (
+                                {notifications.filter(n => !n.is_read).length > 0 && (
                                     <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#A05C5C] text-white text-[9px] font-bold rounded-full ring-2 ring-[#FDFBF7] flex items-center justify-center">
-                                        {unreadCount}
+                                        {notifications.filter(n => !n.is_read).length}
                                     </span>
                                 )}
                             </button>
 
                             {showNotifications && (
+
                                 <div className="absolute right-0 top-full mt-4 w-80 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 p-2 z-[60] overflow-hidden">
                                     <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center">
                                         <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
@@ -331,12 +315,10 @@ export default function StudentDashboardUI({
                                 <div className="w-10 h-10 rounded-full bg-[#5D6BDE] overflow-hidden flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
                                     {user?.profile_picture_url ? (
                                         <Image
-                                            src={user.profile_picture_url}
-                                            alt="Profile"
+                                            src={formatImageUrl(user.profile_picture_url)}
                                             width={40}
                                             height={40}
-                                            className="w-full h-full object-cover"
-                                        />
+                                            className="w-full h-full object-cover" alt={""}                                        />
                                     ) : (
                                         <span className="text-white">
                                             {user?.first_name?.[0]}{user?.last_name?.[0]}
@@ -386,13 +368,14 @@ export default function StudentDashboardUI({
                             {currentResidency?.unit?.accommodation?.image && (
                                 <div className="absolute inset-0 z-0 opacity-10">
                                     <Image 
-                                        src={currentResidency.unit.accommodation.image} 
+                                        src={formatImageUrl(currentResidency.unit.accommodation.image)} 
                                         alt="Background" 
                                         fill 
                                         className="object-cover"
                                     />
                                 </div>
                             )}
+
 
                             <h2 className="text-2xl md:text-[28px] font-bold text-[#2A3F2D] mb-1 leading-tight">
                                 {dormName}{roomNumber ? `, ${roomNumber}` : ""}
@@ -402,56 +385,76 @@ export default function StudentDashboardUI({
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4 w-full">
-                            <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
-                                <p className="text-[15px] font-bold text-slate-900">{checkInDate}</p>
-                            </div>
-                            <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
-                                <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Status</p>
-                                <p className="text-[15px] font-bold text-slate-900">{status}</p>
-                            </div>
-                            <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6] sm:col-span-1 col-span-2">
-                                <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Unit Type</p>
-                                <p className="text-[15px] font-bold text-slate-900">{unitType}</p>
-                            </div>
-                        </div>
+                        {dormName !== "No Active Residency" ? (
+                            <>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4 w-full">
+                                    <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                        <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Check-in</p>
+                                        <p className="text-[15px] font-bold text-slate-900">{checkInDate}</p>
+                                    </div>
+                                    <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6]">
+                                        <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Status</p>
+                                        <p className="text-[15px] font-bold text-slate-900">{status}</p>
+                                    </div>
+                                    <div className="bg-[#F6F8D5]/60 rounded-[14px] p-4 flex flex-col justify-center border border-[#eef1d6] sm:col-span-1 col-span-2">
+                                        <p className="text-[9px] font-extrabold text-[#709849] uppercase tracking-widest mb-1">Unit Type</p>
+                                        <p className="text-[15px] font-bold text-slate-900">{unitType}</p>
+                                    </div>
+                                </div>
 
-                        {/* RENEWAL / EXTEND STAY BUTTON - BOTTOM RIGHT */}
-                        <div className="mt-8 flex justify-end">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="w-full md:w-auto">
-                                            <Button
-                                                disabled={!isRenewalAvailable || isSubmittingExtension}
-                                                onClick={() => setIsConfirmModalOpen(true)}
-                                                className={`w-full md:w-auto h-auto py-3 px-8 rounded-2xl font-bold text-[12px] transition-all flex items-center justify-center gap-2 shadow-lg ${isRenewalAvailable
-                                                    ? 'bg-[#668E42] hover:bg-[#557F44] text-white shadow-[#668E42]/10 active:scale-[0.98]'
-                                                    : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
-                                                    }`}
-                                            >
-                                                <Calendar className="w-4 h-4" />
-                                                {isSubmittingExtension ? "Submitting..." : "Extend Stay"}
-                                            </Button>
-                                        </div>
-                                    </TooltipTrigger>
-                                    {!isRenewalAvailable && (
-                                        <TooltipContent className="bg-slate-800 text-white border-none p-3 rounded-xl shadow-xl max-w-[250px]">
-                                            <div className="flex items-start gap-2">
-                                                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                                                <p className="text-[11px] font-medium leading-relaxed">
-                                                    Accommodation renewal can only be accessed during the renewal period:
-                                                    <span className="block mt-1 font-bold text-white">
-                                                        {formatDate(renewalStart)} – {formatDate(renewalEnd)}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
+                                {/* RENEWAL / EXTEND STAY BUTTON - BOTTOM RIGHT */}
+                                <div className="mt-8 flex justify-end">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="w-full md:w-auto">
+                                                    <Button
+                                                        disabled={!isRenewalAvailable || isSubmittingExtension}
+                                                        onClick={() => setIsConfirmModalOpen(true)}
+                                                        className={`w-full md:w-auto h-auto py-3 px-8 rounded-2xl font-bold text-[12px] transition-all flex items-center justify-center gap-2 shadow-lg ${isRenewalAvailable
+                                                            ? 'bg-[#668E42] hover:bg-[#557F44] text-white shadow-[#668E42]/10 active:scale-[0.98]'
+                                                            : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
+                                                            }`}
+                                                    >
+                                                        <Calendar className="w-4 h-4" />
+                                                        {isSubmittingExtension ? "Submitting..." : "Extend Stay"}
+                                                    </Button>
+                                                </div>
+                                            </TooltipTrigger>
+                                            {!isRenewalAvailable && (
+                                                <TooltipContent className="bg-slate-800 text-white border-none p-3 rounded-xl shadow-xl max-w-[250px]">
+                                                    <div className="flex items-start gap-2">
+                                                        <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                                                        <p className="text-[11px] font-medium leading-relaxed">
+                                                            Accommodation renewal can only be accessed during the renewal period:
+                                                            <span className="block mt-1 font-bold text-white">
+                                                                {formatDate(renewalStart)} – {formatDate(renewalEnd)}
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="mt-auto pt-6">
+                                <div className="bg-[#F8F9EC]/80 rounded-[18px] p-5 flex flex-col md:flex-row items-start md:items-center justify-between border border-[#eef1d6] gap-5">
+                                    <div className="flex items-start md:items-center gap-4">
+                                        <p className="text-[13px] text-slate-600 font-medium italic leading-relaxed max-w-[90%]">
+                                            You are not currently assigned to any accommodation. Browse our available options to find your next stay.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        onClick={goToAccommodations}
+                                        className="group shrink-0 w-full md:w-auto h-auto py-3 px-6 rounded-xl font-bold text-[12px] bg-[#668E42] hover:bg-[#557F44] text-white flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-[0.98] border-none outline-none"
+                                    >
+                                        Browse Options <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* RIGHT SMALL CARD - ACCOMMODATION HISTORY */}
@@ -462,7 +465,7 @@ export default function StudentDashboardUI({
                                 <History className="w-5 h-5 text-white/70" />
                             </div>
 
-                            <div className="space-y-4 mb-6">
+                            <div className="space-y-4 mb-6 px-1">
                                 {history.length > 0 ? (
                                     history.slice(0, 3).map((item, i) => (
                                         <div key={i} className="border-l-2 border-white/20 pl-4 py-0.5">
@@ -481,12 +484,11 @@ export default function StudentDashboardUI({
                         </div>
 
                         <div className="mt-auto">
-                            <button
-                                onClick={goToHistory}
-                                className="w-full py-3 bg-white text-[#6492A7] text-[13px] font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-white/90 transition-all shadow-lg shadow-[#6492A7]/10 active:scale-[0.98] group"
-                            >
-                                View Full History <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </button>
+                            <Link href="/student/history">
+                                <button className="w-full py-3 bg-white text-[#6492A7] text-[13px] font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-white/90 transition-all shadow-lg shadow-[#6492A7]/10 active:scale-[0.98] group">
+                                    View Full History <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -517,21 +519,25 @@ export default function StudentDashboardUI({
                             accommodations.slice(0, 3).map((dorm, i) => (
                                 <div key={i} className="bg-[#F9FBEC] rounded-[32px] overflow-hidden border border-slate-100/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] group hover:shadow-2xl hover:shadow-[#709849]/5 transition-all duration-500">
                                     <div className="h-44 relative overflow-hidden bg-[#F8F9EC]">
-                                        <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center">
+                                        <div className="w-full h-full bg-[#F6F8D5]/30 group-hover:scale-110 transition-transform duration-700">
                                             {dorm.image ? (
-                                                <Image 
+                                                <ImageWithLoader
                                                     src={dorm.image} 
                                                     alt={dorm.name} 
-                                                    fill 
                                                     className="object-cover"
                                                 />
                                             ) : (
-                                                <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                                <div className="flex items-center justify-center w-full h-full">
+                                                    <Building2 className="w-10 h-10 text-[#709849]/20" />
+                                                </div>
                                             )}
                                         </div>
-                                        <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg z-10">
-                                            Available
-                                        </div>
+                                         {dorm.allowed_application && new Date() <= new Date(dorm.allowed_application) && (
+                                            <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-[11px] font-black text-[#2A3F2D] shadow-lg z-10">
+                                                Available
+                                            </div>
+                                         )}
+
                                     </div>
                                     <div className="p-8">
                                         <h4 className="text-[18px] font-bold text-[#2A3F2D] mb-1.5">{dorm.name}</h4>
@@ -553,8 +559,8 @@ export default function StudentDashboardUI({
                     </div>
                 </section>
 
-                {/* BOTTOM THREE CARDS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {/* BOTTOM TWO CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
                     {/* BILLING CARD */}
                     <div className="bg-white rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
                         <div>
@@ -591,54 +597,11 @@ export default function StudentDashboardUI({
                             </div>
                         </div>
 
-                        <button
-                            onClick={goToBilling}
-                            className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-xl transition-all shadow-[0_2px_8px_rgba(100,146,167,0.3)] hover:shadow-[0_4px_12px_rgba(100,146,167,0.4)] active:scale-[0.98]"
-                        >
-                            View All Bills
-                        </button>
-                    </div>
-
-                    {/* DOCUMENTS CARD */}
-                    <div className="bg-white rounded-[24px] p-6 md:p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#eef1d6] flex flex-col justify-between">
-                        <div>
-                            <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-[17px] font-extrabold text-[#2A3F2D]">Documents</h2>
-                                <Folder className="w-5 h-5 text-[#8BAE90] stroke-[1.5]" />
-                            </div>
-
-                            <div className="space-y-3 mb-8">
-                                {documents.length > 0 ? (
-                                    documents.slice(0, 2).map((doc, i) => (
-                                        <div key={i} className="bg-[#F8F9EC] rounded-[14px] p-3 pl-4 flex justify-between items-center border border-[#eef1d6] group hover:bg-[#f3f5e1] transition-colors cursor-pointer">
-                                            <div className="flex items-center gap-3.5">
-                                                <div className="w-8 h-8 bg-white border border-[#e2e7c3] rounded-[9px] flex items-center justify-center text-[#2C5282] shadow-sm">
-                                                    <FileText className="w-4 h-4" strokeWidth={2.5} />
-                                                </div>
-                                                <div className="max-w-[140px]">
-                                                    <p className="text-[13px] font-bold text-slate-900 mb-0.5 truncate">{doc.file_name}</p>
-                                                    <p className="text-[9px] font-bold text-[#668E42] tracking-wider uppercase">{doc.status || 'VERIFIED'}</p>
-                                                </div>
-                                            </div>
-                                            <button className="text-[#a5b487] group-hover:text-[#668E42] transition-colors pr-2">
-                                                <Download className="w-4 h-4 stroke-[2.5]" />
-                                            </button>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-100">
-                                        <p className="text-slate-400 text-xs italic">No documents uploaded yet.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={goToApplications}
-                            className="w-full py-3.5 bg-[#F8F9EC] hover:bg-[#eaeebb] text-[#5d8339] text-[13px] font-bold rounded-[14px] flex items-center justify-center gap-2 border border-[#dce3bc] transition-all hover:shadow-sm active:scale-[0.98]"
-                        >
-                            <Plus className="w-4 h-4 stroke-[2.5]" /> Manage Documents
-                        </button>
+                        <Link href="/student/billing">
+                            <button className="w-full py-3.5 bg-[#6492A7] hover:bg-[#4f7b8f] text-white text-[13px] font-bold rounded-xl transition-all shadow-[0_2px_8px_rgba(100,146,167,0.3)] hover:shadow-[0_4px_12px_rgba(100,146,167,0.4)] active:scale-[0.98]">
+                                View All Bills
+                            </button>
+                        </Link>
                     </div>
 
                     {/* APPLICATIONS CARD */}
@@ -668,12 +631,11 @@ export default function StudentDashboardUI({
                             </div>
                         </div>
 
-                        <button
-                            onClick={goToAccommodations}
-                            className="w-full py-3.5 bg-white hover:bg-slate-50 text-[#1f3d5f] border border-[#dce3bc] text-[13px] font-extrabold rounded-[14px] transition-all hover:border-[#cfd8df] active:scale-[0.98]"
-                        >
-                            Start New Application
-                        </button>
+                        <Link href="/student/accommodations">
+                            <button className="w-full py-3.5 bg-white hover:bg-slate-50 text-[#1f3d5f] border border-[#dce3bc] text-[13px] font-extrabold rounded-[14px] transition-all hover:border-[#cfd8df] active:scale-[0.98]">
+                                Start New Application
+                            </button>
+                        </Link>
                     </div>
                 </div>
 
@@ -702,38 +664,6 @@ export default function StudentDashboardUI({
                     </div>
                 </div>
             </div>
-
-            {/* CONFIRMATION MODAL */}
-            <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
-                <DialogContent className="max-w-md bg-white rounded-3xl p-8 border-none shadow-2xl">
-                    <DialogHeader>
-                        <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100">
-                            <Calendar className="w-7 h-7 text-emerald-600" />
-                        </div>
-                        <DialogTitle className="text-2xl font-extrabold text-slate-900 tracking-tight">Confirm Extension of Stay</DialogTitle>
-                        <DialogDescription className="text-slate-500 text-[15px] font-medium leading-relaxed pt-2">
-                            By confirming, you are applying to extend your stay for the next semester. Please ensure your records and documents are updated to avoid delays in processing.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="mt-8 gap-3 sm:flex-row flex-col">
-                        <Button
-                            variant="outline"
-                            disabled={isSubmittingExtension}
-                            onClick={() => setIsConfirmModalOpen(false)}
-                            className="flex-1 py-6 rounded-2xl border-slate-200 text-slate-600 font-bold text-[13px] hover:bg-slate-50"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            disabled={isSubmittingExtension}
-                            onClick={handleConfirmExtension}
-                            className="flex-1 py-6 rounded-2xl bg-[#668E42] hover:bg-[#557F44] text-white font-bold text-[13px] shadow-lg shadow-[#668E42]/20"
-                        >
-                            {isSubmittingExtension ? "Processing..." : "Confirm Extension"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

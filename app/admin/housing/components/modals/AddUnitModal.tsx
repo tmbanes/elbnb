@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 interface UnitFormData {
   unit_type: string;
@@ -96,7 +97,7 @@ export default function AddUnitModal({
     setLoading(true);
 
     try {
-      const res = await fetch("/api/admin/housing/units", {
+      const res = await fetch("/api/housing/units", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -318,7 +319,16 @@ export default function AddUnitModal({
                 : "bg-[#78A24C] hover:!bg-[#E7FAD3] text-white hover:!text-[#78A24C]"
             )}
           >
-            {loading ? "Adding..." : showConfirm ? "Confirm & Create" : "Add Unit Type"}
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Adding...</span>
+              </div>
+            ) : showConfirm ? (
+              "Confirm & Create"
+            ) : (
+              "Add Unit Type"
+            )}
           </Button>
         </div>
       </div>

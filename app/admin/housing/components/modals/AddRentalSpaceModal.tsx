@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DialogFooter } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Manager {
@@ -37,6 +37,8 @@ interface RentalForm {
   maximum_stay_days: string;
   security_deposit_required: boolean;
   manager_id: string;
+  accommodation_status: string;
+  accomm_sex: string;
 }
 
 interface Props {
@@ -44,6 +46,8 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   existingRental?: any | null;
+  managers?: Manager[];
+  assignedManagerIds?: Set<string>;
 }
 
 const EMPTY: RentalForm = {
@@ -56,6 +60,8 @@ const EMPTY: RentalForm = {
   maximum_stay_days: "",
   security_deposit_required: false,
   manager_id: "",
+  accommodation_status: "active",
+  accomm_sex: "",
 };
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -64,11 +70,13 @@ export default function AddRentalSpaceModal({
   onClose,
   onSuccess,
   existingRental,
+  managers: managersProp,
+  assignedManagerIds,
 }: Props) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<RentalForm>(EMPTY);
   const [units, setUnits] = useState<UnitFormData[]>([]);
-  const [managers, setManagers] = useState<Manager[]>([]);
+  const [managers, setManagers] = useState<Manager[]>(managersProp || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -80,11 +88,17 @@ export default function AddRentalSpaceModal({
   // Fetch managers
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/admin/housing/managers")
+    if (managersProp && managersProp.length > 0) {
+      setManagers(managersProp);
+      return;
+    }
+    fetch("/api/housing/managers?all=true")
       .then((r) => r.json())
-      .then(setManagers)
-      .catch(() => { });
-  }, [isOpen]);
+      .then((data) => {
+        setManagers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setManagers([]));
+  }, [isOpen, managersProp]);
 
   // Pre-fill / reset
   useEffect(() => {
@@ -107,6 +121,8 @@ export default function AddRentalSpaceModal({
         security_deposit_required:
           existingRental.renting_space?.security_deposit_required ?? false,
         manager_id: existingRental.manager_id ?? "",
+        accommodation_status: existingRental.accommodation_status ?? "active",
+        accomm_sex: existingRental.accomm_sex ?? "",
       });
     } else {
       setForm(EMPTY);
@@ -147,7 +163,8 @@ export default function AddRentalSpaceModal({
         form.name.trim() !== "" &&
         form.location.trim() !== "" &&
         form.property_type.trim() !== "" &&
-        !!form.manager_id
+        !!form.accomm_sex
+        // manager_id is optional when editing
       );
     }
     if (step === 1) {
@@ -168,7 +185,8 @@ export default function AddRentalSpaceModal({
       return (
         form.name.trim() !== "" &&
         form.location.trim() !== "" &&
-        form.property_type.trim() !== ""
+        form.property_type.trim() !== "" &&
+        !!form.accomm_sex
       );
     if (step === 4) return !!form.manager_id;
     return true;
@@ -190,20 +208,32 @@ export default function AddRentalSpaceModal({
     setError(null);
 
     try {
-      const editableUnits = isEditing ? existingUnits : units;
-      const unitCapacitySum = editableUnits.reduce((sum: number, unit: any) => {
-        const capacity = Number(unit.max_occupancy);
-        const count = Number(unit.number_of_units || 1);
-        return Number.isFinite(capacity) && capacity > 0 ? sum + (capacity * count) : sum;
-      }, 0);
-      const computedTotalCapacity = unitCapacitySum;
+      let computedTotalCapacity: number;
+      if (isEditing) {
+        const loadedUnits: any[] = existingRental?.units ?? [];
+        if (loadedUnits.length > 0) {
+          computedTotalCapacity = loadedUnits.reduce(
+            (sum: number, u: any) => sum + (Number(u.max_occupancy) || 0), 0
+          );
+        } else {
+          computedTotalCapacity = Number(existingRental?.total_capacity ?? 0);
+        }
+      } else {
+        computedTotalCapacity = units.reduce((sum: number, unit: any) => {
+          const capacity = Number(unit.max_occupancy);
+          const count = Number(unit.number_of_units || 1);
+          return Number.isFinite(capacity) && capacity > 0 ? sum + (capacity * count) : sum;
+        }, 0);
+      }
 
       const payload = {
         accommodationFields: {
           name: form.name,
           location: form.location,
-          manager_id: form.manager_id,
+          manager_id: form.manager_id === "none" ? null : form.manager_id,
           total_capacity: computedTotalCapacity,
+          accommodation_status: form.accommodation_status,
+          accomm_sex: form.accomm_sex,
         },
         rentingFields: {
           property_type: form.property_type,
@@ -220,8 +250,8 @@ export default function AddRentalSpaceModal({
       };
 
       const endpoint = isEditing
-        ? `/api/admin/housing/rental-spaces?id=${existingRental.accommodation_id}`
-        : "/api/admin/housing/rental-spaces";
+        ? `/api/housing/rental-spaces?id=${existingRental.accommodation_id}`
+        : "/api/housing/rental-spaces";
 
       const res = await fetch(endpoint, {
         method: isEditing ? "PATCH" : "POST",
@@ -247,7 +277,7 @@ export default function AddRentalSpaceModal({
               (u) => u.unit_type.trim() && u.max_occupancy && u.rental_fee
             )
             .map((u) =>
-              fetch("/api/admin/housing/units", {
+              fetch("/api/housing/units", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -346,25 +376,46 @@ export default function AddRentalSpaceModal({
                 required
               />
             </Field>
-            <Field>
-              <Label className="font-semibold">
-                Property Type <span className="text-[#DF3538]">*</span>
-              </Label>
-              <Select
-                value={form.property_type}
-                onValueChange={(val) => handleChange("property_type", val)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="apartment">Apartment</SelectItem>
-                  <SelectItem value="boarding">Boarding House</SelectItem>
-                  <SelectItem value="transient">Transient</SelectItem>
-                  <SelectItem value="house">House</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <Label className="font-semibold">
+                  Property Type <span className="text-[#DF3538]">*</span>
+                </Label>
+                <Select
+                  value={form.property_type}
+                  onValueChange={(val) => handleChange("property_type", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="apartment">Apartment</SelectItem>
+                    <SelectItem value="boarding">Boarding House</SelectItem>
+                    <SelectItem value="transient">Transient</SelectItem>
+                    <SelectItem value="house">House</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <Label className="font-semibold">
+                  Allowed Sex <span className="text-[#DF3538]">*</span>
+                </Label>
+                <Select
+                  value={form.accomm_sex}
+                  onValueChange={(val) => handleChange("accomm_sex", val)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select allowed sex" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Male</SelectItem>
+                    <SelectItem value="F">Female</SelectItem>
+                    <SelectItem value="COED">Co-ed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
             <div className="space-y-3 pt-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -442,18 +493,36 @@ export default function AddRentalSpaceModal({
                   <SelectValue placeholder="Select a manager" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">— No Manager —</SelectItem>
                   {managers.map((m) => {
-                    const isAssignedElsewhere = (m.accommodation?.length ?? 0) > 0 && m.users.user_id !== existingRental?.manager_id;
+                    const isAssigned = assignedManagerIds?.has(m.users.user_id) ?? false;
+                    const isCurrentManager = m.users.user_id === existingRental?.manager_id;
+                    const shouldDisable = isAssigned && !isCurrentManager;
                     return (
-                      <SelectItem 
-                        key={m.employee_id} 
+                      <SelectItem
+                        key={m.employee_id}
                         value={m.users.user_id}
-                        disabled={isAssignedElsewhere}
+                        disabled={shouldDisable}
                       >
-                        {m.users.first_name} {m.users.last_name}
+                        {m.users.first_name} {m.users.last_name}{shouldDisable ? " (assigned)" : ""}
                       </SelectItem>
                     );
                   })}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <Label className="font-semibold">Status</Label>
+              <Select
+                value={form.accommodation_status}
+                onValueChange={(val) => handleChange("accommodation_status", val)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
@@ -550,25 +619,46 @@ export default function AddRentalSpaceModal({
                     required
                   />
                 </Field>
-                <Field>
-                  <Label className="font-semibold">
-                    Property Type <span className="text-[#DF3538]">*</span>
-                  </Label>
-                  <Select
-                    value={form.property_type}
-                    onValueChange={(val) => handleChange("property_type", val)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="apartment">Apartment</SelectItem>
-                      <SelectItem value="boarding">Boarding House</SelectItem>
-                      <SelectItem value="transient">Transient</SelectItem>
-                      <SelectItem value="house">House</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field>
+                    <Label className="font-semibold">
+                      Property Type <span className="text-[#DF3538]">*</span>
+                    </Label>
+                    <Select
+                      value={form.property_type}
+                      onValueChange={(val) => handleChange("property_type", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="apartment">Apartment</SelectItem>
+                        <SelectItem value="boarding">Boarding House</SelectItem>
+                        <SelectItem value="transient">Transient</SelectItem>
+                        <SelectItem value="house">House</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field>
+                    <Label className="font-semibold">
+                      Allowed Sex <span className="text-[#DF3538]">*</span>
+                    </Label>
+                    <Select
+                      value={form.accomm_sex}
+                      onValueChange={(val) => handleChange("accomm_sex", val)}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select allowed sex" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Co-ed">Co-ed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
               </>
             )}
 
@@ -667,15 +757,18 @@ export default function AddRentalSpaceModal({
                     <SelectValue placeholder="Select a manager" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">— No Manager —</SelectItem>
                     {managers.map((m) => {
-                      const isAssignedElsewhere = (m.accommodation?.length ?? 0) > 0 && m.users.user_id !== existingRental?.manager_id;
+                      const isAssigned = assignedManagerIds?.has(m.users.user_id) ?? false;
+                      const isCurrentManager = m.users.user_id === existingRental?.manager_id;
+                      const shouldDisable = isAssigned && !isCurrentManager;
                       return (
-                        <SelectItem 
-                          key={m.employee_id} 
+                        <SelectItem
+                          key={m.employee_id}
                           value={m.users.user_id}
-                          disabled={isAssignedElsewhere}
+                          disabled={shouldDisable}
                         >
-                          {m.users.first_name} {m.users.last_name}
+                          {m.users.first_name} {m.users.last_name}{shouldDisable ? " (assigned)" : ""}
                         </SelectItem>
                       );
                     })}
@@ -704,7 +797,12 @@ export default function AddRentalSpaceModal({
             onClick={handleSubmit}
             className="bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
           >
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Saving...</span>
+              </div>
+            ) : "Save Changes"}
           </Button>
         </div>
       ) : (
@@ -734,7 +832,12 @@ export default function AddRentalSpaceModal({
               onClick={handleSubmit}
               className="bg-[#78A24C] hover:bg-[#E7FAD3] text-white hover:text-[#78A24C]"
             >
-              {loading ? "Saving..." : "Create Rental Space"}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              ) : "Create Rental Space"}
             </Button>
           )}
         </div>

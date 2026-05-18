@@ -3,16 +3,12 @@
 import { userProfileService } from "@/services/user_profile";
 import { redirect } from "next/navigation";
 import ManagerDashboardUI from "./manager-dashboard-ui";
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 
 export default async function DormitoryManagerDashboardPage() {
-  const user = await getApiAuthenticatedUser();
+  const user = await requireRole(['dormitory_manager']);
   const supabase = await createSupabaseServerClient();
-
-  if (!user) {
-    redirect("/onboarding");
-  }
 
   // Fetch all necessary data in parallel on the server
   const [
@@ -24,7 +20,7 @@ export default async function DormitoryManagerDashboardPage() {
     userProfileService.getProfile(user.user_id),
     userProfileService.getNotifications(user.user_id),
     supabase.from('accommodation').select('*').eq('manager_id', user.user_id).single(),
-    supabase.from('activity_log').select('*').order('timestamp', { ascending: false }).limit(10)
+    supabase.from('activity_log').select('*').neq('entity_type', 'auth').order('timestamp', { ascending: false }).limit(10)
   ]);
 
   const profile = profileRes.data;
@@ -43,12 +39,12 @@ export default async function DormitoryManagerDashboardPage() {
     const [unitsRes, waitlistRes, recentAppsRes] = await Promise.all([
       supabase.from('unit').select('*').eq('accommodation_id', accom.accommodation_id),
       supabase.from('accommodation_application')
-        .select('*, users!user_id(first_name, last_name, profile_picture_url)')
+        .select('*, user_id, users!user_id(user_id, first_name, last_name, profile_picture_url)')
         .eq('preferred_accommodation_id', accom.accommodation_id)
         .eq('application_status', 'approved')
         .order('date_submitted', { ascending: true }),
       supabase.from('accommodation_application')
-        .select('*, users!user_id(first_name, last_name, profile_picture_url)')
+        .select('*, user_id, users!user_id(user_id, first_name, last_name, profile_picture_url, email, sex)')
         .eq('preferred_accommodation_id', accom.accommodation_id)
         .order('date_submitted', { ascending: false })
         .limit(5)
@@ -72,7 +68,9 @@ export default async function DormitoryManagerDashboardPage() {
         .from('accommodation_assignment')
         .select(`
           *,
+          user_id,
           users:user_id (
+            user_id,
             first_name, 
             last_name, 
             profile_picture_url,

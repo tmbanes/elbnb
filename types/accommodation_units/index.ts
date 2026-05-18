@@ -63,9 +63,25 @@ export interface Accommodation {
     no_of_units: number;
     accomm_sex?: string | null;
     image?: string | null;
+    images?: string[] | null;
+
     min_price?: number | null;
     max_price?: number | null;
     billing_period?: BillingPeriod | null;
+
+    // Flattened dormitory fields
+    curfew_time?: string | null;
+    term_type?: TermType | null;
+    number_of_semestersAllowed?: number | null;
+    separate_by_gender?: boolean | null;
+    allowed_programs?: string | null;
+
+    // Flattened renting_space fields
+    allow_shortterm_stay?: boolean | null;
+    allow_longterm_stay?: boolean | null;
+    minimum_stay_days?: number | null;
+    maximum_stay_days?: number | null;
+    security_deposit_required?: boolean | null;
 }
 
 // BASED ON SUPABASE PROPERTIES

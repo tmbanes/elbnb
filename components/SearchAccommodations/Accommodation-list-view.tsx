@@ -1,6 +1,10 @@
 import React from 'react'
 import Link from 'next/link'
 import { Accommodation, Unit } from '@/types/accommodation_units'
+import { formatImageUrl } from '@/lib/utils/image-utils'
+import { ImageWithLoader } from '@/components/shared/ImageWithLoader'
+import { Banknote } from 'lucide-react'
+
 
 interface AccommodationListViewProps {
   paginatedAccommodations: Accommodation[]
@@ -52,15 +56,13 @@ export function AccommodationListView({
               {/* IMAGE SIDE */}
               <div className="w-full sm:w-[200px] h-48 sm:h-auto relative overflow-hidden flex-shrink-0 bg-gray-200">
                 {acc.image ? (
-                  <img
+                  <ImageWithLoader
                     src={acc.image}
                     alt={acc.name}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
                   />
                 ) : (
+
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
                     <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -71,21 +73,23 @@ export function AccommodationListView({
                 )}
 
                 {/* Availability Chip */}
-                <div className="absolute top-3 left-3 z-10">
-                  {vacantSlots > 5 ? (
-                    <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-                      Available
-                    </span>
-                  ) : vacantSlots > 0 ? (
-                    <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-                      Limited
-                    </span>
-                  ) : (
-                    <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
-                      Full
-                    </span>
-                  )}
-                </div>
+                {isApplicationOpen && (
+                  <div className="absolute top-3 left-3 z-10">
+                    {vacantSlots > 5 ? (
+                      <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                        Available
+                      </span>
+                    ) : vacantSlots > 0 ? (
+                      <span className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                        Limited
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md border border-white/20 backdrop-blur-sm">
+                        Full
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* CONTENT SIDE */}
@@ -98,9 +102,7 @@ export function AccommodationListView({
                   {/* PRICE */}
                   <div className="flex flex-col items-end whitespace-nowrap">
                     <div className="flex items-center gap-1 font-archivo font-bold text-[#264384] text-lg italic">
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
+                      <Banknote className="w-5 h-5 text-gray-400" />
                       <span>
                         {accUnits.length > 0 ? `From ₱${Math.min(...accUnits.map((u: any) => u.rental_fee)).toLocaleString()}` : 'Price not set'}
                       </span>
@@ -131,6 +133,33 @@ export function AccommodationListView({
                     <span className="font-medium">
                       {acc.accommodation_type === 'renting_space' ? 'Renting Space' : acc.accommodation_type === 'dormitory' ? 'Dormitory' : 'Accommodation Type not set'}
                     </span>
+                  </div>
+
+                  {/* Sex Allowed */}
+                  <div className="flex items-center gap-1.5" title="Sex Allowed">
+                    {(!acc.accomm_sex || acc.accomm_sex.toLowerCase() === 'all' || acc.accomm_sex.toLowerCase() === 'coed') && (
+                      <>
+                        <svg className="w-4 h-4 text-purple-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="9" cy="15" r="5" />
+                          <path d="M9 20v3M7 22h4" />
+                          <circle cx="15" cy="9" r="5" />
+                          <path d="M18.5 5.5L22 2M17 2h5v5" />
+                        </svg>
+                        <span className="font-medium">COED</span>
+                      </>
+                    )}
+                    {(acc.accomm_sex?.toLowerCase() === 'female' || acc.accomm_sex?.toLowerCase() === 'f') && (
+                      <>
+                        <svg className="w-4 h-4 text-pink-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6"/><path d="M12 16v6M9 19h6"/></svg>
+                        <span className="font-medium">Female only</span>
+                      </>
+                    )}
+                    {(acc.accomm_sex?.toLowerCase() === 'male' || acc.accomm_sex?.toLowerCase() === 'm') && (
+                      <>
+                        <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6"/><path d="M14.243 9.757L21 3M16 3h5v5"/></svg>
+                        <span className="font-medium">Male only</span>
+                      </>
+                    )}
                   </div>
 
                   {/* Occupants */}

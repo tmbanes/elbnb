@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getPropertyColumns } from "@/app/admin/housing/components/columns/propertyColumns";
 import { Property } from "../../../../types/housing/types";
 
@@ -27,7 +28,7 @@ import {
   CardTitle,
   CardHeader
 } from "@/components/ui/card";
-import { ChevronLeft, Plus, Building2, Home, Users, Bed, Search, Filter } from "lucide-react";
+import { ChevronLeft, Plus, Building2, Home, Users, Bed, Search, Filter, Loader2 } from "lucide-react";
 
 interface SummaryStats {
   totalDorms: number;
@@ -51,6 +52,7 @@ interface PropertiesListProps {
   }>;
   typeFilter: string | null;
   managerCount: number;
+  totalManagerCount: number;
   addPromptOpen: boolean;
   onFilterChange: (type: string) => void;
   onToggleAddPrompt: () => void;
@@ -59,6 +61,7 @@ interface PropertiesListProps {
   onEditProperty: (property: Property) => void;
   onDeleteProperty: (id: string, type: string) => void;
   onBackToHousing: () => void;
+  isDeletingProperty?: boolean;
 }
 
 //Stat Card Function
@@ -110,22 +113,27 @@ export default function PropertiesList({
   tableData = [],
   typeFilter,
   managerCount,
+  totalManagerCount,
   onFilterChange,
   onAddProperty,
   onSelectProperty,
   onEditProperty,
   onDeleteProperty,
   onBackToHousing,
+  isDeletingProperty,
 }: PropertiesListProps) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeProperty, setActiveProperty] = useState<Property | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const stats: SummaryStats = useMemo(() => {
-    const totalCapacity = properties.reduce(
-      (acc, curr) => acc + Number(curr.total_capacity || 0),
-      0
-    );
+    const totalCapacity = properties.reduce((acc, curr) => {
+      const cap = (curr.units && curr.units.length > 0)
+        ? curr.units.reduce((sum, u) => sum + (u.max_occupancy ?? 0), 0)
+        : (curr.total_capacity ?? 0);
+      return acc + Number(cap);
+    }, 0);
 
     return {
       totalDorms: properties.filter((p) => p.accommodation_type === "dormitory")
@@ -140,6 +148,14 @@ export default function PropertiesList({
 
   return (
     <div className="p-6 space-y-4 font-[family-name:var(--font-archivo)]">
+      <Button
+        variant="ghost"
+        onClick={() => router.push("/admin/dashboard")}
+        className="flex items-center gap-2 text-[#44291B]/60 hover:text-[#44291B] hover:bg-[#F6F8D5] -ml-2 mb-2 transition-all group"
+      >
+        <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+        <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+      </Button>
       <div>
         <h1 className="text-3xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] mr-2">Properties Page</h1>
         <p className="text-sm md:text-md text-[#44291B] pt-3">Manage your Properties and view their details</p>
@@ -210,8 +226,8 @@ export default function PropertiesList({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                disabled={managerCount === 0}
-                title={managerCount === 0 ? "Please add a Property Manager first" : ""}
+                disabled={totalManagerCount === 0}
+                title={totalManagerCount === 0 ? "Please add a Property Manager first" : ""}
                 className="flex items-center justify-center gap-2 text-sm font-medium text-white bg-[#264384] hover:opacity-90 px-4 py-2 rounded-xl transition h-auto w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4" />
@@ -256,6 +272,7 @@ export default function PropertiesList({
           })}
           data={tableData.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))}
           onRowClick={(row: any) => onSelectProperty(row.id)}
+          fixedLayout
         />
       )}
 
@@ -267,18 +284,24 @@ export default function PropertiesList({
       >
         <div className="space-y-4">
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)} disabled={isDeletingProperty}>Cancel</Button>
             <Button
               variant="destructive"
-              onClick={() => {
+              disabled={isDeletingProperty}
+              onClick={async () => {
                 if (activeProperty) {
-                  onDeleteProperty(activeProperty.accommodation_id, activeProperty.accommodation_type);
+                  await onDeleteProperty(activeProperty.accommodation_id, activeProperty.accommodation_type);
                   setDeleteModalOpen(false);
                   setActiveProperty(null);
                 }
               }}
             >
-              Delete Property
+              {isDeletingProperty ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Deleting...</span>
+                </div>
+              ) : "Delete Property"}
             </Button>
           </div>
         </div>

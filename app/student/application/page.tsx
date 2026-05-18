@@ -18,7 +18,7 @@ export default async function AccommodationHistoryPage() {
   }
 
   // Keep billing invoices in sync for pending_payment applications.
-  await ensureInitialInvoicesForUser(user.user_id);
+  ensureInitialInvoicesForUser(user.user_id).catch(console.error);
 
   // Fetch data from service layer
   const { data: records, error } = await userProfileService.getAccommodationHistory(user.user_id);
@@ -35,20 +35,6 @@ export default async function AccommodationHistoryPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F6F8D5' }}>
-      {/* Container for the Header. 
-          The ApplicationsPage has its own internal container for the cards 
-      */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-9">
-        <header className="mb-2">
-          <h1 className={`${archivoBlack.className} pt-6 text-4xl md:text-5xl`} style={{ color: '#44291B' }}>
-            Accommodation Overview
-          </h1>
-          <p className="mt-2 text-sm sm:text-sm" style={{ color: '#44291B' }}>
-            Manage your active requests and view past history.
-          </p>
-        </header>
-      </div>
-
       {/* Render the component with the split sections and beige/blue theme */}
       <ApplicationsPage records={records || []} />
     </div>

@@ -29,8 +29,9 @@ export default function ManagerDetail({
       {onBack && (
         <Button
           variant="ghost"
+          size="sm"
           onClick={onBack}
-          className="lg:hidden p-0 h-auto hover:bg-transparent text-[#264384]"
+          className="text-[#264384] hover:bg-transparent hover:text-[#264384] hover:underline px-0 h-auto font-bold mb-2"
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
           Back to List

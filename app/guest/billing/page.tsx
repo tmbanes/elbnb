@@ -1,8 +1,10 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { ensureInitialInvoicesForUser, getUserPaymentSummary, getStudentBillsDetailed, getStudentPaymentHistory } from "@/services/user-services";
 import { redirect } from "next/navigation";
+import { Archivo, Archivo_Black } from "next/font/google";
 import BillingClient from "./BillingClient";
-import LogoutButton from "@/components/logout-button";
+
+const archivo = Archivo({ subsets: ["latin"] });
+const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 import { getApiAuthenticatedUser } from "@/lib/auth/session";
 
@@ -13,30 +15,29 @@ export default async function GuestBillingPage() {
     redirect("/onboarding");
   }
 
-  // Backfill safety net for applications that reached pending payment
-  // before auto-invoice creation was introduced.
-  await ensureInitialInvoicesForUser(user.user_id);
+  // Backfill safety net
+  ensureInitialInvoicesForUser(user.user_id).catch(console.error);
 
-  const { data: summary } = await getUserPaymentSummary(user.user_id, "guest");
-  const { data: bills } = await getStudentBillsDetailed(user.user_id);
-  const { data: paymentHistory } = await getStudentPaymentHistory(user.user_id);
+  const [summaryRes, billsRes, historyRes] = await Promise.all([
+    getUserPaymentSummary(user.user_id, "guest"),
+    getStudentBillsDetailed(user.user_id),
+    getStudentPaymentHistory(user.user_id)
+  ]);
+
+  const summary = summaryRes.data;
+  const bills = billsRes.data;
+  const paymentHistory = historyRes.data;
 
   return (
-    <main className="min-h-screen p-8 bg-slate-50/50">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Guest Billing & Payments</h1>
-          <p className="text-slate-500 mt-1 mb-4 text-sm">Manage your invoices and view your payment history.</p>
-          <LogoutButton />
-        </div>
+    <main className={`min-h-screen pt-10 pb-16 bg-[#F6F8D5] ${archivo.className}`} style={{ color: '#44291B' }}>
+      <div className="max-w-7xl mx-auto px-4 md:px-8 space-y-8">
+
 
         <BillingClient
           userId={user.user_id}
           summary={summary || { total: 0, paid: 0, balance: 0 }}
           bills={bills || []}
           paymentHistory={paymentHistory || []}
-          uploadEndpoint="/api/guest/billing/upload-receipt"
-          cancelEndpoint="/api/guest/billing/cancel-receipt"
         />
       </div>
     </main>

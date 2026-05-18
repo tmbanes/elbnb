@@ -80,10 +80,14 @@ function ApplicationFormContent() {
 
   // FETCH ACCOMMODATION + UNIT details for display
   useEffect(() => {
-    if (!accommodationIdFromQuery) return
+    if (!accommodationIdFromQuery) {
+      setIsLoading(false)
+      return
+    }
 
     const fetchAccommodation = async () => {
       try {
+        setIsLoading(true)
         const res = await fetch('/api/shared/dashboard/tiles?type=accommodations')
         if (!res.ok) throw new Error('Failed to fetch accommodations')
 
@@ -103,6 +107,8 @@ function ApplicationFormContent() {
         }
       } catch (error) {
         console.error('Failed to fetch accommodation:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -151,7 +157,7 @@ function ApplicationFormContent() {
     }
 
     try {
-      const response = await fetch('/api/student/applications', {
+      const response = await fetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

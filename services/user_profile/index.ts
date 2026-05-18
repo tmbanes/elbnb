@@ -190,8 +190,12 @@ not yet tested
         number_of_companions,
         accommodation:preferred_accommodation_id (
           name,
-          accommodation_type
+          accommodation_type,
+          image,
+          accommodation_images(url, is_primary, storage_path)
         ),
+
+
         unit:unit_id (
           unit_number
         ),
@@ -204,11 +208,22 @@ not yet tested
       .eq("user_id", user_id)
       .order("date_submitted", { ascending: false });
 
-    if (error) {
-      console.error("Supabase fetch error:", error);
-    }
+    const mapped = (data || []).map((item: any) => {
+      if (item.accommodation) {
+        let displayImage = item.accommodation.image;
+        const images = item.accommodation.accommodation_images || [];
+        if (images.length > 0) {
+          const primary = images.find((img: any) => img.is_primary) || images[0];
+          displayImage = primary.storage_path || primary.url;
+        }
+        item.accommodation.image = displayImage;
+        item.accommodation.accommodation_images = undefined;
+      }
+      return item;
+    });
 
-    return { data: data as AccommodationApplication[] | null, error };
+    return { data: mapped as AccommodationApplication[] | null, error };
+
   },
 
   // added for the cancel modal in the history and status page, 
@@ -226,6 +241,26 @@ not yet tested
     if (error) {
       console.error("Error canceling application:", error);
       return { data: null, error };
+    }
+
+    // Also update the billing status to cancelled if it exists
+    const { data: assignment, error: assignmentError } = await client
+      .from("accommodation_assignment")
+      .select("assignment_id")
+      .eq("application_id", application_id)
+      .maybeSingle();
+
+    if (!assignmentError && assignment?.assignment_id) {
+      await supabaseAdmin
+        .from("billing")
+        .delete()
+        .eq("assignment_id", assignment.assignment_id)
+        .in("status", ["unpaid", "pending", "pending_verification", "overdue"]);
+
+      await supabaseAdmin
+        .from("accommodation_assignment")
+        .update({ assignment_status: "cancelled" })
+        .eq("assignment_id", assignment.assignment_id);
     }
 
     return { data, error: null };
@@ -265,17 +300,31 @@ not yet tested
           accommodation:accommodation_id (
             name,
             location,
-            renewal_start_date,
             renewal_end_date,
-            image
+            image,
+            accommodation_images(url, is_primary, storage_path)
           )
         )
       `)
+
       .eq("user_id", user_id)
       .in("assignment_status", ["active", "waiting_payment", "pending"])
       .maybeSingle();
 
-    return { data, error };
+    const res = data as any;
+    if (res?.unit?.accommodation) {
+      let displayImage = res.unit.accommodation.image;
+      const images = res.unit.accommodation.accommodation_images || [];
+      if (images.length > 0) {
+        const primary = images.find((img: any) => img.is_primary) || images[0];
+        displayImage = primary.storage_path || primary.url;
+      }
+      res.unit.accommodation.image = displayImage;
+      res.unit.accommodation.accommodation_images = undefined;
+    }
+
+    return { data: res, error };
+
   },
 
   async getDashboardStats(user_id: string) {

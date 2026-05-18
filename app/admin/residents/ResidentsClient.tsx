@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search, Filter, Building2, History, ArrowLeft, AlertCircle,
   CheckCircle2, Clock, ShieldAlert, CalendarArrowDown, CalendarArrowUp,
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,6 +62,8 @@ const STATUS_MAP: Record<AssignmentStatus, { label: string; dot: string; badge: 
 
 const PER_PAGE = 5;
 
+import { updateResidentStatus, overrideResidentUnit } from "@/lib/actions/residents.actions";
+
 // ─── Main Client Component ──────────────────────────────────────────────────────
 
 export default function ResidentsClient({
@@ -69,10 +73,9 @@ export default function ResidentsClient({
   initialResidents: Resident[];
   initialError: string | null;
 }) {
-  const [residents, setResidents] = useState<Resident[]>(initialResidents);
-  const [loading, setLoading] = useState(false);
+  const residents = initialResidents.filter(r => r.unit && r.unit.accommodation);
   const [error, setError] = useState<string | null>(initialError);
-  const [selectedId, setSelectedId] = useState<string | null>(initialResidents[0]?.assignment_id || null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -86,30 +89,6 @@ export default function ResidentsClient({
   const [targetUnit, setTargetUnit] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  // ── Fetch ──────────────────────────────────────────────────────────────────
-  const fetchResidents = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch("/api/admin/residents");
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(`${res.status}: ${t.slice(0, 200)}`);
-      }
-      const json = await res.json();
-      const data: Resident[] = json.data ?? [];
-      setResidents(data);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  
-  useEffect(() => {
-    fetchResidents();
-  }, [fetchResidents]);
 
   // ── Derived data ───────────────────────────────────────────────────────────
   const accommodations = Array.from(
@@ -141,22 +120,17 @@ export default function ResidentsClient({
     if (!selected || !confirmAction) return;
     setActionLoading(true);
     try {
-      const body: Record<string, any> = {
-        assignment_id: selected.assignment_id,
-        action: confirmAction,
-        date: actionDate,
-      };
-      if (confirmAction === "override") body.details = { targetUnit };
-
-      const res = await fetch("/api/admin/residents", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const j = await res.json();
-        throw new Error(j.error ?? "Action failed");
+      let result;
+      if (confirmAction === "override") {
+        result = await overrideResidentUnit(selected.assignment_id, targetUnit);
+      } else {
+        result = await updateResidentStatus(selected.assignment_id, confirmAction as "record-move-in" | "record-move-out" | "terminate", actionDate);
       }
+
+      if (!result.success) {
+        throw new Error(result.error ?? "Action failed");
+      }
+
       setSuccessMsg(
         confirmAction === "override" ? `Transferred to unit ${targetUnit}` :
           confirmAction === "terminate" ? "Stay terminated" :
@@ -164,7 +138,6 @@ export default function ResidentsClient({
               "Move-in recorded"
       );
       setConfirmAction(null);
-      await fetchResidents();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -184,31 +157,17 @@ export default function ResidentsClient({
     setConfirmAction(null);
     setSuccessMsg(null);
   };
-
-  if (error && residents.length === 0) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F6F8D5]">
-      <div className="text-center space-y-4 max-w-md">
-        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-          <AlertCircle className="w-7 h-7 text-red-500" />
-        </div>
-        <h2 className="text-xl font-bold text-[#44291B]">Error Loading Residents</h2>
-        <p className="text-sm text-[#44291B]/60">{error}</p>
-        <button onClick={fetchResidents}
-          className="px-6 py-2 bg-[#264384] text-white font-bold rounded-xl hover:bg-[#1a2d5a] transition-colors">
-          Try Again
-        </button>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen py-8 px-5 md:px-12 lg:px-30 bg-[#F6F8D5] flex overflow-hidden font-[family-name:var(--font-archivo)]">
+    <div className="h-[100dvh] flex overflow-hidden bg-[#F6F8D5] font-[family-name:var(--font-archivo)]">
       {/* ── LEFT: List panel ───────────────────────────────────────────────── */}
       <div className={cn(
-        "flex-1 min-w-0 overflow-y-auto transition-all duration-300",
-        selectedId ? "hidden lg:block" : "block"
+        "flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out",
+        selectedId ? "hidden lg:flex" : "flex-1"
       )}>
-        <div className="p-4 md:p-6 space-y-6">
+        <div className={cn(
+          "h-full flex flex-col pt-10 pb-6 gap-6 transition-all duration-500 overflow-y-auto scrollbar-hide",
+          selectedId ? "px-6 lg:px-12" : "px-4 md:px-12 lg:px-20 xl:px-36"
+        )}>
           <div>
             <h1 className="text-4xl md:text-5xl font-[family-name:var(--font-archivo-black)] text-[#44291B] tracking-tight">
               Resident Management
@@ -264,18 +223,13 @@ export default function ResidentsClient({
           </div>
 
           <div className="bg-[#FDFFF4] rounded-2xl border border-[#e8e2d6] overflow-hidden shadow-sm">
-            {loading ? (
-              <div className="p-10 flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 text-[#264384] animate-spin" />
-                <p className="text-xs font-bold text-[#44291B]/40">Refreshing residents list…</p>
-              </div>
-            ) : paginated.length > 0 ? (
-              <table className="w-full text-left border-collapse">
+            {paginated.length > 0 ? (
+              <table className="w-full text-left border-collapse table-fixed">
                 <thead>
                   <tr className="border-b border-[#e8e2d6] bg-[#FDFFF4]">
-                    <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Resident</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Accommodation</th>
-                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest">Status</th>
+                    <th className="py-3 px-5 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[45%]">Resident</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[35%]">Accommodation</th>
+                    <th className="py-3 px-3 text-[10px] font-extrabold text-[#44291B]/50 uppercase tracking-widest w-[20%]">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -359,38 +313,42 @@ export default function ResidentsClient({
 
       {/* ── RIGHT: Detail panel ────────────────────────────────────────────── */}
       <div className={cn(
-        "w-full lg:w-[450px] border-l border-[#e8e2d6] bg-[#F6F8D5] overflow-y-auto flex flex-col transition-all duration-300 pt-20",
-        selectedId ? "block" : "hidden lg:flex"
+        "fixed lg:relative top-0 right-0 z-50 lg:z-0 h-full lg:h-auto w-full bg-[#F6F8D5] flex flex-col transition-all duration-500 ease-in-out pt-4 lg:pt-20 border-[#e8e2d6]",
+        selectedId
+          ? "lg:w-[450px] translate-x-0 opacity-100 border-l overflow-y-auto"
+          : "lg:w-0 translate-x-full lg:translate-x-0 opacity-0 lg:pointer-events-none border-l-0 overflow-hidden"
       )}>
-        {selected ? (
-          <ResidentDetailPanel
-            resident={selected}
-            onBack={() => setSelectedId(null)}
-            confirmAction={confirmAction}
-            actionDate={actionDate}
-            targetUnit={targetUnit}
-            actionLoading={actionLoading}
-            successMsg={successMsg}
-            onOpenConfirm={openConfirm}
-            onSetActionDate={setActionDate}
-            onSetTargetUnit={setTargetUnit}
-            onConfirm={handleAction}
-            onCancelConfirm={() => setConfirmAction(null)}
-            showOverride={true}
-          />
-        ) : (
-          <div className="flex-1 flex items-center justify-center p-12 text-center">
-            <div className="space-y-3 max-w-xs">
-              <div className="w-14 h-14 bg-[#e8e2d6] rounded-full flex items-center justify-center mx-auto">
-                <History className="w-6 h-6 text-[#44291B]/30" />
+        <div className="w-full lg:w-[450px] shrink-0 h-full flex flex-col">
+          {selected ? (
+            <ResidentDetailPanel
+              resident={selected}
+              onBack={() => setSelectedId(null)}
+              confirmAction={confirmAction}
+              actionDate={actionDate}
+              targetUnit={targetUnit}
+              actionLoading={actionLoading}
+              successMsg={successMsg}
+              onOpenConfirm={openConfirm}
+              onSetActionDate={setActionDate}
+              onSetTargetUnit={setTargetUnit}
+              onConfirm={handleAction}
+              onCancelConfirm={() => setConfirmAction(null)}
+              showOverride={true}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-12 text-center">
+              <div className="space-y-3 max-w-xs">
+                <div className="w-14 h-14 bg-[#e8e2d6] rounded-full flex items-center justify-center mx-auto">
+                  <History className="w-6 h-6 text-[#44291B]/30" />
+                </div>
+                <h2 className="text-lg font-bold text-[#44291B]">No Resident Selected</h2>
+                <p className="text-sm text-[#44291B]/50 leading-relaxed">
+                  Select a resident from the list to view details and manage their stay.
+                </p>
               </div>
-              <h2 className="text-lg font-bold text-[#44291B]">No Resident Selected</h2>
-              <p className="text-sm text-[#44291B]/50 leading-relaxed">
-                Select a resident from the list to view details and manage their stay.
-              </p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -427,9 +385,9 @@ function ResidentDetailPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="lg:hidden p-4 border-b border-[#e8e2d6]">
-        <button onClick={onBack} className="flex items-center gap-2 text-[#264384] font-bold text-sm">
-          <ArrowLeft className="w-4 h-4" /> Back to Residents
+      <div className="p-4 pb-0">
+        <button onClick={onBack} className="flex items-center gap-2 text-[#264384] hover:underline font-bold text-sm">
+          <ArrowLeft className="w-4 h-4" /> Back to List
         </button>
       </div>
 
@@ -446,7 +404,7 @@ function ResidentDetailPanel({
             <div className="px-4 py-3 flex-1">
               <p className="text-[9px] font-black text-[#44291B]/40 uppercase tracking-widest mb-1">Unit</p>
               <p className="text-lg font-[family-name:var(--font-archivo-black)] text-[#44291B] leading-none">
-                Rm {resident.unit.unit_number}
+                Rm {resident.unit?.unit_number}
               </p>
             </div>
             <div className="px-4 py-3 flex items-center gap-4 bg-white/40">
@@ -469,7 +427,7 @@ function ResidentDetailPanel({
             <span className="text-[10px] font-black text-[#44291B]/50 uppercase tracking-widest">History</span>
           </div>
           <div className="relative pl-7 space-y-6 before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[#e8e2d6]">
-            <TimelineEvent color="bg-[#5591AB]" title="Assigned" subtitle={`Room ${resident.unit.unit_number} • ${fmtDate(resident.move_in_date)}`} />
+            <TimelineEvent color="bg-[#5591AB]" title="Assigned" subtitle={`Room ${resident.unit?.unit_number} • ${fmtDate(resident.move_in_date)}`} />
             {(isActive || isCheckedOut) && (
               <TimelineEvent color="bg-[#78A24C]" title="Moved In" subtitle={fmtDate(resident.move_in_date)} />
             )}

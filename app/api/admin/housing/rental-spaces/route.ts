@@ -1,9 +1,10 @@
 import { withRole } from "@/lib/auth/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin-client";
+import { createActivityLog } from "@/services/activity_log/server";
 
-// GET /api/admin/housing/rental-spaces          → all rental spaces
-// GET /api/admin/housing/rental-spaces?id=123   → single rental space with units
+// GET /api/housing/rental-spaces          → all rental spaces
+// GET /api/housing/rental-spaces?id=123   → single rental space with units
 export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
 
@@ -14,7 +15,7 @@ export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
         `
         accommodation_id, name, location,
         accommodation_type, accommodation_status, total_capacity,
-        manager_id,
+        manager_id, accomm_sex,
         dormitory_manager!accommodation_manager_id_fkey (
           employee_id,
           users (first_name, last_name, email)
@@ -40,8 +41,13 @@ export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
     if (error)
       return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Rename 'unit' to 'units' for consistency
-    const response = data && data.unit ? { ...data, units: data.unit } : data;
+    // Flatten related arrays for consistency
+    const response = data ? {
+      ...data,
+      renting_space: Array.isArray(data.renting_space) ? data.renting_space[0] : data.renting_space,
+      dormitory_manager: Array.isArray(data.dormitory_manager) ? data.dormitory_manager[0] : data.dormitory_manager,
+      units: data.unit || [],
+    } : data;
     return NextResponse.json(response);
   }
 
@@ -51,7 +57,7 @@ export const GET = withRole(['housing_admin'], async (req: NextRequest) => {
       `
       accommodation_id, name, location,
       accommodation_type, accommodation_status, total_capacity,
-      manager_id,
+      manager_id, accomm_sex,
       dormitory_manager!accommodation_manager_id_fkey (
         employee_id,
         users (first_name, last_name, email)
@@ -83,8 +89,8 @@ const response = data?.map((item: any) => ({
   return NextResponse.json(response);
 });
 
-// POST /api/admin/housing/rental-spaces
-export const POST = withRole(['housing_admin'], async (req: NextRequest) => {
+// POST /api/housing/rental-spaces
+export const POST = withRole(['housing_admin'], async (req: NextRequest, { user }) => {
   const body = await req.json();
 
   const { data, error } = await supabaseAdmin.rpc("create_rental_space_full", {
@@ -102,12 +108,32 @@ export const POST = withRole(['housing_admin'], async (req: NextRequest) => {
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (body.accomm_sex && data?.accommodation_id) {
+    const { error: updateError } = await supabaseAdmin
+      .from("accommodation")
+      .update({ accomm_sex: body.accomm_sex })
+      .eq("accommodation_id", data.accommodation_id);
+    if (updateError) {
+      console.error("Failed to save accomm_sex:", updateError.message);
+    }
+  }
+
+  await createActivityLog({
+    p_user_id: user.user_id,
+    p_action_type: "create_accomm",
+    p_entity_type: "accommodation",
+    p_entity_id: data?.accommodation_id || "new",
+    p_log_desc: `Created new rental space: ${body.name}`,
+    p_user_role: user.role as any
+  });
+
   return NextResponse.json(data, { status: 201 });
 });
 
-// PATCH /api/admin/housing/rental-spaces?id=123
+// PATCH /api/housing/rental-spaces?id=123
 // Body: { accommodationFields: {...}, rentingFields: {...} }
-export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
+export const PATCH = withRole(['housing_admin'], async (req: NextRequest, { user }) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
@@ -131,11 +157,20 @@ export const PATCH = withRole(['housing_admin'], async (req: NextRequest) => {
       return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  await createActivityLog({
+    p_user_id: user.user_id,
+    p_action_type: "update_accomm",
+    p_entity_type: "accommodation",
+    p_entity_id: id,
+    p_log_desc: `Updated rental space ${accommodationFields?.name ? `(${accommodationFields.name})` : `(ID: ${id})`}`,
+    p_user_role: user.role as any
+  });
+
   return NextResponse.json({ success: true });
 });
 
-// DELETE /api/admin/housing/rental-spaces?id=123
-export const DELETE = withRole(['housing_admin'], async (req: NextRequest) => {
+// DELETE /api/housing/rental-spaces?id=123
+export const DELETE = withRole(['housing_admin'], async (req: NextRequest, { user }) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
@@ -145,5 +180,15 @@ export const DELETE = withRole(['housing_admin'], async (req: NextRequest) => {
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
+
+  await createActivityLog({
+    p_user_id: user.user_id,
+    p_action_type: "delete_accomm",
+    p_entity_type: "accommodation",
+    p_entity_id: id,
+    p_log_desc: `Deleted rental space (ID: ${id})`,
+    p_user_role: user.role as any
+  });
+
   return NextResponse.json(data);
 });

@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -47,6 +45,44 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-toast-in: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-toast-out: toastSlideOut 0.3s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+
+  @keyframes toastSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(100%) translateY(-20px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) translateY(0) scale(1);
+    }
+  }
+
+  @keyframes toastSlideOut {
+    from {
+      opacity: 1;
+      transform: translateX(0) translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(100%) translateY(-20px) scale(0.9);
+    }
+  }
+
+  --animate-collapsible-down: collapsibleDown 0.3s ease-out;
+  --animate-collapsible-up: collapsibleUp 0.3s ease-out;
+
+  @keyframes collapsibleDown {
+    from { height: 0; }
+    to { height: var(--radix-collapsible-content-height); }
+  }
+
+  @keyframes collapsibleUp {
+    from { height: var(--radix-collapsible-content-height); }
+    to { height: 0; }
+  }
 }
 
 :root {
@@ -175,22 +211,7 @@
 }
 
 
-/* Global Page Transitions */
-@keyframes pageSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-main>*:not(.page-loader) {
-  animation: pageSlideIn 0.5s ease-out forwards;
-}
 
 /* 3D Utilities */
 .perspective-2000 {
@@ -206,13 +227,15 @@ main>*:not(.page-loader) {
 }
 
 /* Hide scrollbar but keep scroll */
-.scrollbar-hide::-webkit-scrollbar {
+.scrollbar-hide::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-.scrollbar-hide {
+.scrollbar-hide,
+.no-scrollbar {
   -ms-overflow-style: none;
-  /* IE and Edge */
   scrollbar-width: none;
-  /* Firefox */
 }
+
+/* Toast Animations moved to @theme block */

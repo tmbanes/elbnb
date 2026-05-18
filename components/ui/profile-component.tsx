@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ProfileUpload } from '@/components/edit-profile/ProfileUpload';
 import { EditProfileDialog } from '@/components/edit-profile/EditProfileDialog';
 import { User } from '@/types/user.types';
-import { Home, Edit3, CircleUser, User as UserIcon, ShieldCheck, MapPinHouse, Building2, History } from 'lucide-react';
+import { Home, Edit3, CircleUser, User as UserIcon, ShieldCheck, MapPinHouse, Building2, History, ChevronDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -31,55 +31,14 @@ const nunito = Nunito({
 interface ProfileComponentProps {
   user: User;
   metadata: any;
+  currentAssignment?: any;
+  managerAccommodation?: any;
 }
 
-export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
+export function ProfileComponent({ user, metadata, currentAssignment, managerAccommodation }: ProfileComponentProps) {
   const [uploadPhotoOpen, setUploadPhotoOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'accommodations'>('personal');
-  const [currentAssignment, setCurrentAssignment] = useState<any>(null);
-  const [loadingAssignment, setLoadingAssignment] = useState(false);
-  const [managerAccommodation, setManagerAccommodation] = useState<any>(null);
-  const [loadingManagerAccom, setLoadingManagerAccom] = useState(false);
 
-  useEffect(() => {
-    if (user.role === 'student') {
-      const fetchAssignment = async () => {
-        setLoadingAssignment(true);
-        try {
-          const res = await fetch('/api/student/assignments/history');
-          const result = await res.json();
-          if (result.success && result.data) {
-            // Find the most recent active assignment
-            const active = result.data.find((a: any) => a.assignment_status === 'active');
-            setCurrentAssignment(active);
-          }
-        } catch (err) {
-          console.error("Failed to fetch assignments:", err);
-        } finally {
-          setLoadingAssignment(false);
-        }
-      };
-      fetchAssignment();
-    }
-
-    if (user.role === 'dormitory_manager') {
-      const fetchManagerAccom = async () => {
-        setLoadingManagerAccom(true);
-        try {
-          const res = await fetch('/api/manager/dashboard');
-          const result = await res.json();
-          if (result.accommodation) {
-            setManagerAccommodation(result.accommodation);
-          }
-        } catch (err) {
-          console.error("Failed to fetch manager accommodation:", err);
-        } finally {
-          setLoadingManagerAccom(false);
-        }
-      };
-      fetchManagerAccom();
-    }
-  }, [user.role]);
 
   const role = user.role;
   const isStudent = role === 'student';
@@ -141,22 +100,24 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
       <div className="grid grid-cols-1 grid-rows-1 mt-3 sm:mt-6 relative w-full h-[600px] sm:h-[700px] md:h-[500px]">
         {/* Second Folder (Accommodations/Management) */}
         <div
-          onClick={() => setActiveTab('accommodations')}
+          onClick={() => setActiveTab(activeTab === 'accommodations' ? 'personal' : 'accommodations')}
           className={`col-start-1 row-start-1 w-full md:w-[80%] justify-self-end overflow-hidden transition-all duration-300 ease-in-out cursor-pointer bg-[#8bc453] shadow-inner px-4 sm:px-6 md:px-12 rounded-tl-[200px] sm:rounded-tl-[400px] md:rounded-tl-[700px] rounded-tr-[40px] sm:rounded-tr-[60px] md:rounded-tr-[100px] rounded-bl-[40px] rounded-br-[40px] ${activeTab === 'accommodations' ? 'h-full' : 'hover:bg-[#8bc453] hover:shadow-lg'}`}
           style={{ filter: 'url(#grain)', backgroundBlendMode: 'multiply' }}
         >
           <div className="flex items-center justify-end gap-3 text-[#3E2723] pt-6 mb-4">
             <SecondFolderIcon className="w-6 h-6 stroke-[2.5]" />
             <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>{secondFolderLabel}</h3>
+            <ChevronDown 
+              className={`w-6 h-6 transition-transform duration-300 ease-in-out ${activeTab === 'accommodations' ? 'rotate-180' : ''}`} 
+              strokeWidth={2.5}
+            />
           </div>
 
           <div className="pb-6 pt-3 pl-4 sm:pl-10 md:pl-[180px] pr-4 sm:pr-6 md:pr-12 mt-20">
             <div className="grid grid-cols-1 gap-y-8 w-full">
               {isStudent && (
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
-                  {loadingAssignment ? (
-                    <div className="col-span-2 py-4 animate-pulse text-[#3E2723]/40 font-bold uppercase tracking-widest text-xs">Loading Assignment Data...</div>
-                  ) : currentAssignment ? (
+                  {currentAssignment ? (
                     <>
                       {renderValue(currentAssignment.accommodation?.accommodation_name || 'N/A', 'Dormitory Name')}
                       {renderValue(currentAssignment.unit?.unit_number || 'N/A', 'Unit Number')}
@@ -167,16 +128,16 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                     <div className="col-span-2 py-4 text-[#3E2723]/40 font-bold uppercase tracking-widest text-xs">No Active Accommodation Found</div>
                   )}
                   <div className="absolute right-4 sm:right-6 md:right-8 bottom-12 sm:bottom-22 z-[60] pointer-events-auto">
-            <Link 
-              href="/student/history"
-              className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
-            >
-              <History size={14} strokeWidth={3} />
-              View Past Accommodations
-            </Link>
-          </div>
+                    <Link
+                      href="/student/history"
+                      className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                    >
+                      <History size={14} strokeWidth={3} />
+                      View Past Accommodations
+                    </Link>
+                  </div>
                 </div>
-        
+
               )}
               {isGuest && (
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4 sm:gap-x-8 md:gap-x-16 w-full">
@@ -190,25 +151,18 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
               )}
               {isManager && (
                 <div className="grid grid-cols-1 gap-y-5 w-full">
-                  {loadingManagerAccom ? (
-                    <div className="py-4 animate-pulse text-[#3E2723]/40 font-bold uppercase tracking-widest text-xs">Loading Management Data...</div>
-                  ) : (
-                    <>
-                      {renderLargeValue(managerAccommodation?.name || 'No Assigned Dormitory', "Assigned Accommodation")}
-                      {renderValue(officeLocation, "Office Location")}
-                      
-                      <div className="-mt-2 flex justify-end">
-                        <Link 
-                          href="/manager/housing"
-                          className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
-                        >
-                          <Building2 size={14} strokeWidth={3} />
-                          Manage Housing
-                        </Link>
-                      </div>
-                    </>
-                    
-                  )}
+                  {renderLargeValue(managerAccommodation?.name || 'No Assigned Accommodation', "Assigned Accommodation")}
+                  {renderValue(officeLocation, "Office Location")}
+
+                  <div className="-mt-2 flex justify-end">
+                    <Link
+                      href="/manager/housing"
+                      className="inline-flex items-center gap-2 px-5 py-2 bg-[#3E2723] text-[#F4F5E1] rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-[#3E2723]/80 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                    >
+                      <Building2 size={14} strokeWidth={3} />
+                      Manage Housing
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>
@@ -225,6 +179,10 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
           <div className={`flex items-center gap-3 text-[#3E2723] transition-all duration-500 ${activeTab === 'personal' ? 'pt-8 mb-4' : 'py-5 sm:py-6'}`}>
             <CircleUser className="w-6 h-6 stroke-[2.5]" />
             <h3 className={`${SubheaderLg} text-xl tracking-[0.05em] uppercase`}>Personal Information</h3>
+            <ChevronDown 
+              className={`w-6 h-6 transition-transform duration-300 ease-in-out ${activeTab === 'personal' ? 'rotate-180' : ''}`} 
+              strokeWidth={2.5}
+            />
           </div>
           <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'personal' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
             <div className="min-h-0 overflow-hidden">
@@ -241,7 +199,7 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
                           {renderValue(college, 'College')}
                         </>
                       )}
-                  {isGuest && renderValue(validId, 'Valid ID Reference')}
+                      {isGuest && renderValue(validId, 'Valid ID Reference')}
                     </div>
                   </div>
                   <div className={isStudent ? "md:col-span-8" : "md:col-span-12"}>
@@ -336,9 +294,9 @@ export function ProfileComponent({ user, metadata }: ProfileComponentProps) {
           </div>
 
           <div className="absolute right-4 md:right-6 bottom-6 flex gap-3 z-50">
-            <EditProfileDialog 
-              user={user} 
-              metadata={metadata} 
+            <EditProfileDialog
+              user={user}
+              metadata={metadata}
             />
           </div>
         </div>

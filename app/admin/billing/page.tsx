@@ -2,23 +2,21 @@ import { ensureInitialInvoicesForPendingPaymentApplications, getAllBillsForAdmin
 import { redirect } from "next/navigation";
 import { Archivo, Archivo_Black } from "next/font/google";
 import AdminBillingClient from "./AdminBillingClient";
-import { getApiAuthenticatedUser } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/session";
 
 const archivo = Archivo({ subsets: ["latin"] });
 const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400" });
 
 export default async function AdminBillingPage() {
-  const user = await getApiAuthenticatedUser();
+  const user = await requireRole(['housing_admin', 'admin']);
 
-  if (!user) {
-    redirect("/onboarding");
-  }
+  // Trigger maintenance task in the background (fire and forget)
+  ensureInitialInvoicesForPendingPaymentApplications().catch(console.error);
 
-  // Parallelize the data fetching and the maintenance task
-  const [_, billsRes, tenantsRes] = await Promise.all([
-    ensureInitialInvoicesForPendingPaymentApplications(),
-    getAllBillsForAdmin("admin"),
-    getActiveTenants()
+  // Parallelize the data fetching
+  const [billsRes, tenantsRes] = await Promise.all([
+    getAllBillsForAdmin(user.role || "", user.user_id || undefined),
+    getActiveTenants(user.role || undefined, user.user_id || undefined)
   ]);
 
   const { data: bills, error } = billsRes;
@@ -61,10 +59,7 @@ export default async function AdminBillingPage() {
   return (
     <main className="min-h-screen px-20 md:px-36 py-4 md:py-10" style={{ backgroundColor: '#F6F8D5' }}>
       <div className="max-w-7xl mx-auto space-y-8">
-        <div className="mb-8">
-          <h1 className={`${archivoBlack.className} pt-6 space-y-4 text-5xl font-bold text-[#44291B] tracking-tight`}>Billing Management</h1>
-          <p className={`${archivo.className}  mt-1 mb-4 text-sm text-[#44291B]`}>Overview of all tenant invoices, payments, and revenue.</p>
-        </div>
+
 
         <AdminBillingClient
           adminId={user.user_id}

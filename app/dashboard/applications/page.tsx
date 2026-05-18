@@ -64,7 +64,7 @@ interface ApplicationTileProps {
 
 function ApplicationTile({ enriched, onCancel, cancelling }: ApplicationTileProps) {
   const { application, accommodation, unit } = enriched
-  console.log('STATUS VALUE:', application.application_status)
+  // console.log('STATUS VALUE:', application.application_status)
   const status = STATUS_STYLES[application.application_status]
   const isCancellable = (CANCELLABLE_STATUSES as string[]).includes(application.application_status)
 
@@ -182,7 +182,7 @@ export default function MyApplicationsPage() {
 
     try {
       // 1. applications
-      const appRes = await fetch('/api/student/applications')
+      const appRes = await fetch('/api/applications')
       if (!appRes.ok) {
         if (appRes.status === 401) { router.push('/login'); return }
         throw new Error('Failed to fetch applications')
@@ -268,7 +268,7 @@ export default function MyApplicationsPage() {
     setCancellingId(applicationId)
     setConfirmId(null)
     try {
-      const res = await fetch('/api/student/applications/cancel', {
+      const res = await fetch('/api/applications/cancel', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

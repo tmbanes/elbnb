@@ -21,6 +21,7 @@ function PropertyCard({
   pct,
   totalCap,
   router,
+  isClickable,
 }: {
   property: Property;
   isDorm: boolean;
@@ -28,11 +29,16 @@ function PropertyCard({
   pct: number;
   totalCap: number;
   router: ReturnType<typeof useRouter>;
+  isClickable: boolean;
 }) {
   return (
     <Card
-      onClick={() => router.push(`/admin/housing?id=${property.accommodation_id}&from=managers`)}
-      className="shadow-sm bg-[#FDFFF4] transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-md cursor-default overflow-hidden" // Added overflow-hidden
+      onClick={isClickable ? () => router.push(`/admin/housing?id=${property.accommodation_id}&from=managers`) : undefined}
+      className={`shadow-sm bg-[#FDFFF4] transition-all duration-300 ease-in-out overflow-hidden ${
+        isClickable 
+          ? "hover:-translate-y-2 hover:shadow-md cursor-pointer" 
+          : "opacity-60 cursor-not-allowed select-none"
+      }`}
       style={{ borderTop: `6px solid ${isDorm ? "#5591AB" : "#EB8A0B"}` }}
     >
       <CardContent className="p-4">
@@ -92,7 +98,7 @@ function PropertyCard({
               value={pct}
               className="h-1.5 bg-[#F6F8D5]"
             />
-            <ChevronRight className="w-4 h-4 text-[#264384] opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+            {isClickable && <ChevronRight className="w-4 h-4 text-[#264384] opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />}
 
           </div>
         </div>
@@ -103,6 +109,7 @@ function PropertyCard({
 
 export default function AssignedProperties({ managerId }: AssignedPropertiesProps) {
   const [properties, setProperties] = useState<Property[]>([]);
+  const [myAccommodationIds, setMyAccommodationIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -111,16 +118,26 @@ export default function AssignedProperties({ managerId }: AssignedPropertiesProp
     async function fetchAssigned() {
       try {
         setLoading(true);
-        const [dormsRes, rentalsRes] = await Promise.all([
-          fetch("/api/admin/housing/dorms"),
-          fetch("/api/admin/housing/rental-spaces"),
+        const [dormsRes, rentalsRes, myDormsRes, myRentalsRes] = await Promise.all([
+          fetch("/api/housing/dorms?all=true"),
+          fetch("/api/housing/rental-spaces?all=true"),
+          fetch("/api/housing/dorms"),
+          fetch("/api/housing/rental-spaces"),
         ]);
-        const [dorms, rentals] = await Promise.all([
+        const [dorms, rentals, myDorms, myRentals] = await Promise.all([
           dormsRes.json(),
           rentalsRes.json(),
+          myDormsRes.json(),
+          myRentalsRes.json(),
         ]);
         const all = [...(dorms || []), ...(rentals || [])];
         setProperties(all.filter((property: any) => property.manager_id === managerId));
+
+        const myIds = new Set<string>([
+          ...(myDorms || []).map((d: any) => d.accommodation_id),
+          ...(myRentals || []).map((r: any) => r.accommodation_id),
+        ]);
+        setMyAccommodationIds(myIds);
       } catch (err: any) {
         setError(err?.message || "Unable to load assigned property.");
       } finally {
@@ -171,6 +188,7 @@ export default function AssignedProperties({ managerId }: AssignedPropertiesProp
                 pct={pct}
                 totalCap={totalCap}
                 router={router}
+                isClickable={myAccommodationIds.has(property.accommodation_id)}
               />
             );
           })}

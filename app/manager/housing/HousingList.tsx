@@ -17,7 +17,9 @@ export default function HousingList({ properties, onSelect }: HousingListProps) 
     <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 font-archivo">
       {properties.map((property) => {
         const isDorm = property.accommodation_type === "dormitory";
-        const totalCap = property.total_capacity ?? 0;
+        const totalCap = (property.units && property.units.length > 0)
+          ? property.units.reduce((a, u) => a + (u.max_occupancy ?? 0), 0)
+          : (property.total_capacity ?? 0);
         const occupied = property.units?.reduce((a, u) => a + (u.current_occupancy ?? 0), 0) ?? 0;
         const pct = totalCap > 0 ? Math.round((occupied / totalCap) * 100) : 0;
 

@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 
 interface Unit {
   unit_id: string;
@@ -24,6 +25,7 @@ interface Unit {
   furnishing_status: string;
   min_stay_duration: number | null;
   max_stay_duration: number | null;
+  unit_status: string;
   accommodation_id?: string;
 }
 
@@ -36,6 +38,7 @@ interface UnitFormData {
   furnishing_status: string;
   min_stay_duration: string;
   max_stay_duration: string;
+  unit_status: string;
 }
 
 interface Props {
@@ -60,6 +63,7 @@ export default function EditUnitModal({
     furnishing_status: "semi-furnished",
     min_stay_duration: "",
     max_stay_duration: "",
+    unit_status: "active",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,18 +71,15 @@ export default function EditUnitModal({
   useEffect(() => {
     if (isOpen && unit) {
       setForm({
-        unit_number: unit.unit_number || "",
+        unit_number: String(unit.unit_number ?? ""),
         unit_type: unit.unit_type || "",
         max_occupancy: String(unit.max_occupancy) || "",
         rental_fee: String(unit.rental_fee) || "",
         billing_period: unit.billing_period || "monthly",
         furnishing_status: unit.furnishing_status || "semi-furnished",
-        min_stay_duration: unit.min_stay_duration
-          ? String(unit.min_stay_duration)
-          : "",
-        max_stay_duration: unit.max_stay_duration
-          ? String(unit.max_stay_duration)
-          : "",
+        min_stay_duration: unit.min_stay_duration ? String(unit.min_stay_duration) : "",
+        max_stay_duration: unit.max_stay_duration ? String(unit.max_stay_duration) : "",
+        unit_status: unit.unit_status || "active",
       });
       setError(null);
     }
@@ -89,7 +90,7 @@ export default function EditUnitModal({
   }
 
   async function handleSubmit() {
-    if (!form.unit_number.trim()) {
+    if (!String(form.unit_number ?? "").trim()) {
       setError("Unit number is required.");
       return;
     }
@@ -110,7 +111,7 @@ export default function EditUnitModal({
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/admin/housing/units?id=${unit.unit_id}`, {
+      const res = await fetch(`/api/housing/units?id=${unit.unit_id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,12 +121,9 @@ export default function EditUnitModal({
           rental_fee: parseFloat(form.rental_fee),
           billing_period: form.billing_period,
           furnishing_status: form.furnishing_status,
-          min_stay_duration: form.min_stay_duration
-            ? parseInt(form.min_stay_duration)
-            : null,
-          max_stay_duration: form.max_stay_duration
-            ? parseInt(form.max_stay_duration)
-            : null,
+          unit_status: form.unit_status,
+          min_stay_duration: form.min_stay_duration ? parseInt(form.min_stay_duration) : null,
+          max_stay_duration: form.max_stay_duration ? parseInt(form.max_stay_duration) : null,
         }),
       });
 
@@ -305,6 +303,26 @@ export default function EditUnitModal({
           </Field>
         </div>
 
+        {/* Status */}
+        <Field>
+          <Label className="text-sm font-medium">
+            Status <span className="text-destructive">*</span>
+          </Label>
+          <Select
+            value={form.unit_status}
+            onValueChange={(val) => handleChange("unit_status", val)}
+            disabled={loading}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+
         {/* Actions */}
         <div className="flex justify-between gap-2 pt-3 border-t">
           <Button variant="outline" onClick={onClose} disabled={loading}>
@@ -315,7 +333,12 @@ export default function EditUnitModal({
             disabled={loading}
             className="bg-[#78A24C] hover:!bg-[#E7FAD3] text-white hover:!text-[#78A24C]"
           >
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Saving...</span>
+              </div>
+            ) : "Save Changes"}
           </Button>
         </div>
       </div>
