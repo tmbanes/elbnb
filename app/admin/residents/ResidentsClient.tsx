@@ -440,13 +440,13 @@ function ResidentDetailPanel({
             </h2>
             <p className="text-sm text-[#44291B]/50 font-medium mt-0.5">{resident.users.email}</p>
           </div>
-          {resident.assignment_status && STATUS_MAP[resident.assignment_status] && (
+          {resident.assignment_status && STATUS_MAP[resident.assignment_status as AssignmentStatus] && (
             <span className={cn(
               "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 mt-1",
-              STATUS_MAP[resident.assignment_status].badge
+              STATUS_MAP[resident.assignment_status as AssignmentStatus].badge
             )}>
-              <span className={cn("w-1.5 h-1.5 rounded-full", STATUS_MAP[resident.assignment_status].dot)} />
-              {STATUS_MAP[resident.assignment_status].label}
+              <span className={cn("w-1.5 h-1.5 rounded-full", STATUS_MAP[resident.assignment_status as AssignmentStatus].dot)} />
+              {STATUS_MAP[resident.assignment_status as AssignmentStatus].label}
             </span>
           )}
         </div>

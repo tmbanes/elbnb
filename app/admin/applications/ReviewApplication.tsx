@@ -295,7 +295,7 @@ export default function ReviewApplication({
     id: appData?.application_id || "",
     status: appData?.application_status || "Pending",
     submitted: new Date(appData.date_submitted).toLocaleDateString(),
-    unit: appData.units?.unit_number || "Not assigned",
+    unit: appData.unit?.unit_number || "Not assigned",
     
     firstName: userData?.first_name || "Unknown",
     lastName: userData?.last_name || "",

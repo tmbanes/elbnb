@@ -812,9 +812,6 @@ export default function AdminBillingClient({ adminId, bills, summary, activeTena
                         {t.users ? `${t.users.first_name} ${t.users.last_name}` : "Unknown"}
                       </SelectItem>
                     ))}
-                    <SelectItem value="48fc2483-6ebf-4d7a-ab9c-822d71504af6" className="text-sm font-medium">
-                      TEST: Dummy Tenant (Overrides DB Empty State)
-                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

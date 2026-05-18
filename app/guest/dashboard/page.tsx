@@ -24,6 +24,7 @@ export default async function GuestDashboardPage() {
     activeResidencyRes,
     applicationsRes,
     historyRes,
+    docsRes,
     billsRes,
     notificationsRes,
     accommodationsRes
@@ -37,8 +38,8 @@ export default async function GuestDashboardPage() {
               unit:unit_id (*)
           `)
       .eq('user_id', user.user_id)
-      .eq('assignment_status', 'active')
-      .single(),
+      .in('assignment_status', ['active', 'waiting_payment', 'pending'])
+      .maybeSingle(),
     supabase
       .from('accommodation_application')
       .select('*')

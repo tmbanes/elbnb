@@ -644,7 +644,7 @@ export async function createInvoiceService(user: User, payload: any) {
     .from('billing')
     .delete()
     .eq('assignment_id', assignmentId)
-    .in('status', ['unpaid', 'draft']);
+    .in('status', ['unpaid', 'draft', 'overdue', 'failed']);
 
   // Create new invoice
   const { data: createdBilling, error: createBillingError } = await supabaseAdmin.from("billing").insert({
