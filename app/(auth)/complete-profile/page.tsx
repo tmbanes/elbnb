@@ -11,8 +11,8 @@ export default async function CompleteProfilePage() {
     redirect("/onboarding");
   }
 
-  // If the user already has a complete profile (role + real name), they shouldn't be on the complete-profile page.
-  if (user.role && user.first_name && user.first_name !== "TBD") {
+  // If the user already has a complete profile, they shouldn't be on the complete-profile page.
+  if ((user as any).is_profile_complete) {
     if (user.role === "student") redirect("/student/dashboard");
     else if (user.role === "housing_admin") redirect("/admin/dashboard");
     else if (user.role === "dormitory_manager") redirect("/manager/dashboard");

@@ -14,6 +14,7 @@ export const getApiAuthenticatedUser = cache(async (): Promise<User | null> => {
     if (!user) return null;
 
     let metadata = user.user_metadata || {};
+    let isProfileComplete = true;
 
     // SOURCE OF TRUTH: Fetch from the public.users table to ensure roles are current.
     // This prevents stale JWT metadata from causing incorrect redirects (e.g. Managers sent to Student dashboard).
@@ -38,6 +39,35 @@ export const getApiAuthenticatedUser = cache(async (): Promise<User | null> => {
                 }
             }).catch(() => {});
         }
+
+        // Query sub-table to verify profile completion
+        if (dbUser.role === "student") {
+            const { data: studentData } = await supabase
+                .from("student")
+                .select("student_num")
+                .eq("user_id", user.id)
+                .maybeSingle();
+            
+            if (!studentData || !studentData.student_num || studentData.student_num === "none") {
+                isProfileComplete = false;
+            } else {
+                metadata.student_num = studentData.student_num;
+            }
+        } else if (dbUser.role === "guest") {
+            const { data: guestData } = await supabase
+                .from("guest")
+                .select("valid_id")
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+            if (!guestData || !guestData.valid_id || guestData.valid_id === "none") {
+                isProfileComplete = false;
+            } else {
+                metadata.valid_id = guestData.valid_id;
+            }
+        }
+    } else {
+        isProfileComplete = false;
     }
 
     // Construct User object
@@ -53,9 +83,11 @@ export const getApiAuthenticatedUser = cache(async (): Promise<User | null> => {
         sex: metadata.sex || "",
         birthdate: metadata.birthdate || "",
         profile_picture_url: metadata.profile_picture_url,
-        student_number: metadata.student_number,
+        student_number: metadata.student_num || metadata.student_number || "",
+        student_num: metadata.student_num || metadata.student_number || "",
         phone_number: metadata.phone_number,
         contact_number: metadata.contact_number,
+        is_profile_complete: !!(isProfileComplete && metadata.role && metadata.first_name && metadata.first_name !== "TBD"),
     } as any;
 });
 
@@ -65,12 +97,12 @@ export async function requireRole(allowedRoles: string[]) {
 
     if (!user) redirect("/onboarding");
 
-    // If role is missing OR profile is incomplete (indicated by "TBD" or empty name)
-    if (!user.role || !user.first_name || user.first_name === "TBD") {
+    // If profile is incomplete, redirect to complete-profile page
+    if (!(user as any).is_profile_complete) {
         redirect("/complete-profile");
     }
 
-    if (!allowedRoles.includes(user.role)) {
+    if (!user.role || !allowedRoles.includes(user.role)) {
         redirect("/auth/auth-code-error");
     }
 
@@ -83,8 +115,8 @@ export async function redirectByRole() {
 
     if (!user) redirect("/onboarding");
 
-    // If role is missing OR profile is incomplete
-    if (!user.role || !user.first_name || user.first_name === "TBD") {
+    // If profile is incomplete, redirect to complete-profile page
+    if (!(user as any).is_profile_complete) {
         redirect("/complete-profile");
         return; // Ensure execution stops
     }
@@ -107,3 +139,4 @@ export async function redirectByRole() {
             break;
     }
 }
+

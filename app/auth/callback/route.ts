@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 
         // Skip auth-callback bounce and determine exact target immediately
         if (!next || next === "/auth-callback") {
-          if (!user.role || !user.first_name || user.first_name === "TBD") {
+          if (!(user as any).is_profile_complete) {
             next = "/complete-profile";
           } else {
             if (user.role === 'student') next = '/student/dashboard';

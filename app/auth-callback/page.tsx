@@ -9,7 +9,7 @@ export default async function AuthCallbackPage() {
   }
 
   // Check if profile is complete
-  if (!user.role || !user.first_name || user.first_name === "TBD") {
+  if (!(user as any).is_profile_complete) {
     redirect('/complete-profile');
   }
 
