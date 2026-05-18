@@ -290,6 +290,13 @@ export default function ManagerDashboardUI({
                     <ManagerDashboardHeader profile={profile} initialNotifications={initialNotifications} />
 
                     <div className="px-8 lg:px-16 xl:px-24">
+                        {/* TITLE */}
+                        <div className="mb-6">
+                            <h1 className="text-[32px] md:text-[38px] font-black text-[#0B3A64] tracking-tight leading-none mb-1">Manager Dashboard</h1>
+                            <p className="text-[13px] text-slate-500 font-medium">
+                                {dashboardView === 'operations' ? `Real-time oversight of ${dormName}.` : 'Financial health and collection management.'}
+                            </p>
+                        </div>
 
                         {/* VIEW TOGGLE */}
                         <div className="flex bg-slate-200/50 p-1 rounded-xl w-fit mb-8 border border-slate-200">
