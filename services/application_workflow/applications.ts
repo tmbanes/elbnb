@@ -55,7 +55,7 @@ export async function getSingleApplicationService(user: User, id: string) {
 
   const { data: unitList } = await supabase
     .from("unit")
-    .select("unit_id, unit_number, unit_type")
+    .select("unit_id, unit_number, unit_type, rental_fee")
     .eq("accommodation_id", data.preferred_accommodation_id);
 
   const { data: userAssignments } = await supabaseAdmin
@@ -249,7 +249,7 @@ export async function getAdminApplicationsService(user: User, filters: {
     // Fetch available units for the dropdown logic
     const { data: unitList } = await supabase
       .from("unit")
-      .select("unit_id, unit_number, unit_type")
+      .select("unit_id, unit_number, unit_type, rental_fee")
       .eq("accommodation_id", data.preferred_accommodation_id);
 
     const { data: userAssignments } = await supabaseAdmin

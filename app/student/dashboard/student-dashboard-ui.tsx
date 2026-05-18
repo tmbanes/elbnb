@@ -622,9 +622,9 @@ export default function StudentDashboardUI({
                             </div>
                         </div>
 
-                        <Link href="/student/accommodations">
+                        <Link href="/student/application">
                             <button className="w-full py-3.5 bg-white hover:bg-slate-50 text-[#1f3d5f] border border-[#dce3bc] text-[13px] font-extrabold rounded-[14px] transition-all hover:border-[#cfd8df] active:scale-[0.98]">
-                                Start New Application
+                                See Applications
                             </button>
                         </Link>
                     </div>

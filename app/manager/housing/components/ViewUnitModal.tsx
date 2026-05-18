@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Modal from "./Modal";
 import { Badge } from "@/components/ui/badge";
 import { User, Users, Banknote, Armchair, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Unit } from "@/types/housing/types";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 
 interface Props {
   isOpen: boolean;
@@ -14,6 +16,52 @@ interface Props {
 }
 
 export default function ViewUnitModal({ isOpen, onClose, unit, accentColor = "#264384" }: Props) {
+  const [occupants, setOccupants] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!unit || !isOpen) return;
+
+    const fetchOccupants = async () => {
+      setLoading(true);
+      try {
+        const supabase = getSupabaseBrowserClient();
+        const { data, error } = await supabase
+          .from("accommodation_assignment")
+          .select(`
+            assignment_id,
+            user_id,
+            users:user_id (
+              first_name,
+              last_name,
+              email
+            )
+          `)
+          .eq("unit_id", unit.unit_id)
+          .eq("assignment_status", "active");
+
+        if (error) throw error;
+
+        const mappedOccupants = (data || []).map((asg: any) => {
+          const u = Array.isArray(asg.users) ? asg.users[0] : asg.users;
+          return {
+            id: asg.user_id,
+            name: u ? `${u.first_name || ""} ${u.last_name || ""}`.trim() : "Unknown User",
+            email: u?.email || "No email",
+          };
+        });
+
+        setOccupants(mappedOccupants);
+      } catch (err) {
+        console.error("Failed to fetch unit occupants:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOccupants();
+  }, [unit, isOpen]);
+
   if (!unit) return null;
 
   return (
@@ -104,26 +152,28 @@ export default function ViewUnitModal({ isOpen, onClose, unit, accentColor = "#2
           </div>
         </div>
 
-        {/* Occupants List (Dummy) */}
+        {/* Occupants List */}
         {unit.current_occupancy > 0 && (
           <div className="space-y-2">
             <p className="text-[10px] font-bold uppercase tracking-widest text-[#44291B] font-archivo-black ml-1">Current Occupants</p>
             <div className="rounded-xl border border-[#e2e4c0] bg-white overflow-hidden shadow-sm">
-              {[...Array(unit.current_occupancy)].map((_, i) => {
-                const names = ["Alexander Thorne", "Elena Rodriguez", "Julian Hayes", "Sofia Chen", "Marcus Wright"];
-                const emails = ["alex.t@example.com", "elena.r@example.com", "j.hayes@example.com", "s.chen@example.com", "m.wright@example.com"];
-                return (
-                  <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-[#e2e4c0] last:border-0 hover:bg-[#F6F8D5]/30 transition-colors">
+              {loading ? (
+                <div className="p-4 text-center text-xs text-slate-400 font-bold uppercase tracking-wider animate-pulse">Loading occupants...</div>
+              ) : occupants.length === 0 ? (
+                <div className="p-4 text-center text-xs text-slate-400 font-bold uppercase tracking-wider">No active assignments found</div>
+              ) : (
+                occupants.map((occ, idx) => (
+                  <div key={occ.id ?? idx} className="flex items-center gap-3 px-4 py-3 border-b border-[#e2e4c0] last:border-0 hover:bg-[#F6F8D5]/30 transition-colors">
                     <div className="w-10 h-10 rounded-full bg-[#EEF2FB] flex items-center justify-center border border-[#c5d0ef]">
                       <User className="h-5 w-5 text-[#264384]" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-[13px] font-bold text-[#44291B]">{names[i % names.length]}</p>
-                      <p className="text-[10px] text-[#8c8b82] font-medium">{emails[i % emails.length]}</p>
+                      <p className="text-[13px] font-bold text-[#44291B]">{occ.name}</p>
+                      <p className="text-[10px] text-[#8c8b82] font-medium">{occ.email}</p>
                     </div>
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
           </div>
         )}

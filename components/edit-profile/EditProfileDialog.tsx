@@ -49,7 +49,7 @@ import {
   DialogDescription,
   DialogTrigger 
 } from "@/components/ui/dialog";
-import { User as UserType } from '@/types/user.types';
+import { User as UserType, SEX } from '@/types/user.types';
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser-client';
 import { Edit3, Loader2, Camera, ShieldCheck } from 'lucide-react';
 import { ProfileUpload } from './ProfileUpload';
@@ -101,6 +101,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
   const [adminId, setAdminId] = useState(metadata?.admin_id || '');
   const [officeLocation, setOfficeLocation] = useState(metadata?.office_location || '');
   const [birthdate, setBirthdate] = useState(user.birthdate || '');
+  const [sex, setSex] = useState(user.sex || metadata?.sex || '');
   const [enrollmentStatus, setEnrollmentStatus] = useState(metadata?.enrollment_status || 'enrolled');
   const [emergencyPerson, setEmergencyPerson] = useState(metadata?.emergency_person || '');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -157,6 +158,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
         admin_id: adminId,
         office_location: officeLocation,
         birthdate: birthdate,
+        sex: sex,
         enrollment_status: enrollmentStatus,
         emergency_person: emergencyPerson,
       };
@@ -218,7 +220,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1" ref={contactRef}>
                   <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Contact Number</label>
                   <input 
@@ -236,7 +238,7 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                   {fieldErrors.contact_number ? (
                     <p className="text-[10px] text-red-500 font-bold pl-1">{fieldErrors.contact_number}</p>
                   ) : (
-                    <p className="text-[10px] text-[#3E2723]/60 font-semibold pl-1">Format: 11 digits (e.g. 09760799992)</p>
+                    <p className="text-[10px] text-[#3E2723]/60 font-semibold pl-1">Format: 11 digits</p>
                   )}
                 </div>
                 <div className="space-y-1">
@@ -248,6 +250,19 @@ export function EditProfileDialog({ user, metadata, children, open, onOpenChange
                     onChange={(e) => setBirthdate(e.target.value)}
                     className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2 font-semibold outline-none transition-colors"
                   />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#3E2723] opacity-80 uppercase tracking-wide">Sex</label>
+                  <select 
+                    required
+                    value={sex}
+                    onChange={(e) => setSex(e.target.value)}
+                    className="w-full bg-white border-[3px] border-[#3E2723]/10 focus:border-[#7EB647] text-[#3E2723] rounded-xl px-4 py-2.5 font-semibold outline-none transition-colors"
+                  >
+                    <option value="" disabled>Select Sex</option>
+                    <option value="M">Male (M)</option>
+                    <option value="F">Female (F)</option>
+                  </select>
                 </div>
               </div>
 

@@ -45,6 +45,13 @@ export class ResidentsService {
         unit:unit_id (
           unit_id, unit_number, unit_type,
           accommodation:accommodation_id!inner ( accommodation_id, name, location )
+        ),
+        billing:billing (
+          billing_id,
+          amount,
+          status,
+          due_date,
+          created_at
         )
       `);
 
@@ -130,6 +137,13 @@ export class ResidentsService {
         unit:unit_id (
           unit_id, unit_number, unit_type,
           accommodation:accommodation_id ( accommodation_id, name, location )
+        ),
+        billing:billing (
+          billing_id,
+          amount,
+          status,
+          due_date,
+          created_at
         )
       `)
       .in("unit_id", unitIds)
