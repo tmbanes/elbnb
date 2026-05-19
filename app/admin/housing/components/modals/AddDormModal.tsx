@@ -603,14 +603,35 @@ export default function AddDormModal({
                 </Select>
               </Field>
             </div>
-            <Field>
-              <Label className="font-semibold">Curfew Time</Label>
-              <Input
-                type="time"
-                value={form.curfew_time}
-                onChange={(e) => handleChange("curfew_time", e.target.value)}
-              />
-            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <Label className="font-semibold">Curfew Time</Label>
+                <Input
+                  type="time"
+                  value={form.curfew_time}
+                  onChange={(e) => handleChange("curfew_time", e.target.value)}
+                />
+              </Field>
+              <Field>
+                <Label className="font-semibold">
+                  Allowed Sex <span className="text-[#DF3538]">*</span>
+                </Label>
+                <Select
+                  value={form.accomm_sex}
+                  onValueChange={(val) => handleChange("accomm_sex", val)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select allowed sex" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Male</SelectItem>
+                    <SelectItem value="F">Female</SelectItem>
+                    <SelectItem value="COED">Co-ed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
             <Field>
               <Label className="font-semibold">Allowed Programs</Label>
               <Textarea
