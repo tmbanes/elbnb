@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 
     // 3. UPDATE USERS TABLE (Requires RLS Policy: auth.uid() = user_id)
     // console.log("Completing profile for user:", user.user_id, "Data:", { first_name, last_name, role, sex });
-    const { error: userError } = await supabase
+    const { error: userError } = await supabaseAdmin
       .from("users")
       .update({
         first_name: metadataUpdates.first_name as string,
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Base profile update failed: " + userError.message }, { status: 500 });
     }
 
-    // 4. UPDATE ROLE TABLES (Requires RLS Policy: auth.uid() = user_id for INSERT/UPDATE)
+    // 4. UPDATE ROLE TABLES (Using admin client to bypass INSERT restrictions)
     // Fields that should ONLY go to the 'users' table
     const userOnlyFields = ["role", "first_name", "last_name", "middle_name", "sex", "birthdate"];
 
@@ -114,9 +114,9 @@ export async function POST(req: NextRequest) {
     });
 
     // console.log(`Updating ${role} table for ${user.user_id}:`, subtableData);
-    const { error: roleError } = await supabase
+    const { error: roleError } = await supabaseAdmin
       .from(role)
-      .update(subtableData)
+      .upsert(subtableData)
       .eq('user_id', user.user_id);
 
     if (roleError) {
