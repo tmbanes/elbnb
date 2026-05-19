@@ -622,7 +622,7 @@ export async function createInvoiceService(user: User, payload: any) {
 
   let assignmentId: string | null = null;
   let resolvedUnitId = unit_id ?? application.unit_id ?? null;
-  const { data: existingAssignment } = await supabase.from("accommodation_assignment").select("assignment_id").eq("application_id", application_id).maybeSingle();
+  const { data: existingAssignment } = await supabaseAdmin.from("accommodation_assignment").select("assignment_id").eq("application_id", application_id).maybeSingle();
 
   if (existingAssignment?.assignment_id) {
     assignmentId = existingAssignment.assignment_id;
